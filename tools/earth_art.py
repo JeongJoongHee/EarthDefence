@@ -765,6 +765,114 @@ def dome_front():
             + f'<path d="M{cx - 270} {GROUND_Y - 110} A270 230 0 0 1 {cx - 120} {GROUND_Y - 248}" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".45"/>')
 
 
+
+# ------------------------------------------------------------------ 6차 수정안 "기지 외형 이미지 수정": 외형마다 다른 돔 (예전 = 같은 돔에 색만)
+# 돔 테두리 = 가로 반지름 330 · 세로 290 반원. 장식은 테두리를 따라 놓음. 유리 안쪽 칠은 아주 옅게(안의 대장 카피가 가려지지 않게).
+DOME_RX, DOME_RY = 330, 290
+
+
+def _arc_pt(t, k=1.0):
+    """돔 테두리 위 점: t = 0(오른쪽 끝) ~ 180(왼쪽 끝) 도 · k = 반지름 배율"""
+    a = math.radians(t)
+    return W_ / 2 + DOME_RX * k * math.cos(a), GROUND_Y - DOME_RY * k * math.sin(a)
+
+
+def _arc_d(k=1.0):
+    cx = W_ / 2
+    return f'M{cx - DOME_RX * k} {GROUND_Y} A{DOME_RX * k} {DOME_RY * k} 0 0 1 {cx + DOME_RX * k} {GROUND_Y}'
+
+
+def _flower(x, y, r, petal, core=GOLD):
+    s = ''
+    for i in range(5):
+        a = math.radians(i * 72 - 90)
+        s += C(x + math.cos(a) * r * .62, y + math.sin(a) * r * .62, r * .5, petal, 3.4)
+    return s + C(x, y, r * .36, core, 3.4)
+
+
+def _star(x, y, r, fill=GOLD, sw=3.6, rot=0):
+    pts = []
+    for i in range(10):
+        a = math.radians(rot - 90 + i * 36); rr_ = r if i % 2 == 0 else r * .45
+        pts.append(f'{x + math.cos(a) * rr_:.1f} {y + math.sin(a) * rr_:.1f}')
+    return P('M' + ' L'.join(pts) + ' Z', fill, sw)
+
+
+def dome_variant(fid):
+    """외형별 돔 앞 그림 (dome_front 와 같은 캔버스 · 같은 자리)"""
+    cx = W_ / 2
+    d = _arc_d()
+    hl = f'<path d="M{cx - 270} {GROUND_Y - 110} A270 230 0 0 1 {cx - 120} {GROUND_Y - 248}" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".45"/>'
+
+    def glass(c, op=.10):
+        return f'<path d="{d} Z" fill="{c}" opacity="{op}"/>'
+
+    def rim(glow, line, w=11):
+        return blur(L(d, w + 8, glow), 7, .6) + L(d, w) + L(d, w * .5, line)
+
+    if fid == 'prism':     # 무지개 돔 (부활): 테두리 안쪽 무지개 띠 3줄 + 꼭대기 깃털 한 쌍
+        s = glass('#f3dcff', .12) + rim('#d9b8ff', '#f6e8ff', 12)
+        for k, c in ((.955, '#ffb3c8'), (.92, '#ffe08a'), (.885, '#9fe0ff')):
+            s += f'<path d="{_arc_d(k)}" fill="none" stroke="{c}" stroke-width="9" stroke-linecap="round" opacity=".85"/>'
+        tx, ty = _arc_pt(90)
+        for sgn in (-1, 1):
+            s += P(f'M{tx} {ty - 4} Q{tx + sgn * 40} {ty - 70} {tx + sgn * 92} {ty - 52} Q{tx + sgn * 60} {ty - 30} {tx + sgn * 70} {ty - 14} Q{tx + sgn * 34} {ty - 14} {tx} {ty - 4} Z', G('#ffd0e6', 'v', .86, .3), 4.4)
+            s += L(f'M{tx + sgn * 8} {ty - 10} Q{tx + sgn * 40} {ty - 40} {tx + sgn * 76} {ty - 46}', 3, '#e8a2c8')
+        s += blur(C(tx, ty - 4, 16, '#ffd0ff', 0), 6, .8) + C(tx, ty - 4, 14, G('#fff4dc', 'r'), 4.4)
+        return s + hl
+    if fid == 'starsea':   # 별바다 장막 (별똥별): 남색 유리 + 안쪽 별 · 테두리 별 장식
+        s = glass('#5868b8', .13) + rim('#9fb2ff', '#dfe5ff', 12)
+        rnd = random.Random(31)
+        for _ in range(16):
+            t = rnd.uniform(18, 162); k = rnd.uniform(.3, .86)
+            x, y = _arc_pt(t, k)
+            s += f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rnd.uniform(2.4, 4.6):.1f}" fill="#fff4dc" opacity="{rnd.uniform(.5, .95):.2f}"/>'
+        for t in (30, 62, 90, 118, 150):
+            x, y = _arc_pt(t)
+            s += blur(C(x, y, 16, '#cfd8ff', 0), 6, .8) + _star(x, y, 20 if t == 90 else 15, '#fff2a8', 3.6, t)
+        x0, y0 = _arc_pt(140, .7)
+        s += L(f'M{x0} {y0} l90 46', 5, '#fff4dc') + _star(x0 + 92, y0 + 47, 11, '#fff2a8', 3)
+        return s + hl
+    if fid == 'frost':     # 얼음 돔 (얼림): 두꺼운 얼음 테두리 + 고드름 + 눈 결정
+        s = glass('#dff6ff', .14) + rim('#9fe8ff', '#eafcff', 16)
+        for t in range(14, 170, 13):
+            x, y = _arc_pt(t, .985); ln = 26 + (t * 7) % 22
+            s += P(f'M{x - 9} {y} L{x + 9} {y} L{x} {y + ln} Z', G('#e6fbff', 'v', .9, .4), 3.4)
+        for t, k, r in ((34, .74, 18), (146, .74, 18), (64, .9, 13), (116, .9, 13)):
+            x, y = _arc_pt(t, k)
+            for a in (0, 60, 120):
+                s += f'<g transform="rotate({a} {x} {y})">' + L(f'M{x - r} {y} L{x + r} {y} M{x - r * .55} {y - 7} L{x - r * .3} {y} L{x - r * .55} {y + 7} M{x + r * .55} {y - 7} L{x + r * .3} {y} L{x + r * .55} {y + 7}', 3.4, '#ffffff') + '</g>'
+        return s + hl
+    if fid == 'thorn':     # 가시 돔 (반격): 초록 덩굴 테두리 + 바깥으로 뻗은 가시
+        s = glass('#e8f4d8', .10)
+        for t in range(10, 175, 11):
+            x, y = _arc_pt(t); xo, yo = _arc_pt(t, 1.13)
+            a = math.radians(t); nx, ny = -math.sin(a) * 12, -math.cos(a) * 12
+            s += P(f'M{x + nx} {y + ny} L{xo} {yo} L{x - nx} {y - ny} Z', G('#c9e6a6', 'v', .86, .3), 3.8)
+        s += rim('#b8e08f', '#d9efbf', 13)
+        for t in range(16, 170, 22):
+            x, y = _arc_pt(t, .975)
+            s += E(x, y + 10, 14, 7, '#9dcf7a', 3, rot=-t + 45)
+        return s + hl
+    if fid == 'bloom':     # 꽃 돔 (회복): 분홍 테두리 + 꽃 · 잎이 테두리를 따라
+        s = glass('#ffe4ec', .12) + rim('#ffb3c8', '#ffe1ea', 12)
+        for i, t in enumerate(range(14, 175, 16)):
+            x, y = _arc_pt(t)
+            s += E(x + 14, y + 6, 13, 7, '#a9d68c', 3, rot=-t + 30)
+            s += _flower(x, y, 20 if i % 2 == 0 else 15, '#ffc2d4' if i % 3 else '#fff4dc', GOLD if i % 3 else '#ffb3c8')
+        return s + hl
+    if fid == 'gold':      # 황금 돔 (골드): 굵은 금 테두리 + 리벳 + 꼭대기 왕관 보석
+        s = glass('#fff2c8', .12) + blur(L(d, 26, '#ffd34d'), 8, .6) + L(d, 18) + L(d, 11, '#f7c948') + L(d, 4, '#fff1b0')
+        for t in range(8, 176, 14):
+            x, y = _arc_pt(t)
+            s += C(x, y, 6.5, G('#fff4dc', 'r'), 3)
+        tx, ty = _arc_pt(90)
+        s += P(f'M{tx - 46} {ty - 6} L{tx - 50} {ty - 58} L{tx - 22} {ty - 30} L{tx} {ty - 66} L{tx + 22} {ty - 30} L{tx + 50} {ty - 58} L{tx + 46} {ty - 6} Z', G('#ffd34d', 'v', .86, .3), 4.6)
+        s += C(tx, ty - 24, 9, '#ff9a8a', 3.4) + C(tx - 50, ty - 60, 6, '#8fd6ff', 3) + C(tx + 50, ty - 60, 6, '#8fd6ff', 3)
+        return s + hl
+    return dome_front()
+
+
 def ground():
     rnd = random.Random(4)
     s = [P(f'M-10 {GROUND_Y - 6} Q270 {GROUND_Y - 34} 540 {GROUND_Y - 4} Q810 {GROUND_Y + 22} 1090 {GROUND_Y - 20} L1090 1930 L-10 1930 Z', G('#7da36d', 'v', .82, .12), 5.5),

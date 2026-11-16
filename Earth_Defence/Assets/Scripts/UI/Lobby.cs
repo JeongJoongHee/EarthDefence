@@ -24,8 +24,9 @@ namespace EarthDef
         (Image bg, Text label, string id)[] tabBtns;
         Image missionDot, gearDot;
         // 전투 탭
-        Text stageT, stageName, bestT, weakT, patrolT, patrolAmt, costT;
-        Button startB, prevB, nextB, patrolB, patrolAdB, normalB, eliteB;
+        Text stageT, stageName, bestT, weakT, patrolT, costT;
+        Image patrolDot;
+        Button startB, prevB, nextB, patrolB, normalB, eliteB;
         // 터렛 탭
         Text baseLvT, baseDescT, baseCostT;
         Button baseB;
@@ -43,17 +44,17 @@ namespace EarthDef
             top.sizeDelta = new Vector2(0, 130); top.anchoredPosition = Vector2.zero;
             var gp = UIKit.Panel(top, "pill", "Gold"); gp.rectTransform.TL(20, 26, 270, 84);
             var gi = UIKit.Img(gp.transform, Art.Icon("coin"), "Coin"); gi.rectTransform.Place(0, 0.5f, new Vector2(8, 0), new Vector2(76, 76), new Vector2(0, 0.5f));
-            goldT = UIKit.Label(gp.transform, "", 40, Art.Ink, TextAnchor.MiddleLeft, false); goldT.rectTransform.Fill(92, 6, 16, 0);
+            goldT = UIKit.Label(gp.transform, "", 40, Art.Ink, TextAnchor.MiddleRight, false); goldT.rectTransform.Fill(92, 6, 26, 0);   // 6차 수정안 "재화 숫자는 우측에"
             var sp = UIKit.Panel(top, "pill", "Stamina"); sp.rectTransform.TL(300, 26, 290, 84);
             var si = UIKit.Img(sp.transform, Art.Icon("energy"), "Energy"); si.rectTransform.Place(0, 0.5f, new Vector2(8, 0), new Vector2(76, 76), new Vector2(0, 0.5f));
-            stamT = UIKit.Label(sp.transform, "", 38, Art.Ink, TextAnchor.MiddleLeft, false); stamT.rectTransform.Fill(92, 6, 16, 0);
+            stamT = UIKit.Label(sp.transform, "", 38, Art.Ink, TextAnchor.MiddleRight, false); stamT.rectTransform.Fill(92, 6, 26, 0);
             stamNext = UIKit.Label(top, "", 24, Art.Cream, TextAnchor.MiddleCenter, true); stamNext.rectTransform.TL(300, 106, 290, 30);
             UIKit.Clickable(sp, ShowStamina);
             // 3차: 다이아 (누르면 상점)
             var dp = UIKit.Panel(top, "pill", "Dia"); dp.rectTransform.TL(600, 26, 300, 84);
             var di = UIKit.Img(dp.transform, Art.Icon("diamond"), "Dia"); di.rectTransform.Place(0, 0.5f, new Vector2(10, 0), new Vector2(70, 70), new Vector2(0, 0.5f));
-            diaT = UIKit.Label(dp.transform, "", 38, Art.Ink, TextAnchor.MiddleLeft, false); diaT.rectTransform.Fill(90, 6, 16, 0);
-            UIKit.Clickable(dp, () => SetTab(5));
+            diaT = UIKit.Label(dp.transform, "", 38, Art.Ink, TextAnchor.MiddleRight, false); diaT.rectTransform.Fill(90, 6, 26, 0);
+            UIKit.Clickable(dp, () => { ShopTab.sub = 0; SetTab(5); });   // 6차: 다이아 칸을 누르면 상점의 다이아 패널
             var set = UIKit.Tile(top, "btn_orange", Color.white, Art.Icon("gear"), 0.6f, "Settings"); set.rectTransform.TL(954, 20, 100, 100);
             UIKit.Clickable(set, Settings.Open);
 
@@ -148,16 +149,13 @@ namespace EarthDef
             enemyBox.gameObject.SetActive(enemiesOpen);
 
             // [전투 시작](위) + 순찰(아래, 4차 수정안 "순찰 보상을 전투 시작 버튼 아래로") — 돔 바로 위 (PlaceOverDome)
-            var pc = UIKit.Panel(page, "card", "Patrol"); patrolRT = pc.rectTransform; patrolRT.Place(0.5f, 0, new Vector2(0, 380), new Vector2(860, 116), new Vector2(0.5f, 0));
-            var pi = UIKit.Img(pc.transform, Art.Icon("patrol"), "Icon"); pi.rectTransform.TL(14, 16, 80, 80);
-            var pt = UIKit.Label(pc.transform, L.T("patrol"), 30, Art.Ink, TextAnchor.MiddleLeft, false); pt.rectTransform.TL(104, 10, 300, 46);
-            patrolT = UIKit.Label(pc.transform, "", 21, Art.Soft, TextAnchor.MiddleLeft, false); patrolT.rectTransform.TL(104, 56, 330, 40);
-            patrolAmt = UIKit.Label(pc.transform, "", 24, Art.Brown, TextAnchor.MiddleRight, false); patrolAmt.rectTransform.TL(330, 10, 180, 90);
-            patrolB = UIKit.Btn(pc.transform, "btn_orange", L.T("claim"), 32, () => Claim(1), "Claim"); ((RectTransform)patrolB.transform).TL(526, 14, 146, 84);
-            // 4차 수정안 "순찰 보상에 광고 — 보면 2배" (광고는 [초안]: 지금은 바로 성공)
-            patrolAdB = UIKit.Btn(pc.transform, "btn_purple", null, 30, () => Ads.Show(ok => { if (ok) Claim(Tables.Ci("Patrol_Ad_Mul", 2)); }), "ClaimAd"); ((RectTransform)patrolAdB.transform).TL(682, 14, 160, 84);
-            var adi = UIKit.Img(patrolAdB.transform, Art.Icon("ad"), "Ad"); adi.raycastTarget = false; adi.rectTransform.Place(0, 0.5f, new Vector2(10, 5), new Vector2(54, 54), new Vector2(0, 0.5f));
-            UIKit.Label(patrolAdB.transform, L.T("patrol_x2"), 30).rectTransform.Fill(60, 12, 6, 2);
+            // 6차 수정안 "순찰 보상 크기를 전투 시작 크기와 맞추고, 누르면 몇 분 순찰 · 얼마 얻었는지 안내 창 (받기 / 광고 2배)"
+            patrolB = UIKit.Btn(page, "btn_orange", null, 40, PatrolPopup, "Patrol"); patrolRT = (RectTransform)patrolB.transform;
+            patrolRT.Place(0.5f, 0, new Vector2(0, 380), new Vector2(600, 150), new Vector2(0.5f, 0));
+            var pi = UIKit.Img(patrolB.transform, Art.Icon("patrol"), "Icon"); pi.raycastTarget = false; pi.rectTransform.Place(0, 0.5f, new Vector2(26, 6), new Vector2(104, 104), new Vector2(0, 0.5f));
+            var pt = UIKit.Label(patrolB.transform, L.T("patrol"), 46); pt.rectTransform.Fill(140, 62, 20, 10);
+            patrolT = UIKit.Label(patrolB.transform, "", 24, Art.Cream); patrolT.rectTransform.Fill(140, 16, 20, 80);
+            patrolDot = UIKit.Dot(patrolB.transform, -16, -14, 34);
 
             startB = UIKit.Btn(page, "btn_green", null, 60, StartBattle, "Start");
             startRT = (RectTransform)startB.transform; startRT.Place(0.5f, 0, new Vector2(0, 520), new Vector2(600, 150), new Vector2(0.5f, 0));
@@ -197,7 +195,7 @@ namespace EarthDef
             y = Mathf.Max(y, 20);
             if (Mathf.Abs(patrolRT.anchoredPosition.y - y) < 0.01f) return;      // 11-17: 매 프레임 같은 자리를 다시 넣지 않음 (화면이 바뀐 때만)
             patrolRT.anchoredPosition = new Vector2(0, y);
-            startRT.anchoredPosition = new Vector2(0, y + 116 + 18);
+            startRT.anchoredPosition = new Vector2(0, y + 150 + 18);
         }
 
         (Image, Text) BossTile(Transform p, float x, string title)
@@ -243,6 +241,35 @@ namespace EarthDef
         }
 
         public void StartBattle() => Game.TryStart(S.stage, S.elite);
+
+        /// <summary>6차 수정안: 순찰 안내 창 — 몇 분 순찰했고 무엇을 얼마 얻는지 · [받기] = 그대로 · [광고 보고 2배] = Patrol_Ad_Mul 배</summary>
+        public void PatrolPopup()
+        {
+            if (!Meta.CanClaimPatrol)
+            {
+                Toast.Show(L.F("patrol_wait", Num.Dur(Tables.C("Patrol_Min_Sec", 60) - S.PatrolSec)));
+                return;
+            }
+            double gold = System.Math.Floor(S.PatrolGold); int sh = S.PatrolShards, mul = Tables.Ci("Patrol_Ad_Mul", 2);
+            var p = Popup.Make(L.T("patrol"), 860, 800);
+            var ic = UIKit.Img(p.win, Art.Icon("patrol"), "PatrolIcon"); ic.raycastTarget = false; ic.rectTransform.Place(0.5f, 1, new Vector2(0, -116), new Vector2(120, 120), new Vector2(0.5f, 1));
+            p.Text(L.F("patrol_popup", Num.Dur(S.PatrolSec)), 246, 40, Art.Ink, 60);
+            p.Text(L.F("patrol_max", Tables.Ci("Patrol_Max_Hours", 12)), 306, 26, Art.Soft, 40);
+            void Got(float x, string icon, string amt, string name)
+            {
+                var t = UIKit.Tile(p.win, "slot", Color.white, Art.Icon(icon), 0.66f, "Got_" + icon); t.rectTransform.Place(0.5f, 1, new Vector2(x, -362), new Vector2(170, 170), new Vector2(0.5f, 1));
+                t.gameObject.AddComponent<PopIn>();
+                var a = UIKit.Label(p.win, amt, 40); a.rectTransform.Place(0.5f, 1, new Vector2(x, -540), new Vector2(320, 56), new Vector2(0.5f, 1));
+                UIKit.Label(p.win, name, 26, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.Place(0.5f, 1, new Vector2(x, -592), new Vector2(320, 36), new Vector2(0.5f, 1));
+            }
+            Got(-160, "coin", "+" + Num.Res(gold), L.T("r_gold"));
+            Got(160, "shard", "+" + sh, L.T("r_shards"));
+            p.Btn("btn_orange", L.T("claim"), -200, 40, 340, () => { p.Close(); Claim(1); }, 120).name = "PatrolClaim";
+            var ad = p.Btn("btn_purple", "", 200, 40, 340, () => Ads.Show(ok => { if (!ok) return; p.Close(); Claim(mul); }), 120);
+            ad.name = "ClaimAd";
+            var adi = UIKit.Img(ad.transform, Art.Icon("ad"), "Ad"); adi.raycastTarget = false; adi.rectTransform.Place(0, 0.5f, new Vector2(18, 6), new Vector2(64, 64), new Vector2(0, 0.5f));
+            var al = UIKit.LabelOf(ad); if (al) { al.text = L.T("patrol_ad"); al.fontSize = Art.FontSize(32); al.rectTransform.Fill(84, 14, 14, 4); }
+        }
 
         void Claim(int mul)
         {
@@ -434,8 +461,9 @@ namespace EarthDef
 
         void RefreshTop()
         {
-            goldT.text = Num.F(S.gold);
-            diaT.text = Num.Comma(S.dia);
+            // 6차 수정안: 금화 · 다이아는 100만부터 K (Num.Res) · 칸보다 길면 글자를 줄여 칸 안에 (UIKit.Fit)
+            UIKit.Fit(goldT, Num.Res(S.gold), 40);
+            UIKit.Fit(diaT, Num.Res(S.dia), 38);
             int st = Meta.Stamina;
             stamT.text = $"{st}/{Meta.StaminaMax}";
             long nx = Meta.StaminaNext;
@@ -448,10 +476,9 @@ namespace EarthDef
         void RefreshPatrol()
         {
             patrolT.text = L.F("patrol_desc", Num.Dur(S.PatrolSec), Tables.Ci("Patrol_Max_Hours", 12));
-            patrolAmt.text = $"{Num.F(S.PatrolGold)}골드\n조각 {S.PatrolShards}";
             bool can = Meta.CanClaimPatrol;
-            patrolB.interactable = can; UIKit.SetKind(patrolB, can ? "btn_orange" : "btn_gray");
-            patrolAdB.interactable = can; UIKit.SetKind(patrolAdB, can ? "btn_purple" : "btn_gray");
+            UIKit.SetKind(patrolB, can ? "btn_orange" : "btn_gray");
+            patrolDot.enabled = can;
         }
 
         public void Refresh()

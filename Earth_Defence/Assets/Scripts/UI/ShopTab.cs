@@ -63,7 +63,29 @@ namespace EarthDef
             lobby = l;
             var root = (RectTransform)transform;
             var panel = UIKit.Panel(root, "card_white", "Shop"); panel.rectTransform.Fill(20, 6, 20, 6);
-            list = UIKit.Scroll(panel.transform, "Scroll"); list.parent.GetComponent<RectTransform>().Fill(8, 12, 8, 8);
+            // 6차 수정안 "패널 추가 — 다이아 · 장비 · 재화 3분류": 위에 패널 단추 3개 (외형 탭과 같은 모양)
+            subBtns.Clear();
+            for (int i = 0; i < SubKeys.Length; i++)
+            {
+                int k = i;
+                var b = UIKit.Btn(panel.transform, i == sub ? "btn_orange" : "btn_cream", L.T(SubKeys[i]), 34, () => { if (sub == k) return; sub = k; scrollY = 0; SetSub(); }, "ShopSub" + i);
+                ((RectTransform)b.transform).TL(22 + i * 336, 20, 320, 96);
+                subBtns.Add(b);
+            }
+            var area = UIKit.Rect(panel.transform, "Area"); area.Fill(8, 12, 8, 128);
+            list = UIKit.Scroll(area, "Scroll"); list.parent.GetComponent<RectTransform>().Fill();
+            Refresh();
+        }
+
+        /// <summary>6차: 0 = 다이아 · 1 = 장비(상자) · 2 = 재화(스태미나 · 골드 · 강화 재료 · 터렛 조각)</summary>
+        public static int sub;
+        public static readonly string[] SubKeys = { "shop_tab_dia", "shop_tab_gear", "shop_tab_res" };
+        readonly List<Button> subBtns = new();
+        public static int SubOf(ShopItemRow it) => it.kind is "free_box" or "ad_box" or "gear_box" or "chip_box" ? 1 : 2;
+        void SetSub()
+        {
+            for (int i = 0; i < subBtns.Count; i++) UIKit.SetKind(subBtns[i], i == sub ? "btn_orange" : "btn_cream");
+            list.anchoredPosition = Vector2.zero;
             Refresh();
         }
 
@@ -80,13 +102,38 @@ namespace EarthDef
             float keep = list.anchoredPosition.y;
             for (int c = list.childCount - 1; c >= 0; c--) Destroy(list.GetChild(c).gameObject);
             float y = 14;
+            if (sub == 0) y = DiaPanel(y);
+            else if (sub == 1)
+            {   // ---- 상자 (장비 · 회로)
+                Head(ref y, L.T("shop_box"));
+                var rb = UIKit.Btn(list, "btn_orange", L.T("rates"), 28, RatePopup, "Rates"); ((RectTransform)rb.transform).TL(840, y - 78, 160, 64);
+                var bn = UIKit.Label(list, L.T("box_max_note"), 24, Art.Purple, TextAnchor.MiddleLeft, false); bn.rectTransform.TL(28, y - 6, 960, 40);
+                y += 40;
+                foreach (var it in Tables.ShopItems) if (SubOf(it) == 1) y = ItemRow(it, y);
+            }
+            else
+            {   // ---- 재화
+                Head(ref y, L.T("shop_tab_res"));
+                foreach (var it in Tables.ShopItems) if (SubOf(it) == 2) y = ItemRow(it, y);
+            }
+            UIKit.SetScrollH(list, y + 20);
+            list.anchoredPosition = new Vector2(0, keep);
+        }
+
+        float DiaPanel(float y)
+        {
             // ---- 다이아 (결제 [초안])
             Head(ref y, L.T("shop_dia"));
             var note = UIKit.Label(list, Store.IapReady ? L.T("iap_draft") : L.T("iap_off"), 22, Art.Soft, TextAnchor.MiddleRight, false); note.rectTransform.TL(380, y - 72, 620, 40);
+            // 월 1회 패키지는 맨 위에 넓은 띠로 (참고영상.txt 메모 "월 1회 구매 9,900원 다이아 폭탄 패키지 10,000")
+            foreach (var mp in Tables.Products) if (mp.kind == "monthly") y = MonthlyCard(mp, y);
+            int idx = 0;
             for (int i = 0; i < Tables.Products.Count; i++)
             {
                 var p = Tables.Products[i];
-                float x = 20 + i % 3 * 330, yy = y + i / 3 * 300;
+                if (p.kind == "monthly") continue;
+                int slot = idx++;
+                float x = 20 + slot % 3 * 330, yy = y + slot / 3 * 300;
                 var card = UIKit.Panel(list, "card", "P_" + p.id); card.rectTransform.TL(x, yy, 316, 286);
                 var pp = p; bool noads = p.kind == "noads", done = noads && Store.NoAds;
                 var ic = UIKit.Img(card.transform, Art.Icon(noads ? "ad" : "diamond"), "Icon"); ic.raycastTarget = false; ic.rectTransform.TL(108, 18, 100, 100);
@@ -116,14 +163,30 @@ namespace EarthDef
                     UIKit.Label(tag.transform, L.T("first_double"), 24).rectTransform.Fill(0, 4, 0, 0);
                 }
             }
-            y += Mathf.CeilToInt(Tables.Products.Count / 3f) * 300 + 10;
-            // ---- 상자 · 스태미나 · 골드
-            var rt = Head(ref y, L.T("shop_box"));
-            var rb = UIKit.Btn(list, "btn_orange", L.T("rates"), 28, RatePopup, "Rates"); ((RectTransform)rb.transform).TL(840, y - 78, 160, 64);
-            foreach (var it in Tables.ShopItems) y = ItemRow(it, y);
-            // (터렛 외형 · 기지 외형은 3차 수정안대로 "외형" 메뉴로 옮김)
-            UIKit.SetScrollH(list, y + 20);
-            list.anchoredPosition = new Vector2(0, keep);
+            return y + Mathf.CeilToInt(idx / 3f) * 300 + 10;
+        }
+
+        float MonthlyCard(ProductRow p, float y)
+        {
+            bool done = Store.MonthDone(p);
+            var card = UIKit.Panel(list, "card", "P_" + p.id); card.rectTransform.TL(20, y, 980, 230);
+            card.color = Art.Hex("#fff0c4");
+            var ic = UIKit.Img(card.transform, Art.Icon("diamond"), "Icon"); ic.raycastTarget = false; ic.rectTransform.TL(40, 40, 150, 150);
+            var ic2 = UIKit.Img(card.transform, Art.Icon("diamond"), "Icon2"); ic2.raycastTarget = false; ic2.rectTransform.TL(120, 86, 100, 100);
+            UIKit.Label(card.transform, p.name, 40, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(250, 26, 440, 56);
+            UIKit.Label(card.transform, Num.Comma(p.dia), 56, Art.Sky, TextAnchor.MiddleLeft).rectTransform.TL(250, 86, 440, 76);
+            var tag = UIKit.Panel(card.transform, "pill", "Month"); tag.color = Art.Red; tag.rectTransform.TL(250, 166, 170, 46);
+            UIKit.Label(tag.transform, L.T("month_limit"), 26).rectTransform.Fill(0, 4, 0, 0);
+            var pp = p;
+            var b = UIKit.Btn(card.transform, done ? "btn_gray" : Store.IapReady ? "btn_green" : "btn_gray", done ? L.T("month_done") : Num.Comma(p.krw) + "원", done ? 26 : 38, () =>
+            {
+                if (Store.MonthDone(pp)) return;
+                if (!Store.IapReady) { Toast.Show(L.T("iap_off")); return; }
+                int n = Store.Purchase(pp); if (n > 0) Toast.Show($"{L.T("dia")} +{Num.Comma(n)}");
+                lobby.Refresh();
+            }, "Buy");
+            ((RectTransform)b.transform).TL(700, 66, 250, 100);
+            return y + 246;
         }
 
         float ItemRow(ShopItemRow it, float y)
@@ -132,8 +195,13 @@ namespace EarthDef
             string icon = it.kind switch { "stamina" => "energy", "gold" => "coin", "ad_box" => "ad", "chip_box" => "chip_4", "gear_box" => "g_suit_4", "parts_box" => "parts", "shard_box" => "shard", _ => "chest" };
             var ic = UIKit.Img(r.transform, Art.Icon(icon), "Icon"); ic.raycastTarget = false; ic.rectTransform.TL(24, 20, 100, 100);
             UIKit.Label(r.transform, it.name, 34, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(144, 16, 500, 54);
-            string sub = it.desc + (it.perDay > 0 ? "   " + L.F("per_day", it.perDay - Store.Left(it), it.perDay) : "");
-            UIKit.Label(r.transform, sub, 24, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(144, 72, 560, 48);
+            string desc = it.desc + (it.perDay > 0 ? "   " + L.F("per_day", it.perDay - Store.Left(it), it.perDay) : "");
+            UIKit.Label(r.transform, desc, 24, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(144, 72, 560, 48);
+            if (Store.PityN > 0 && it.kind is "gear_box" or "chip_box")
+            {   // 6차: 천장 — 전설 확정까지 남은 횟수 (장비 · 회로 상자 따로 셈, 10+1 은 같은 셈)
+                var pt = UIKit.Label(r.transform, L.F("pity_left", Store.PityLeft(it.kind)), 22, Art.Purple, TextAnchor.MiddleLeft, false);
+                pt.rectTransform.TL(390, 16, 320, 50); pt.name = "Pity";
+            }
             bool can = Store.Left(it) > 0 && S.dia >= it.costDia;
             var b = UIKit.Btn(r.transform, can ? (it.kind == "ad_box" ? "btn_purple" : "btn_green") : "btn_gray", null, 30, () =>
             {
@@ -184,18 +252,24 @@ namespace EarthDef
         }
 
         /// <summary>상자 등급 확률 (확률형 아이템 표시 — Shop.xlsx Box_Rate 그대로)</summary>
+        /// <summary>시험용</summary>
+        public static void RateOpen() => RatePopup();
         static void RatePopup()
         {
-            var p = Popup.Make(L.T("rate_title"), 760, 300 + Tables.BoxRates.Count * 70);
+            int shown = 0; foreach (var (g, r) in Tables.BoxRates) if (g <= Store.BoxMax && r > 0) shown++;
+            var p = Popup.Make(L.T("rate_title"), 760, 420 + shown * 70);
             float y = 130;
             foreach (var (g, r) in Tables.BoxRates)
             {
+                if (g > Store.BoxMax || r <= 0) continue;     // 6차: 신화 · 궁극은 상자에서 안 나옴 (합성으로만)
                 var gr = Tables.Grade(g);
                 var tag = UIKit.Panel(p.win, "pill", "G"); tag.color = gr.color; tag.rectTransform.TL(140, y, 220, 56);
                 UIKit.Label(tag.transform, gr.name, 30, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
                 UIKit.Label(p.win, r.ToString("0.##") + "%", 34, Art.Ink, TextAnchor.MiddleRight, false).rectTransform.TL(380, y, 220, 56);
                 y += 70;
             }
+            p.Text(L.T("box_max_note"), y + 6, 26, Art.Purple, 40);
+            if (Store.PityN > 0) p.Text(L.F("pity_note", Store.PityN), y + 50, 26, Art.Purple, 40);
             p.Btn("btn_green", L.T("ok"), 0, 40, 300, p.Close, 100);
         }
 
@@ -204,11 +278,11 @@ namespace EarthDef
         {
             var t = Tables.TurretById[k.turret];
             var r = UIKit.Panel(list, "card", "S_" + k.id); r.rectTransform.TL(20, y, 960, 190);
-            var a = UIKit.Tile(r.transform, "slot", Color.white, Art.TurretUI(t.art), 0.86f, "Before"); a.rectTransform.TL(20, 20, 140, 140);
-            var b2 = UIKit.Tile(r.transform, "slot", Color.white, Art.TurretSkinUI(t.art), 0.86f, "After"); b2.rectTransform.TL(170, 20, 140, 140);
-            UIKit.Label(r.transform, $"{k.name}  ({t.name})", 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(330, 14, 400, 50);
-            UIKit.Label(r.transform, $"{L.T("ult")}: {k.ultName} - {k.ultDesc}", 22, Art.Purple, TextAnchor.UpperLeft, false).rectTransform.TL(330, 66, 400, 60);
-            UIKit.Label(r.transform, L.F("skin_bonus", t.name, k.dmg), 20, Art.Soft, TextAnchor.UpperLeft, false).rectTransform.TL(330, 126, 400, 50);
+            // 6차 수정안 "터렛 외형은 변경되는 이미지만 사용": 바뀐 그림 한 장만 (예전 = 원래 그림 + 바뀐 그림)
+            var b2 = UIKit.Tile(r.transform, "slot", Color.white, Art.TurretSkinUI(t.art), 0.86f, "After"); b2.rectTransform.TL(20, 15, 160, 160);
+            UIKit.Label(r.transform, $"{k.name}  ({t.name})", 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(200, 14, 520, 50);
+            UIKit.Label(r.transform, $"{L.T("ult")}: {k.ultName} - {k.ultDesc}", 22, Art.Purple, TextAnchor.UpperLeft, false).rectTransform.TL(200, 66, 520, 60);
+            UIKit.Label(r.transform, L.F("skin_bonus", t.name, k.dmg), 20, Art.Soft, TextAnchor.UpperLeft, false).rectTransform.TL(200, 126, 520, 50);
             foreach (var x in r.GetComponentsInChildren<Text>()) x.horizontalOverflow = HorizontalWrapMode.Wrap;
             bool has = S.HasSkin(k.turret), on = S.SkinOn(k.turret);
             Button btn;
@@ -231,10 +305,12 @@ namespace EarthDef
         {
             int star = S.FrameStar(f.id); bool on = S.frame == f.id;
             var r = UIKit.Panel(list, "card", "F_" + f.id); r.rectTransform.TL(20, y, 960, 170);
-            var ic = UIKit.Tile(r.transform, "slot", f.tint, Art.Icon("base"), 0.74f, "Icon"); ic.rectTransform.TL(20, 20, 130, 130);
-            UIKit.Label(r.transform, f.name + (star > 0 && f.id != "basic" ? "  " + L.F("frame_star", star) : ""), 34, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(170, 14, 520, 50);
+            // 6차 수정안 "기지 외형 이미지 수정": 색만 입힌 같은 집 아이콘 → 외형마다 다른 돔 그림 (tools/earth_export.py frames)
+            var ic = UIKit.Tile(r.transform, "slot", Color.white, Art.FrameIcon(f), 0.9f, "Icon"); ic.rectTransform.TL(16, 16, 236, 138);   // 돔 그림은 가로로 길어서 칸도 가로로
+            ic.transform.Find("Icon").GetComponent<Image>().preserveAspect = true;
+            UIKit.Label(r.transform, f.name + (star > 0 && f.id != "basic" ? "  " + L.F("frame_star", star) : ""), 34, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(270, 14, 440, 50);
             var d = UIKit.Label(r.transform, f.Desc(Mathf.Max(1, star)), 24, Art.Soft, TextAnchor.UpperLeft, false);
-            d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(170, 68, 540, 90);
+            d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(270, 68, 440, 90);
             if (star <= 0)
             {
                 var b = UIKit.Btn(r.transform, S.dia >= f.price ? "btn_green" : "btn_gray", null, 30, () => { if (!Store.BuyFrame(f)) { Toast.Show(L.T("no_dia")); return; } changed?.Invoke(); }, "Buy");

@@ -307,6 +307,18 @@ namespace EarthDef
             if (s.Contains(".")) s = s.TrimEnd('0').TrimEnd('.');
             return s + (k < Named.Length ? Named[k] : "e" + k * 3);
         }
+        static readonly string[] ResUnit = { "K", "M", "B", "T" };
+        /// <summary>6차 수정안 "금화 · 다이아는 100만부터 K": 100만 아래는 쉼표 숫자 그대로(999,999), 100만부터 천 단위 K(1,000K ~ 999,999K) · 10억부터 M … — 길어야 8글자</summary>
+        public static string Res(double v)
+        {
+            if (double.IsNaN(v) || v < 0) v = 0;
+            if (double.IsInfinity(v)) return "-";
+            v = Math.Floor(v);
+            if (v < 1e6) return v.ToString("#,0");
+            double d = 1e3; int i = 0;
+            while (v / d >= 1e6 && i < ResUnit.Length - 1) { d *= 1e3; i++; }
+            return Math.Floor(v / d).ToString("#,0") + ResUnit[i];
+        }
         /// <summary>쉼표 (2,840) — 기지 체력처럼 사용자가 정확한 숫자를 보는 곳</summary>
         public static string Comma(double v) => Math.Max(0, Math.Ceiling(v)).ToString("#,0");
         public static string Clock(float sec) { int s = Mathf.Max(0, Mathf.CeilToInt(sec)); return $"{s / 60:00} : {s % 60:00}"; }

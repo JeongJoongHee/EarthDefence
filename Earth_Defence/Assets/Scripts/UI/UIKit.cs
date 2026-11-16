@@ -89,6 +89,15 @@ namespace EarthDef
             return b;
         }
 
+        /// <summary>글자를 넣고 칸 폭보다 길면 글자 크기를 줄임 (6차 수정안 "글자수가 안 넘어가는지") — 같은 글자면 그대로</summary>
+        public static void Fit(Text t, string s, int size)
+        {
+            if (t.text == s && t.fontSize > 0) return;
+            t.text = s; int full = Art.FontSize(size); t.fontSize = full;
+            float w = t.rectTransform.rect.width;
+            if (w <= 0) return;
+            while (t.fontSize > full * 0.6f && t.preferredWidth > w) t.fontSize--;
+        }
         public static Text LabelOf(Component b) => b.transform.Find("Label")?.GetComponent<Text>();
         public static void SetKind(Component b, string kind) { var im = b.GetComponent<Image>(); if (im) im.sprite = Art.UI(kind); }
 

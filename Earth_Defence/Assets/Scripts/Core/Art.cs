@@ -113,6 +113,9 @@ namespace EarthDef
         }
 
         public static Sprite Icon(string name) => Get("Icon/" + name, 100f);
+        /// <summary>6차 수정안 "기지 외형 이미지 수정": 외형마다 다른 돔 그림 (Icon/frame_&lt;id&gt; = 목록용 · Bg/dome_&lt;id&gt; = 전장). 없으면 예전 그림</summary>
+        public static Sprite FrameIcon(FrameRow f) => (f != null ? Icon("frame_" + f.id) : null) ?? Icon("base");
+        public static Sprite Dome(string id) => (string.IsNullOrEmpty(id) ? null : Get("Bg/dome_" + id, 100f)) ?? Get("Bg/dome", 100f);
         static readonly Dictionary<string, Sprite> fxCache = new();
         /// <summary>효과 그림 — 테두리 없는 것은 이름만으로 바로 찾음 (예전엔 부를 때마다 "Fx/" + 이름 글자를 새로 만듦)</summary>
         public static Sprite Fx(string name, Vector4 border = default)

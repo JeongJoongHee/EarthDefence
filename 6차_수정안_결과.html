@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>6차 수정안 반영</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>6차 수정안 반영 (+ 어제 밤 성능 점검 마무리)</h1>
+<p class="note">2026-11-17 · <code>요청 사항/6차 수정안.docx</code> (15줄) · 자동 시험 <b>기존 120줄 + 시험장 13줄 + 3차·6차 95줄 통과 · 오류 0</b></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>어제 멈춘 곳</b> = 성능 점검 · 결함 고침(효과음 · 저장 · 장비 가방 · 세이브 백업 등)을 끝내고 시험 · 커밋만 남은 상태였습니다. 시험에서 걸린 1줄(효과 물체 이름)을 고쳐 마무리 · 커밋했고, 그 뒤 6차를 반영했습니다.</li>
+<li><b>월 1회 다이아 폭탄 패키지</b>는 6차 문서엔 없고 <code>참고영상.txt</code> 끝에 적힌 메모("월 1회 구매 9900원 다이아 폭탄 패키지 10,000")를 보고 다이아 패널 맨 위에 넣었습니다. [초안] 결제(에디터만 바로 지급) · 같은 달 1번.</li>
+<li><b>"k"</b>는 다른 단위(M · B)와 맞춰 대문자 <b>K</b> 로 했습니다.</li>
+<li><b>"순찰 보상 아이콘 크기를 전투 시작 크기와"</b> → 순찰 칸 전체를 [전투 시작]과 같은 600 x 150 단추로 바꿨습니다.</li>
+<li><b>무한 모드</b>는 처음 4레벨은 그대로 두었습니다. 처음부터 필요 경험치를 늘리면 첫 터렛이 늦어져 적을 못 잡고 막히는 것을 시험에서 확인했습니다. 값은 Config 하나로 되돌릴 수 있습니다 (Endless_Exp_Mul 1 · Endless_Pick_Gap 0).</li>
+<li><b>천장</b>은 다이아로 사는 장비 상자 · 회로 상자에만, 종류별로 따로 셉니다. 무료 · 광고 상자는 천장 셈에 안 넣었습니다.</li>
+<li>표 고치기 <code>tools/fix6_tables.py</code> · 돔 그림 <code>tools/earth_export.py frames</code>.</li>
+</ul></div>
+
+<h2>위 줄 숫자 · 순찰</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/6차_수정안_캡처/before_70_lobby.png" loading="lazy"><figcaption><span class="b">전</span> 110M · 숫자 왼쪽 · 순찰 칸에 받기 · 2배</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/80_topbar.png" loading="lazy"><figcaption><span class="a">뒤</span> 123,456K · 2,345K · 숫자 오른쪽 · 순찰 = 전투 시작 크기</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/6차_수정안_캡처/81_patrol_popup.png" loading="lazy"><figcaption>순찰 안내 창: 1시간 30분 · 골드 · 조각 → [받기] / [광고 보고 2배]</figcaption></figure></div>
+
+<h2>상점 3패널 · 상자</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/6차_수정안_캡처/before_76_shop.png" loading="lazy"><figcaption><span class="b">전</span> 한 목록에 모두</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/83_shop_dia.png" loading="lazy"><figcaption><span class="a">뒤</span> 다이아 패널 (맨 위 월 1회 패키지)</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/6차_수정안_캡처/84_shop_gear.png" loading="lazy"><figcaption>장비 패널: 전설까지 안내 · 전설 확정까지 N번</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/85_shop_res.png" loading="lazy"><figcaption>재화 패널</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/86_rates.png" loading="lazy"><figcaption>확률 창: 전설까지 · 55번 천장</figcaption></figure></div>
+
+<h2>외형</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/6차_수정안_캡처/before_60_looks_tab.png" loading="lazy"><figcaption><span class="b">전</span> 원래 그림 + 바뀐 그림</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/87_looks_turret.png" loading="lazy"><figcaption><span class="a">뒤</span> 바뀐 그림 한 장</figcaption></figure></div>
+<div class="pair"><figure><img src="캡쳐본 모음/6차_수정안_캡처/before_32_frames.png" loading="lazy"><figcaption><span class="b">전</span> 같은 집 아이콘에 색만</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/88_looks_base.png" loading="lazy"><figcaption><span class="a">뒤</span> 외형마다 다른 돔</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/6차_수정안_캡처/89_lobby_gold_dome.png" loading="lazy"><figcaption>황금 돔</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/89_dome_prism.png" loading="lazy"><figcaption>무지개 돔</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/89_dome_frost.png" loading="lazy"><figcaption>얼음 돔</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/89_dome_thorn.png" loading="lazy"><figcaption>가시 돔</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/89_dome_bloom.png" loading="lazy"><figcaption>꽃 돔</figcaption></figure></div>
+
+<h2>장비 탭 카피바라</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/6차_수정안_캡처/before_72_gear_tab.png" loading="lazy"><figcaption><span class="b">전</span> 가만히 서 있음</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/90_gear_capy.gif" loading="lazy"><figcaption><span class="a">뒤</span> 좌우로 둥실둥실 · 살짝 몸을 돌림 · 그늘 · 발밑 그림자 (0.3초 간격)</figcaption></figure></div>
+
+<h2>설정 · 무한 모드</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/6차_수정안_캡처/before_38_settings.png" loading="lazy"><figcaption><span class="b">전</span> 프레임 60 · 도움말 다시 보기 있음</figcaption></figure><figure><img src="캡쳐본 모음/6차_수정안_캡처/82_settings.png" loading="lazy"><figcaption><span class="a">뒤</span> 둘 다 뺌 · 창 작게</figcaption></figure></div>
+<table><tr><th>무한 모드 (같은 판 · 스테이지 15 · 3분)</th><th>30초</th><th>1분</th><th>2분</th><th>3분</th></tr>
+<tr><td>예전 (경험치 x1 · 간격 0)</td><td>창 6</td><td>창 13</td><td>창 19</td><td>창 22 (Lv 22)</td></tr>
+<tr><td>창 간격 8초만</td><td>창 3</td><td>창 7</td><td>창 14</td><td>창 22</td></tr>
+<tr><td><b>지금 (Lv 5부터 x2.5 · 간격 8초)</b></td><td><b>창 3</b></td><td><b>창 7</b></td><td><b>창 14</b></td><td><b>창 17 (Lv 17)</b></td></tr></table>
+<p class="note">뒤로 갈수록 적이 많아 어느 값이든 창이 드물어집니다. "너무 빠르다"는 처음 1분 (약 5초마다 → 약 8.5초마다).</p>
+
+<h2>(앞) 어제 밤 성능 점검 · 결함 고침</h2>
+<p class="note">PlayTest.RunPerf 자동 측정 (에디터) — 전: 11-16 23:29 · 뒤: 오늘. 탭을 처음 여는 시간은 그대로(고치지 않음)입니다.</p>
+<table><tr><th>항목</th><th>전</th><th>뒤</th></tr><tr><td>켤 때 걸리는 시간</td><td>481.88 ms</td><td><b>118.13 ms</b></td></tr><tr><td>그중 효과음 만들기</td><td>383.48 ms</td><td><b>2.89 ms</b></td></tr><tr><td>전투 한 칸 계산 (무거운 장면 A)</td><td>0.09 ms</td><td><b>0.06 ms</b></td></tr><tr><td>전투 한 칸 계산 (장면 B)</td><td>0.13 ms</td><td><b>0.07 ms</b></td></tr><tr><td>전투 한 칸 계산 (장면 C)</td><td>0.10 ms</td><td><b>0.06 ms</b></td></tr><tr><td>전투 30초 메모리 할당 (장면 C)</td><td>6.28 KB</td><td><b>11.78 KB</b></td></tr><tr><td>장비 가방 새로 그리기</td><td>41.16 ms</td><td><b>0.79 ms</b></td></tr><tr><td>회로 가방 새로 그리기</td><td>38.92 ms</td><td><b>2.04 ms</b></td></tr><tr><td>로비 새로 고침</td><td>46.65 ms</td><td><b>0.63 ms</b></td></tr><tr><td>장비 탭 빨간 점 판단</td><td>1.22 ms</td><td><b>0.01 ms</b></td></tr><tr><td>일괄 합성</td><td>10.61 ms</td><td><b>1.82 ms</b></td></tr></table>
+<div class="tip gray">같이 고친 결함: 세이브가 깨지면 지난번 잘 읽힌 판에서 되살림 · 기기 시계를 뒤로 돌리면 순찰 보상이 음수로 보이던 것 · 창 두 겹일 때 위 창을 닫으면 "창 없음"으로 보던 것 · 화상 피해 큰 수가 깎이던 것 · 피해 숫자 글자 테두리 8방향.</div>
+
+<h2>확인 칸</h2>
+<ul class="todo"><li data-id="r6-1"><label><input type="checkbox"><span><span class="tag">1</span>금화 100만부터 K · 글자가 칸 안에<span class="why">100만 아래는 999,999 그대로 · 100만부터 1,000K ~ 999,999K · 10억부터 M (가장 길어도 8글자). 칸보다 길면 글자를 줄여 넣음 (시험: 999,999B 까지 칸 안)</span></span></label></li><li data-id="r6-2"><label><input type="checkbox"><span><span class="tag">2</span>다이아도 마찬가지<span class="why">같은 규칙</span></span></label></li><li data-id="r6-3"><label><input type="checkbox"><span><span class="tag">3</span>상점 패널 3분류: 다이아 · 장비 · 재화<span class="why">장비 = 무료 · 광고 · 장비 · 회로 상자 / 재화 = 스태미나 · 골드 · 강화 재료 · 터렛 조각. 위 다이아 칸을 누르면 다이아 패널</span></span></label></li><li data-id="r6-4"><label><input type="checkbox"><span><span class="tag">3+</span>월 1회 다이아 폭탄 패키지 (9,900원 · 다이아 10,000)<span class="why">참고영상.txt 메모를 보고 넣었습니다 — 아니면 알려 주세요 (Shop.xlsx Product 줄만 지우면 빠짐)</span></span></label></li><li data-id="r6-5"><label><input type="checkbox"><span><span class="tag">4</span>무한 모드 레벨업 창이 덜 자주<span class="why">처음 1분 창 13번 → 7번 · 3분 22 → 17번. Lv 5 부터 필요 경험치 x2.5 + 창 사이 최소 8초 (Config Endless_Exp_Mul · Endless_Exp_From · Endless_Pick_Gap)</span></span></label></li><li data-id="r6-6"><label><input type="checkbox"><span><span class="tag">5</span>기지 외형 그림<span class="why">외형마다 다른 돔 (무지개 띠+깃털 · 별 · 고드름 · 가시 덩굴 · 꽃 · 금 테두리+왕관), 목록과 전장 둘 다</span></span></label></li><li data-id="r6-7"><label><input type="checkbox"><span><span class="tag">6</span>터렛 외형은 바뀐 그림만<span class="why">원래 그림 칸을 빼고 바뀐 그림 한 장을 크게</span></span></label></li><li data-id="r6-8"><label><input type="checkbox"><span><span class="tag">7</span>장비 탭 카피바라 3D 느낌 · 좌우 둥실둥실<span class="why">좌우로 떠다니며 살짝 몸을 돌림 + 오른쪽 아래 그늘 · 발밑 그림자 (GIF)</span></span></label></li><li data-id="r6-9"><label><input type="checkbox"><span><span class="tag">8</span>순찰 보상 = 전투 시작 크기 · 누르면 안내 창<span class="why">"N분 동안 순찰했어요" + 골드 · 조각 → [받기] 그대로 / [광고 보고 2배]</span></span></label></li><li data-id="r6-10"><label><input type="checkbox"><span><span class="tag">9</span>설정: 프레임 60 · 도움말 다시 보기 제거<span class="why">프레임은 늘 60</span></span></label></li><li data-id="r6-11"><label><input type="checkbox"><span><span class="tag">10</span>재화 숫자 우측<span class="why">골드 · 스태미나 · 다이아 숫자 모두 오른쪽 정렬</span></span></label></li><li data-id="r6-12"><label><input type="checkbox"><span><span class="tag">11</span>토스트 사라질 때 흐려짐<span class="why">끝나기 0.4초 전부터 흐려지며 살짝 위로 (Config Toast_Fade)</span></span></label></li><li data-id="r6-13"><label><input type="checkbox"><span><span class="tag">12</span>상자는 전설까지 · 신화부터 합성으로만<span class="why">확률표의 신화 0.7% · 궁극 0.1% → 0 (빠진 0.8% 는 일반에). 무료 · 광고 상자도 전설까지 (Config Box_Grade_Max 5)</span></span></label></li><li data-id="r6-14"><label><input type="checkbox"><span><span class="tag">13</span>55뽑 천장 (전설 확정)<span class="why">장비 상자 · 회로 상자 따로 셈 · 10+1 은 11번으로 셈 · 전설이 나오면 처음부터. 상점 줄에 "전설 확정까지 N번" (Config Box_Pity 55)</span></span></label></li><li data-id="r6-perf"><label><input type="checkbox"><span><span class="tag">앞</span>어제 밤 성능 점검 · 결함 고침 (커밋 8b4e9ce)<span class="why">아래 표</span></span></label></li></ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-req6-1117', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

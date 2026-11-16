@@ -115,9 +115,9 @@ namespace EarthDef.EditorTools
             Check(Store.Buy(gb10) != null && S.gear.Count == g0 + 11 && S.dia == d0 - gb10.costDia, $"장비 상자 10+1 → 장비 +{S.gear.Count - g0} · 다이아 -{d0 - S.dia}");
             {   // 상자 등급이 표 확률대로 (2만 번)
                 var rnd = new System.Random(5); var cnt = new int[8];
-                for (int i = 0; i < 20000; i++) cnt[Store.BoxGrade(rnd)]++;
+                for (int i = 0; i < 100000; i++) cnt[Store.BoxGrade(rnd)]++;      // 6차: 2만 → 10만 번 (표본 오차로 1% 넘게 벗어난 적이 있음)
                 bool ok = true; string log = "";
-                foreach (var (g, r) in Tables.BoxRates) { double got = cnt[g] / 200.0; log += $"{g}:{got:0.0} "; if (System.Math.Abs(got - r) > 1.0) ok = false; }
+                foreach (var (g, r) in Tables.BoxRates) { double got = cnt[g] / 1000.0; log += $"{g}:{got:0.0} "; if (System.Math.Abs(got - r) > 0.8) ok = false; }
                 Check(ok, "상자 등급 확률 = 표 (" + log + ")");
             }
             var stItem = Tables.ShopItems.Find(i => i.kind == "stamina"); int st0 = Meta.Stamina;
@@ -219,6 +219,7 @@ namespace EarthDef.EditorTools
                 Check(card.sizeDelta.y <= 360 && pat.position.y < st.position.y, $"스테이지 칸 {card.sizeDelta.y} · 순찰이 [전투 시작] 아래");
                 S.patrolFrom = SaveData.Clock - 7200;
                 double pg = System.Math.Floor(S.PatrolGold), gb = S.gold;
+                pat.GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);     // 6차: 순찰 단추 → 안내 창 → [광고 보고 2배]
                 GameObject.Find("ClaimAd").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);
                 var ts = Object.FindAnyObjectByType<Toast>();
                 var cc = new Vector3[4]; card.GetWorldCorners(cc); var sc = new Vector3[4]; st.GetWorldCorners(sc);
@@ -316,7 +317,7 @@ namespace EarthDef.EditorTools
                 var na = Tables.Products.Find(x => x.kind == "noads");
                 Check(pa != null && sb != null && pa.perDay == 10 && S.parts == p0 + pa.value && s1 == s0 + (int)sb.value && na != null && Store.Purchase(na) == 1 && Store.NoAds,
                       "상점: 강화 재료 상자 · 터렛 조각 상자 (하루 10번) · 광고 제거 [초안]");
-                Game.Lobby.SetTab(5); yield return Wait(0.3f);
+                ShopTab.sub = 0; Game.Lobby.SetTab(5); yield return Wait(0.3f);
                 Capture("76_shop");
                 Game.Lobby.shopTab.GetComponentInChildren<UnityEngine.UI.ScrollRect>().verticalNormalizedPosition = 0f; yield return Wait(0.3f);
                 Capture("76b_shop_bottom");
@@ -332,6 +333,139 @@ namespace EarthDef.EditorTools
                 Game.BattleUI.ShowCards(); yield return Wait(0.4f);
                 Capture("78_cards_list");
                 Popup.CloseAll(); Game.ToLobby(); yield return null; Popup.CloseAll();
+            }
+            {   // ---- 6차 수정안 (11-17)
+                // 1) 재화 숫자: 100만부터 K · 칸 안에 들어감 · 오른쪽 정렬
+                Check(Num.Res(999999) == "999,999" && Num.Res(1000000) == "1,000K" && Num.Res(110000000) == "110,000K" && Num.Res(1e9) == "1,000M" && Num.Res(999999999999999) == "999,999B",
+                      $"재화 숫자: {Num.Res(999999)} · {Num.Res(1000000)} · {Num.Res(110000000)} · {Num.Res(1e9)}");
+                Game.ToLobby(); yield return null; Popup.CloseAll(); Game.Lobby.SetTab(0);
+                double gKeep = S.gold, dKeep = S.dia;
+                bool fit = true; string fitLog = "";
+                foreach (var v in new[] { 999999.0, 999999999.0, 999999999999.0, 999999999999999.0 })
+                {
+                    S.gold = v; S.dia = v; Game.Lobby.Refresh(); yield return null;
+                    foreach (var nm in new[] { "Gold", "Dia" })
+                    {
+                        var tx = GameObject.Find("TopBar/" + nm).GetComponentInChildren<UnityEngine.UI.Text>();
+                        if (tx.alignment != TextAnchor.MiddleRight || tx.preferredWidth > tx.rectTransform.rect.width + 1) fit = false;
+                        fitLog = tx.text;
+                    }
+                }
+                Check(fit, $"금화 · 다이아 글자가 칸 안 (가장 긴 {fitLog}) · 오른쪽 정렬");
+                S.gold = 123456789; S.dia = 2345678; Game.Lobby.Refresh(); yield return Wait(0.2f);
+                Capture("80_topbar");
+                S.gold = gKeep; S.dia = dKeep; Game.Lobby.Refresh();
+                // 2) 순찰: [전투 시작]과 같은 크기 · 누르면 안내 창 · [받기] = 그대로
+                var pat6 = GameObject.Find("Patrol").GetComponent<RectTransform>(); var st6 = GameObject.Find("Start").GetComponent<RectTransform>();
+                Check(pat6.sizeDelta == st6.sizeDelta, $"순찰 단추 크기 = 전투 시작 ({pat6.sizeDelta.x}x{pat6.sizeDelta.y})");
+                S.patrolFrom = SaveData.Clock - 5400; Game.Lobby.Refresh(); yield return null;
+                double pg6 = System.Math.Floor(S.PatrolGold), gb6 = S.gold;
+                pat6.GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.5f);
+                Check(Popup.Open != null && GameObject.Find("PatrolClaim") != null && GameObject.Find("ClaimAd") != null && GameObject.Find("Got_coin") != null,
+                      "순찰 안내 창: 순찰 시간 · 골드 · 조각 · [받기] · [광고 보고 2배]");
+                Capture("81_patrol_popup");
+                GameObject.Find("PatrolClaim").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.2f);
+                Check(Popup.Open == null && System.Math.Abs(S.gold - gb6 - pg6) < 1, $"[받기] → 그대로 +{Num.F(S.gold - gb6)}");
+                // 3) 토스트: 사라질 때 흐려짐
+                Toast.Show("흐려지기 시험", 1.0f); yield return Wait(0.82f);
+                var tf = Object.FindAnyObjectByType<Toast>(); float ta = tf ? tf.Alpha : -1;
+                yield return Wait(0.4f);
+                Check(ta > 0.05f && ta < 0.95f && Object.FindAnyObjectByType<Toast>() == null, $"토스트 흐려지며 사라짐 (끝나기 전 투명도 {ta:0.00})");
+                // 4) 설정: 프레임 60 · 도움말 다시 보기 없음
+                Settings.Open(); yield return Wait(0.3f);
+                bool oldRow = false;
+                foreach (var tx in Popup.Open.GetComponentsInChildren<UnityEngine.UI.Text>()) if (tx.text == L.T("set_fps") || tx.text == L.T("set_tutorial")) oldRow = true;
+                Check(!oldRow && Application.targetFrameRate == 60, "설정: 프레임 60 · 도움말 다시 보기 제거 (프레임은 늘 60)");
+                Capture("82_settings");
+                Popup.CloseAll();
+                // 5) 상점 패널 3개: 다이아 · 장비 · 재화
+                ShopTab.sub = 0; Game.Lobby.SetTab(5); yield return Wait(0.3f);
+                bool pDia = GameObject.Find("P_p_month") != null && GameObject.Find("P_p_dia1") != null && GameObject.Find("I_i_gear") == null;
+                Capture("83_shop_dia");
+                GameObject.Find("ShopSub1").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);
+                bool pGear = GameObject.Find("I_i_gear") != null && GameObject.Find("I_i_free") != null && GameObject.Find("Rates") != null && GameObject.Find("P_p_dia1") == null && GameObject.Find("I_i_stamina") == null;
+                bool pityT = false; foreach (var tx in Game.Lobby.shopTab.GetComponentsInChildren<UnityEngine.UI.Text>()) if (tx.text == L.F("pity_left", Store.PityLeft("gear_box"))) pityT = true;
+                Capture("84_shop_gear");
+                GameObject.Find("ShopSub2").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);
+                bool pRes = GameObject.Find("I_i_stamina") != null && GameObject.Find("I_i_parts") != null && GameObject.Find("I_i_gear") == null;
+                Capture("85_shop_res");
+                Check(pDia && pGear && pRes && pityT, $"상점 패널: 다이아 {pDia} · 장비 {pGear} · 재화 {pRes} · 천장 표시 {pityT}");
+                // 6) 월 1회 다이아 폭탄 패키지
+                var mp = Tables.Products.Find(x => x.kind == "monthly"); double dm = S.dia;
+                int m1 = mp != null ? Store.Purchase(mp) : 0, m2 = mp != null ? Store.Purchase(mp) : -1;
+                Check(mp != null && mp.krw == 9900 && m1 == 10000 && m2 == 0 && Store.MonthDone(mp) && S.dia == dm + 10000, $"월 1회 패키지: {m1} → 같은 달 다시 {m2}");
+                // 7) 상자: 전설까지 · 55번 천장
+                {
+                    var rnd = new System.Random(9); int top = 0;
+                    for (int i = 0; i < 20000; i++) top = Mathf.Max(top, Store.BoxGrade(rnd));
+                    int pc = 0, maxGap = 0, gap = 0, forced = 0, legends = 0;
+                    for (int i = 0; i < 6000; i++)
+                    {
+                        int before = pc, g = Store.PityGrade(ref pc, rnd); gap++;
+                        if (g > Store.BoxMax) top = 99;
+                        if (g >= 5) { legends++; maxGap = Mathf.Max(maxGap, gap); if (gap == Store.PityN) forced++; gap = 0; if (pc != 0) maxGap = 999; }
+                    }
+                    Check(top <= 5 && Store.BoxMax == 5, $"상자 등급은 전설까지 (2만 번 중 최고 {top})");
+                    Check(Store.PityN == 55 && maxGap <= 55 && forced > 0 && legends > 6000 / 55, $"천장 55: 전설 사이 최대 {maxGap}번 · 천장으로 {forced}번 · 전설 {legends}번 (뽑으면 셈 0)");
+                    S.pityGear = 54; S.dia += 1000;
+                    var got1 = Store.Buy(Tables.ShopItems.Find(i => i.id == "i_gear"));
+                    Check(got1 != null && got1[0].grade >= 5 && S.pityGear == 0, $"54번 쌓인 뒤 55번째 = {Tables.Grade(got1?[0].grade ?? 1).name} · 셈 다시 0");
+                    var fb = Tables.ShopItems.Find(i => i.kind == "ad_box"); S.best = 300; int bestKeep = 30;
+                    int hi = 0; for (int i = 0; i < 300; i++) hi = Mathf.Max(hi, Mathf.Min(Store.BoxMax, Gear.DropGrade(300, false, rnd)));
+                    S.best = bestKeep;
+                    Check(hi <= 5, $"무료 · 광고 상자도 전설까지 (스테이지 300 에서 최고 {hi})");
+                }
+                ShopTab.RateOpen(); yield return Wait(0.3f);
+                Capture("86_rates");
+                Popup.CloseAll();
+                // 8) 외형: 터렛 외형은 바뀐 그림만 · 기지 외형은 외형마다 다른 돔
+                Game.Lobby.SetTab(6); Looks.sub = 0; Game.Lobby.SetTab(6); yield return Wait(0.3f);
+                var srow = GameObject.Find("S_sk_rail");
+                Check(srow != null && srow.transform.Find("After") != null && srow.transform.Find("Before") == null, "터렛 외형 = 바뀐 그림 한 장");
+                Capture("87_looks_turret");
+                bool domes = true; foreach (var f in Tables.Frames) if (Art.Get("Bg/dome_" + f.id, 100f) == null || Art.Icon("frame_" + f.id) == null) domes = false;
+                Looks.sub = 1; Game.Lobby.SetTab(6); yield return Wait(0.3f);
+                Capture("88_looks_base");
+                S.dia += 2000; var gf = Tables.Frame("gold"); Store.BuyFrame(gf); Store.EquipFrame("gold");
+                var domeSr = GameObject.Find("Dome").GetComponent<SpriteRenderer>();
+                Check(domes && domeSr.sprite.name == "Bg/dome_gold" && domeSr.color == Color.white, $"기지 외형마다 다른 돔 그림 ({Tables.Frames.Count}종) · 끼우면 전장 돔도 ({domeSr.sprite.name})");
+                Game.Lobby.SetTab(0); yield return Wait(0.3f);
+                Capture("89_lobby_gold_dome");
+                foreach (var fid in new[] { "prism", "frost", "thorn", "bloom" }) { Store.BuyFrame(Tables.Frame(fid)); Store.EquipFrame(fid); yield return null; Capture("89_dome_" + fid); }
+                Store.EquipFrame("basic");
+                // 9) 장비 탭 대장 카피: 둥실둥실 + 몸 돌리기
+                Game.Lobby.SetTab(2); yield return Wait(0.2f);
+                var hv = Object.FindAnyObjectByType<Hover3D>(); var hrt = hv ? (RectTransform)hv.transform : null;
+                Vector2 hvP0 = hrt ? hrt.anchoredPosition : Vector2.zero; float hy0 = hrt ? hrt.localEulerAngles.y : 0;
+                Capture("90_gear_capy_a");
+                for (int f = 0; f < 12; f++) { yield return Wait(0.3f); Capture($"90_capy_{f:00}"); }    // 보고서 GIF 용 (0.3초 간격)
+                Capture("90_gear_capy_b");
+                Check(hv != null && hv.shadow != null && hv.lit != null && (hrt.anchoredPosition - hvP0).magnitude > 4f && Mathf.Abs(Mathf.DeltaAngle(hrt.localEulerAngles.y, hy0)) > 3f,
+                      $"장비 탭 카피바라 둥실둥실 (움직임 {(hrt ? (hrt.anchoredPosition - hvP0).magnitude : 0):0} · 몸 돌림 {(hrt ? Mathf.DeltaAngle(hrt.localEulerAngles.y, hy0) : 0):0}°)");
+                // 10) 무한 모드: 레벨업 창이 덜 자주 (3분 동안 연 창 수 예전 ↔ 지금)
+                double mulNew = Tables.C("Endless_Exp_Mul", 1), gapNew = Tables.C("Endless_Pick_Gap", 0);
+                // 몇 가지 조합을 재서 로그에 남김 (마지막 = 지금 표 값). 같은 씨앗 · 스테이지 15 (시험 세이브 전력에 맞춤 — 30 은 대장 카피 혼자 겨우 잡아서 결과가 흔들림)
+                var combos = new List<(double mul, double gap)> { (1, 0), (1, 8), (1.6, 6), (2, 6), (2, 8), (mulNew, gapNew) };
+                var opened = new int[combos.Count]; var lvs = new int[combos.Count]; var min1 = new int[combos.Count];
+                for (int k = 0; k < combos.Count; k++)
+                {
+                    Tables.SetC("Endless_Exp_Mul", combos[k].mul); Tables.SetC("Endless_Pick_Gap", combos[k].gap);
+                    Game.StartStage(15, 77, false, "endless"); yield return null;
+                    string marks = "";
+                    for (int sec = 1; sec <= 180; sec++)
+                    {
+                        B.baseHp = B.baseMax; FF(1f, 0);
+                        if (sec % 30 == 0) marks += $" {sec}초:Lv{B.level}/창{B.picksOpened}/처치{B.kills}";
+                        if (sec == 60) min1[k] = B.picksOpened;
+                    }
+                    opened[k] = B.picksOpened; lvs[k] = B.level;
+                    Log($"무한 모드 경험치 x{combos[k].mul} · 창 간격 {combos[k].gap}초 →{marks}");
+                    yield return null;
+                }
+                Tables.SetC("Endless_Exp_Mul", mulNew); Tables.SetC("Endless_Pick_Gap", gapNew);
+                int last = combos.Count - 1;
+                Check(min1[last] <= min1[0] * 0.6f && opened[last] < opened[0] && lvs[last] >= 10, $"무한 모드 레벨업 창: 처음 1분 {min1[0]} → {min1[last]}번 · 3분 {opened[0]} → {opened[last]}번 (Lv {lvs[0]} → {lvs[last]})");
+                Game.ToLobby(); yield return null; Popup.CloseAll();
             }
             Game.ToLobby(); yield return null; Popup.CloseAll();
             Game.Lobby.SetTab(5); yield return Wait(0.4f);

@@ -48,6 +48,7 @@ namespace EarthDef
         public int dailyDay = -1;
         public List<string> dailyKeys = new(); public List<int> dailyVals = new();   // 하루 횟수 (도전 입장 · 상점)
         public List<string> iapOnce = new();    // 첫 구매 2배 받은 상품
+        public int pityGear, chipPity;          // 6차: 장비 · 회로 상자 천장 셈 (전설이 나오면 0) — 새 칸은 옛 세이브에서 0
         public string account = "";        // [초안] 구글 계정
         public bool vib = true, nums = true, fps60 = true;
 

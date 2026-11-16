@@ -111,20 +111,20 @@ namespace EarthDef
     }
 
     /// <summary>
-    /// 설정 (2차): 배경음 · 효과음(값만 저장 — 소리는 다음 작업) · 진동 · 피해 숫자 · 프레임 60/30 · 도움말 다시 보기.
+    /// 설정 (2차): 배경음 · 효과음 · 진동 · 피해 숫자 (6차 수정안: 프레임 · 도움말 다시 보기 제거) · 구글 계정 · 클라우드 [초안].
     /// </summary>
     public static class Settings
     {
         static SaveData S => SaveData.Cur;
         public static void Open()
         {
-            var p = Popup.Make(L.T("settings"), 900, 1560, () => S.Save());
+            // 6차 수정안: "프레임 60" · "도움말 다시 보기" 제거 → 창 높이를 줄임 (프레임은 늘 60)
+            var p = Popup.Make(L.T("settings"), 900, Cheat.Enabled ? 1080 : 960, () => S.Save());
             float y = 140;
             Volume(p, ref y, L.T("set_bgm"), "music", () => S.bgm, v => S.bgm = v);
             Volume(p, ref y, L.T("set_sfx"), "sound", () => S.sfx, v => S.sfx = v);
             Toggle(p, ref y, L.T("set_vib"), () => S.vib, v => S.vib = v);
             Toggle(p, ref y, L.T("set_nums"), () => S.nums, v => S.nums = v);
-            Toggle(p, ref y, L.T("set_fps"), () => S.fps60, v => { S.fps60 = v; Apply(); });
             // 3차 [초안] 구글 계정 · 클라우드 저장 (실제 Play 게임즈 로그인 · 저장된 게임은 출시 단계)
             var ln = UIKit.Plain(p.win, new Color(0.23f, 0.16f, 0.11f, 0.2f), "Line"); ln.rectTransform.TL(60, y + 6, 780, 3);
             y += 24;
@@ -146,7 +146,6 @@ namespace EarthDef
                 var ch = UIKit.Btn(p.win, "btn_gray", L.T("cheat_btn"), 30, () => { p.Close(); Cheat.Open(); }, "Cheat");
                 ((RectTransform)ch.transform).TL(60, y + 80, 780, 90);
             }
-            p.Btn("btn_orange", L.T("set_tutorial"), 0, 60, 520, () => { S.tut.Clear(); S.Save(); Toast.Show(L.T("ok")); p.Close(); }, 110);
         }
 
         /// <summary>[초안] 클라우드 판과 이 기기 판 비교 → 고르기 (카치건 · 불도깨비의 충돌 비교 창과 같은 모양)</summary>
@@ -166,7 +165,7 @@ namespace EarthDef
             p.Btn("btn_green", L.T("cloud_remote"), 220, 50, 380, () => { p.Close(); Store.CloudLoad(); }, 110);
         }
 
-        public static void Apply() { Application.targetFrameRate = S == null || S.fps60 ? 60 : 30; }
+        public static void Apply() { Application.targetFrameRate = 60; }   // 6차 수정안: 프레임 설정 제거 → 늘 60 (예전 세이브의 fps60 값은 안 씀)
 
         static void Volume(Popup p, ref float y, string name, string icon, Func<float> get, Action<float> set)
         {
@@ -211,12 +210,24 @@ namespace EarthDef
             // 4차 수정안 "토스트는 스테이지 칸과 순찰 보상 사이 빈 공간에서": 로비 전투 탭이고 창이 없으면 그 빈 곳 가운데
             if (Popup.Open == null && Game.Lobby != null && Game.Lobby.ToastSpot(out var wp)) box.transform.position = wp;
         }
+        CanvasGroup cg;
         void Update()
         {
             t += Time.unscaledDeltaTime;
             transform.localScale = Vector3.one * (t < 0.12f ? 0.8f + t / 0.12f * 0.2f : 1f);
+            // 6차 수정안 "토스트 메시지 사라질 때 fade out": 끝나기 Toast_Fade 초 전부터 흐려지며 살짝 위로
+            float fade = Mathf.Max(0.01f, Tables.Cf("Toast_Fade", 0.4f));
+            if (t > life - fade)
+            {
+                if (!cg) cg = gameObject.AddComponent<CanvasGroup>();
+                float k = Mathf.Clamp01((t - (life - fade)) / fade);
+                cg.alpha = 1 - k * k;
+                transform.localPosition += new Vector3(0, Time.unscaledDeltaTime * 40f, 0);
+            }
             if (t > life) Destroy(gameObject);
         }
+        /// <summary>시험용: 지금 투명도</summary>
+        public float Alpha => cg ? cg.alpha : 1f;
     }
 
     /// <summary>

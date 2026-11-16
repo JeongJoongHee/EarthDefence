@@ -62,8 +62,17 @@ namespace EarthDef
         {
             lobby = l; root = (RectTransform)transform;
             var top = UIKit.Panel(root, "card", "Top"); top.rectTransform.TL(20, 4, 1040, 610);
+            // 6차 수정안 "가운데 카피바라는 약간 3D 로 생동감 있게 · 좌우로 둥실둥실" (Hover3D): 발밑 그림자 + 몸 모양 안의 빛 · 그늘이 돌 때 따라 움직임
+            var gsh = UIKit.Img(top.transform, Art.Fx("glow"), "GuardianShadow"); gsh.raycastTarget = false; gsh.color = new Color(0.16f, 0.1f, 0.06f, 0.4f);
+            gsh.rectTransform.Place(0.5f, 1, new Vector2(0, -566), new Vector2(330, 70), new Vector2(0.5f, 0.5f));
             var me = UIKit.Img(top.transform, Art.TurretUI("guardian"), "Guardian"); me.raycastTarget = false;
             me.rectTransform.Place(0.5f, 1, new Vector2(0, -36), new Vector2(560, 560), new Vector2(0.5f, 1));   // 요청 사항_05: 능력치 칸을 판 밖으로 빼고 대장 카피를 크게
+            me.gameObject.AddComponent<Mask>().showMaskGraphic = true;      // 빛 · 그늘이 몸 모양 밖으로 안 나가게
+            var lit = UIKit.Img(me.transform, Art.Fx("glow"), "Light"); lit.raycastTarget = false; lit.color = new Color(1f, 1f, 0.94f, 0.2f);
+            lit.rectTransform.Place(0.5f, 0.5f, new Vector2(-130, 130), new Vector2(330, 330), new Vector2(0.5f, 0.5f));
+            var shade = UIKit.Img(me.transform, Art.Fx("glow"), "Shade"); shade.raycastTarget = false; shade.color = new Color(0.22f, 0.12f, 0.3f, 0.4f);
+            shade.rectTransform.Place(0.5f, 0.5f, new Vector2(250, -150), new Vector2(560, 560), new Vector2(0.5f, 0.5f));
+            var hv = me.gameObject.AddComponent<Hover3D>(); hv.shadow = gsh.rectTransform; hv.lit = lit.rectTransform; hv.shade = shade.rectTransform;
             for (int i = 0; i < 3; i++) { Slot(top.transform, Left[i], 34, 22 + i * 192); Slot(top.transform, Right[i], 856, 22 + i * 192); }
             // 2차 수정안: 능력치를 네모 칸으로 (3 x 2 + 칩 수)
             string[] keys = { "st_atk", "st_hp", "st_reduce", "st_crit", "st_crit_dmg", "st_cd" };
@@ -520,6 +529,36 @@ namespace EarthDef
                 y += 140;
             }
             UIKit.SetScrollH(c0, y + 10);
+        }
+    }
+
+    /// <summary>6차 수정안: 장비 탭 대장 카피 — 좌우로 둥실둥실 + 살짝 몸을 돌림(세로 축 회전 = 입체감) · 빛은 도는 쪽 반대로, 그늘은 같은 쪽으로 미끄러짐 · 발밑 그림자는 떠오르면 작고 옅게</summary>
+    public class Hover3D : MonoBehaviour
+    {
+        public RectTransform shadow, lit, shade;   // "light" 는 Component 의 옛 속성 이름과 겹쳐서 lit
+        RectTransform rt; Vector2 p0, s0, l0, d0; Image shImg; float a0, t;
+        public float Sway => Mathf.Sin(t * 0.9f);     // 시험용
+        void Start()
+        {
+            rt = (RectTransform)transform; p0 = rt.anchoredPosition;
+            if (shadow) { s0 = shadow.anchoredPosition; shImg = shadow.GetComponent<Image>(); a0 = shImg.color.a; }
+            if (lit) l0 = lit.anchoredPosition;
+            if (shade) d0 = shade.anchoredPosition;
+        }
+        void Update()
+        {
+            t += Time.unscaledDeltaTime;
+            float sx = Mathf.Sin(t * 0.9f), up = (Mathf.Sin(t * 1.8f) + 1) * 0.5f;      // 좌우 한 번에 위아래 두 번
+            rt.anchoredPosition = p0 + new Vector2(sx * 24f, 6f + up * 16f);
+            rt.localEulerAngles = new Vector3(0, -sx * 18f, -sx * 3f);
+            if (lit) lit.anchoredPosition = l0 + new Vector2(-sx * 60f, 0);
+            if (shade) shade.anchoredPosition = d0 + new Vector2(-sx * 70f, 0);
+            if (shadow)
+            {
+                shadow.anchoredPosition = s0 + new Vector2(sx * 24f, 0);
+                shadow.localScale = new Vector3(1f - up * 0.16f, 1f - up * 0.16f, 1);
+                var c = shImg.color; c.a = a0 * (1f - up * 0.35f); shImg.color = c;
+            }
         }
     }
 }

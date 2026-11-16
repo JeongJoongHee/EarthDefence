@@ -1,6 +1,13 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
-## ▶ 재개 메모 (2026-11-17 밤 — 치트 · 코어 그림 · 요청 사항_05)
+## ▶ 재개 메모 (2026-11-17 아침 — 성능 점검 마무리 + 6차 수정안 15개)
+- 어제 밤 끊긴 곳 = 성능 점검 · 결함 고침(시험 · 커밋 전) → 시험 1줄(Fx 물체 이름 "fx_" 붙음) 고쳐 커밋 8b4e9ce. 측정 `PlayTest.RunPerf` → `Earth_Defence/Logs/Perf/perf_<label.txt>.json` (before · after3). 시험 4개를 연달아 돌린 직후 재면 PC 부하로 탭 · 프레임 값이 1.5~2배 나옴 → 한 번 더 재서 확인.
+- 요청 = `요청 사항/6차 수정안.docx`. 보고 = `6차_수정안_결과.html` (키 earthdef-req6-1117, 캡처 `캡쳐본 모음/6차_수정안_캡처/`, 전 = before_*.png). 시험 120 + 13 + 95 오류 0. 표 = tools/fix6_tables.py.
+- 바뀐 것: Num.Res(100만부터 K · UIKit.Fit 로 칸 안) · 위 줄 숫자 오른쪽 · 순찰 = 600x150 단추 → Lobby.PatrolPopup(받기 / 광고 2배) · 설정 프레임 · 도움말 다시 보기 제거(프레임 늘 60) · 토스트 흐려짐(Toast_Fade) · 상점 3패널(ShopTab.sub 다이아 · 장비 · 재화) · 월 1회 패키지 p_month(Kind monthly, iapOnce "month:id:yyyyMM") · 상자 전설까지(Box_Grade_Max) · 천장 55(Box_Pity, SaveData pityGear · chipPity) · 무한 모드 Endless_Exp_Mul 2.5 · Endless_Exp_From 5 · Endless_Pick_Gap 8 · 터렛 외형 바뀐 그림만 · 기지 외형 돔 7종(earth_art.dome_variant → Bg/dome_<id> · Icon/frame_<id>, `earth_export.py frames`) · 장비 탭 Hover3D(둥실 + 몸 돌림 + 그늘 · 발밑 그림자).
+- 해석(보고 첫머리): 월 1회 패키지는 참고영상.txt 메모를 보고 넣음(확인 대기) · K 대문자 · 천장은 다이아 상자만 종류별.
+- 주의: 무한 모드 시험은 스테이지 15 (30 은 시험 세이브 전력으론 대장 카피 혼자 겨우 잡아 결과가 흔들림) · 주아에 '·' 없음 → 표 글자에 쓰지 말 것.
+
+## (지난) 재개 메모 (2026-11-17 밤 — 치트 · 코어 그림 · 요청 사항_05)
 - 치트 = UI/Cheat.cs (설정 창 맨 아래 [치트] — 에디터 · 개발용 빌드 · Config Cheat_On 1). 장비(등급 · 부위) · 회로 · 터렛 조각 · 강화 부품. **스토어 빌드 전 Cheat_On 0 확인**.
 - 코어 그림 = gear_tiers.core (세로 에너지 캡슐, 육각 부품과 구분). 빈 칸 g_core 도 같은 그림.
 - 요청 = `요청 사항/요청 사항_05.pptx` (슬라이드 6장 · 그림에 글 상자로 지시). 보고 = `요청05_결과.html` (키 earthdef-req5-1117, 캡처 `캡쳐본 모음/요청05_캡처/`). 시험 120 + 13 + 78 오류 0. 표 = tools/fix5_tables.py.

@@ -40,13 +40,13 @@ namespace EarthDef
         {
             switch (it.kind)
             {
-                case "gear_box": for (int i = 0; i < n; i++) { var g = Gear.NewGear(BoxGrade(rnd), null, rnd); got.Add(GotItem.Of(g)); } break;
-                case "chip_box": for (int i = 0; i < n; i++) { var c = Gear.NewChip(BoxGrade(rnd), null, rnd); got.Add(GotItem.Of(c)); } break;
+                case "gear_box": for (int i = 0; i < n; i++) { var g = Gear.NewGear(PityGrade(ref S.pityGear, rnd), null, rnd); got.Add(GotItem.Of(g)); } break;
+                case "chip_box": for (int i = 0; i < n; i++) { var c = Gear.NewChip(PityGrade(ref S.chipPity, rnd), null, rnd); got.Add(GotItem.Of(c)); } break;
                 case "free_box":
                 case "ad_box":
                     for (int i = 0; i < n; i++)
                     {
-                        int g = Gear.DropGrade(Mathf.Max(1, S.best), false, rnd);
+                        int g = Mathf.Min(BoxMax, Gear.DropGrade(Mathf.Max(1, S.best), false, rnd));   // 6차: 무료 · 광고 상자도 전설까지
                         if (rnd.NextDouble() < 0.5) { var x = Gear.NewGear(g, null, rnd); got.Add(GotItem.Of(x)); }
                         else { var c = Gear.NewChip(g, null, rnd); got.Add(GotItem.Of(c)); }
                     }
@@ -73,11 +73,34 @@ namespace EarthDef
         /// <summary>상자 등급 (Shop.xlsx Box_Rate 확률 그대로 — 화면 [확률] 과 같음)</summary>
         public static int BoxGrade(System.Random rnd)
         {
-            double sum = 0; foreach (var (_, r) in Tables.BoxRates) sum += r;
+            int max = BoxMax;
+            double sum = 0; foreach (var (g, r) in Tables.BoxRates) if (g <= max) sum += r;
             double x = rnd.NextDouble() * sum;
-            foreach (var (g, r) in Tables.BoxRates) { x -= r; if (x < 0) return g; }
+            foreach (var (g, r) in Tables.BoxRates) { if (g > max) continue; x -= r; if (x < 0) return g; }
             return 1;
         }
+
+        // 6차 수정안 "상자 뽑기는 전설까지 (신화부터는 합성으로만) · 55뽑이면 전설 100% (천장) — 못 뽑으면 쌓이고 전설을 뽑으면 처음부터"
+        /// <summary>상자에서 나오는 가장 높은 등급 (Config Box_Grade_Max 5 = 전설)</summary>
+        public static int BoxMax => Mathf.Clamp(Tables.Ci("Box_Grade_Max", 5), 1, Tables.GradeMax);
+        /// <summary>천장 등급 = 전설(5) — 상한이 더 낮으면 상한</summary>
+        public static int PityTarget => Mathf.Min(5, BoxMax);
+        public static int PityN => Tables.Ci("Box_Pity", 55);
+        /// <summary>이 상자 종류로 전설 확정까지 남은 횟수 (이번 회 포함: 1 = 다음 번이 확정)</summary>
+        public static int PityLeft(string kind) => Mathf.Max(1, PityN - (kind == "chip_box" ? S.chipPity : S.pityGear));
+        /// <summary>한 번 뽑기: 횟수를 하나 쌓고, 천장에 닿으면 전설 · 전설 이상이 나오면 셈을 처음부터 (10+1 은 11번으로 셈)</summary>
+        public static int PityGrade(ref int cnt, System.Random rnd)
+        {
+            int g = BoxGrade(rnd);
+            cnt++;
+            if (PityN > 0 && cnt >= PityN && g < PityTarget) g = PityTarget;
+            if (g >= PityTarget) cnt = 0;
+            return g;
+        }
+
+        // 월 1회 상품 (6차: 다이아 폭탄 패키지) — 세이브 칸을 새로 만들지 않고 iapOnce 에 "month:상품:연월"
+        static string MonthKey(ProductRow p) => "month:" + p.id + ":" + DateTimeOffset.FromUnixTimeSeconds(SaveData.Clock).ToLocalTime().ToString("yyyyMM");
+        public static bool MonthDone(ProductRow p) => p.kind == "monthly" && S.iapOnce.Contains(MonthKey(p));
 
         // ---------- 결제 [초안] ----------
         /// <summary>폰에서는 결제 연동(라이선스 키 · 상품)이 갖춰지기 전까지 꺼 둠 (카치건 방식). 에디터는 가짜 결제로 바로 지급</summary>
@@ -92,6 +115,11 @@ namespace EarthDef
             {
                 if (NoAds) return 0;
                 S.iapOnce.Add("noads"); Audio.Play(Audio.Sfx.Coin); S.Save(); return 1;
+            }
+            if (p.kind == "monthly")
+            {
+                if (MonthDone(p)) return 0;
+                S.iapOnce.Add(MonthKey(p));
             }
             int n = p.dia * (FirstDouble(p) ? 2 : 1);
             if (FirstDouble(p)) S.iapOnce.Add("first2x:" + p.id);

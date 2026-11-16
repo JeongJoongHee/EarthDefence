@@ -51,7 +51,10 @@ namespace EarthDef
         public void SetFrame(FrameRow f)
         {
             if (!dome) return;
-            dome.color = f != null ? f.tint : Color.white;
+            // 6차 수정안: 외형마다 다른 돔 그림 (그림에 색이 들어 있음) — 그림이 없으면 예전처럼 기본 돔에 색만
+            var sp = f != null ? Art.Get("Bg/dome_" + f.id, 100f) : null;
+            dome.sprite = sp ? sp : Art.Get("Bg/dome", 100f);
+            dome.color = sp ? Color.white : f != null ? f.tint : Color.white;
             glowCol = f != null && f.id != "basic" ? f.glow : new Color(1, 1, 1, 0);
         }
 

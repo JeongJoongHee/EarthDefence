@@ -56,6 +56,21 @@ def export_bg():
     print('bg')
 
 
+# ------------------------------------------------------------------ 6차 수정안: 기지 외형마다 다른 돔 (Bg/dome_<id> = 전장 · Icon/frame_<id> = 외형 목록)
+FRAME_IDS = ('basic', 'prism', 'starsea', 'frost', 'thorn', 'bloom', 'gold')
+
+
+def export_frames():
+    y0 = 1360
+    for fid in FRAME_IDS:
+        front = A.dome_front() if fid == 'basic' else A.dome_variant(fid)
+        out('Bg', f'dome_{fid}', Rr(f'<g transform="translate(0,{-y0})">{front}</g>', 1080, 560, A.WOB['ui'], .02))
+        # 목록 아이콘: 땅 · 기지 건물 · 돔을 돔 둘레(가로 760 · 세로 420)만 잘라 0.5배
+        cx = A.W_ / 2; x0, yt = cx - 380, A.GROUND_Y - 380
+        svg = f'<g transform="scale(.5) translate({-x0},{-yt})">{A.ground() + A.base_back() + front}</g>'
+        out('Icon', f'frame_{fid}', Rr(svg, 380, 210, A.WOB['icon'], .02))
+    print('frames', len(FRAME_IDS))
+
 # ------------------------------------------------------------------ 가디언 · 터렛
 GK = 1.8   # 대장 카피 그림 배율 (PPU 200 → 화면 0.9배) — 11-16 "너무 큼, 0.7~0.8" → 2.4 의 0.75배 — 게임 Art.cs 의 Guardian* 값과 같게
 
@@ -585,7 +600,7 @@ def export_icon():
 
 
 if __name__ == '__main__':
-    want = set(sys.argv[1:]) or {'bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon'}
-    for n in ('bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon'):
+    want = set(sys.argv[1:]) or {'bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'frames'}
+    for n in ('bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'frames'):
         if n in want:
             globals()['export_' + n]()

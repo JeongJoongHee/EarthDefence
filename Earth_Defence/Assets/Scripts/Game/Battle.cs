@@ -86,13 +86,19 @@ namespace EarthDef
             baseMax = baseHp = SaveData.Cur.BaseHp + lo.hp;
             shield = shieldMax = lo.B("shield");
             immune = (int)Math.Round(lo.B("immune"));
-            need = Need(1);
+            need = NeedOf(1); nextPickAt = 0;
             nextWave = Tables.Cf("Wave_Len", 30);
             AddUnit(run.turrets[0]);
             World.I.ShowSlots(0);
             Time.timeScale = 1;
         }
 
+        /// <summary>6차 수정안 "무한 모드에서 레벨업 창이 너무 빨리 뜸": 무한 모드는 필요 경험치 x Endless_Exp_Mul</summary>
+        //   처음 몇 레벨(Endless_Exp_From 아래)은 그대로 — 첫 터렛이 늦으면 적을 못 잡고 막힘 (시험에서 확인)
+        double NeedOf(int lv) => Need(lv) * (mode == "endless" && lv >= Tables.Ci("Endless_Exp_From", 5) ? Math.Max(0.1, Tables.C("Endless_Exp_Mul", 1)) : 1);
+        /// <summary>무한 모드: 다음 레벨업 창을 열 수 있는 시각 (창 사이 최소 Endless_Pick_Gap 초)</summary>
+        public float nextPickAt;
+        public int picksOpened;   // 시험용: 연 레벨업 · 보스 카드 창 수
         public static double Need(int lv) => Math.Ceiling(Tables.C("Exp_Base", 8) * Math.Pow(Tables.C("Exp_Growth", 1.17), lv - 1));
         public float RunTime => mode == "survival" ? Tables.Cf("Survival_Time", 180) : mode == "endless" ? 1e6f : Tables.Cf("Run_Time", 240);
         public float TimeLeft => Mathf.Max(0, RunTime - time);
@@ -154,7 +160,7 @@ namespace EarthDef
             Flush();
             if (st == St.Play && baseHp <= 0) { End(false); return; }
             if (st == St.Play && mode == "survival" && time >= RunTime) { End(true); return; }
-            if (st == St.Play && (pendingLevel > 0 || pendingBoss > 0)) OpenPick();
+            if (st == St.Play && (pendingLevel > 0 || pendingBoss > 0) && (mode != "endless" || time >= nextPickAt)) OpenPick();
         }
 
         void Flush()
@@ -327,7 +333,7 @@ namespace EarthDef
             while (exp >= need && level < LevelMax)
             {
                 exp -= need; level++; pendingLevel++;
-                need = Need(level);
+                need = NeedOf(level);
             }
             if (level >= LevelMax) exp = 0;
         }
@@ -413,7 +419,7 @@ namespace EarthDef
             offerIsBoss = pendingLevel == 0 && pendingBoss > 0;
             offer = run.Roll(Choices, offerIsBoss);
             if (offer.Count == 0) { pendingLevel = 0; pendingBoss = 0; return; }   // 고를 카드가 없으면 넘어감
-            st = St.Pick;
+            st = St.Pick; picksOpened++;
             Audio.Play(Audio.Sfx.LevelUp);
             Changed?.Invoke();
         }
@@ -434,6 +440,7 @@ namespace EarthDef
             else if (t?.unit != null && c.kind == "break") t.unit.RefreshTier();
             if (offerIsBoss) pendingBoss--; else pendingLevel--;
             st = St.Play;
+            if (mode == "endless") nextPickAt = time + Tables.Cf("Endless_Pick_Gap", 0);
             Changed?.Invoke();
         }
 
