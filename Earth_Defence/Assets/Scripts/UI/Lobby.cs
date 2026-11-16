@@ -195,6 +195,7 @@ namespace EarthDef
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(page, sp, UIRoot.I.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : UIRoot.I.canvas.worldCamera, out var lp)) return;
             float y = lp.y - page.rect.yMin + 8;               // 페이지 아래 끝에서 잰 높이
             y = Mathf.Max(y, 20);
+            if (Mathf.Abs(patrolRT.anchoredPosition.y - y) < 0.01f) return;      // 11-17: 매 프레임 같은 자리를 다시 넣지 않음 (화면이 바뀐 때만)
             patrolRT.anchoredPosition = new Vector2(0, y);
             startRT.anchoredPosition = new Vector2(0, y + 116 + 18);
         }

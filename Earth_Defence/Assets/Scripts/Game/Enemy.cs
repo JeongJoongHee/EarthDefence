@@ -15,7 +15,11 @@ namespace EarthDef
         public float radius;
         public float size;            // 그림 크기 (표 Size x 보스 배율)
         float barK = 1f;
-        public Vector2 Pos => transform.position;
+        // 11-17 최적화: 위치를 C# 쪽에 들고 있음 — 목표 찾기 · 맞음 판정이 한 칸에 수천 번 읽는데, 매번 엔진(transform)에서 읽으면 느림
+        Vector2 pos;
+        public Vector2 Pos => pos;
+        /// <summary>위치 바꾸기 (시험 · 시험장에서 직접 옮길 때도 이것으로)</summary>
+        public void Teleport(Vector2 p) { pos = p; x0 = p.x; transform.position = p; }
 
         SpriteRenderer sr, white;
         SpriteRenderer barBg, barFill;
@@ -34,7 +38,7 @@ namespace EarthDef
         public void Init(EnemyRow r, Vector2 p, double hp, double atk)
         {
             row = r; this.hp = maxHp = hp; this.atk = atk;
-            transform.position = p;
+            pos = p; transform.position = p;
             // 2차 수정안: 중간 보스 x3 · 보스 x3.5 (Config Elite_Size_Mul · Boss_Size_Mul)
             size = r.size * (r.IsBoss ? Tables.Cf("Boss_Size_Mul", 3.5f) : r.IsElite ? Tables.Cf("Elite_Size_Mul", 3f) : 1f);
             transform.localScale = Vector3.one * size;
@@ -49,7 +53,7 @@ namespace EarthDef
             if (r.IsBoss || r.IsElite)
             {
                 barBg = Bar("BarBg", Art.UI("track"), 20); barFill = Bar("BarFill", Art.UI("fill"), 21);
-                barFill.color = Art.Red;
+                barFill.color = Art.Red; hasBar = true;
             }
             SetAlpha(0);
         }
@@ -67,13 +71,14 @@ namespace EarthDef
             return b;
         }
 
+        bool shown;
         void SetAlpha(float a) { var c = sr.color; c.a = a; sr.color = c; }
 
         public void Step(float dt)
         {
             if (dead) return;
             age += dt;
-            if (age < 0.4f) SetAlpha(age / 0.4f); else if (sr.color.a < 1) SetAlpha(1);
+            if (age < 0.4f) SetAlpha(age / 0.4f); else if (!shown) { shown = true; SetAlpha(1); }
             // 상태이상 시간
             if (slowT > 0) { slowT -= dt; if (slowT <= 0) slow = 0; }
             if (para > 0) para -= dt;
@@ -105,7 +110,7 @@ namespace EarthDef
             if (Paralyzed || hold) return;
 
             float spd = row.speed * (1 - slow);
-            var p = transform.position;
+            var p = pos;
             switch (row.move)
             {
                 case "zigzag": p.y -= spd * dt; p.x = x0 + Mathf.Sin(age * 2.2f + phase) * 0.9f; break;
@@ -114,7 +119,7 @@ namespace EarthDef
                 default: p.y -= spd * dt; break;
             }
             p.x = Mathf.Clamp(p.x, -World.HalfW + radius, World.HalfW - radius);
-            transform.position = p;
+            pos = p; transform.position = p;
             if (p.y - radius <= World.ShieldY)
             {
                 if (row.crash) { Battle.I?.HurtBase(atk * Tables.C("Crash_Mul", 3), Pos, this); Fx.Burst(Pos, 0.6f * size); dead = true; return; }
@@ -122,12 +127,12 @@ namespace EarthDef
             }
         }
 
-        float wob;
+        float wob; bool hasBar; double barHp = -1;
         void Wobble() { wob = 0.15f; }
         void LateUpdate()
         {
             if (wob > 0) { wob -= Time.deltaTime; transform.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(wob * 60) * 8 * wob / 0.15f); }
-            if (barFill) { float k = (float)(hp / maxHp); barFill.size = new Vector2(1.6f * Mathf.Clamp01(k), 0.3f); barFill.transform.localPosition = barBg.transform.localPosition + new Vector3(-0.8f * (1 - k) * barK / size, 0, 0); }
+            if (hasBar && hp != barHp) { barHp = hp; float k = (float)(hp / maxHp); barFill.size = new Vector2(1.6f * Mathf.Clamp01(k), 0.3f); barFill.transform.localPosition = barBg.transform.localPosition + new Vector3(-0.8f * (1 - k) * barK / size, 0, 0); }
         }
 
         /// <summary>피해 → 죽으면 true</summary>
@@ -150,7 +155,7 @@ namespace EarthDef
             if (row.IsBoss) return;      // 보스는 마비 안 됨 (기획서 6-2)
             para = Mathf.Max(para, time);
         }
-        public void Burn(double dps, float time, TurretInst src) { burnDps = Mathf.Max((float)burnDps, (float)dps); burnT = time; burnSrc = src; }
+        public void Burn(double dps, float time, TurretInst src) { burnDps = burnT > 0 ? System.Math.Max(burnDps, dps) : dps; burnT = time; burnSrc = src; }   // 11-17: 큰 수가 float 로 깎이던 것 · 화상이 끝난 뒤에도 예전 큰 값이 남던 것 고침
         public void Vulnerable(double amt, float time) { vuln = System.Math.Max(vuln, amt); vulnT = time; }
         /// <summary>밀어내기 (쾅쾅 대포 · 기뢰 충격파 · 충격 미사일): 위로 d 칸. 보스는 안 밀림 · 중간 보스는 30%만</summary>
         public void Knock(float d)
@@ -158,9 +163,9 @@ namespace EarthDef
             if (row.IsBoss || d <= 0 || dead) return;
             if (row.IsElite) d *= 0.3f;
             Knocks++;
-            var p = transform.position;
+            var p = pos;
             p.y = Mathf.Min(p.y + d, World.SpawnY - 0.3f);
-            transform.position = p;
+            pos = p; transform.position = p;
             if (atShield && p.y - radius > World.ShieldY + 0.05f) atShield = false;
         }
 
@@ -168,9 +173,9 @@ namespace EarthDef
         public void Pull(Vector2 to, float amt)
         {
             if (row.IsBoss) return;
-            var p = (Vector2)transform.position;
-            transform.position = Vector2.MoveTowards(p, to, amt);
-            x0 = transform.position.x;
+            pos = Vector2.MoveTowards(pos, to, amt);
+            transform.position = pos;
+            x0 = pos.x;
         }
     }
 }

@@ -12,7 +12,7 @@ namespace EarthDef
     public class Fx : MonoBehaviour
     {
         public static Fx I;
-        class Item { public GameObject go; public SpriteRenderer sr; public Text tx; public float t, life, s0, s1, drag; public Vector3 v; public Color c; public bool num, crit; public object key; public double val; }
+        class Item { public string kind; public GameObject go; public SpriteRenderer sr; public Text tx; public float t, life, s0, s1, drag; public Vector3 v; public Color c; public bool num, crit; public object key; public double val; }
         readonly Dictionary<object, Item> numByKey = new();
         static readonly Color CritCol = new(1f, 0.45f, 0.35f);
         // 11-16 네온: 빛 더하기로 그리는 효과 (밤하늘에서 빛남)
@@ -40,7 +40,7 @@ namespace EarthDef
         Item Take(string kind)
         {
             if (free.TryGetValue(kind, out var st) && st.Count > 0) { var it = st.Pop(); it.go.SetActive(true); return it; }
-            var n = new Item { go = new GameObject("fx_" + kind) };
+            var n = new Item { go = new GameObject(kind), kind = kind };   // 11-17: 종류를 C# 쪽에 적어 둠 (예전엔 쓸 때마다 물체 이름을 고치고, 돌려줄 때 이름을 읽어 글자를 새로 만듦)
             if (kind == "num")
             {
                 n.go.transform.SetParent(numCanvas.transform, false);
@@ -48,7 +48,7 @@ namespace EarthDef
                 n.tx = n.go.AddComponent<Text>();
                 n.tx.font = Art.Font; n.tx.alignment = TextAnchor.MiddleCenter; n.tx.raycastTarget = false;
                 n.tx.horizontalOverflow = HorizontalWrapMode.Overflow;
-                var ol = n.go.AddComponent<Outline>(); ol.effectColor = Art.Ink; ol.effectDistance = new Vector2(3, -3);
+                var ol = n.go.AddComponent<SoftOutline>(); ol.effectColor = Art.Ink; ol.effectDistance = new Vector2(3, 3);   // 11-17: 피해 숫자도 8방향 테두리 (4차 수정안 "글자 찢김"이 여기만 남아 있었음)
                 var sh = n.go.AddComponent<Shadow>(); sh.effectColor = Art.Ink; sh.effectDistance = new Vector2(0, -4.5f);
                 n.num = true;
             }
@@ -66,7 +66,6 @@ namespace EarthDef
         {
             var it = Take(kind);
             it.drag = drag;
-            it.go.name = kind;
             it.t = 0; it.life = life; it.s0 = s0; it.s1 = s1; it.c = c; it.v = v;
             it.go.transform.position = pos;
             it.go.transform.rotation = Quaternion.Euler(0, 0, rot);
@@ -128,7 +127,6 @@ namespace EarthDef
         {
             if (!I) return;
             var it = I.Take("num");
-            it.go.name = "num";
             it.crit = false; it.val = 0; it.key = null;
             it.tx.text = s; it.tx.fontSize = Art.FontSize(34);
             it.tx.color = c; it.t = 0; it.life = 1.2f; it.s0 = it.s1 = 1; it.c = c; it.drag = 3f;
@@ -155,7 +153,6 @@ namespace EarthDef
             }
             if (I.numCount >= MaxNums) return;
             var it = I.Take("num");
-            it.go.name = "num";
             it.crit = crit; it.val = v; it.key = key;
             it.tx.text = Num.F(v);
             it.tx.fontSize = Art.FontSize(crit ? 50 : 38);
@@ -188,7 +185,7 @@ namespace EarthDef
                 if (it.t >= it.life)
                 {
                     it.go.SetActive(false);
-                    string kind = it.num ? "num" : it.go.name;
+                    string kind = it.kind;
                     if (it.num) { numCount--; if (it.key != null && numByKey.TryGetValue(it.key, out var kq) && kq == it) numByKey.Remove(it.key); it.key = null; }
                     if (!free.TryGetValue(kind, out var st)) free[kind] = st = new Stack<Item>();
                     st.Push(it);

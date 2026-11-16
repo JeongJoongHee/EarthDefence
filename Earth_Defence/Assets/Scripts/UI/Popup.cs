@@ -8,7 +8,10 @@ namespace EarthDef
     public class Popup : MonoBehaviour
     {
         public RectTransform win;
-        public static Popup Open { get; private set; }
+        // 11-17 결함 고침: 창이 두 겹일 때(회로 착용 안내 위에 확인 창 등) 위 창을 닫으면 Open 이 null 이 되어,
+        //   아래 창이 떠 있는데도 "창 없음"으로 보고 토스트 자리 · 로비 알림이 어긋날 수 있었음 → 열린 창 목록의 맨 위를 돌려줌
+        static readonly System.Collections.Generic.List<Popup> stack = new();
+        public static Popup Open { get { for (int i = stack.Count - 1; i >= 0; i--) { if (stack[i] && !stack[i].closed) return stack[i]; stack.RemoveAt(i); } return null; } }
         Action onClose;
         float t;
 
@@ -31,7 +34,7 @@ namespace EarthDef
                 var x = UIKit.Tile(p.win, "btn_red", Color.white, Art.Icon("x"), 0.56f, "Close"); x.rectTransform.Place(1, 1, new Vector2(16, 16), new Vector2(80, 80), new Vector2(1, 1));
                 UIKit.Clickable(x, p.Close);
             }
-            Open = p;
+            stack.Add(p);
             p.win.localScale = Vector3.one * 0.85f;
             return p;
         }
@@ -55,7 +58,7 @@ namespace EarthDef
         {
             if (closed) return;
             closed = true;
-            if (Open == this) Open = null;
+            stack.Remove(this);
             if (callback) onClose?.Invoke();
             gameObject.SetActive(false);
             Destroy(gameObject);

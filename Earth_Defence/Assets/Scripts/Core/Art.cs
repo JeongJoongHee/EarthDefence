@@ -61,7 +61,7 @@ namespace EarthDef
         /// <summary>스킨 그림 (UI · 카드 — tools/skin_preview.py 가 같은 식으로 미리 돌려 둠)</summary>
         public static Sprite TurretSkinUI(string art) => Get("Turret/" + art + "_skin", 100f);
         /// <summary>화면 아이콘: 외형(스킨)을 착용했으면 외형 그림 (3차 수정안 "스킨 착용 시 아이콘도 스킨 모양으로")</summary>
-        public static Sprite TurretIcon(TurretRow r) => r != null && SaveData.Cur != null && SaveData.Cur.SkinOn(r.id) && Tables.SkinOf(r.id) != null ? TurretSkinUI(r.art) : TurretUI(r.art);
+        public static Sprite TurretIcon(TurretRow r) => r == null ? null : SaveData.Cur != null && SaveData.Cur.SkinOn(r.id) && Tables.SkinOf(r.id) != null ? TurretSkinUI(r.art) : TurretUI(r.art);
         // 터렛 312x346: 바닥 = 아래에서 12.5px · 쏘는 곳 = 바닥 위 1.36칸
         public static readonly Vector2 TurretFoot = new(0.5f, 12.5f / 346f);
         public const float TurretHead = 1.36f;
@@ -113,7 +113,14 @@ namespace EarthDef
         }
 
         public static Sprite Icon(string name) => Get("Icon/" + name, 100f);
-        public static Sprite Fx(string name, Vector4 border = default) => Get("Fx/" + name, PPU, null, border);
+        static readonly Dictionary<string, Sprite> fxCache = new();
+        /// <summary>효과 그림 — 테두리 없는 것은 이름만으로 바로 찾음 (예전엔 부를 때마다 "Fx/" + 이름 글자를 새로 만듦)</summary>
+        public static Sprite Fx(string name, Vector4 border = default)
+        {
+            if (border != default) return Get("Fx/" + name, PPU, null, border);
+            if (fxCache.TryGetValue(name, out var s) && s) return s;
+            return fxCache[name] = Get("Fx/" + name, PPU);
+        }
         public static Sprite Shot(string name) => Get("Fx/" + name, PPU, ShotPivot(name));
         public static Sprite Turret(string art) => Get("Turret/" + art, PPU, TurretFoot);
         /// <summary>터렛 그림을 UI 에 쓸 때 (가운데 피벗)</summary>
@@ -122,7 +129,14 @@ namespace EarthDef
         public static Sprite GuardianGun => Get("Char/guardian_gun", PPU, GunPivot);
         public static Sprite Enemy(EnemyRow e, bool white = false) => Get("Enemy/" + e.art + (white ? "_w" : ""), PPU, new Vector2(0.5f, e.pivotY));
 
-        public static Color Hex(string h) { ColorUtility.TryParseHtmlString(h, out var c); return c; }
+        // 11-17 최적화: 색 글자("#ffd45e")를 매번 엔진에서 풀던 것 → 한 번 푼 색은 보관 (탄 · 불꽃 · 낙뢰가 맞을 때마다 불림)
+        static readonly Dictionary<string, Color> hexCache = new();
+        public static Color Hex(string h)
+        {
+            if (hexCache.TryGetValue(h, out var c)) return c;
+            ColorUtility.TryParseHtmlString(h, out c);
+            return hexCache[h] = c;
+        }
         public static readonly Color Ink = Hex("#3b281c");
         public static readonly Color Cream = Hex("#fff4dc");
         public static readonly Color Cream2 = Hex("#f3e3c3");

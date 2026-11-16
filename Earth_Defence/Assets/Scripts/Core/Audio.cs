@@ -41,6 +41,11 @@ namespace EarthDef
         string want = "lobby", playing = "";
         readonly Dictionary<string, AudioClip> bgmClips = new();
         readonly Dictionary<string, Task<float[]>> tasks = new();
+        Task<Dictionary<Sfx, float[]>> sfxTask;
+        /// <summary>효과음이 다 만들어졌나 (시험 · 소리 뽑기가 기다림)</summary>
+        public static bool SfxReady => I && I.sfxTask == null;
+        /// <summary>검토용 원본 배열(SfxData · BgmData)은 에디터에서만 남김 — 폰에서는 소리 조각으로 바꾼 뒤 버려 메모리를 아낌 (배경음 3곡 = 같은 크기가 두 벌이었음)</summary>
+        static bool KeepData => Application.isEditor;
         const int Channels = 16, CombatChannels = 10;
 
         static SaveData S => SaveData.Cur;
@@ -68,7 +73,8 @@ namespace EarthDef
             var sg = new GameObject("Sfx"); sg.transform.SetParent(transform, false);
             sfxSrc = new AudioSource[Channels];
             for (int i = 0; i < Channels; i++) { sfxSrc[i] = sg.AddComponent<AudioSource>(); sfxSrc[i].playOnAwake = false; }
-            MakeSfx();
+            // 11-17 최적화: 효과음 29개 합성(PC 0.38초 · 폰은 몇 초)을 켤 때 화면을 멈추고 하던 것 → 일꾼 스레드에서 만들고, 다 되면 Update 가 소리 조각으로 바꿈
+            try { sfxTask = Task.Run(SynthSfx); } catch { sfxTask = Task.FromResult(SynthSfx()); }
             // 배경음은 길어서 일꾼 스레드에서 (로비 먼저)
             foreach (var n in new[] { "lobby", "battle", "boss" })
             {
@@ -127,7 +133,8 @@ namespace EarthDef
             if (!BgmData.TryGetValue(name, out var d))
             {
                 if (!tasks.TryGetValue(name, out var t) || !t.IsCompleted) return null;    // 아직 계산 중 → 다음 프레임에
-                d = BgmData[name] = t.Result;
+                d = t.Result; tasks.Remove(name);
+                if (KeepData) BgmData[name] = d;
             }
             c = AudioClip.Create("Bgm_" + name, d.Length, 1, SR, false); c.SetData(d, 0);
             return bgmClips[name] = c;
@@ -136,6 +143,22 @@ namespace EarthDef
         void Update()
         {
             float dt = Time.unscaledDeltaTime;
+            if (sfxTask != null && sfxTask.IsCompleted)
+            {
+                foreach (var kv in sfxTask.Result)
+                {
+                    if (KeepData) SfxData[kv.Key] = kv.Value;
+                    var c = AudioClip.Create("Sfx_" + kv.Key, kv.Value.Length, 1, SR, false); c.SetData(kv.Value, 0); clips[kv.Key] = c;
+                }
+                sfxTask = null;
+            }
+            // 전투 · 보스 곡의 소리 조각을 로비에서 쉬는 동안 미리 만들어 둠 (예전엔 첫 전투 · 첫 보스 순간에 만들며 멈칫) — 한 프레임에 한 곡
+            else if (sfxTask == null && want == playing && fadeT >= 1f && tasks.Count > 0)
+            {
+                string ready = null;
+                foreach (var kv in tasks) if (kv.Value.IsCompleted) { ready = kv.Key; break; }
+                if (ready != null) BgmClip(ready);
+            }
             duck = Mathf.MoveTowards(duck, duckWant, dt * 1.5f);
             if (want != playing)
             {
@@ -158,9 +181,11 @@ namespace EarthDef
         }
 
         // ================================================================ 효과음 만들기
-        void MakeSfx()
+        /// <summary>효과음 원본 배열 만들기 (일꾼 스레드에서 돎 — 엔진 함수를 부르지 않음)</summary>
+        static Dictionary<Sfx, float[]> SynthSfx()
         {
-            void Add(Sfx s, float[] d) { Edge(d); SfxData[s] = d; var c = AudioClip.Create("Sfx_" + s, d.Length, 1, SR, false); c.SetData(d, 0); clips[s] = c; }
+            var made = new Dictionary<Sfx, float[]>();
+            void Add(Sfx s, float[] d) { Edge(d); made[s] = d; }
             // 대장 카피 소총: 아주 짧고 둥근 "퓻" (1초에 7번 → 작게)
             Add(Sfx.Gun, Mix(Sweep(1500, 820, 0.055f, W.Sine, 0.20f, 7f), Sweep(3000, 1640, 0.04f, W.Sine, 0.05f, 9f)));
             // 관통포: 유리 같은 "휘익 - 띵"
@@ -215,6 +240,7 @@ namespace EarthDef
             Add(Sfx.Upgrade, Space(Arp(new[] { 74, 81, 86 }, 0.05f, 0.16f, 1.3f), 0.3f, 0.6f));
             Add(Sfx.Merge, Space(Arp(new[] { 78, 81, 86, 90 }, 0.06f, 0.16f, 1.5f), 0.35f, 0.7f));
             Add(Sfx.UiClick, Mix(Sweep(900, 760, 0.045f, W.Sine, 0.2f, 6f), Sweep(1800, 1520, 0.03f, W.Sine, 0.05f, 8f)));
+            return made;
         }
 
         enum W { Sine, Tri }

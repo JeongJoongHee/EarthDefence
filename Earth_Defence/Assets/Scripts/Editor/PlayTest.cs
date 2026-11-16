@@ -38,6 +38,8 @@ namespace EarthDef.EditorTools
         public static void RunLab() => Start("lab");
         /// <summary>3차 시험 (11-16 밤): 상점 · 다이아 · 결제 [초안] · 기지 외형 · 스킨 · 필살기 · 무한 모드 · 엘리트 군단 · 광고 2배 · 클라우드 [초안]</summary>
         public static void RunP3() => Start("p3");
+        /// <summary>11-17 성능 측정 (Editor/PlayTestPerf.cs) → Logs/Perf/perf_<이름>.json</summary>
+        public static void RunPerf() => Start("perf");
 
         static void Start(string mode)
         {
@@ -59,7 +61,7 @@ namespace EarthDef.EditorTools
         }
     }
 
-    public class PlayTestRunner : MonoBehaviour
+    public partial class PlayTestRunner : MonoBehaviour
     {
         int errors;
         RenderTexture rt;
@@ -79,7 +81,7 @@ namespace EarthDef.EditorTools
         {
             float timeout = Time.realtimeSinceStartup + 420f;
             string mode = SessionState.GetString(PlayTest.ModeKey, "");
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -513,6 +515,7 @@ namespace EarthDef.EditorTools
             yield return null;
             Lobby.NoIntro = true; Popup.CloseAll();
             string dir = "Logs/Sound"; Directory.CreateDirectory(dir);
+            while (!Audio.SfxReady) yield return null;      // 효과음은 일꾼 스레드에서 만들어짐 (11-17)
             foreach (var kv in Audio.SfxData) Wav($"{dir}/sfx_{kv.Key}.wav", kv.Value);
             foreach (var n in new[] { "lobby", "battle", "boss" }) { var d = Audio.Song(n); Wav($"{dir}/bgm_{n}.wav", d); Log($"배경음 {n} {d.Length / (float)Audio.SR:0.0}초"); }
             Check(Audio.SfxData.Count == System.Enum.GetValues(typeof(Audio.Sfx)).Length, $"효과음 {Audio.SfxData.Count}개 wav");
@@ -631,10 +634,10 @@ namespace EarthDef.EditorTools
                 var p0 = e0.transform.position;
                 float gx = B.Guardian.transform.position.x;
                 B.enemies.Clear(); B.enemies.Add(e0);
-                e0.transform.position = new Vector3(gx - 3f, 0f, 0);
+                e0.Teleport(new Vector2(gx - 3f, 0f));
                 for (int i = 0; i < 150 && !B.Guardian.FaceLeft; i++) B.Guardian.Step(Battle.StepSec);
                 bool l = B.Guardian.FaceLeft && B.Guardian.GetComponent<SpriteRenderer>().flipX;
-                e0.transform.position = new Vector3(gx + 3f, 0f, 0);
+                e0.Teleport(new Vector2(gx + 3f, 0f));
                 for (int i = 0; i < 150 && B.Guardian.FaceLeft; i++) B.Guardian.Step(Battle.StepSec);
                 Check(l && !B.Guardian.FaceLeft, "적 쪽으로 몸을 돌림 (왼쪽 → 오른쪽)");
                 var hd = (Vector2)e0.transform.position - (Vector2)B.Guardian.transform.position;
@@ -646,7 +649,7 @@ namespace EarthDef.EditorTools
                 float y0 = B.Guardian.transform.position.y, ymax = 0; int f0 = B.Guardian.shotsFired;
                 for (int i = 0; i < 90; i++) { B.Guardian.Step(Battle.StepSec); ymax = Mathf.Max(ymax, Mathf.Abs(B.Guardian.transform.position.y - y0)); }
                 Check(B.Guardian.shotsFired > f0 && ymax < 0.005f, $"서서 쏠 때 몸이 안 튐 (쏨 {B.Guardian.shotsFired - f0} · 흔들림 {ymax:0.000})");
-                e0.transform.position = p0;
+                e0.Teleport(p0);
                 B.enemies.Clear(); B.enemies.AddRange(saved);
             }
             yield return Wait(0.3f);

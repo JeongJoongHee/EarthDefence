@@ -232,7 +232,7 @@ namespace EarthDef
             if (time >= nextElite)
             {
                 nextElite += mode == "survival" ? Tables.Cf("Survival_Elite_Gap", 12) : Tables.Cf("Endless_Boss_Gap", 150);
-                var els = new[] { "big", "moth_king", "beetle_steel", "mother" };
+                var els = SurvivalElites;
                 Spawn(mode == "survival" ? els[rnd.Next(els.Length)] : stage.elite, new Vector2(RandX() * 0.6f, World.SpawnY + 0.5f));
                 if (!eliteSpawned) { eliteSpawned = true; Banner?.Invoke(L.T("elite_warn")); Audio.Play(Audio.Sfx.EliteWarn); }
             }
@@ -391,10 +391,12 @@ namespace EarthDef
             return pick;
         }
 
+        static readonly int[] crowdCnt = new int[20];
+        static readonly string[] SurvivalElites = { "big", "moth_king", "beetle_steel", "mother" };
         /// <summary>적이 가장 많이 모인 높이 (장판 놓을 곳) — 1칸 높이 칸마다 세어 가장 많은 곳</summary>
         public float CrowdY()
         {
-            var cnt = new int[20];
+            var cnt = crowdCnt; Array.Clear(cnt, 0, cnt.Length);
             foreach (var e in enemies)
             {
                 if (e.dead) continue;
@@ -452,6 +454,13 @@ namespace EarthDef
         {
             if (st == St.End) return;
             st = St.End; won = win;
+            SaveData.BeginBatch();      // 보상 · 떨어진 장비(가방 넘침 분해) · 미션을 한 번에 저장
+            try { EndRewards(win); } finally { SaveData.EndBatch(); }
+            Changed?.Invoke();
+        }
+
+        void EndRewards(bool win)
+        {
             Audio.Duck(0.35f);
             Audio.Play(win ? Audio.Sfx.Victory : Audio.Sfx.Defeat);
             Time.timeScale = 1;
@@ -504,7 +513,6 @@ namespace EarthDef
             if (eliteMode) Meta.MissionAdd("elite");
             Meta.MissionAdd("kill", (int)Math.Min(int.MaxValue, kills));
             s.Save();
-            Changed?.Invoke();
         }
 
         /// <summary>결과 창 "광고 보고 보상 2배" [초안] — 한 판에 1번 · 골드 · 조각 · 다이아를 한 번 더</summary>

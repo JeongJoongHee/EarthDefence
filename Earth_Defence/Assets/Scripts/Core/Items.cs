@@ -84,6 +84,7 @@ namespace EarthDef
         public static int ScrapParts(GearItem g) => Tables.Ci("Gear_Scrap_Parts", 2) * g.grade + g.lv / 2;
         public static void Scrap(GearItem g) { S.parts += ScrapParts(g); S.gear.Remove(g); S.Save(); }
         static int MergeN => Mathf.Max(2, Tables.Ci("Merge_N", 3));
+        public static int MergeNeed => MergeN;
         /// <summary>합성할 수 있는 짝 (끼운 것은 빼고) — 같은 부위 · 같은 등급 MergeN 개</summary>
         public static List<GearItem> MergeSet(GearItem g)
         {
@@ -141,13 +142,18 @@ namespace EarthDef
         public static List<GearItem> MergeAllGear()
         {
             var made = new List<GearItem>();
-            for (int guard = 0; guard < 500; guard++)
+            SaveData.BeginBatch();
+            try
             {
-                var g = S.gear.Find(x => !x.on && MergeSet(x) != null);
-                if (g == null) break;
-                var n = Merge(g); if (n == null) break;
-                made.Add(n);
+                for (int guard = 0; guard < 500; guard++)
+                {
+                    var g = S.gear.Find(x => !x.on && MergeSet(x) != null);
+                    if (g == null) break;
+                    var n = Merge(g); if (n == null) break;
+                    made.Add(n);
+                }
             }
+            finally { SaveData.EndBatch(); }
             made.RemoveAll(x => !S.gear.Contains(x));      // 다시 합성 재료가 된 것은 빼고
             return made;
         }
@@ -156,21 +162,33 @@ namespace EarthDef
         /// <summary>지금 바로 합성할 수 있는 횟수 (한 단계만 셈)</summary>
         static IEnumerable<int> GroupCount(bool gear)
         {
-            var d = new Dictionary<string, int>();
-            if (gear) foreach (var g in S.gear) { if (g.on || g.grade >= Tables.GradeMax) continue; var k = g.part + g.grade; d[k] = (d.TryGetValue(k, out var v) ? v : 0) + 1; }
-            else foreach (var c in S.chips) { if (c.at >= 0 || c.q >= Tables.GradeMax) continue; var k = c.id + c.q; d[k] = (d.TryGetValue(k, out var v) ? v : 0) + 1; }
-            foreach (var v in d.Values) yield return v / MergeN;
+            var d = Counts(gear);
+            int n = MergeN;
+            foreach (var kv in d) if (kv.Key.Item2 < Tables.GradeMax) yield return kv.Value / n;
+        }
+        /// <summary>가방(끼우지 않은 것)에서 같은 것끼리 센 수: 장비 = (부위, 등급) · 회로 = (종류, 등급). 합성 빨간 점 · 일괄 합성 횟수가 같이 씀 (11-17: 물건마다 목록을 새로 훑던 것을 한 번에)</summary>
+        public static Dictionary<(string, int), int> Counts(bool gear)
+        {
+            var d = new Dictionary<(string, int), int>();
+            if (gear) foreach (var g in S.gear) { if (g.on) continue; var k = (g.part, g.grade); d[k] = (d.TryGetValue(k, out var v) ? v : 0) + 1; }
+            else foreach (var c in S.chips) { if (c.at >= 0) continue; var k = (c.id, c.q); d[k] = (d.TryGetValue(k, out var v) ? v : 0) + 1; }
+            return d;
         }
         /// <summary>칩 일괄 합성 → 새로 생긴 칩 (마지막 것만)</summary>
         public static List<ChipItem> MergeAllChipList()
         {
             var made = new List<ChipItem>();
-            for (int guard = 0; guard < 500; guard++)
+            SaveData.BeginBatch();
+            try
             {
-                var c = S.chips.Find(x => x.at < 0 && ChipMergeSet(x) != null);
-                if (c == null) break;
-                var n = MergeChip(c); if (n == null) break; made.Add(n);
+                for (int guard = 0; guard < 500; guard++)
+                {
+                    var c = S.chips.Find(x => x.at < 0 && ChipMergeSet(x) != null);
+                    if (c == null) break;
+                    var n = MergeChip(c); if (n == null) break; made.Add(n);
+                }
             }
+            finally { SaveData.EndBatch(); }
             made.RemoveAll(x => !S.chips.Contains(x));
             return made;
         }

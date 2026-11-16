@@ -22,19 +22,38 @@ namespace EarthDef
 
         static readonly string[] Left = { "weapon", "helmet", "suit" }, Right = { "shield", "core", "boots" };
 
+        static bool[] newsOn = new bool[6], newsBag = new bool[6], newsOcc = new bool[36]; static readonly bool[] newsOpen = new bool[Gear.Slots];
         /// <summary>빨간 점: 빈 부위에 낄 장비가 있거나, 열린 빈 칩 칸에 낄 칩이 있음</summary>
         public static bool HasNews
         {
             get
             {
                 var s = SaveData.Cur; if (s == null) return false;
-                for (int p = 0; p < Tables.GearParts.Count; p++)
+                // 11-17 최적화: 한 번 훑어 "부위마다 낀 것 · 가방에 있는 것" · "찬 회로 칸"을 적어 두고 판단
+                int np = Tables.GearParts.Count;
+                if (newsOn.Length < np) { newsOn = new bool[np]; newsBag = new bool[np]; }
+                if (newsOcc.Length < np * Gear.Slots) newsOcc = new bool[np * Gear.Slots];
+                System.Array.Clear(newsOn, 0, newsOn.Length); System.Array.Clear(newsBag, 0, newsBag.Length); System.Array.Clear(newsOcc, 0, newsOcc.Length);
+                foreach (var g in s.gear) { int pi = Tables.PartIdx(g.part); if (pi < 0) continue; if (g.on) newsOn[pi] = true; else newsBag[pi] = true; }
+                for (int i = 0; i < np; i++) if (!newsOn[i] && newsBag[i]) return true;
+                bool anyFree = false;
+                foreach (var c in s.chips) if (c.at >= 0 && c.at < newsOcc.Length) newsOcc[c.at] = true;
+                for (int sl = 0; sl < Gear.Slots; sl++)
                 {
-                    string part = Tables.GearParts[p].part;
-                    if (Gear.On(part) == null && s.gear.Exists(g => !g.on && g.part == part)) return true;
+                    newsOpen[sl] = Gear.SlotOpen(sl);
+                    if (newsOpen[sl]) for (int pi = 0; pi < np; pi++) if (!newsOcc[pi * Gear.Slots + sl]) anyFree = true;
                 }
+                if (!anyFree) return false;
                 foreach (var c in s.chips)
-                    if (c.at < 0 && Gear.FreeSlotFor(c).part >= 0) return true;
+                {
+                    if (c.at >= 0) continue;
+                    var row = c.Row; if (row == null) continue;
+                    for (int pi = 0; pi < np; pi++)
+                    {
+                        if (!row.Fits(Tables.GearParts[pi].part)) continue;
+                        for (int sl = 0; sl < Gear.Slots; sl++) if (newsOpen[sl] && !newsOcc[pi * Gear.Slots + sl]) return true;
+                    }
+                }
                 return false;
             }
         }
@@ -124,20 +143,22 @@ namespace EarthDef
             UIKit.SetKind(gearB, showChips ? "btn_cream" : "btn_orange");
             UIKit.SetKind(chipB, showChips ? "btn_orange" : "btn_cream");
             UIKit.SetKind(mergeB, Gear.GearMergeCount() + Gear.ChipMergeCount() > 0 ? "btn_green" : "btn_gray");
-            // 가방
-            for (int c = grid.childCount - 1; c >= 0; c--) Destroy(grid.GetChild(c).gameObject);
-            int n = 0; const float cell = 196f;
+            // 가방 (11-17 최적화: 칸을 매번 지우고 새로 만들던 것 → 한 번 만든 칸을 다시 씀 · 합성 빨간 점은 같은 것 개수를 한 번 세어 판단)
+            int n = 0, need = Gear.MergeNeed;
             if (!showChips)
             {
                 var list = S.gear.FindAll(x => !x.on);
                 list.Sort((a, b) => b.grade != a.grade ? b.grade.CompareTo(a.grade) : b.lv != a.lv ? b.lv.CompareTo(a.lv) : string.CompareOrdinal(a.part, b.part));
+                var cnt = Gear.Counts(true);
                 foreach (var g in list)
                 {
-                    var t = UIKit.Tile(grid, "slot", Color.Lerp(Color.white, g.G.color, 0.75f), Art.Icon(g.Icon), 0.6f, "G" + g.uid);
-                    t.rectTransform.TL(14 + n % 5 * cell, 10 + n / 5 * cell, 180, 180);
-                    var gg = g; UIKit.Clickable(t, () => GearWindow(gg));
-                    UIKit.Label(t.transform, $"Lv {g.lv}", 26).rectTransform.Place(0.5f, 0, new Vector2(0, 4), new Vector2(180, 36), new Vector2(0.5f, 0));
-                    if (Gear.MergeSet(g) != null) UIKit.Dot(t.transform, -14, -14, 30);
+                    var t = TileAt(n);
+                    t.bg.color = Color.Lerp(Color.white, g.G.color, 0.75f);
+                    t.icon.sprite = Art.Icon(g.Icon); IconK(t.icon, 0.6f);
+                    var gg = g; t.act = () => GearWindow(gg);
+                    if (t.label.fontSize != Art.FontSize(26)) t.label.fontSize = Art.FontSize(26);
+                    t.label.text = "Lv " + g.lv;
+                    t.dot.enabled = g.grade < Tables.GradeMax && cnt.TryGetValue((g.part, g.grade), out var k) && k >= need;
                     n++;
                 }
             }
@@ -145,21 +166,48 @@ namespace EarthDef
             {
                 var list = S.chips.FindAll(x => x.at < 0 && x.Row != null);
                 list.Sort((a, b) => b.q != a.q ? b.q.CompareTo(a.q) : string.CompareOrdinal(a.id, b.id));
+                var cnt = Gear.Counts(false);
                 foreach (var c in list)
                 {
-                    var t = UIKit.Tile(grid, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.48f, "C" + c.uid);
-                    t.rectTransform.TL(14 + n % 5 * cell, 10 + n / 5 * cell, 180, 180);
-                    var cc = c; UIKit.Clickable(t, () => ChipWindow(cc));
-                    var nm = UIKit.Label(t.transform, Short(c.Name), 22); nm.rectTransform.Place(0.5f, 0, new Vector2(0, 4), new Vector2(176, 34), new Vector2(0.5f, 0));
-                    if (Gear.ChipMergeSet(c) != null) UIKit.Dot(t.transform, -14, -14, 30);
+                    var t = TileAt(n);
+                    t.bg.color = Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f);
+                    t.icon.sprite = Art.Icon(c.Icon); IconK(t.icon, 0.48f);
+                    var cc = c; t.act = () => ChipWindow(cc);
+                    if (t.label.fontSize != Art.FontSize(22)) t.label.fontSize = Art.FontSize(22);
+                    t.label.text = Short(c.Name);
+                    t.dot.enabled = c.q < Tables.GradeMax && cnt.TryGetValue((c.id, c.q), out var k) && k >= need;
                     n++;
                 }
             }
-            if (n == 0)
+            for (int i = 0; i < bag.Count; i++) { bool on = i < n; if (bag[i].bg.gameObject.activeSelf != on) bag[i].bg.gameObject.SetActive(on); }
+            if (!emptyT) { emptyT = UIKit.Label(grid, "-", 40, Art.Soft, TextAnchor.MiddleCenter, false); emptyT.rectTransform.TL(0, 30, 1000, 60); }
+            emptyT.enabled = n == 0;
+            UIKit.SetScrollH(grid, 20 + Mathf.CeilToInt(n / 5f) * Cell);
+        }
+
+        class BagTile { public Image bg, icon, dot; public Text label; public System.Action act; }
+        readonly List<BagTile> bag = new();
+        Text emptyT;
+        const float Cell = 196f;
+        BagTile TileAt(int i)
+        {
+            while (bag.Count <= i)
             {
-                var e = UIKit.Label(grid, "-", 40, Art.Soft, TextAnchor.MiddleCenter, false); e.rectTransform.TL(0, 30, 1000, 60);
+                int k = bag.Count; var bt = new BagTile();
+                bt.bg = UIKit.Tile(grid, "slot", Color.white, null, 0.6f, "Bag" + k);
+                bt.bg.rectTransform.TL(14 + k % 5 * Cell, 10 + k / 5 * Cell, 180, 180);
+                bt.icon = bt.bg.transform.Find("Icon").GetComponent<Image>(); bt.icon.preserveAspect = true;
+                UIKit.Clickable(bt.bg, () => bt.act?.Invoke());
+                bt.label = UIKit.Label(bt.bg.transform, "", 26); bt.label.rectTransform.Place(0.5f, 0, new Vector2(0, 4), new Vector2(180, 36), new Vector2(0.5f, 0));
+                bt.dot = UIKit.Dot(bt.bg.transform, -14, -14, 30);
+                bag.Add(bt);
             }
-            UIKit.SetScrollH(grid, 20 + Mathf.CeilToInt(n / 5f) * cell);
+            return bag[i];
+        }
+        static void IconK(Image ic, float k)
+        {
+            var rt = ic.rectTransform; var mn = new Vector2((1 - k) / 2, (1 - k) / 2 + 0.04f);
+            if (rt.anchorMin != mn) { rt.anchorMin = mn; rt.anchorMax = new Vector2(1 - (1 - k) / 2, 1 - (1 - k) / 2 + 0.04f); }
         }
 
         static string Short(string s) => s.Length > 7 ? s.Substring(0, 7) : s;

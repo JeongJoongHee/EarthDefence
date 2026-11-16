@@ -12,11 +12,21 @@ namespace EarthDef
         public static World I;
         public Camera cam;
         public const float Bottom = -9.6f, HalfW = 5.4f;
-        public static float GroundY => Tables.Cf("Ground_Y", -7.52f);
-        public static float ShieldY => Tables.Cf("Shield_Y", -4.6f);
+        // 11-17 최적화: 이 세 값은 전투 한 칸에 수천 번 읽힘(목표 찾기 · 맞음 판정) — 예전엔 읽을 때마다 표 조회 + 카메라 값(엔진 호출 6번)을 다시 계산.
+        //   → 한 번 계산해 두고, 값이 바뀔 수 있는 때(화면 비율이 바뀜 = Fit · 시험에서 Config 를 바꿈 = Tables.SetC)만 다시 계산
+        static float groundY, shieldY, spawnY; static bool cached;
+        public static void Invalidate() => cached = false;
+        static void Recache()
+        {
+            groundY = Tables.Cf("Ground_Y", -7.52f); shieldY = Tables.Cf("Shield_Y", -4.6f);
+            spawnY = Mathf.Min(Tables.Cf("Spawn_Y", 10.6f), I ? I.PlayTop - Tables.Cf("Spawn_Below_Hud", 0.6f) : 99f);
+            cached = I;      // 월드가 생기기 전(로딩 중)엔 매번 다시 계산
+        }
+        public static float GroundY { get { if (!cached) Recache(); return groundY; } }
+        public static float ShieldY { get { if (!cached) Recache(); return shieldY; } }
         /// <summary>적이 나오는 높이 = Spawn_Y 와 "위쪽 UI 바로 아래" 중 낮은 쪽 (11-16: 화면이 짧으면 UI 밑에 숨어 내려오던 것).
         /// 19.5:9 이상 폰은 Spawn_Y(10.6) 그대로, 그보다 짧은 화면만 낮아짐</summary>
-        public static float SpawnY => Mathf.Min(Tables.Cf("Spawn_Y", 10.6f), I ? I.PlayTop - Tables.Cf("Spawn_Below_Hud", 0.6f) : 99f);
+        public static float SpawnY { get { if (!cached) Recache(); return spawnY; } }
         /// <summary>위쪽 UI(스테이지 · 경험치 줄) 아래 끝의 월드 높이. UI 는 폰에선 폭 1080 기준(Boot), 넓은 화면은 높이 1920 기준</summary>
         public float PlayTop
         {
@@ -71,7 +81,10 @@ namespace EarthDef
             float aspect = cam.aspect > 0 ? cam.aspect : 9f / 16f;
             cam.orthographicSize = Mathf.Max(9.6f, HalfW / aspect);
             cam.transform.position = new Vector3(0, Bottom + cam.orthographicSize, -10);
+            cached = false;
         }
+
+        void OnDestroy() { if (I == this) { I = null; cached = false; } }
 
         float lastAspect;
         void Update()

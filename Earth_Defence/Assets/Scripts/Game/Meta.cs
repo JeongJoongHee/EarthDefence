@@ -67,6 +67,7 @@ namespace EarthDef
             get
             {
                 long now = SaveData.Clock;
+                if (now < S.staminaAt) S.staminaAt = now;       // 11-17: 기기 시계를 뒤로 돌린 경우 (다음 +1 까지 남은 시간이 이상하게 길어지던 것)
                 if (S.stamina >= StaminaMax) { S.staminaAt = now; return S.stamina; }
                 long n = (now - S.staminaAt) / RegenSec;
                 if (n > 0)

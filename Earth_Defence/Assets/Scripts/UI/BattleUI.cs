@@ -99,17 +99,25 @@ namespace EarthDef
             }
         }
 
+        // 11-17 최적화: 매 프레임 시계 · 레벨 · 체력 글자를 새로 만들던 것 → 값이 바뀐 때만 (글자 만들기 = 메모리 할당)
+        int lastSec = -1, lastLv = -1, lastCharge = -1; double lastHp = -1, lastShield = -1;
         void Refresh()
         {
-            timeT.text = b.mode == "endless" ? L.F("endless_time", Num.Clock(b.ClockSec)) : b.mode == "survival" ? L.F("survive_left", Num.Clock(b.ClockSec)) : Num.Clock(b.TimeLeft);
-            lvT.text = b.level >= b.LevelMax ? L.F("lv", b.level) + " MAX" : L.F("lv", b.level);
+            int sec = Mathf.Max(0, Mathf.CeilToInt(b.ClockSec));
+            if (sec != lastSec)
+            {
+                lastSec = sec;
+                timeT.text = b.mode == "endless" ? L.F("endless_time", Num.Clock(b.ClockSec)) : b.mode == "survival" ? L.F("survive_left", Num.Clock(b.ClockSec)) : Num.Clock(b.TimeLeft);
+            }
+            if (b.level != lastLv) { lastLv = b.level; lvT.text = b.level >= b.LevelMax ? L.F("lv", b.level) + " MAX" : L.F("lv", b.level); }
             UIKit.SetBar(expFill, b.level >= b.LevelMax ? 1 : (float)(b.exp / b.need));
-            hpT.text = Num.Comma(b.baseHp);
-            shieldT.text = b.shield > 0 ? "+" + Num.Comma(b.shield) : "";
+            double hp = System.Math.Ceiling(b.baseHp), sh = System.Math.Ceiling(b.shield);
+            if (hp != lastHp) { lastHp = hp; hpT.text = Num.Comma(b.baseHp); }
+            if (sh != lastShield) { lastShield = sh; shieldT.text = b.shield > 0 ? "+" + Num.Comma(b.shield) : ""; }
             hpBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(0, World.ShieldY + 0.7f));
             var g = b.Guardian;
             bool showCharge = g != null && g.t.Has("charge");
-            chargeBox.gameObject.SetActive(showCharge);
+            if ((showCharge ? 1 : 0) != lastCharge) { lastCharge = showCharge ? 1 : 0; chargeBox.gameObject.SetActive(showCharge); }
             if (showCharge)
             {
                 chargeBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(g.transform.position.x, World.GroundY - 0.45f));

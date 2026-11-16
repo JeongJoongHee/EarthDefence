@@ -198,7 +198,7 @@ namespace EarthDef
         }
         public static float Cf(string key, float def = 0) => (float)C(key, def);
         /// <summary>시험·촬영용으로 Config 값을 잠깐 바꿈 (표는 그대로)</summary>
-        public static void SetC(string key, double v) => config[key] = v;
+        public static void SetC(string key, double v) { config[key] = v; World.Invalidate(); }
         public static int Ci(string key, int def = 0) => (int)Math.Round(C(key, def));
 
         public static StageRow Stage(int n) => Stages[Mathf.Clamp(n - 1, 0, Stages.Count - 1)];
@@ -206,8 +206,9 @@ namespace EarthDef
         public static int MaxTurretLv => TurretLv.Count;
         public static GradeRow Grade(int g) => Grades[Mathf.Clamp(g - 1, 0, Grades.Count - 1)];
         public static int GradeMax => Grades.Count;
-        public static GearPartRow Part(string p) => GearParts.Find(x => x.part == p);
-        public static int PartIdx(string p) => GearParts.FindIndex(x => x.part == p);
+        // 11-17 최적화: 장비 능력치 · 이름 · 아이콘을 읽을 때마다 불림 — 람다 찾기(부를 때마다 메모리 할당) 대신 반복문 (부위는 6개)
+        public static GearPartRow Part(string p) { for (int i = 0; i < GearParts.Count; i++) if (GearParts[i].part == p) return GearParts[i]; return null; }
+        public static int PartIdx(string p) { for (int i = 0; i < GearParts.Count; i++) if (GearParts[i].part == p) return i; return -1; }
 
         // ---------- csv ----------
         public class Row
@@ -283,10 +284,10 @@ namespace EarthDef
     {
         public static string Name(string e) => e switch { "phys" => "물리", "light" => "빛", "grav" => "중력", "fire" => "불", "bolt" => "번개", _ => "" };
         public static readonly string[] All = { "phys", "light", "grav", "fire", "bolt" };
+        static readonly Color Phys = Art.Hex("#d9c19a"), Light = Art.Hex("#8fd6ff"), Grav = Art.Hex("#b9a6e0"), Fire = Art.Hex("#f09a7e"), Bolt = Art.Hex("#ffd966"), None = Art.Hex("#c9c1b3");
         public static Color Color(string e) => e switch
         {
-            "phys" => Art.Hex("#d9c19a"), "light" => Art.Hex("#8fd6ff"), "grav" => Art.Hex("#b9a6e0"),
-            "fire" => Art.Hex("#f09a7e"), "bolt" => Art.Hex("#ffd966"), _ => Art.Hex("#c9c1b3"),
+            "phys" => Phys, "light" => Light, "grav" => Grav, "fire" => Fire, "bolt" => Bolt, _ => None,
         };
     }
 

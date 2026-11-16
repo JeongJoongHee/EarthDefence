@@ -56,14 +56,25 @@ namespace EarthDef
         public static long NowOffset;
         public static long Clock => Now + NowOffset;
 
+        public const string BackupKey = Key + ".bak";
+        static SaveData Parse(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return null;
+            try { return JsonUtility.FromJson<SaveData>(json); } catch (Exception e) { Debug.LogWarning("세이브 읽기 실패: " + e.Message); return null; }
+        }
+
         public static SaveData Load()
         {
-            SaveData s = null;
             var json = PlayerPrefs.GetString(Key, "");
-            if (!string.IsNullOrEmpty(json))
+            var s = Parse(json);
+            // 11-17 안전장치: 세이브가 깨져 못 읽으면(예전엔 그대로 새 게임이 됨) 지난번에 잘 읽힌 판(백업)에서 되살림.
+            //   백업은 켤 때 잘 읽힌 세이브를 한 번 적어 둠 (저장할 때마다 두 번 쓰지 않음)
+            if (s == null && !string.IsNullOrEmpty(json))
             {
-                try { s = JsonUtility.FromJson<SaveData>(json); } catch (Exception e) { Debug.LogWarning("세이브 읽기 실패: " + e.Message); }
+                s = Parse(PlayerPrefs.GetString(BackupKey, ""));
+                if (s != null) Debug.LogWarning("세이브가 깨져 백업에서 되살림");
             }
+            else if (s != null) PlayerPrefs.SetString(BackupKey, json);
             s ??= New();
             s.Fix();
             Cur = s;
@@ -83,7 +94,8 @@ namespace EarthDef
             while (shards.Count < Tables.Turrets.Count) shards.Add(0);
             stage = Mathf.Clamp(stage, 1, Mathf.Min(Tables.Stages.Count, best + 1));
             baseLv = Mathf.Max(1, baseLv);
-            if (patrolFrom <= 0) patrolFrom = Clock;
+            if (patrolFrom <= 0 || patrolFrom > Clock) patrolFrom = Clock;     // 11-17: 기기 시계를 뒤로 돌린 경우 (순찰 보상이 음수로 보이던 것)
+            if (staminaAt > Clock) staminaAt = Clock;
             if (stamina < 0) { stamina = Tables.Ci("Stamina_Base", 30); staminaAt = Clock; }
             gear ??= new(); chips ??= new(); mProg ??= new(); mGot ??= new(); tut ??= new(); seen ??= new();
             frames ??= new(); skins ??= new(); skinOn ??= new(); dailyKeys ??= new(); dailyVals ??= new(); iapOnce ??= new();
@@ -109,8 +121,19 @@ namespace EarthDef
         public bool HasSkin(string turret) => skins.Contains(turret);
         public bool SkinOn(string turret) => skinOn.Contains(turret) && skins.Contains(turret);
 
+        // 11-17 최적화: 일괄 합성 · 상자 10+1 · 전투 끝처럼 한 번에 여러 번 저장하던 곳을 묶어서 마지막에 한 번만 (저장 = 폰 저장소에 쓰기)
+        static int batch; static bool batchDirty;
+        public static void BeginBatch() => batch++;
+        public static void EndBatch()
+        {
+            if (--batch > 0) return;
+            batch = 0;
+            if (batchDirty) { batchDirty = false; Cur?.Save(); }
+        }
+
         public void Save()
         {
+            if (batch > 0 && this == Cur) { batchDirty = true; return; }
             lastSeen = Clock;
             PlayerPrefs.SetString(Key, JsonUtility.ToJson(this));
             PlayerPrefs.Save();
@@ -118,14 +141,14 @@ namespace EarthDef
 
         public static void ResetAll()
         {
-            PlayerPrefs.DeleteKey(Key);
+            PlayerPrefs.DeleteKey(Key); PlayerPrefs.DeleteKey(BackupKey);
             PlayerPrefs.Save();
-            Cur = null;
+            Cur = null; batch = 0; batchDirty = false;
             NowOffset = 0;
         }
 
         // ---------- 편의 ----------
-        public int TIdx(string id) => Tables.Turrets.FindIndex(t => t.id == id);
+        public int TIdx(string id) { var ts = Tables.Turrets; for (int i = 0; i < ts.Count; i++) if (ts[i].id == id) return i; return -1; }
         public int TurretLv(string id) { int i = TIdx(id); return i < 0 ? 1 : tLv[i]; }
 
         /// <summary>기지 최대 체력 · 공격력</summary>
@@ -135,7 +158,7 @@ namespace EarthDef
         public bool BaseMax => baseLv >= Tables.Ci("Base_Max_Lv", 300);
 
         /// <summary>순찰: 시간당 골드 · 조각 (깬 최고 스테이지 기준), 최대 시간까지</summary>
-        public double PatrolSec => Math.Min(Clock - patrolFrom, Tables.C("Patrol_Max_Hours") * 3600);
+        public double PatrolSec => Math.Max(0, Math.Min(Clock - patrolFrom, Tables.C("Patrol_Max_Hours") * 3600));
         public double PatrolGold => PatrolSec / 3600.0 * (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * Math.Max(0, best - 1));
         public int PatrolShards => (int)Math.Floor(PatrolSec / 3600.0 * Tables.C("Patrol_Shards_Hour"));
     }

@@ -11,13 +11,18 @@ namespace EarthDef
     /// </summary>
     public class Boot : MonoBehaviour
     {
+        /// <summary>시작에 걸린 시간 (성능 측정용): 표 · 세이브 / 소리 만들기 / 전체</summary>
+        public static double BootTablesMs, BootAudioMs, BootMs;
         void Awake()
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             Tables.Load();
             SaveData.Load();
             Settings.Apply();
+            BootTablesMs = sw.Elapsed.TotalMilliseconds;
             Audio.Ensure();
+            BootAudioMs = sw.Elapsed.TotalMilliseconds - BootTablesMs;
             var cam = Camera.main;
             cam.backgroundColor = Art.Night;
             new GameObject("World").AddComponent<World>().Build(cam);
@@ -30,6 +35,7 @@ namespace EarthDef
             }
             UIRoot.Build(cam);
             Game.ToLobby();
+            BootMs = sw.Elapsed.TotalMilliseconds;
         }
 
         void OnApplicationPause(bool p) { if (p) SaveData.Cur?.Save(); }

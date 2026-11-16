@@ -21,7 +21,7 @@ namespace EarthDef
         static double CondBonus(TurretInst t, Enemy e)
         {
             var b = Battle.I; if (b == null || b.lo == null || b.lo.cond.Count == 0) return 0;
-            var lo = b.lo; double v = lo.C("dmg") + lo.C("el_" + t.row.elem);
+            var lo = b.lo; double v = lo.C("dmg") + lo.C(ElKey(t.row.elem));
             if (lo.C("hp70") > 0 && e.hp >= e.maxHp * 0.7) v += lo.C("hp70");
             if (lo.C("elite_dmg") > 0 && (e.row.IsElite || e.row.IsBoss)) v += lo.C("elite_dmg");
             if (lo.C("early") > 0 && b.time < 120f) v += lo.C("early");
@@ -32,6 +32,9 @@ namespace EarthDef
             v += lo.C("per_turret") * (b.run.turrets.Count - 1) + lo.C("per_card") * b.picks;
             return v / 100.0;
         }
+
+        /// <summary>속성 피해 회로 키 — 맞을 때마다 "el_" + 속성 글자를 새로 만들던 것을 고정 글자로 (11-17)</summary>
+        static string ElKey(string elem) => elem switch { "phys" => "el_phys", "light" => "el_light", "grav" => "el_grav", "fire" => "el_fire", "bolt" => "el_bolt", _ => "el_" + elem };
 
         public static double Calc(TurretInst t, Enemy e, double ratePct, out bool crit)
         {
@@ -133,12 +136,13 @@ namespace EarthDef
             }
         }
 
+        static readonly System.Collections.Generic.HashSet<Enemy> chainHit = new();
         /// <summary>연쇄 번개: 맞은 적에서 가까운 적으로 n 번 튐</summary>
         public static void Chain(TurretInst t, Enemy from, int n, double ratePct)
         {
             var b = Battle.I; if (b == null) return;
             Vector2 p = from.Pos;
-            var hit = new System.Collections.Generic.HashSet<Enemy> { from };
+            var hit = chainHit; hit.Clear(); hit.Add(from);     // 11-17: 연쇄마다 새로 만들던 목록을 다시 씀 (연쇄 안의 공격은 효과를 다시 일으키지 않아 겹쳐 불리지 않음)
             float range = Tables.Cf("Chain_Range", 2.4f);
             for (int k = 0; k < n; k++)
             {

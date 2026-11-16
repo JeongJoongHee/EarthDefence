@@ -87,7 +87,7 @@ namespace EarthDef
 
         public int MaxSlots => Tables.Ci("Turret_Slots", 4);
         public int FreeSlots => MaxSlots - (turrets.Count - 1);
-        public TurretInst Get(string id) => turrets.Find(t => t.row.id == id);
+        public TurretInst Get(string id) { for (int i = 0; i < turrets.Count; i++) if (turrets[i].row.id == id) return turrets[i]; return null; }
         public bool Owns(string id) => Get(id) != null;
 
         /// <summary>터렛 시험장: 정한 칸에 놓기</summary>

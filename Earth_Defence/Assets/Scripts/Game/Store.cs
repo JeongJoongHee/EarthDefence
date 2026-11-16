@@ -29,6 +29,15 @@ namespace EarthDef
             rnd ??= new System.Random(Environment.TickCount);
             var got = new List<GotItem>();
             int n = Mathf.Max(1, (int)it.value);
+            SaveData.BeginBatch();      // 10+1 상자: 가방이 넘쳐 분해될 때마다 저장하던 것을 한 번으로
+            try { Give(it, n, rnd, got); } finally { SaveData.EndBatch(); }
+            Audio.Play(Audio.Sfx.Merge);
+            S.Save();
+            return got;
+        }
+
+        static void Give(ShopItemRow it, int n, System.Random rnd, List<GotItem> got)
+        {
             switch (it.kind)
             {
                 case "gear_box": for (int i = 0; i < n; i++) { var g = Gear.NewGear(BoxGrade(rnd), null, rnd); got.Add(GotItem.Of(g)); } break;
@@ -59,9 +68,6 @@ namespace EarthDef
                     S.gold += g; got.Add(GotItem.Res("coin", $"{L.T("r_gold")} +{Num.F(g)}")); break;
                 }
             }
-            Audio.Play(Audio.Sfx.Merge);
-            S.Save();
-            return got;
         }
 
         /// <summary>상자 등급 (Shop.xlsx Box_Rate 확률 그대로 — 화면 [확률] 과 같음)</summary>
