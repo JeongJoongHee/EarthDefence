@@ -33,7 +33,7 @@ namespace EarthDef
     public class StageRow { public int stage; public string name, swarm, elite, boss; public string[] enemies; public float hpMul; }
     // ---------- 2차: 장비 · 칩 · 미션 · 출석 ----------
     public class GearPartRow { public string part, name, icon, stat1, stat2; public double base1, perLv1, base2, perLv2; }
-    public class GradeRow { public int grade, lvMax; public string name; public Color color; public double mul; }
+    public class GradeRow { public int grade, lvMax; public string name, chipPrefix; public Color color; public double mul; }
     public class ChipRow
     {
         public string id, name, desc, scope, turret, stat; public double max; public int weight;
@@ -84,6 +84,7 @@ namespace EarthDef
         public static readonly List<MissionRow> Missions = new();
         public static readonly List<AttendRow> Attend = new();
         public static readonly List<FrameRow> Frames = new();
+        public static readonly Dictionary<string, string> GearNames = new();   // "부위_등급" → 등급별 장비 이름 (3차 수정안)
         public static readonly List<SkinRow> Skins = new();
         public static readonly List<ProductRow> Products = new();
         public static readonly List<ShopItemRow> ShopItems = new();
@@ -98,7 +99,7 @@ namespace EarthDef
             config.Clear(); Turrets.Clear(); TurretById.Clear(); TurretLv.Clear(); Cards.Clear(); CardById.Clear();
             Enemies.Clear(); Stages.Clear(); Strings.Clear();
             GearParts.Clear(); Grades.Clear(); Chips.Clear(); ChipById.Clear(); Missions.Clear(); Attend.Clear();
-            Frames.Clear(); Skins.Clear(); Products.Clear(); ShopItems.Clear(); BoxRates.Clear();
+            Frames.Clear(); GearNames.Clear(); Skins.Clear(); Products.Clear(); ShopItems.Clear(); BoxRates.Clear();
 
             foreach (var r in Read("Config")) config[r.S("Key")] = r.D("Value");
             foreach (var r in Read("Turret"))
@@ -154,7 +155,8 @@ namespace EarthDef
                     stat2 = r.S("Stat2"), base2 = r.D("Base2"), perLv2 = r.D("Per_Lv2"),
                 });
             foreach (var r in Read("Gear_Grade"))
-                Grades.Add(new GradeRow { grade = r.I("Grade"), name = r.S("Name"), color = Art.Hex(r.S("Color")), mul = r.D("Mul"), lvMax = r.I("Lv_Max") });
+                Grades.Add(new GradeRow { grade = r.I("Grade"), name = r.S("Name"), color = Art.Hex(r.S("Color")), mul = r.D("Mul"), lvMax = r.I("Lv_Max"), chipPrefix = r.S("Chip_Prefix") });
+            foreach (var r in Read("Gear_Name")) GearNames[r.S("Part") + "_" + r.I("Grade")] = r.S("Name");
             foreach (var r in Read("Chip"))
             {
                 var c = new ChipRow

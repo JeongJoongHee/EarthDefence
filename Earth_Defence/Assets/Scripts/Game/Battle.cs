@@ -495,8 +495,8 @@ namespace EarthDef
                 for (int i = 0; i < n; i++)
                 {
                     int g = Gear.DropGrade(stageNo, eliteMode, rnd);
-                    if (rnd.NextDouble() < Tables.C("Drop_Gear_Chance", 0.4)) { var it = Gear.NewGear(g, null, rnd); drops.Add($"{it.Row.name} ({it.G.name})"); dropGear++; }
-                    else { var c = Gear.NewChip(g, null, rnd); drops.Add($"{c.Row.name} ({Tables.Grade(c.q).name})"); dropChip++; }
+                    if (rnd.NextDouble() < Tables.C("Drop_Gear_Chance", 0.4)) { var it = Gear.NewGear(g, null, rnd); drops.Add(it.Name); dropGear++; }
+                    else { var c = Gear.NewChip(g, null, rnd); drops.Add(c.Name); dropChip++; }
                 }
             }
             Meta.MissionAdd("play");

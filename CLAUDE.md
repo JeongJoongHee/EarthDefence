@@ -1,6 +1,12 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
-## ▶ 재개 메모 (2026-11-17 — 2차 수정안 17개 반영)
+## ▶ 재개 메모 (2026-11-17 — 3차 수정안 10개 반영)
+- 요청 = `요청 사항/3차 수정안.docx`. 보고 = `3차_수정안_결과.html` (키 earthdef-req3-1117, 캡처 `캡쳐본 모음/3차_수정안_캡처/`, 전·뒤 = before_*.png). 시험 120 + 13 + 54 오류 0. 결정 대기 r3-art (아트 퀄업 더 할 화면).
+- 표 = tools/fix3_tables.py (칩 → 회로 · 스킨 → 외형 · Gear.xlsx Gear_Name 부위x등급 이름 · Gear_Grade Chip_Prefix). 코드: GearItem.Name/Icon(g_<부위>_<등급>) · ChipItem.Name/Icon(chip_<등급>) · Art.TurretIcon(외형 끼우면 외형 그림) · GearTab.ChipPlace(착용 안내 창) · 작은 회로 칸 UI/minislot · Looks.Open(외형 메뉴, 로비 위 줄 붓 단추, 상점·터렛 탭에선 뺌) · GlowPulse(영웅 이상 획득 빛, UI/glow_frame).
+- 그림: earth_export.py GRADE_PAL · grade_icon · gq_* (icon) · card() 명암 + 윤기 (ui). 고치기 전 UI 그림은 세션 스크래치 ui_before (지워질 수 있음).
+- 시험 고침: 소용돌이포 필살기가 가끔 0번 → 시험에서 사거리 안에 적을 둠.
+
+## (지난) 재개 메모 (2026-11-17 — 2차 수정안 17개 반영)
 - 요청 = `요청 사항/2차 수정안.docx`. 보고 = `2차_수정안_결과.html` (키 earthdef-req2-1117, 캡처 `캡쳐본 모음/2차_수정안_캡처/`). 시험 120 + 13 + 47 오류 0.
 - 표 고치기 tools/fix2_tables.py · 아이콘 입체감 = earth_export.py pop3d (FLAT_ICONS 는 뺌) · 장비 그림 gx_* · 달토끼 earth_art.moon_rabbit + World · 돌파 붉은색 = SpriteHue _SetHue (Config Break_Hue · Break_Sat) · 보스 크기 Config Elite_Size_Mul 3 · Boss_Size_Mul 3.5.
 - 해석: "기지 끼움 – 변경" = 외형 단추 "변경 / 사용 중" · 돌파 붉은색이 스킨 색보다 먼저.

@@ -297,8 +297,11 @@ def export_fx():
 # ------------------------------------------------------------------ UI 9분할 판
 def export_ui():
     def card(fill, lip, w=120, h=120, r=24, sw=5.5, lipH=12):
-        return A.rr(sw / 2 + 1, sw / 2 + 1, w - sw - 2, h - sw - 2, r, lip, sw) + rrf(sw + 1, sw + 1, w - 2 * sw - 2, h - 2 * sw - 2 - lipH, r - 4, fill) \
-            + rrf(sw + 8, sw + 5, w - 2 * sw - 18, 6, 3, '#ffffff', .35)
+        # 3차 수정안 "전체적인 아트 퀄업": 윗면을 위 밝게 → 아래 조금 어둡게 + 위쪽 윤기 띠를 굵게 + 아래 턱과 사이에 얇은 그림자
+        return (A.rr(sw / 2 + 1, sw / 2 + 1, w - sw - 2, h - sw - 2, r, A.G(lip, 'v', .85, .1), sw)
+                + rrf(sw + 1, sw + 1, w - 2 * sw - 2, h - 2 * sw - 2 - lipH, r - 4, A.G(fill, 'v', .93, .3))
+                + rrf(sw + 1, h - sw - 2 - lipH - 3, w - 2 * sw - 2, 3, 1, '#000000', .08)
+                + rrf(sw + 8, sw + 5, w - 2 * sw - 18, 9, 4, '#ffffff', .45))
     items = {
         'card': card(CREAM, TAN), 'card_white': card('#fffaf0', '#e9dcc2'), 'btn_green': card(GREEN, GREEN2), 'btn_gray': card('#cfc7b8', '#a8a092'),
         'btn_orange': card(ORANGE, ORANGE2), 'btn_red': card(RED, RED2), 'btn_cream': card(CREAM, TAN), 'btn_sky': card('#bfe6fb', '#8fc3e0'),
@@ -308,14 +311,18 @@ def export_ui():
         'white': rrf(0, 0, 80, 80, 24, '#ffffff'), 'window': A.rr(4, 4, 232, 232, 30, CREAM, 6),
         'slot_dash': f'<rect x="4" y="4" width="112" height="112" rx="22" fill="{CREAM2}" stroke="{INK}" stroke-width="5" stroke-dasharray="14 9"/>',
         'band': f'<path d="M3 30 Q3 3 30 3 L90 3 Q117 3 117 30 L117 117 L3 117 Z" fill="#ffffff"/>',
+        # 3차 수정안: 영웅 이상 획득 테두리 빛 (흰 → 코드에서 등급 색) · 작은 회로 칸
+        'glow_frame': blur('<rect x="22" y="22" width="116" height="116" rx="30" fill="none" stroke="#ffffff" stroke-width="14"/>', 7, 1)
+                      + '<rect x="22" y="22" width="116" height="116" rx="30" fill="none" stroke="#ffffff" stroke-width="5"/>',
+        'minislot': f'<rect x="3" y="3" width="42" height="42" rx="11" fill="{CREAM}" stroke="{INK}" stroke-width="4"/>',
         # 11-16 저녁 사용자 "속성이 이쁘게 안 보임 — 타원이 아닌 네모(태그를 붙이는 느낌)": 흰 바탕(코드에서 속성 색) + 왼쪽 뾰족 + 구멍
         'tag': f'<path d="M28 5 L106 5 Q115 5 115 14 L115 58 Q115 67 106 67 L28 67 L6 36 Z" fill="#ffffff" stroke="{INK}" stroke-width="5" stroke-linejoin="round"/>'
                f'<circle cx="26" cy="36" r="6.5" fill="{INK}"/><path d="M34 13 L104 13" stroke="#ffffff" stroke-width="4" opacity=".5"/>',
     }
-    sizes = {'tag': (120, 72), 'pill': (120, 80), 'pill_dark': (120, 80), 'track': (80, 40), 'fill': (80, 40), 'white': (80, 80), 'window': (240, 240)}
+    sizes = {'glow_frame': (160, 160), 'minislot': (48, 48), 'tag': (120, 72), 'pill': (120, 80), 'pill_dark': (120, 80), 'track': (80, 40), 'fill': (80, 40), 'white': (80, 80), 'window': (240, 240)}
     for n, svg in items.items():
         w, h = sizes.get(n, (120, 120))
-        out('UI', n, Rr(svg, w, h, A.WOB['ui'] if n not in ('fill', 'white', 'band', 'tag') else 0, .04))
+        out('UI', n, Rr(svg, w, h, A.WOB['ui'] if n not in ('fill', 'white', 'band', 'tag', 'glow_frame', 'minislot') else 0, .04))
     print('ui', len(items))
 
 
@@ -424,6 +431,87 @@ def gx_boots(w, h, f, s):
             + F(f'M{w*.34} {h*.12} L{w*.4} {h*.12} L{w*.38} {h*.5} L{w*.33} {h*.5} Z', '#ffffff', .6))
 
 
+# 3차 수정안 (11-17) "등급별로 아이콘 다르게": 등급 색으로 몸 · 장식 바꾸고, 희귀부터 보석 · 전설부터 빛 · 궁극은 반짝이
+GRADE_PAL = {1: ('#d8d0c2', '#a8a092'), 2: ('#b9e09e', '#6fae55'), 3: ('#a9d6f6', '#4a8fd0'), 4: ('#d2b8f2', '#8a60d0'),
+             5: ('#ffd09a', '#e08a30'), 6: ('#f7aa9c', '#d0564a'), 7: ('#ffe89a', '#e0a722')}
+
+
+def grade_icon(fn, g):
+    main, trim = GRADE_PAL[g]
+
+    def draw(w, h, f, s):
+        out = ''
+        if g >= 5:
+            out += A.blur(C(w * .5, h * .52, w * .46, main, 0), 7, .9)          # 둘레 빛
+        out += fn(w, h, f, s, A.mix(main, '#ffffff', .25), trim)
+        if g >= 3:                                                         # 보석 (오른쪽 위)
+            gx, gy, r = w * .84, h * .14, w * .1
+            out += P(f'M{gx} {gy - r} L{gx + r * .8} {gy} L{gx} {gy + r} L{gx - r * .8} {gy} Z', A.G(trim, 'v', .8, .5), s * .6) + C(gx - r * .2, gy - r * .3, r * .22, '#ffffff', 0)
+        if g >= 7:                                                         # 반짝이
+            for (x, y, k) in ((.12, .18, .1), (.86, .82, .08)):
+                cx, cy, r = w * x, h * y, w * k
+                out += P(f'M{cx} {cy - r} Q{cx + r * .15} {cy - r * .15} {cx + r} {cy} Q{cx + r * .15} {cy + r * .15} {cx} {cy + r} Q{cx - r * .15} {cy + r * .15} {cx - r} {cy} Q{cx - r * .15} {cy - r * .15} {cx} {cy - r} Z', '#fff6c8', s * .4)
+        return out
+    return draw
+
+
+def gq_weapon(w, h, f, s, body, trim):
+    G = A.G
+    return (A.blur(C(w * .9, h * .4, w * .09, trim, 0), 4, .9)
+            + A.rr(w * .08, h * .36, w * .62, h * .2, 8, G(body, 'v', .78, .5), s)
+            + A.rr(w * .62, h * .3, w * .3, h * .14, 6, G(trim, 'v', .8, .5), s * .9)
+            + A.rr(w * .2, h * .24, w * .26, h * .1, 4, G('#a9b1bb', 'v'), s * .8)
+            + P(f'M{w*.24} {h*.56} L{w*.44} {h*.56} L{w*.38} {h*.88} Q{w*.3} {h*.92} {w*.2} {h*.86} Z', G('#8a929c', 'v'), s)
+            + A.rr(w * .44, h * .43, w * .2, h * .06, 3, trim, 0) + C(w * .9, h * .37, w * .045, '#fffbe0', 0)
+            + F(f'M{w*.14} {h*.39} L{w*.58} {h*.39} L{w*.58} {h*.42} L{w*.14} {h*.42} Z', '#ffffff', .75))
+def gq_helmet(w, h, f, s, body, trim):
+    G = A.G
+    return (L(f'M{w*.66} {h*.2} L{w*.78} {h*.04}', s * .9) + A.blur(C(w * .78, h * .05, w * .05, trim, 0), 3, 1) + C(w * .78, h * .05, w * .035, '#ffffff', 0)
+            + C(w * .5, h * .54, w * .42, G(body, 'r', .82, .3), s)
+            + P(f'M{w*.2} {h*.5} Q{w*.5} {h*.26} {w*.8} {h*.5} Q{w*.8} {h*.76} {w*.5} {h*.78} Q{w*.2} {h*.76} {w*.2} {h*.5} Z', G('#5fb7ea', 'v', .7, .45), s * .8)
+            + F(f'M{w*.28} {h*.5} Q{w*.36} {h*.36} {w*.52} {h*.36} Q{w*.38} {h*.42} {w*.34} {h*.56} Z', '#ffffff', .85)
+            + A.rr(w * .12, h * .82, w * .76, h * .1, 5, G(trim, 'v'), s * .7))
+def gq_suit(w, h, f, s, body, trim):
+    G = A.G
+    return (P(f'M{w*.3} {h*.14} L{w*.7} {h*.14} L{w*.92} {h*.36} L{w*.8} {h*.48} L{w*.76} {h*.92} L{w*.24} {h*.92} L{w*.2} {h*.48} L{w*.08} {h*.36} Z', G(body, 'v', .8, .3), s)
+            + E(w * .5, h * .16, w * .2, h * .07, G('#cfd8de', 'v'), s * .8)
+            + A.rr(w * .34, h * .36, w * .32, h * .22, 6, G('#9aa3ad', 'v'), s * .8)
+            + A.blur(C(w * .42, h * .47, w * .05, '#7ff0ff', 0), 2.5, 1) + C(w * .42, h * .47, w * .035, '#c8ffff', 0)
+            + A.blur(C(w * .58, h * .47, w * .05, trim, 0), 2.5, 1) + C(w * .58, h * .47, w * .035, '#fff0d8', 0)
+            + A.rr(w * .22, h * .64, w * .56, h * .1, 4, G(trim, 'v'), s * .7)
+            + F(f'M{w*.28} {h*.2} L{w*.36} {h*.2} L{w*.3} {h*.6} L{w*.24} {h*.6} Z', '#ffffff', .6))
+def gq_shield(w, h, f, s, body, trim):
+    G = A.G
+    sh = f'M{w*.5} {h*.06} L{w*.9} {h*.2} Q{w*.92} {h*.66} {w*.5} {h*.94} Q{w*.08} {h*.66} {w*.1} {h*.2} Z'
+    inn = f'M{w*.5} {h*.18} L{w*.78} {h*.28} Q{w*.78} {h*.62} {w*.5} {h*.82} Q{w*.22} {h*.62} {w*.22} {h*.28} Z'
+    return (P(sh, G(trim, 'v', .75, .4), s) + A.blur(P(inn, body, 0), 5, .8) + P(inn, G(body, 'v', .7, .55), s * .7)
+            + P(f'M{w*.5} {h*.32} L{w*.56} {h*.46} L{w*.7} {h*.47} L{w*.59} {h*.56} L{w*.63} {h*.7} L{w*.5} {h*.62} L{w*.37} {h*.7} L{w*.41} {h*.56} L{w*.3} {h*.47} L{w*.44} {h*.46} Z', '#ffffff', s * .5)
+            + F(f'M{w*.18} {h*.24} L{w*.42} {h*.14} L{w*.3} {h*.4} Z', '#ffffff', .55))
+def gq_core(w, h, f, s, body, trim):
+    G = A.G
+    hexd = ' '.join(('M' if i == 0 else 'L') + f'{w*.5 + w*.44*math.cos(math.radians(-90 + i*60)):.1f} {h*.5 + h*.44*math.sin(math.radians(-90 + i*60)):.1f}' for i in range(6)) + ' Z'
+    bolts = ''.join(C(w * .5 + w * .34 * math.cos(math.radians(-90 + i * 60)), h * .5 + h * .34 * math.sin(math.radians(-90 + i * 60)), w * .035, '#6b737d', 0) for i in range(6))
+    return (P(hexd, G(trim, 'v', .72, .4), s) + bolts
+            + A.blur(C(w * .5, h * .5, w * .26, body, 0), 6, .9) + C(w * .5, h * .5, w * .2, G(body, 'r', .85, .7), s * .8)
+            + C(w * .5, h * .5, w * .08, '#fffbe0', 0) + C(w * .43, h * .43, w * .045, '#ffffff', 0))
+def gq_boots(w, h, f, s, body, trim):
+    G = A.G
+    return (A.blur(E(w * .3, h * .95, w * .14, h * .05, trim, 0), 3, .9)
+            + P(f'M{w*.3} {h*.08} L{w*.6} {h*.08} L{w*.6} {h*.54} L{w*.88} {h*.64} Q{w*.94} {h*.84} {w*.8} {h*.86} L{w*.24} {h*.86} Q{w*.18} {h*.86} {w*.2} {h*.68} Z', G(body, 'v', .8, .3), s)
+            + A.rr(w * .18, h * .78, w * .74, h * .12, 5, G(trim, 'v'), s * .7)
+            + A.rr(w * .28, h * .26, w * .34, h * .08, 3, G('#9aa3ad', 'v'), s * .6)
+            + C(w * .34, h * .46, w * .04, '#7ff0ff', 0)
+            + F(f'M{w*.34} {h*.12} L{w*.4} {h*.12} L{w*.38} {h*.5} L{w*.33} {h*.5} Z', '#ffffff', .6))
+def gq_chip(w, h, f, s, body, trim):
+    """회로 (등급마다 판 색 · 금 선이 늘어남)"""
+    pins = ''.join(L(f'M{w*x} {h*.08} L{w*x} {h*.22} M{w*x} {h*.78} L{w*x} {h*.92} M{w*.08} {h*x} L{w*.22} {h*x} M{w*.78} {h*x} L{w*.92} {h*x}', s * .9) for x in (.35, .5, .65))
+    return (pins + A.rr(w * .2, h * .2, w * .6, h * .6, 8, A.G(body, 'v', .8, .4), s) + A.rr(w * .34, h * .34, w * .32, h * .32, 4, A.G(trim, 'v', .75, .4), s * .6)
+            + L(f'M{w*.26} {h*.3} L{w*.34} {h*.38} M{w*.74} {h*.7} L{w*.66} {h*.62}', s * .5, '#ffe28a') + C(w * .3, h * .3, w * .04, '#fff4dc', 0))
+
+
+GEAR_Q = dict(weapon=gq_weapon, helmet=gq_helmet, suit=gq_suit, shield=gq_shield, core=gq_core, boots=gq_boots)
+
+
 def pop3d(im):
     """모든 아이콘 입체감 (2차 수정안 "아이콘을 조금 더 퀄리티 있게 — 입체적으로"):
     선(진갈색)이 아닌 색 부분에 위→아래 명암 · 왼쪽 위 반짝임 · 아래로 그림자"""
@@ -473,6 +561,12 @@ FLAT_ICONS = {'star_off', 'gem_off', 'plus', 'x', 'check'}   # 입체감을 안 
 
 
 def export_icon():
+    # 등급별 장비 6 x 7 · 회로 7 (3차 수정안)
+    for part, fn in GEAR_Q.items():
+        for g in range(1, 8):
+            out('Icon', f'g_{part}_{g}', pop3d(Rr(f'<g transform="translate(8,8)">{grade_icon(fn, g)(96, 96, CREAM, 5)}</g>', 112, 112, A.WOB['icon'])))
+    for g in range(1, 8):
+        out('Icon', f'chip_{g}', pop3d(Rr(f'<g transform="translate(8,8)">{grade_icon(gq_chip, g)(96, 96, CREAM, 5)}</g>', 112, 112, A.WOB['icon'])))
     for n, f in ICON_LIST.items():
         im = Rr(f'<g transform="translate(8,8)">{ICONS[n](96, 96, f, 5)}</g>', 112, 112, A.WOB['icon'])
         out('Icon', n, im if n in FLAT_ICONS else pop3d(im))

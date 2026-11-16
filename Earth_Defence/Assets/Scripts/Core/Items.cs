@@ -17,14 +17,17 @@ namespace EarthDef
         public int LvMax => G.lvMax;
         public double V1 => (Row.base1 + Row.perLv1 * (lv - 1)) * G.mul;
         public double V2 => (Row.base2 + Row.perLv2 * (lv - 1)) * G.mul;
+        /// <summary>등급별 이름 · 아이콘 (3차 수정안 "등급별로 아이템 이름 · 아이콘 다르게")</summary>
+        public string Name => Tables.GearNames.TryGetValue(part + "_" + grade, out var n) ? n : Row.name;
+        public string Icon => Row.icon + "_" + grade;
     }
 
     /// <summary>받은 것 1개 (상자 · 합성 결과를 아이콘으로 하나씩 보여 줄 때 — 2차 수정안)</summary>
     public class GotItem
     {
         public string name, icon; public Color bg = Color.white; public int grade;
-        public static GotItem Of(GearItem g) => new() { name = g.Row.name, icon = g.Row.icon, bg = g.G.color, grade = g.grade };
-        public static GotItem Of(ChipItem c) => new() { name = c.Row.name, icon = "chip", bg = Tables.Grade(c.q).color, grade = c.q };
+        public static GotItem Of(GearItem g) => new() { name = g.Name, icon = g.Icon, bg = g.G.color, grade = g.grade };
+        public static GotItem Of(ChipItem c) => new() { name = c.Name, icon = c.Icon, bg = Tables.Grade(c.q).color, grade = c.q };
         public static GotItem Res(string icon, string text) => new() { name = text, icon = icon };
     }
 
@@ -37,6 +40,8 @@ namespace EarthDef
         public int q = 1, at = -1;
         public ChipRow Row => Tables.ChipById.TryGetValue(id, out var r) ? r : null;
         public double Val => Row?.Val(q) ?? 0;
+        public string Name => (string.IsNullOrEmpty(Tables.Grade(q).chipPrefix) ? "" : Tables.Grade(q).chipPrefix + " ") + (Row?.name ?? id);
+        public string Icon => "chip_" + q;
     }
 
     /// <summary>
@@ -249,8 +254,8 @@ namespace EarthDef
                     for (int i = 0; i < (int)v; i++) S.shards[S.TIdx(open[rnd.Next(open.Count)].id)]++;
                     return $"{L.T("r_shards")} +{v:0}";
                 }
-                case "chip": { var c = NewChip((int)v, null, rnd); return $"{c.Row.name} ({Tables.Grade(c.q).name})"; }
-                case "gear": { var g = NewGear((int)v, null, rnd); return $"{g.Row.name} ({g.G.name})"; }
+                case "chip": { var c = NewChip((int)v, null, rnd); return c.Name; }
+                case "gear": { var g = NewGear((int)v, null, rnd); return g.Name; }
             }
             return kind;
         }

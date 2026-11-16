@@ -130,7 +130,7 @@ namespace EarthDef.EditorTools
             Check(Tables.Grade(3).color.b > Tables.Grade(3).color.r + 0.3f && Tables.Grade(4).color.b > Tables.Grade(4).color.g + 0.2f, "등급 색: 희귀 파랑 · 영웅 보라");
             {
                 var got = Store.Buy(Tables.ShopItems.Find(i => i.id == "i_chip10"));
-                Check(got != null && got.Count == 11 && got.TrueForAll(g => g.icon == "chip" && g.grade > 0), "상자 → 아이콘 11개 (등급)");
+                Check(got != null && got.Count == 11 && got.TrueForAll(g => g.icon.StartsWith("chip_") && g.grade > 0), "상자 → 아이콘 11개 (등급)");
                 Game.ToLobby(); yield return null; Popup.CloseAll();
                 ShopTab.GotPopup(got); yield return Wait(2.2f);
                 Capture("40_box_icons");
@@ -172,11 +172,42 @@ namespace EarthDef.EditorTools
                 B.time = Tables.Cf("Boss_Time") - 0.1f; FF(1.5f, 2); yield return Wait(0.5f);
                 Capture("47_boss_big");
             }
+            {   // ---- 3차 수정안 (11-17)
+                Check(L.T("chip") == "회로" && Tables.ChipById["ch_atk"].name == "공격 회로" && L.T("skin") == "외형", "글자: 칩 → 회로 · 스킨 → 외형");
+                var gw = Gear.NewGear(4, "weapon"); var cw = Gear.NewChip(3, "ch_atk");
+                Check(gw.Name == "보랏빛 플라즈마 소총" && gw.Icon == "g_weapon_4" && cw.Name == "푸른 공격 회로" && cw.Icon == "chip_3" && Art.Icon(gw.Icon) != null && Art.Icon(cw.Icon) != null,
+                      $"등급별 이름 · 아이콘: {gw.Name} · {cw.Name}");
+                Store.BuySkin(Tables.SkinOf("rail"));
+                Check(Art.TurretIcon(Tables.TurretById["rail"]) == Art.TurretSkinUI("rail"), "외형 착용 → 터렛 아이콘도 외형 그림");
+                Game.ToLobby(); yield return null; Popup.CloseAll();
+                Game.Lobby.SetTab(1); yield return Wait(0.3f);
+                Check(GameObject.Find("Skin") == null && GameObject.Find("Frame") == null, "터렛 탭에서 외형 단추 없앰");
+                Capture("50_turret_tab_skinicon");
+                Gear.Equip(gw); Gear.Equip(Gear.NewGear(6, "core")); Gear.Equip(Gear.NewGear(7, "helmet"));
+                { var (pp, ss) = Gear.FreeSlotFor(cw); Gear.PutChip(cw, pp, ss); }
+                foreach (var q in new[] { 5, 7, 2 }) { var cx = Gear.NewChip(q, "ch_atk"); var (pp, ss) = Gear.FreeSlotFor(cx); if (pp >= 0) Gear.PutChip(cx, pp, ss); }
+                Game.Lobby.SetTab(2); yield return Wait(0.3f);
+                Check(GameObject.Find("MiniSlot") != null, "장비 탭 회로 작은 칸");
+                Capture("51_gear_minislots");
+                Game.Lobby.gearTab.ChipPlace(cw); yield return Wait(0.3f);
+                Capture("52_chip_place");
+                Popup.CloseAll();
+                var got = new List<GotItem> { GotItem.Of(Gear.NewGear(4, "suit")), GotItem.Of(Gear.NewGear(6, "core")), GotItem.Of(Gear.NewChip(7, "ch_dmg")), GotItem.Of(Gear.NewChip(2, "ch_hp")) };
+                ShopTab.GotPopup(got); yield return Wait(1.2f);
+                int glows = 0; foreach (var gl in Object.FindObjectsByType<GlowPulse>(FindObjectsSortMode.None)) glows++;
+                Check(glows == 3, $"영웅 이상 획득 테두리 빛 {glows}개 (4개 중 영웅 · 신화 · 궁극)");
+                Capture("53_got_glow");
+                Popup.CloseAll();
+            }
             Game.ToLobby(); yield return null; Popup.CloseAll();
             Game.Lobby.SetTab(5); yield return Wait(0.4f);
             Capture("30_shop");
-            Game.Lobby.shopTab.GetComponentInChildren<UnityEngine.UI.ScrollRect>().verticalNormalizedPosition = 0.45f; yield return Wait(0.3f);
-            Capture("30b_shop_skins");
+            Game.Lobby.shopTab.GetComponentInChildren<UnityEngine.UI.ScrollRect>().verticalNormalizedPosition = 0f; yield return Wait(0.3f);
+            Capture("30b_shop_bottom");
+            Check(GameObject.Find("S_sk_rail") == null, "상점엔 외형이 없음 (외형 메뉴로 옮김)");
+            Looks.Open(0); yield return Wait(0.4f);
+            Capture("30c_looks_turret");
+            Popup.CloseAll();
             Game.Lobby.SetTab(4); yield return Wait(0.3f);
             Capture("31_challenge");
 
@@ -186,7 +217,7 @@ namespace EarthDef.EditorTools
             Check(Store.UpFrame("starsea") && S.FrameStar("starsea") == 2, $"별 올리기 → 별 {S.FrameStar("starsea")} (효과 {star.Val(2)})");
             Store.EquipFrame("starsea");
             Game.Lobby.SetTab(1); yield return null;
-            ShopTab.FramePopup(Game.Lobby); yield return Wait(0.3f);
+            Looks.Open(1); yield return Wait(0.3f);
             Capture("32_frames");
             Popup.CloseAll();
             Game.StartStage(10, 3); yield return null;
@@ -214,7 +245,11 @@ namespace EarthDef.EditorTools
             var mpb = new MaterialPropertyBlock(); rail.unit.GetComponent<SpriteRenderer>().GetPropertyBlock(mpb);
             Check(rail.skin != null && rail.late > 0 && rail.unit.GetComponent<SpriteRenderer>().sharedMaterial == Art.HueMat && System.Math.Abs(mpb.GetFloat("_Hue") - rail.skin.hue / 360f) < 0.001f,
                   $"관통포 스킨: 색 돌리기 {mpb.GetFloat("_Hue") * 360:0}° · 피해 +{rail.late:P0}");
-            for (int i = 0; i < 12 && !B.units.TrueForAll(u => u == B.Guardian || u.ults > 0); i++) FF(5f);
+            for (int i = 0; i < 12 && !B.units.TrueForAll(u => u == B.Guardian || u.ults > 0); i++)
+            {   // 소용돌이포는 사거리가 짧음 → 필살기가 안 찼으면 사거리 안에 적을 둠 (시험이 가끔 실패했음)
+                foreach (var u in B.units) if (u != B.Guardian && u.ults == 0) B.Spawn("beetle", (Vector2)u.transform.position + new Vector2(0, 1.2f));
+                FF(5f);
+            }
             foreach (var u in B.units) if (u != B.Guardian) Check(u.ults > 0, $"{u.t.row.name} 필살기 {u.ults}번 ({u.t.skin.ultName})");
             yield return Wait(0.3f);
             Capture("33_skins_battle");

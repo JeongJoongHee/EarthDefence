@@ -49,7 +49,10 @@ namespace EarthDef
             stamNext = UIKit.Label(top, "", 24, Art.Cream, TextAnchor.MiddleCenter, true); stamNext.rectTransform.TL(300, 106, 290, 30);
             UIKit.Clickable(sp, ShowStamina);
             // 3차: 다이아 (누르면 상점)
-            var dp = UIKit.Panel(top, "pill", "Dia"); dp.rectTransform.TL(600, 26, 300, 84);
+            var dp = UIKit.Panel(top, "pill", "Dia"); dp.rectTransform.TL(600, 26, 240, 84);
+            // 3차 수정안: 외형 메뉴 (터렛 외형 · 기지 외형)
+            var lk = UIKit.Tile(top, "btn_purple", Color.white, Art.Icon("brush"), 0.6f, "Looks"); lk.rectTransform.TL(850, 20, 96, 100);
+            UIKit.Clickable(lk, () => Looks.Open());
             var di = UIKit.Img(dp.transform, Art.Icon("diamond"), "Dia"); di.rectTransform.Place(0, 0.5f, new Vector2(10, 0), new Vector2(70, 70), new Vector2(0, 0.5f));
             diaT = UIKit.Label(dp.transform, "", 38, Art.Ink, TextAnchor.MiddleLeft, false); diaT.rectTransform.Fill(90, 6, 16, 0);
             UIKit.Clickable(dp, () => SetTab(5));
@@ -241,7 +244,6 @@ namespace EarthDef
                 baseDescT = UIKit.Label(r, "", 26, Art.Soft, TextAnchor.MiddleLeft, false); baseDescT.rectTransform.TL(126, 58, 560, 44);
                 baseB = UIKit.Btn(r, "btn_green", null, 30, () => UpPopup(null), "Up"); ((RectTransform)baseB.transform).TL(730, 12, 250, 96);
                 baseCostT = CostLabel(baseB.transform);
-                var fb = UIKit.Btn(r, "btn_purple", L.T("frame"), 24, () => ShopTab.FramePopup(this), "Frame"); ((RectTransform)fb.transform).TL(560, 22, 156, 76);
                 Divider(c, y + h + 3);
                 y += h + 8;
             }
@@ -249,7 +251,7 @@ namespace EarthDef
             {
                 var r = UIKit.Rect(c, "Row_" + t.id); r.TL(10, y, 1000, h);
                 bool open = S.Unlocked(t);
-                var tile = UIKit.Tile(r, "slot", open ? Color.white : new Color(0.75f, 0.72f, 0.68f), Art.TurretUI(t.art), 0.86f, "Icon"); tile.rectTransform.TL(0, 4, 108, 108);
+                var tile = UIKit.Tile(r, "slot", open ? Color.white : new Color(0.75f, 0.72f, 0.68f), Art.TurretIcon(t), 0.86f, "Icon"); tile.rectTransform.TL(0, 4, 108, 108);
                 var tt = t; UIKit.Clickable(tile, () => TurretInfo(tt));
                 Divider(c, y + h + 3);
                 if (!open) { var lk = UIKit.Img(tile.transform, Art.Icon("lock"), "Lock"); lk.raycastTarget = false; lk.rectTransform.Place(1, 0, new Vector2(4, -4), new Vector2(52, 52), new Vector2(1, 0)); }
@@ -261,12 +263,6 @@ namespace EarthDef
                     y += h + 8; continue;
                 }
                 var lv = UIKit.Label(r, "", 30, Art.Brown, TextAnchor.MiddleLeft, false); lv.rectTransform.TL(470, 4, 220, 50);
-                var sk = Tables.SkinOf(t.id);
-                if (sk != null)
-                {   // 3차 스킨 단추 (가졌으면 보라 · 끼웠으면 붓에 빛)
-                    var sb = UIKit.Tile(r, S.HasSkin(t.id) ? "btn_purple" : "btn_cream", Color.white, Art.Icon("brush"), 0.62f, "Skin"); sb.rectTransform.TL(600, 18, 84, 84);
-                    var skr = sk; UIKit.Clickable(sb, () => ShopTab.SkinPopup(skr, this));
-                }
                 var bar = UIKit.Bar(r, Art.Sky, "Shards"); bar.transform.parent.GetComponent<RectTransform>().TL(126, 62, 460, 34);
                 var sh = UIKit.Label(bar.transform.parent, "", 22, Color.white); sh.rectTransform.Fill(0, 2, 0, 0);
                 var btn = UIKit.Btn(r, "btn_green", null, 30, () => UpPopup(t), "Up"); ((RectTransform)btn.transform).TL(730, 12, 250, 96);
@@ -284,7 +280,7 @@ namespace EarthDef
             {
                 for (int i = p.win.childCount - 1; i >= 0; i--) { var ch = p.win.GetChild(i); if (ch.name.StartsWith("U_")) Destroy(ch.gameObject); }
                 var root = UIKit.Rect(p.win, "U_Root"); root.Fill();
-                var tile = UIKit.Tile(root, "slot", Color.white, t != null ? Art.TurretUI(t.art) : Art.Icon("base"), t != null ? 0.86f : 0.7f, "Pic"); tile.rectTransform.TL(40, 124, 170, 170);
+                var tile = UIKit.Tile(root, "slot", Color.white, t != null ? Art.TurretIcon(t) : Art.Icon("base"), t != null ? 0.86f : 0.7f, "Pic"); tile.rectTransform.TL(40, 124, 170, 170);
                 var rows = new List<(string name, string now, string next)>();
                 bool max; string costTxt; bool can;
                 if (t != null)
@@ -340,7 +336,7 @@ namespace EarthDef
         {
             // 11-16 밤 "정보창을 조금 더 컴팩트하게"
             var p = Popup.Make(t.name, 900, 860);
-            var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretUI(t.art), 0.86f, "Pic"); tile.rectTransform.TL(40, 124, 196, 196);
+            var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretIcon(t), 0.86f, "Pic"); tile.rectTransform.TL(40, 124, 196, 196);
             var nm = UIKit.Label(p.win, t.name, 46, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(260, 128, 600, 60);
             UIKit.ElemTag(p.win, t.elem, 260, 196, 122, 50, 26);
             bool open = SaveData.Cur.Unlocked(t);
@@ -489,7 +485,7 @@ namespace EarthDef
         static void ShowUnlock(TurretRow t, System.Action next)
         {
             var p = Popup.Make(L.T("unlocked"), 820, 760, next);
-            var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretUI(t.art), 0.86f, "Pic"); tile.rectTransform.Place(0.5f, 1, new Vector2(0, -130), new Vector2(280, 280), new Vector2(0.5f, 1));
+            var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretIcon(t), 0.86f, "Pic"); tile.rectTransform.Place(0.5f, 1, new Vector2(0, -130), new Vector2(280, 280), new Vector2(0.5f, 1));
             tile.gameObject.AddComponent<PopIn>();
             p.Text(t.name, 430, 52, Art.Ink, 70);
             p.Text($"{Elem.Name(t.elem)}, {t.desc.Replace(" · ", ", ")}", 500, 30, Art.Soft, 50);

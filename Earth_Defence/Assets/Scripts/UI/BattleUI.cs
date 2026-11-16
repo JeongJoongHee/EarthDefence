@@ -148,7 +148,7 @@ namespace EarthDef
                     var et = UIKit.Label(w, L.T("empty"), 28, Art.Soft, TextAnchor.MiddleCenter, false); et.rectTransform.TL(x, 372, 150, 40);
                     continue;
                 }
-                var tile = UIKit.Tile(w, "slot", Color.white, Art.TurretUI(t.row.art), 0.86f, "Slot" + i); tile.rectTransform.TL(x, 214, 150, 150);
+                var tile = UIKit.Tile(w, "slot", Color.white, Art.TurretIcon(t.row), 0.86f, "Slot" + i); tile.rectTransform.TL(x, 214, 150, 150);
                 Stars(w, x + (150 - StarsW(17)) / 2, 380, t.tier, t.stars, 17);
             }
             // 카드 3장
@@ -190,7 +190,7 @@ namespace EarthDef
             var tg = UIKit.Panel(card.transform, "pill", "Tag"); tg.color = tag.col; tg.rectTransform.Place(0.5f, 1, new Vector2(0, 26), new Vector2(150, 52), new Vector2(0.5f, 0.5f));
             UIKit.Label(tg.transform, L.T(tag.label), 28).rectTransform.Fill(0, 4, 0, 0);
             var pic = UIKit.Panel(card.transform, "slot", "PicBg"); pic.rectTransform.TL(22, 112, cw - 44, 240);
-            var im = UIKit.Img(pic.transform, Art.TurretUI(turret.art), "Pic"); im.raycastTarget = false; im.rectTransform.Fill(24, 20, 24, 14);
+            var im = UIKit.Img(pic.transform, Art.TurretIcon(turret), "Pic"); im.raycastTarget = false; im.rectTransform.Fill(24, 20, 24, 14);
             var sub = UIKit.Label(card.transform, turret.name + ", " + Elem.Name(turret.elem), 26, Art.Soft, TextAnchor.MiddleCenter, false); sub.rectTransform.TL(0, 362, cw, 44);
             var desc = UIKit.Label(card.transform, c.desc, 30, Art.Ink, TextAnchor.UpperCenter, false);
             desc.horizontalOverflow = HorizontalWrapMode.Wrap; desc.rectTransform.TL(16, 420, cw - 32, 140);
@@ -261,7 +261,7 @@ namespace EarthDef
             float y = 128;
             foreach (var t in b.run.turrets)
             {
-                var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretUI(t.row.art), 0.86f, "T"); tile.rectTransform.TL(40, y, 124, 124);
+                var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretIcon(t.row), 0.86f, "T"); tile.rectTransform.TL(40, y, 124, 124);
                 var tt = t; UIKit.Clickable(tile, () => CardList(tt));
                 var nm = UIKit.Label(p.win, t.row.name, 38, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(184, y, 380, 56);
                 Stars(p.win, 920 - StarsW(32), y + 34, t.tier, t.stars, 32);

@@ -78,8 +78,10 @@ namespace EarthDef
             var dots = new Image[Gear.Slots];
             for (int i = 0; i < Gear.Slots; i++)
             {
-                dots[i] = UIKit.Img(p, Art.UI("white"), "Dot"); dots[i].raycastTarget = false; dots[i].type = Image.Type.Simple;
-                dots[i].rectTransform.TL(x + 4 + i * 24.5f, y + 156, 20, 20);
+                // 3차 수정안 "회로 칸이 잘 안 보임": 점 → 테두리 있는 작은 칸 (안에 회로 아이콘 · 잠김은 어둡게)
+                dots[i] = UIKit.Img(p, Art.UI("minislot"), "MiniSlot"); dots[i].raycastTarget = false;
+                dots[i].rectTransform.TL(x - 6 + i * 27, y + 152, 26, 26);
+                var ci = UIKit.Img(dots[i].transform, null, "Chip"); ci.raycastTarget = false; ci.rectTransform.Fill(2, 2, 2, 2); ci.preserveAspect = true;
             }
             slots.Add((tile, tile.transform.Find("Icon").GetComponent<Image>(), lv, dots));
         }
@@ -95,12 +97,17 @@ namespace EarthDef
                 var g = Gear.On(part);
                 var (tile, icon, lv, dots) = slots[k];
                 tile.color = g != null ? Color.Lerp(Color.white, g.G.color, 0.75f) : Color.white;
+                icon.sprite = Art.Icon(g != null ? g.Icon : Tables.Part(part).icon);
                 icon.color = g != null ? Color.white : new Color(1, 1, 1, 0.35f);
                 lv.text = g != null ? $"Lv {g.lv}" : "";
                 for (int i = 0; i < Gear.Slots; i++)
                 {
                     var c = Gear.ChipAt(pi, i);
-                    dots[i].color = !Gear.SlotOpen(i) ? new Color(0.35f, 0.3f, 0.28f, 0.5f) : c != null ? Tables.Grade(c.q).color : new Color(1, 1, 1, 0.55f);
+                    bool open = Gear.SlotOpen(i);
+                    dots[i].color = !open ? new Color(0.45f, 0.4f, 0.36f) : c != null ? Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.6f) : Color.white;
+                    var ci = dots[i].transform.Find("Chip").GetComponent<Image>();
+                    ci.sprite = !open ? Art.Icon("lock") : c != null ? Art.Icon(c.Icon) : null;
+                    ci.enabled = ci.sprite != null; ci.color = open ? Color.white : new Color(1, 1, 1, 0.7f);
                 }
             }
             var lo = Loadout.Build(S);
@@ -123,7 +130,7 @@ namespace EarthDef
                 list.Sort((a, b) => b.grade != a.grade ? b.grade.CompareTo(a.grade) : b.lv != a.lv ? b.lv.CompareTo(a.lv) : string.CompareOrdinal(a.part, b.part));
                 foreach (var g in list)
                 {
-                    var t = UIKit.Tile(grid, "slot", Color.Lerp(Color.white, g.G.color, 0.75f), Art.Icon(g.Row.icon), 0.6f, "G" + g.uid);
+                    var t = UIKit.Tile(grid, "slot", Color.Lerp(Color.white, g.G.color, 0.75f), Art.Icon(g.Icon), 0.6f, "G" + g.uid);
                     t.rectTransform.TL(14 + n % 5 * cell, 10 + n / 5 * cell, 180, 180);
                     var gg = g; UIKit.Clickable(t, () => GearWindow(gg));
                     UIKit.Label(t.transform, $"Lv {g.lv}", 26).rectTransform.Place(0.5f, 0, new Vector2(0, 4), new Vector2(180, 36), new Vector2(0.5f, 0));
@@ -137,10 +144,10 @@ namespace EarthDef
                 list.Sort((a, b) => b.q != a.q ? b.q.CompareTo(a.q) : string.CompareOrdinal(a.id, b.id));
                 foreach (var c in list)
                 {
-                    var t = UIKit.Tile(grid, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon("chip"), 0.48f, "C" + c.uid);
+                    var t = UIKit.Tile(grid, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.48f, "C" + c.uid);
                     t.rectTransform.TL(14 + n % 5 * cell, 10 + n / 5 * cell, 180, 180);
                     var cc = c; UIKit.Clickable(t, () => ChipWindow(cc));
-                    var nm = UIKit.Label(t.transform, Short(c.Row.name), 22); nm.rectTransform.Place(0.5f, 0, new Vector2(0, 4), new Vector2(176, 34), new Vector2(0.5f, 0));
+                    var nm = UIKit.Label(t.transform, Short(c.Name), 22); nm.rectTransform.Place(0.5f, 0, new Vector2(0, 4), new Vector2(176, 34), new Vector2(0.5f, 0));
                     if (Gear.ChipMergeSet(c) != null) UIKit.Dot(t.transform, -14, -14, 30);
                     n++;
                 }
@@ -210,10 +217,10 @@ namespace EarthDef
                 var c = Gear.ChipAt(pi, i);
                 if (c != null && c.Row != null)
                 {
-                    var t = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon("chip"), 0.5f, "Chip" + i); t.rectTransform.TL(x, 576, 136, 136);
+                    var t = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.5f, "Chip" + i); t.rectTransform.TL(x, 576, 136, 136);
                     UIKit.Clickable(t, () => { p.Close(false); ChipWindow(c, () => PartWindow(pi)); });
-                    UIKit.Label(p.win, Short(c.Row.name), 22, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.TL(x - 6, 716, 148, 34);
-                    desc.Add($"- {c.Row.name} ({Tables.Grade(c.q).name}): {c.Row.Desc(c.q)}");
+                    UIKit.Label(p.win, Short(c.Name), 22, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.TL(x - 6, 716, 148, 34);
+                    desc.Add($"- {c.Name}: {c.Row.Desc(c.q)}");
                 }
                 else
                 {
@@ -239,8 +246,8 @@ namespace EarthDef
         /// <summary>장비 정보 (그림 · 이름 · 등급 · 레벨 · 능력치 2개)</summary>
         static void GearInfo(RectTransform w, GearItem g, float y, GearItem cmp = null)
         {
-            var t = UIKit.Tile(w, "slot", Color.Lerp(Color.white, g.G.color, 0.75f), Art.Icon(g.Row.icon), 0.64f, "Pic"); t.rectTransform.TL(50, y, 220, 220);
-            var nm = UIKit.Label(w, g.Row.name, 44, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(300, y + 4, 640, 60);
+            var t = UIKit.Tile(w, "slot", Color.Lerp(Color.white, g.G.color, 0.75f), Art.Icon(g.Icon), 0.64f, "Pic"); t.rectTransform.TL(50, y, 220, 220);
+            var nm = UIKit.Label(w, g.Name, 44, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(300, y + 4, 640, 60);
             var gr = UIKit.Panel(w, "pill", "Grade"); gr.color = g.G.color; gr.rectTransform.TL(300, y + 70, 170, 52);
             UIKit.Label(gr.transform, g.G.name, 28, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
             UIKit.Label(w, L.F("gear_lv", g.lv, g.LvMax), 32, Art.Brown, TextAnchor.MiddleLeft, false).rectTransform.TL(490, y + 70, 300, 52);
@@ -252,10 +259,10 @@ namespace EarthDef
         // ---------- 가방 장비 창 ----------
         void GearWindow(GearItem g)
         {
-            var p = Popup.Make(g.Row.name, 980, 1000, () => { Refresh(); lobby.Refresh(); });
+            var p = Popup.Make(g.Name, 980, 1000, () => { Refresh(); lobby.Refresh(); });
             var on = Gear.On(g.part);
             GearInfo(p.win, g, 128, on);
-            if (on != null) p.Text($"{L.T("equip")}: {on.Row.name} ({on.G.name}) Lv {on.lv}", 380, 28, Art.Soft);
+            if (on != null) p.Text($"{L.T("equip")}: {on.Name} Lv {on.lv}", 380, 28, Art.Soft);
             p.Btn("btn_green", L.T("equip"), -230, 420, 400, () => { Gear.Equip(g); p.Close(); }, 120);
             var up = p.Btn(Gear.CanUp(g) ? "btn_orange" : "btn_gray", null, 230, 420, 400, () => { if (Gear.Up(g)) { p.Close(false); GearWindow(g); } }, 120);
             UpLabel(up, g);
@@ -264,7 +271,7 @@ namespace EarthDef
             p.Btn(set != null ? "btn_purple" : "btn_gray", $"{L.T("merge")} {same}/{Tables.Ci("Merge_N", 3)}", -230, 250, 400, () =>
             {
                 var n = Gear.Merge(g); if (n == null) return;
-                p.Close(false); Toast.Show($"{n.Row.name} ({n.G.name})"); GearWindow(n);
+                p.Close(false); Toast.Show(n.Name); GearWindow(n);
             }, 120);
             p.Btn("btn_red", $"{L.T("scrap")} +{Gear.ScrapParts(g)}", 230, 250, 400, () => { Gear.Scrap(g); p.Close(); }, 120);
             p.Text(g.grade >= Tables.GradeMax ? "" : $"{L.T("merge")}: {Tables.Grade(g.grade).name} x{Tables.Ci("Merge_N", 3)} > {Tables.Grade(g.grade + 1).name}", 870, 26, Art.Soft);
@@ -275,7 +282,7 @@ namespace EarthDef
         {
             var r = c.Row;
             var p = Popup.Make(r.name, 940, 980, () => { Refresh(); lobby.Refresh(); back?.Invoke(); });
-            var t = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon("chip"), 0.5f, "Pic"); t.rectTransform.TL(50, 128, 200, 200);
+            var t = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.5f, "Pic"); t.rectTransform.TL(50, 128, 200, 200);
             var gr = UIKit.Panel(p.win, "pill", "Grade"); gr.color = Tables.Grade(c.q).color; gr.rectTransform.TL(280, 134, 170, 52);
             UIKit.Label(gr.transform, Tables.Grade(c.q).name, 28, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
             if (!string.IsNullOrEmpty(r.turret) && Tables.TurretById.TryGetValue(r.turret, out var tr))
@@ -287,17 +294,47 @@ namespace EarthDef
             if (c.at >= 0) p.Btn("btn_orange", L.T("unequip"), -230, 300, 400, () => { Gear.TakeChip(c); p.Close(); }, 120);
             else p.Btn("btn_green", L.T("equip"), -230, 300, 400, () =>
             {
-                var (pp, ss) = Gear.FreeSlotFor(c);
-                if (pp < 0) { Toast.Show(L.T("no_chip")); return; }
-                Gear.PutChip(c, pp, ss); p.Close();
+                p.Close(false); ChipPlace(c, back);
             }, 120);
             int same = S.chips.FindAll(x => x.at < 0 && x.id == c.id && x.q == c.q).Count;
             p.Btn(Gear.ChipMergeSet(c) != null ? "btn_purple" : "btn_gray", $"{L.T("merge")} {same}/{Tables.Ci("Merge_N", 3)}", 230, 300, 400, () =>
             {
                 var n = Gear.MergeChip(c); if (n == null) return;
-                p.Close(false); Toast.Show($"{n.Row.name} ({Tables.Grade(n.q).name})"); ChipWindow(n, back);
+                p.Close(false); Toast.Show(n.Name); ChipWindow(n, back);
             }, 120);
             p.Btn("btn_red", $"{L.T("scrap")} +{Tables.Ci("Chip_Scrap_Parts", 1) * c.q}", 0, 140, 400, () => { Gear.ScrapChip(c); p.Close(); }, 120);
+        }
+
+        /// <summary>회로 착용 안내 (3차 수정안 "칩 착용을 눌렀을 때 어디에 착용할지 안내 팝업"):
+        /// 6부위 x 6칸 — 착용할 수 있는 부위는 밝게(빈 칸 초록), 못 하는 부위는 어둡게 · 빈 칸을 누르면 착용 · 회로가 있는 칸을 누르면 바꿔 끼움</summary>
+        public void ChipPlace(ChipItem c, System.Action back = null)
+        {
+            var p = Popup.Make(L.T("chip_where"), 1000, 1500, () => { Refresh(); lobby.Refresh(); back?.Invoke(); });
+            var head = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.6f, "Me"); head.rectTransform.TL(40, 120, 120, 120);
+            UIKit.Label(p.win, c.Name, 34, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(180, 124, 780, 52);
+            var ds = UIKit.Label(p.win, c.Row.Desc(c.q), 26, Art.Soft, TextAnchor.MiddleLeft, false); ds.rectTransform.TL(180, 180, 780, 50);
+            UIKit.Label(p.win, L.T("chip_tap_slot"), 24, Art.Purple, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 250, 1000, 40);
+            for (int pi = 0; pi < Tables.GearParts.Count; pi++)
+            {
+                var part = Tables.GearParts[pi]; bool fit = c.Row.Fits(part.part);
+                float y = 300 + pi * 176;
+                var row = UIKit.Panel(p.win, fit ? "card" : "btn_gray", "P_" + part.part); row.rectTransform.TL(30, y, 940, 164);
+                var ic = UIKit.Img(row.transform, Art.Icon(Gear.On(part.part)?.Icon ?? part.icon), "Icon"); ic.rectTransform.TL(16, 24, 96, 96);
+                if (!fit) ic.color = new Color(1, 1, 1, 0.45f);
+                UIKit.Label(row.transform, part.name, 28, fit ? Art.Ink : Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(14, 122, 240, 36);
+                if (!fit) { UIKit.Label(row.transform, L.T("chip_nofit"), 28, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(260, 50, 660, 60); continue; }
+                for (int si = 0; si < Gear.Slots; si++)
+                {
+                    int ppi = pi, ssi = si; float x = 140 + si * 130;
+                    bool open = Gear.SlotOpen(si); var cur = Gear.ChipAt(pi, si);
+                    var sl = UIKit.Tile(row.transform, "slot", !open ? new Color(0.6f, 0.56f, 0.5f) : cur != null ? Color.Lerp(Color.white, Tables.Grade(cur.q).color, 0.7f) : Art.Hex("#cdeeb8"),
+                                        !open ? Art.Icon("lock") : cur != null ? Art.Icon(cur.Icon) : Art.Icon("plus"), cur != null ? 0.62f : 0.42f, "S" + si);
+                    sl.rectTransform.TL(x, 18, 116, 116);
+                    if (!open) { UIKit.Label(row.transform, L.F("chip_locked", Gear.SlotNeed(si)), 18, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(x - 4, 134, 124, 26); continue; }
+                    if (cur == c) { UIKit.Panel(sl.transform, "glow_frame", "Here").rectTransform.Fill(-14, -14, -14, -14); continue; }
+                    UIKit.Clickable(sl, () => { Gear.PutChip(c, ppi, ssi); p.Close(); });
+                }
+            }
         }
 
         /// <summary>빈 칩 칸 → 끼울 수 있는 칩 고르기</summary>
@@ -314,8 +351,8 @@ namespace EarthDef
             foreach (var c in list)
             {
                 var row = UIKit.Panel(c0, "card_white", "Row"); row.rectTransform.TL(0, y, 920, 130);
-                var t = UIKit.Tile(row.transform, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon("chip"), 0.5f, "Pic"); t.rectTransform.TL(14, 12, 106, 106);
-                UIKit.Label(row.transform, $"{c.Row.name} ({Tables.Grade(c.q).name})", 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(140, 14, 760, 48);
+                var t = UIKit.Tile(row.transform, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.5f, "Pic"); t.rectTransform.TL(14, 12, 106, 106);
+                UIKit.Label(row.transform, c.Name, 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(140, 14, 760, 48);
                 var ds = UIKit.Label(row.transform, c.Row.Desc(c.q), 26, Art.Soft, TextAnchor.MiddleLeft, false); ds.rectTransform.TL(140, 66, 760, 44);
                 var cc = c; UIKit.Clickable(row, () => { Gear.PutChip(cc, pi, slot); p.Close(); });
                 y += 140;

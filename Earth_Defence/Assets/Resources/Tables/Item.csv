@@ -1,9 +1,9 @@
 ﻿Id,Name,Kind,Cost_Dia,Value,Per_Day,Desc,,Kind: free_box · ad_box · gear_box · chip_box · stamina · gold(Value = 순찰 몇 시간치) · Per_Day 0 = 제한 없음
-i_free,오늘의 무료 상자,free_box,0,1,1,장비 또는 칩 1개,,
-i_ad,광고 상자,ad_box,0,1,1,광고 보고 장비 또는 칩 1개,,
+i_free,오늘의 무료 상자,free_box,0,1,1,장비 또는 회로 1개,,
+i_ad,광고 상자,ad_box,0,1,1,광고 보고 장비 또는 회로 1개,,
 i_gear,장비 상자,gear_box,150,1,0,장비 1개 (등급 확률 보기),,
 i_gear10,장비 상자 10+1,gear_box,1500,11,0,장비 11개,,
-i_chip,칩 상자,chip_box,150,1,0,칩 1개 (등급 확률 보기),,
-i_chip10,칩 상자 10+1,chip_box,1500,11,0,칩 11개,,
+i_chip,회로 상자,chip_box,150,1,0,회로 1개 (등급 확률 보기),,
+i_chip10,회로 상자 10+1,chip_box,1500,11,0,회로 11개,,
 i_stamina,스태미나 30,stamina,50,30,3,하루 3번,,
 i_gold,골드 주머니,gold,100,4,0,순찰 4시간치 골드,,

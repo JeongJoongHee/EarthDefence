@@ -60,6 +60,8 @@ namespace EarthDef
         }
         /// <summary>스킨 그림 (UI · 카드 — tools/skin_preview.py 가 같은 식으로 미리 돌려 둠)</summary>
         public static Sprite TurretSkinUI(string art) => Get("Turret/" + art + "_skin", 100f);
+        /// <summary>화면 아이콘: 외형(스킨)을 착용했으면 외형 그림 (3차 수정안 "스킨 착용 시 아이콘도 스킨 모양으로")</summary>
+        public static Sprite TurretIcon(TurretRow r) => r != null && SaveData.Cur != null && SaveData.Cur.SkinOn(r.id) && Tables.SkinOf(r.id) != null ? TurretSkinUI(r.art) : TurretUI(r.art);
         // 터렛 312x346: 바닥 = 아래에서 12.5px · 쏘는 곳 = 바닥 위 1.36칸
         public static readonly Vector2 TurretFoot = new(0.5f, 12.5f / 346f);
         public const float TurretHead = 1.36f;
@@ -97,6 +99,8 @@ namespace EarthDef
             {
                 "pill" or "pill_dark" => new Vector4(40, 39, 40, 39),
                 "tag" => new Vector4(38, 20, 20, 20),     // 11-16 속성 태그 (왼쪽 뾰족 + 구멍)
+                "glow_frame" => new Vector4(50, 50, 50, 50),
+                "minislot" => new Vector4(16, 16, 16, 16),
                 "track" or "fill" => new Vector4(19, 19, 19, 19),
                 "white" => new Vector4(26, 26, 26, 26),
                 "window" => new Vector4(40, 40, 40, 40),
