@@ -141,6 +141,11 @@ namespace EarthDef
             ((RectTransform)ld.transform).TL(460, y, 380, 96);
             y += 110;
             p.Text(L.T("cloud_draft"), y, 24, Art.Soft);
+            if (Cheat.Enabled)
+            {   // 11-17 치트 (시험용 — 에디터 · 개발용 빌드 · Config Cheat_On 1 일 때만)
+                var ch = UIKit.Btn(p.win, "btn_gray", L.T("cheat_btn"), 30, () => { p.Close(); Cheat.Open(); }, "Cheat");
+                ((RectTransform)ch.transform).TL(60, y + 80, 780, 90);
+            }
             p.Btn("btn_orange", L.T("set_tutorial"), 0, 60, 520, () => { S.tut.Clear(); S.Save(); Toast.Show(L.T("ok")); p.Close(); }, 110);
         }
 

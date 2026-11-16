@@ -180,28 +180,41 @@ def shield(g):
     return o
 
 
-def core(g):
-    import math
+def core(g, plain=False):
+    """에너지 코어 (11-17 사용자 "코어가 장비 강화 부품(육각 너트)과 비슷함" → 육각형 대신 세로 캡슐:
+    유리관 안에 빛나는 구슬 + 위아래 금속 마개). plain = 빈 칸용 기본 그림"""
     m, t = PAL[g]; G = A.G; o = ''
-    if g >= 5: o += halo(m, .5)
-    if g >= 6: o += flames(t)
-    rr_ = .36 if g == 1 else .42
-    hexd = 'M' + ' L'.join(f'{.5 + rr_ * math.cos(math.radians(-90 + i * 60)):.3f} {.5 + rr_ * math.sin(math.radians(-90 + i * 60)):.3f}' for i in range(6)) + ' Z'
-    o += P(U(hexd), G(GOLD if g >= 7 else ('#a9b1bb' if g < 4 else t), 'v', .72, .4), S)
-    if g >= 3:
-        for i in range(6):
-            a = math.radians(-60 + i * 60)
-            o += C(u(.5 + .32 * math.cos(a)), u(.5 + .32 * math.sin(a)), u(.03), '#6b737d', 0)
-    cr = .13 if g == 1 else .19
-    if g >= 2: o += A.blur(C(u(.5), u(.5), u(cr + .07), m, 0), 6, .9)
-    o += C(u(.5), u(.5), u(cr), G(m if g > 1 else '#d8d0c2', 'r', .85, .6), S * .8)
-    if g >= 7: o += star5(.5, .5, .14, '#fff6c8')
-    else: o += C(u(.5), u(.5), u(cr * .4), '#fffbe0' if g > 1 else '#eee8dc', 0) + C(u(.44), u(.44), u(.035), '#ffffff', 0)
-    if g >= 4:                                                                                          # 도는 고리
-        o += E(u(.5), u(.5), u(.5), u(.16), 'none', S * .5, -25, ink=t) + C(u(.92), u(.32), u(.04), '#fffbe0', S * .4)
-    if g >= 5:
-        o += E(u(.5), u(.5), u(.5), u(.16), 'none', S * .5, 25, ink=GOLD) + C(u(.1), u(.3), u(.035), '#fffbe0', S * .4)
-    if g >= 7: o += sparkles()
+    if plain: m, t = '#8fd6ff', '#a9b1bb'
+    if g >= 5 and not plain: o += halo(m, .48)
+    if g >= 6 and not plain: o += flames(t)
+    if g >= 4 and not plain:                                                                            # 뒤쪽 고리 반
+        o += f'<path d="{f"M{u(.04)} {u(.56)} A{u(.46)} {u(.14)} 0 0 1 {u(.96)} {u(.56)}"}" fill="none" stroke="{INK}" stroke-width="{S * 1.3}"/>'
+        o += f'<path d="{f"M{u(.04)} {u(.56)} A{u(.46)} {u(.14)} 0 0 1 {u(.96)} {u(.56)}"}" fill="none" stroke="{t}" stroke-width="{S * .55}"/>'
+    w0 = .26 if g == 1 else .22
+    glass = '#c9d3d8' if g == 1 else A.mix(m, '#ffffff', .45)
+    o += A.rr(u(w0), u(.16), u(1 - 2 * w0), u(.68), u(.12), G(glass, 'v', .85, .5), S)                  # 유리관
+    orb_r = .12 if g == 1 else .16
+    if g >= 2: o += A.blur(C(u(.5), u(.5), u(orb_r + .06), m, 0), 5, 1)
+    o += C(u(.5), u(.5), u(orb_r), G(m if g > 1 else '#e0dbd2', 'r', .85, .6), S * .7)
+    if g >= 7 and not plain: o += star5(.5, .5, .12, '#fff6c8')
+    else: o += C(u(.46), u(.45), u(orb_r * .35), '#ffffff', 0)
+    cap = GOLD if g >= 5 and not plain else ('#a9b1bb' if g < 4 else t)
+    o += A.rr(u(w0 - .06), u(.06), u(1 - 2 * w0 + .12), u(.14), 6, G(cap, 'v', .78, .45), S * .9)     # 위 마개
+    o += A.rr(u(w0 - .06), u(.8), u(1 - 2 * w0 + .12), u(.14), 6, G(cap, 'v', .78, .45), S * .9)      # 아래 마개
+    if g >= 2: o += A.rr(u(w0 + .02), u(.68), u(1 - 2 * w0 - .04), u(.05), 2, t, 0)                     # 띠
+    if g >= 3 and not plain:
+        for x in (w0, 1 - w0):
+            o += C(u(x), u(.13), u(.022), '#6b737d', 0) + C(u(x), u(.87), u(.022), '#6b737d', 0)
+        o += gem(.5, .13, .05, t)
+    if g >= 4 and not plain:                                                                            # 앞쪽 고리 반
+        o += f'<path d="{f"M{u(.04)} {u(.56)} A{u(.46)} {u(.14)} 0 0 0 {u(.96)} {u(.56)}"}" fill="none" stroke="{INK}" stroke-width="{S * 1.3}"/>'
+        o += f'<path d="{f"M{u(.04)} {u(.56)} A{u(.46)} {u(.14)} 0 0 0 {u(.96)} {u(.56)}"}" fill="none" stroke="{t}" stroke-width="{S * .55}"/>'
+        o += C(u(.9), u(.62), u(.035), '#fffbe0', S * .4)
+    if g >= 5 and not plain:
+        o += E(u(.5), u(.4), u(.46), u(.12), 'none', S * .45, 20, ink=GOLD) + C(u(.08), u(.3), u(.03), '#fffbe0', S * .35)
+    o += F(U(f'M{w0 + .06} .2 L{w0 + .12} .2 L{w0 + .12} .78 L{w0 + .06} .78 Z'), '#ffffff', .55)       # 유리 반짝임
+    if g == 1: o += L(U('M.6 .3 L.66 .38'), S * .4, '#8a8276')
+    if g >= 7 and not plain: o += sparkles()
     return o
 
 

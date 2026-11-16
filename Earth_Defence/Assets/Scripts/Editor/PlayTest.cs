@@ -253,6 +253,19 @@ namespace EarthDef.EditorTools
                 Game.Lobby.SetTab(2); yield return Wait(0.2f); Game.Lobby.gearTab.MergeAll(); yield return Wait(0.3f);
                 Capture("67_merge");
                 Popup.CloseAll();
+                // 11-17 치트: 설정 창 [치트] → 장비 · 회로 · 조각 · 부품
+                Settings.Open(); yield return Wait(0.2f);
+                Check(GameObject.Find("Cheat") != null, "설정 창에 [치트] (에디터)");
+                Capture("68_settings_cheat");
+                Popup.CloseAll(); Cheat.Open(); yield return Wait(0.3f);
+                int ng = S.gear.Count, nc = S.chips.Count, sh0 = S.shards[S.TIdx("rail")]; double pa0 = S.parts;
+                void Press(string row, int n) => GameObject.Find("Row_" + row).transform.Find("Add" + n).GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+                Press(L.T("r_gear"), 10); Press(L.T("r_chip"), 1); Press(L.T("cheat_shards"), 100); Press(L.T("r_parts"), 1000);
+                yield return Wait(0.2f);
+                Check(S.gear.Count == ng + 10 && S.gear.FindAll(x => x.grade == 4).Count >= 10 && S.chips.Count == nc + 1 && S.shards[S.TIdx("rail")] == sh0 + 100 && S.parts == pa0 + 1000,
+                      $"치트: 장비 +10 (영웅) · 회로 +1 · 조각 +100 · 부품 +1000");
+                Capture("69_cheat");
+                Popup.CloseAll();
             }
             Game.ToLobby(); yield return null; Popup.CloseAll();
             Game.Lobby.SetTab(5); yield return Wait(0.4f);

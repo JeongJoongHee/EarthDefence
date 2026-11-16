@@ -548,7 +548,7 @@ def pop3d(im):
 
 EXTRA = dict(cards=ic_cards, coin=ic_coin, shard=ic_shard, star_on=ic_dia(GOLD), star_off=ic_dia(TRACK), ad=ic_ad, plus=ic_plus,
              home=ic_home, retry=ic_retry, base=ic_base, patrol=ic_patrol,
-             g_weapon=gx_weapon, g_helmet=gx_helmet, g_suit=gx_suit, g_shield=gx_shield, g_core=gx_core, g_boots=gx_boots,
+             g_weapon=gx_weapon, g_helmet=gx_helmet, g_suit=gx_suit, g_shield=gx_shield, g_core=(lambda w, h, f, s: __import__('gear_tiers').core(2, plain=True)), g_boots=gx_boots,
              gem_on=ic_gem_on, gem_off=ic_gem_off, brush=ic_brush, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret, info=ic_info)
 ICONS.update(EXTRA)
 ICON_LIST = {'pause': CREAM, 'play': CREAM, 'cards': CREAM, 'heart': RED, 'coin': GOLD, 'shard': SKY, 'star_on': GOLD, 'star_off': TRACK,

@@ -60,6 +60,10 @@ print('String +', add_rows(ws, 'Key', [dict(Key=k, KO=v, EN='') for k, v in [
     ('tab_looks', '외형'), ('attend_toast', '출석 {0}일차 보상 {1}'), ('patrol_got', '순찰 보상 {0}'), ('patrol_x2', '2배'),
     ('chip_ability', '능력'), ('chip_all_parts', '모든 부위'), ('gear_up_title', '장비 강화'), ('lv_table', '레벨별 능력'),
     ('lv_now', '지금'), ('up_cost', '필요'),
+    # 11-17 치트 (시험용)
+    ('cheat', '치트 (시험용)'), ('cheat_btn', '치트'), ('cheat_grade', '등급'), ('cheat_part', '장비 부위'), ('cheat_random', '무작위'),
+    ('cheat_shards', '터렛 조각'), ('cheat_all_turrets', '열린 터렛 모두'),
+    ('cheat_note', '시험용입니다. 에디터 · 개발용 빌드에서만 보이고, 스토어 빌드는 Config Cheat_On 0 이면 안 보여요.'),
 ]]))
 wb.save(os.path.join(TB, 'String.xlsx'))
 
@@ -68,6 +72,7 @@ heads = [c.value for c in ws[1]]
 print('Config +', add_rows(ws, heads[0], [{heads[0]: k, heads[1]: v, **({heads[2]: d} if len(heads) > 2 else {})} for k, v, d in [
     ('Attend_Auto', 1, '4차 수정안: 1 = 로비에 오면 출석 보상을 자동으로 받고 토스트 · 0 = 예전처럼 창'),
     ('Patrol_Ad_Mul', 2, '4차 수정안: 순찰 보상 광고 보면 x배'),
+    ('Cheat_On', 0, '11-17 치트 창: 1 = 스토어 빌드에서도 보임 (에디터 · 개발용 빌드는 늘 보임) — 스토어 빌드 전 0 확인'),
 ]]))
 wb.save(os.path.join(TB, 'Config.xlsx'))
 print('ok')
