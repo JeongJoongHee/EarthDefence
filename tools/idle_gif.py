@@ -7,6 +7,8 @@
       → <출력>/<터렛>_p0_x2.gif · <터렛>_p1_x2.gif (2배 확대) + base<묶음>_p*.gif (기지 전체, 실제 크기 0.6배)
 월드 → 화면(1080x2340): x = (wx + 5.4) * 100 · 위에서 y = (13.8 - wy) * 100 (카메라 아래 끝 -9.6, 크기 11.7)
 촬영 묶음 s0 = 레이저 포(칸 0, x -2.72) · 벼락탑(칸 1, +2.72) · 관통포(칸 2, -4.3) · 드론(칸 3, +4.3) / s1 = 벌집(-2.72) · 미사일(+2.72) · 바닥 Ground_Y -7.52
+          s2 = 쾅쾅 대포 · 집중 빔 · 소용돌이포 · 불바퀴 / s3 = 찌릿 코일 (2차)
+2차 터렛만: PYTHONUTF8=1 python tools/idle_gif.py 2차_캡처/idle cannon focus vortex wheel tesla
 파일 이름: s{묶음}p{0 끔 · 1 켬}_000.png
 """
 import os, sys, glob
@@ -40,9 +42,13 @@ def make(out, name, box, frames, scale=1.0):
 if __name__ == '__main__':
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, '대기효과_시안')
     os.makedirs(out, exist_ok=True)
-    SETS = {0: {'laser': -2.72, 'bolt': 2.72, 'rail': -4.3, 'drone': 4.3}, 1: {'hive': -2.72, 'missile': 2.72}}
-    want = set(sys.argv[2:]) or {'laser', 'bolt', 'rail', 'drone', 'hive', 'missile'}
+    SETS = {0: {'laser': -2.72, 'bolt': 2.72, 'rail': -4.3, 'drone': 4.3}, 1: {'hive': -2.72, 'missile': 2.72},
+            # 2차 (11-16): s2 = 쾅쾅 대포 · 집중 빔 · 소용돌이포 · 불바퀴 / s3 = 찌릿 코일
+            2: {'cannon': -2.72, 'focus': 2.72, 'vortex': -4.3, 'wheel': 4.3}, 3: {'tesla': -2.72}}
+    want = set(sys.argv[2:]) or {n for t in SETS.values() for n in t}
     for st, tur in SETS.items():
+        if not any(n in want for n in tur):
+            continue
         for p in (0, 1):
             fr = sorted(glob.glob(os.path.join(SRC, f's{st}p{p}_*.png')))
             if not fr:

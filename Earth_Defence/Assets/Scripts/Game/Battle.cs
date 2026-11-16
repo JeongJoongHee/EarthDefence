@@ -27,6 +27,13 @@ namespace EarthDef
         public double goldGot;
         public bool won;
         public float speed = 1f;
+        // 2차: 엘리트 난이도 · 장비/칩 · 보호막 · 첫 피격 면역
+        public bool eliteMode;
+        public Loadout lo;
+        public double atk, shield, shieldMax;
+        public int immune, picks;
+        public readonly List<string> drops = new();     // 얻은 장비 · 칩 (결과 창 글자)
+        public int dropGear, dropChip;
 
         public readonly List<Enemy> enemies = new();
         readonly List<Enemy> addE = new();
@@ -47,22 +54,26 @@ namespace EarthDef
         public Enemy boss;
         System.Random rnd;
 
-        public static Battle Begin(int stageNo, int seed = 0)
+        public static Battle Begin(int stageNo, int seed = 0, bool elite = false)
         {
             var go = new GameObject("Battle");
             var b = go.AddComponent<Battle>();
-            b.Setup(stageNo, seed == 0 ? Environment.TickCount : seed);
+            b.Setup(stageNo, seed == 0 ? Environment.TickCount : seed, elite);
             return b;
         }
 
-        void Setup(int no, int seed)
+        void Setup(int no, int seed, bool elite)
         {
             I = this;
-            stageNo = no; stage = Tables.Stage(no);
+            stageNo = no; stage = Tables.Stage(no); eliteMode = elite;
             rnd = new System.Random(seed);
             Combat.Seed(seed + 1);
-            run = new Run(seed + 2);
-            baseMax = baseHp = SaveData.Cur.BaseHp;
+            lo = Loadout.Build(SaveData.Cur);
+            run = new Run(seed + 2, lo);
+            atk = SaveData.Cur.Atk + lo.AtkTotal;
+            baseMax = baseHp = SaveData.Cur.BaseHp + lo.hp;
+            shield = shieldMax = lo.B("shield");
+            immune = (int)Math.Round(lo.B("immune"));
             need = Need(1);
             nextWave = Tables.Cf("Wave_Len", 30);
             AddUnit(run.turrets[0]);
@@ -125,6 +136,7 @@ namespace EarthDef
             float k = Mathf.Clamp01(time / RunTime);
             float rate = Mathf.Lerp(Tables.Cf("Spawn_Rate_Start", 0.9f), Tables.Cf("Spawn_Rate_End", 2.6f), k) + Tables.Cf("Spawn_Rate_Per_Stage", 0.03f) * (stageNo - 1);
             if (bossSpawned) rate *= 0.5f;
+            if (eliteMode) rate *= Tables.Cf("Elite_Mode_Spawn", 1.25f);
             spawnAcc += rate * dt;
             int alive = enemies.Count + addE.Count, max = Tables.Ci("Max_Alive", 90);
             while (spawnAcc >= 1)
@@ -167,6 +179,7 @@ namespace EarthDef
             hp *= 1 + Tables.C("Run_HP_Ramp", 1.5) * Mathf.Clamp01(time / RunTime);
             if (r.IsElite) { hp *= Tables.C("Elite_HP_Mul", 30); atk *= Tables.C("Elite_Atk_Mul", 3); }
             if (r.IsBoss) { hp *= Tables.C("Boss_HP_Mul", 140); atk *= Tables.C("Boss_Atk_Mul", 6); }
+            if (eliteMode) { hp *= Tables.C("Elite_Mode_HP", 2.6); atk *= Tables.C("Elite_Mode_Atk", 1.6); }
             var go = new GameObject("Enemy_" + id);
             go.transform.SetParent(transform, false);
             var e = go.AddComponent<Enemy>();
@@ -184,6 +197,7 @@ namespace EarthDef
             if (!string.IsNullOrEmpty(e.row.split))
                 for (int i = 0; i < e.row.splitN; i++) Spawn(e.row.split, e.Pos + new Vector2((i - (e.row.splitN - 1) / 2f) * 0.6f, 0.1f), true);
             GainExp(e.row.exp);
+            if ((e.row.IsBoss || e.row.IsElite) && lo.B("heal_elite") > 0) Heal(lo.B("heal_elite") / 100.0);
             if (e.row.IsBoss) { if (e == boss || boss == null || boss.dead) End(true); return; }
             if (e.row.IsElite && Tables.Ci("Boss_Extra_Card", 1) == 1) pendingBoss++;
         }
@@ -203,9 +217,18 @@ namespace EarthDef
         public void HurtBase(double d, Vector2 at)
         {
             if (st == St.End) return;
+            // 2차 칩: 처음 N번 막음 → 받는 피해 -N(최소 1) → 보호막이 먼저 받음
+            if (immune > 0) { immune--; Fx.Ring(at + Vector2.down * 0.2f, 0.8f, Art.Sky); return; }
+            d = Math.Max(1, d - lo.reduce);
+            if (shield > 0) { double s = Math.Min(shield, d); shield -= s; d -= s; if (d <= 0) { Fx.Ring(at + Vector2.down * 0.2f, 0.6f, Art.Sky); return; } }
             baseHp = Math.Max(0, baseHp - d);
             Fx.Hit(at + Vector2.down * 0.3f, 1.2f);
         }
+
+        public void Heal(double frac) { if (st != St.End) baseHp = Math.Min(baseMax, baseHp + baseMax * frac); }
+
+        /// <summary>조건 피해 칩용: 지금 중간 보스 · 보스가 있나</summary>
+        public bool BossOnField { get { foreach (var e in enemies) if (!e.dead && (e.row.IsBoss || e.row.IsElite)) return true; return false; } }
 
         /// <summary>목표 찾기: from 에서 range 안의 가장 가까운 적 (방어막 위쪽, 화면에 보이는 적)</summary>
         public Enemy Nearest(Vector2 from, float range, HashSet<Enemy> skip = null)
@@ -218,6 +241,15 @@ namespace EarthDef
                 if (d < bd) { bd = d; best = e; }
             }
             return best;
+        }
+
+        /// <summary>찌릿 코일: at 둘레 r 안의 무작위 적 (not 빼고, 화면에 보이는 적)</summary>
+        public Enemy RandomEnemyNear(Vector2 at, float r, Enemy not)
+        {
+            int n = 0; Enemy pick = null;
+            foreach (var e in enemies)
+                if (!e.dead && e != not && e.Pos.y < World.SpawnY - 0.3f && Vector2.Distance(e.Pos, at) <= r && rnd.Next(++n) == 0) pick = e;
+            return pick;
         }
 
         public Enemy RandomEnemy()
@@ -245,16 +277,21 @@ namespace EarthDef
         void OpenPick()
         {
             offerIsBoss = pendingLevel == 0 && pendingBoss > 0;
-            offer = run.Roll(Tables.Ci("Card_Choices", 3), offerIsBoss);
+            offer = run.Roll(Choices, offerIsBoss);
             if (offer.Count == 0) { pendingLevel = 0; pendingBoss = 0; return; }   // 고를 카드가 없으면 넘어감
             st = St.Pick;
             Changed?.Invoke();
         }
 
+        /// <summary>카드 장수 (칩 "첫 카드 N장 더" = 첫 레벨업에만)</summary>
+        int Choices => Tables.Ci("Card_Choices", 3) + (picks == 0 ? run.firstExtra : 0);
+
         public void Choose(int i)
         {
             if (st != St.Pick || i < 0 || i >= offer.Count) return;
             var c = offer[i];
+            picks++;
+            if (c.kind == "break" && lo.B("heal_break") > 0) Heal(lo.B("heal_break") / 100.0);
             int before = run.turrets.Count;
             var t = run.Pick(c);
             if (run.turrets.Count > before) { AddUnit(t); World.I.ShowSlots(run.turrets.Count - 1); }
@@ -270,7 +307,7 @@ namespace EarthDef
         {
             if (st != St.Pick || !CanRefresh) return;
             if (run.refreshFree > 0) run.refreshFree--; else run.refreshAd--;
-            offer = run.Roll(Tables.Ci("Card_Choices", 3), offerIsBoss);
+            offer = run.Roll(Choices, offerIsBoss);
             Changed?.Invoke();
         }
 
@@ -284,13 +321,31 @@ namespace EarthDef
             Time.timeScale = 1;
             var s = SaveData.Cur;
             FirstClear = win && stageNo > s.best;
+            if (eliteMode) FirstClear = win && stageNo > s.eliteBest;
             double mul = win ? (FirstClear ? Tables.C("First_Clear_Mul", 2) : 1) : Tables.C("Lose_Mul", 0.35) * Mathf.Clamp01(time / RunTime);
+            if (eliteMode) mul *= Tables.C("Elite_Mode_Reward", 2);
             RewardGold = Math.Floor((Tables.C("Win_Gold_Base") + Tables.C("Win_Gold_Per_Stage") * (stageNo - 1) + goldGot) * mul);
             RewardShards = Math.Floor((Tables.C("Win_Shards") + Tables.C("Win_Shards_Per_Stage") * (stageNo - 1)) * mul);
             s.gold += RewardGold;
             GiveShards((int)RewardShards);
-            if (win) { s.wins++; if (stageNo > s.best) s.best = stageNo; s.stage = Mathf.Min(Tables.Stages.Count, Mathf.Max(s.stage, stageNo + 1)); }
+            if (win && eliteMode) { s.wins++; if (stageNo > s.eliteBest) s.eliteBest = stageNo; }
+            else if (win) { s.wins++; if (stageNo > s.best) s.best = stageNo; s.stage = Mathf.Min(Tables.Stages.Count, Mathf.Max(s.stage, stageNo + 1)); }
             s.runs++; s.kills += kills;
+            // 2차: 장비 · 칩 떨어짐 (이겼을 때)
+            if (win)
+            {
+                int n = Tables.Ci("Drop_Win_N", 2) + (eliteMode ? Tables.Ci("Drop_Elite_N", 1) : 0) + (FirstClear ? Tables.Ci("Drop_First_N", 1) : 0);
+                for (int i = 0; i < n; i++)
+                {
+                    int g = Gear.DropGrade(stageNo, eliteMode, rnd);
+                    if (rnd.NextDouble() < Tables.C("Drop_Gear_Chance", 0.4)) { var it = Gear.NewGear(g, null, rnd); drops.Add($"{it.Row.name} ({it.G.name})"); dropGear++; }
+                    else { var c = Gear.NewChip(g, null, rnd); drops.Add($"{c.Row.name} ({Tables.Grade(c.q).name})"); dropChip++; }
+                }
+            }
+            Meta.MissionAdd("play");
+            if (win) Meta.MissionAdd("win");
+            if (eliteMode) Meta.MissionAdd("elite");
+            Meta.MissionAdd("kill", (int)Math.Min(int.MaxValue, kills));
             s.Save();
             Changed?.Invoke();
         }
@@ -301,9 +356,10 @@ namespace EarthDef
         {
             var s = SaveData.Cur;
             var used = new List<string>(); foreach (var t in run.turrets) used.Add(t.row.id);
+            var open = Tables.Turrets.FindAll(t => s.Unlocked(t));
             for (int i = 0; i < n; i++)
             {
-                string id = rnd.NextDouble() < 0.7 ? used[rnd.Next(used.Count)] : Tables.Turrets[rnd.Next(Tables.Turrets.Count)].id;
+                string id = rnd.NextDouble() < 0.7 ? used[rnd.Next(used.Count)] : open[rnd.Next(open.Count)].id;
                 s.shards[s.TIdx(id)]++;
                 shardsGot[id] = (shardsGot.TryGetValue(id, out var v) ? v : 0) + 1;
             }

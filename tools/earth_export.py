@@ -80,7 +80,10 @@ def export_turret():
              'rail_base': A.t_rail_base, 'rail_hl': A.t_rail_hl,
              'drone_base': A.t_drone_base, 'drone_body': A.t_drone_body,
              'hive_base': A.t_hive_base,
-             'missile_base': A.t_missile_base, 'missile_l': lambda: A.missile(78, 84), 'missile_r': lambda: A.missile(122, 76)}
+             'missile_base': A.t_missile_base, 'missile_l': lambda: A.missile(78, 84), 'missile_r': lambda: A.missile(122, 76),
+             # 2차 5종 (11-16)
+             'cannon_base': A.t_cannon_base, 'cannon_barrel': A.t_cannon_barrel, 'focus_base': A.t_focus_base,
+             'vortex_base': A.t_vortex_base, 'wheel_base': A.t_wheel_base, 'tesla_base': A.t_tesla_base, 'tesla_orb': A.t_tesla_orb}
     for n, fn in parts.items():
         out('Turret', n, A.piece(fn(), 200, 222, 1.56, 0 if 'ring' in n else A.WOB['turret'], .018))
     for i in range(3):
@@ -93,6 +96,9 @@ def export_turret():
     out('Turret', 'drone_prop', box(A.t_drone_prop(), 36, 58, 70, 26))
     out('Turret', 'drone_pupil', box(A.t_drone_pupil(), 100, 88, 30, 30))
     out('Turret', 'drone_lid', box(A.t_drone_lid(), 100, 86, 50, 38))
+    out('Turret', 'focus_spin', box(A.t_focus_spin(), *A.FOCUS_C, 92, 92))
+    out('Turret', 'vortex_spin', box(A.t_vortex_spin(), *A.VORTEX_C, 100, 100))
+    out('Turret', 'wheel_spin', box(A.t_wheel_spin(), *A.WHEEL_C, 104, 104))
     print('turret', len(A.TURRETS), '+ 대기 조각', len(parts) + 7)
 
 
@@ -264,6 +270,17 @@ def export_fx():
     out('Fx', 'pad', Rr(f'<ellipse cx="160" cy="55" rx="150" ry="44" fill="{_rgrad("#ffffff", .55, 0)}"/>'
                         + blur('<ellipse cx="160" cy="55" rx="122" ry="30" fill="none" stroke="#ffffff" stroke-width="10"/>', 5, .9)
                         + '<ellipse cx="160" cy="55" rx="122" ry="30" fill="none" stroke="#ffffff" stroke-width="3.5"/>', 320, 110, 0))
+    # 2차 (11-16): 쾅쾅 대포 포탄 · 부유 기뢰 · 소용돌이(흰색 → 코드에서 색) · 불바퀴
+    out('Fx', 'cannonball', Rr(blur('<circle cx="48" cy="48" r="30" fill="#ffcf6b"/>', 9, .8)
+                               + C(48, 48, 21, A.G('#7d6a5a', 'r', .7, .35), 4.5) + F('M36 40 Q40 30 50 30 Q42 34 40 44 Z', '#ffffff', .7)
+                               + blur('<circle cx="48" cy="48" r="8" fill="#ffe9b0"/>', 3, .8), 96, 96, 0))
+    spikes = ''.join(L(f'M{64 + 22 * math.cos(a):.1f} {64 + 22 * math.sin(a):.1f} L{64 + 34 * math.cos(a):.1f} {64 + 34 * math.sin(a):.1f}', 5) for a in [i * math.pi / 4 for i in range(8)])
+    out('Fx', 'mine', Rr(blur('<circle cx="64" cy="64" r="34" fill="#ffb35c"/>', 10, .6) + spikes
+                         + C(64, 64, 24, A.G('#9aa3ad', 'r', .7, .35), 4.5) + blur(C(64, 64, 8, '#ff7a5a', 0), 3, .9) + C(64, 64, 6, '#ffd0b8', 0), 128, 128, 0))
+    arms = ''.join(f'<path d="M180 180 Q260 160 268 70" transform="rotate({i * 72} 180 180)" fill="none" stroke="#ffffff" stroke-width="{16 - i}" stroke-linecap="round" opacity=".8"/>' for i in range(5))
+    out('Fx', 'vortex', Rr(f'<circle cx="180" cy="180" r="170" fill="{_rgrad("#ffffff", .5, .03, .45)}"/>'
+                           + blur(arms, 6, .9) + arms + blur('<circle cx="180" cy="180" r="40" fill="#ffffff"/>', 14, .9), 360, 360, 0))
+    out('Fx', 'wheel', Rr(f'<g transform="translate({100 - A.WHEEL_C[0] * 1.9},{100 - A.WHEEL_C[1] * 1.9}) scale(1.9)">{A.t_wheel_spin()}</g>', 200, 200, 0))
     out('Fx', 'puff', Rr(puff(50, 50, 40, '#ffffff', 5, 7, 3), 100, 100, 1.0))
     out('Fx', 'dot', Rr(f'<circle cx="16" cy="16" r="14" fill="#ffffff"/>', 32, 32, 0))
     print('fx')
@@ -305,12 +322,40 @@ def ic_base(w, h, f, s): return P(f'M{w*.08} {h*.86} A{w*.42} {h*.62} 0 0 1 {w*.
 def ic_patrol(w, h, f, s): return C(w * .5, h * .54, w * .38, CREAM, s) + L(f'M{w*.5} {h*.3} L{w*.5} {h*.56} L{w*.68} {h*.66}', s * 1.3) + A.rr(w * .4, h * .04, w * .2, h * .12, 3, ORANGE, s * .8)
 
 
+# 2차 (11-16): 장비 6부위 · 칩 · 스태미나 · 미션 · 출석 · 설정 · 부품 · 엘리트 · 손가락 · 탭
+def ic_g_weapon(w, h, f, s): return (A.rr(w * .12, h * .42, w * .7, h * .2, 6, '#e6e9ee', s) + A.rr(w * .62, h * .36, w * .3, h * .14, 4, GOLD, s * .8)
+                                     + P(f'M{w*.26} {h*.6} L{w*.42} {h*.6} L{w*.36} {h*.86} L{w*.22} {h*.86} Z', '#a9b1bb', s) + C(w * .88, h * .43, w * .05, '#fff3c4', 0))
+def ic_g_helmet(w, h, f, s): return C(w * .5, h * .52, w * .4, '#eef2f4', s) + P(f'M{w*.22} {h*.5} Q{w*.5} {h*.3} {w*.78} {h*.5} Q{w*.78} {h*.72} {w*.5} {h*.74} Q{w*.22} {h*.72} {w*.22} {h*.5} Z', '#8fd6ff', s * .8) + F(f'M{w*.32} {h*.48} Q{w*.4} {h*.4} {w*.5} {h*.4} Q{w*.4} {h*.45} {w*.36} {h*.54} Z', '#ffffff', .8)
+def ic_g_suit(w, h, f, s): return P(f'M{w*.3} {h*.12} L{w*.7} {h*.12} L{w*.9} {h*.36} L{w*.78} {h*.46} L{w*.74} {h*.9} L{w*.26} {h*.9} L{w*.22} {h*.46} L{w*.1} {h*.36} Z', '#f6f7f8', s) + A.rr(w * .38, h * .4, w * .24, h * .18, 4, '#f0a06a', s * .7) + C(w * .5, h * .2, w * .08, '#7ff0ff', s * .6)
+def ic_g_shield(w, h, f, s): return P(f'M{w*.5} {h*.06} L{w*.9} {h*.2} Q{w*.92} {h*.66} {w*.5} {h*.94} Q{w*.08} {h*.66} {w*.1} {h*.2} Z', '#9fd6ff', s) + P(f'M{w*.5} {h*.2} L{w*.76} {h*.3} Q{w*.76} {h*.62} {w*.5} {h*.8} Z', '#d4efff', 0)
+def ic_g_core(w, h, f, s): return P(f'M{w*.5} {h*.06} L{w*.88} {h*.28} L{w*.88} {h*.72} L{w*.5} {h*.94} L{w*.12} {h*.72} L{w*.12} {h*.28} Z', '#a9b1bb', s) + C(w * .5, h * .5, w * .22, '#ffd966', s * .8) + C(w * .44, h * .44, w * .07, '#ffffff', 0)
+def ic_g_boots(w, h, f, s): return P(f'M{w*.3} {h*.08} L{w*.6} {h*.08} L{w*.6} {h*.56} L{w*.9} {h*.66} Q{w*.94} {h*.86} {w*.8} {h*.88} L{w*.24} {h*.88} Q{w*.18} {h*.88} {w*.2} {h*.7} Z', '#f6f7f8', s) + A.rr(w * .18, h * .78, w * .74, h * .12, 4, '#f0a06a', s * .7) + L(f'M{w*.3} {h*.3} L{w*.6} {h*.3}', s * .7)
+def ic_chip(w, h, f, s):
+    pins = ''.join(L(f'M{w*x} {h*.08} L{w*x} {h*.22} M{w*x} {h*.78} L{w*x} {h*.92} M{w*.08} {h*x} L{w*.22} {h*x} M{w*.78} {h*x} L{w*.92} {h*x}', s * .9) for x in (.35, .5, .65))
+    return pins + A.rr(w * .2, h * .2, w * .6, h * .6, 8, '#8ccb6e', s) + A.rr(w * .34, h * .34, w * .32, h * .32, 4, '#3f7d3a', s * .6) + C(w * .3, h * .3, w * .04, '#fff4dc', 0)
+def ic_energy(w, h, f, s): return C(w * .5, h * .5, w * .44, '#fff4dc', s) + P(f'M{w*.58} {h*.14} L{w*.26} {h*.56} L{w*.48} {h*.56} L{w*.4} {h*.86} L{w*.74} {h*.44} L{w*.52} {h*.44} Z', GOLD, s * .8)
+def ic_mission(w, h, f, s): return (A.rr(w * .16, h * .12, w * .68, h * .8, 8, CREAM, s) + A.rr(w * .36, h * .04, w * .28, h * .14, 4, ORANGE, s * .8)
+                                    + L(f'M{w*.28} {h*.42} L{w*.36} {h*.5} L{w*.48} {h*.36} M{w*.28} {h*.68} L{w*.36} {h*.76} L{w*.48} {h*.62}', s * .9, '#3f7d3a')
+                                    + L(f'M{w*.56} {h*.44} L{w*.74} {h*.44} M{w*.56} {h*.7} L{w*.74} {h*.7}', s * .9))
+def ic_calendar(w, h, f, s): return (A.rr(w * .1, h * .16, w * .8, h * .74, 10, CREAM, s) + P(f'M{w*.1} {h*.36} L{w*.1} {h*.26} Q{w*.1} {h*.16} {w*.2} {h*.16} L{w*.8} {h*.16} Q{w*.9} {h*.16} {w*.9} {h*.26} L{w*.9} {h*.36} Z', RED, s)
+                                     + L(f'M{w*.3} {h*.08} L{w*.3} {h*.24} M{w*.7} {h*.08} L{w*.7} {h*.24}', s * 1.4) + L(f'M{w*.34} {h*.6} L{w*.46} {h*.72} L{w*.68} {h*.48}', s * 1.2, '#3f7d3a'))
+def ic_parts(w, h, f, s): return P(' '.join(('M' if i == 0 else 'L') + f'{w*.5 + w*.42*math.cos(math.radians(30 + i*60)):.1f} {h*.5 + h*.42*math.sin(math.radians(30 + i*60)):.1f}' for i in range(6)) + ' Z', '#c9c1b3', s) + C(w * .5, h * .5, w * .16, '#5b4433', s * .8)
+def ic_crown(w, h, f, s): return P(f'M{w*.1} {h*.3} L{w*.32} {h*.52} L{w*.5} {h*.2} L{w*.68} {h*.52} L{w*.9} {h*.3} L{w*.82} {h*.82} L{w*.18} {h*.82} Z', GOLD, s) + C(w * .5, h * .62, w * .07, RED, s * .6)
+def ic_hand(w, h, f, s): return P(f'M{w*.36} {h*.5} L{w*.36} {h*.12} Q{w*.36} {h*.04} {w*.44} {h*.04} Q{w*.52} {h*.04} {w*.52} {h*.12} L{w*.52} {h*.4} L{w*.72} {h*.44} Q{w*.86} {h*.48} {w*.84} {h*.62} L{w*.78} {h*.86} L{w*.4} {h*.86} L{w*.2} {h*.62} Q{w*.16} {h*.52} {w*.26} {h*.5} Z', '#fff4dc', s)
+def ic_tab_turret(w, h, f, s): return P(f'M{w*.18} {h*.9} L{w*.26} {h*.6} L{w*.74} {h*.6} L{w*.82} {h*.9} Z', '#c9c1b3', s) + C(w * .5, h * .5, w * .22, '#d9c19a', s) + A.rr(w * .44, h * .08, w * .12, h * .36, 4, '#a9b1bb', s)
+
+
 EXTRA = dict(cards=ic_cards, coin=ic_coin, shard=ic_shard, star_on=ic_dia(GOLD), star_off=ic_dia(TRACK), ad=ic_ad, plus=ic_plus,
-             home=ic_home, retry=ic_retry, base=ic_base, patrol=ic_patrol)
+             home=ic_home, retry=ic_retry, base=ic_base, patrol=ic_patrol,
+             g_weapon=ic_g_weapon, g_helmet=ic_g_helmet, g_suit=ic_g_suit, g_shield=ic_g_shield, g_core=ic_g_core, g_boots=ic_g_boots,
+             chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret)
 ICONS.update(EXTRA)
 ICON_LIST = {'pause': CREAM, 'play': CREAM, 'cards': CREAM, 'heart': RED, 'coin': GOLD, 'shard': SKY, 'star_on': GOLD, 'star_off': TRACK,
              'ad': CREAM, 'plus': CREAM, 'x': CREAM, 'lock': CREAM, 'home': CREAM, 'retry': CREAM, 'check': CREAM, 'skull': CREAM,
-             'base': CREAM, 'patrol': CREAM, 'trophy': GOLD, 'bolt': GOLD, 'star': GOLD}
+             'base': CREAM, 'patrol': CREAM, 'trophy': GOLD, 'bolt': GOLD, 'star': GOLD,
+             'g_weapon': CREAM, 'g_helmet': CREAM, 'g_suit': CREAM, 'g_shield': CREAM, 'g_core': CREAM, 'g_boots': CREAM,
+             'chip': CREAM, 'energy': CREAM, 'mission': CREAM, 'calendar': CREAM, 'parts': CREAM, 'crown': GOLD, 'hand': CREAM,
+             'tab_turret': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
 
 
 def export_icon():

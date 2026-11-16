@@ -123,6 +123,30 @@ namespace EarthDef
             f.rectTransform.offsetMin = new Vector2(4, 4); f.rectTransform.offsetMax = new Vector2(-4, -4);
             return f;
         }
+        /// <summary>세로 스크롤 (2차): 돌려준 content 에 TL 좌표로 넣고, 끝에 SetScrollH 로 높이를 맞춤</summary>
+        public static RectTransform Scroll(Transform parent, string name = "Scroll")
+        {
+            var view = Rect(parent, name);
+            var vi = view.gameObject.AddComponent<Image>(); vi.color = new Color(1, 1, 1, 0.001f);
+            view.gameObject.AddComponent<RectMask2D>();
+            var content = Rect(view, "Content");
+            content.anchorMin = new Vector2(0, 1); content.anchorMax = new Vector2(1, 1); content.pivot = new Vector2(0.5f, 1);
+            content.anchoredPosition = Vector2.zero; content.sizeDelta = new Vector2(0, 100);
+            var sr = view.gameObject.AddComponent<ScrollRect>();
+            sr.content = content; sr.viewport = view; sr.horizontal = false; sr.vertical = true;
+            sr.movementType = ScrollRect.MovementType.Elastic; sr.scrollSensitivity = 40; sr.inertia = true;
+            return content;
+        }
+        public static void SetScrollH(RectTransform content, float h) => content.sizeDelta = new Vector2(0, h);
+
+        /// <summary>둥근 빨간 점 (받을 것이 있음)</summary>
+        public static Image Dot(Transform parent, float x, float y, float size = 34)
+        {
+            var d = Img(parent, Art.UI("btn_red"), "Dot"); d.raycastTarget = false; d.type = Image.Type.Simple;
+            d.rectTransform.Place(1, 1, new Vector2(x, y), new Vector2(size, size), new Vector2(0.5f, 0.5f));
+            return d;
+        }
+
         public static void SetBar(Image fill, float k)
         {
             k = Mathf.Clamp01(k);

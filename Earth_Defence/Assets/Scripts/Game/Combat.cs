@@ -14,20 +14,41 @@ namespace EarthDef
         public static void Seed(int s) => rnd = new System.Random(s);
         public static double R => rnd.NextDouble();
 
-        public static double Atk => SaveData.Cur != null ? SaveData.Cur.Atk : Tables.C("Atk_Base", 100);
+        /// <summary>공격력 = 기지 레벨 + 장비 · 칩 (판이 시작할 때 Battle 이 계산해 둠)</summary>
+        public static double Atk => Battle.I != null && Battle.I.atk > 0 ? Battle.I.atk : SaveData.Cur != null ? SaveData.Cur.Atk : Tables.C("Atk_Base", 100);
+
+        /// <summary>2차 조건 피해 칩 (일반 브래킷에 더함 — 기획서 6-3 · 9-3)</summary>
+        static double CondBonus(TurretInst t, Enemy e)
+        {
+            var b = Battle.I; if (b == null || b.lo == null || b.lo.cond.Count == 0) return 0;
+            var lo = b.lo; double v = lo.C("dmg") + lo.C("el_" + t.row.elem);
+            if (lo.C("hp70") > 0 && e.hp >= e.maxHp * 0.7) v += lo.C("hp70");
+            if (lo.C("elite_dmg") > 0 && (e.row.IsElite || e.row.IsBoss)) v += lo.C("elite_dmg");
+            if (lo.C("early") > 0 && b.time < 120f) v += lo.C("early");
+            if (lo.C("low_hp") > 0 && b.baseHp < b.baseMax * 0.3) v += lo.C("low_hp");
+            if (lo.C("debuff") > 0 && e.Debuffed) v += lo.C("debuff");
+            if (lo.C("near") > 0 && e.Pos.y < Tables.Cf("Pos_Near_Y")) v += lo.C("near");
+            if (lo.C("boss_on") > 0 && b.BossOnField) v += lo.C("boss_on");
+            v += lo.C("per_turret") * (b.run.turrets.Count - 1) + lo.C("per_card") * b.picks;
+            return v / 100.0;
+        }
 
         public static double Calc(TurretInst t, Enemy e, double ratePct, out bool crit)
         {
-            double ordinary = t.Ordinary;
+            double ordinary = t.Ordinary + CondBonus(t, e);
             if (e.Paralyzed) ordinary += t.S("dmg_vs_para") / 100.0;
             if (t.Has("dmg_by_slow")) ordinary += t.S("dmg_by_slow") / 100.0 * Mathf.Clamp01(e.slow / Mathf.Max(0.01f, Tables.Cf("Slow_Max", 0.5f)));
             double late = 0;   // 2차: S1 칩 · 스킨 Final DMG 자리
             crit = R < t.CritRate;
-            double critMul = crit ? Tables.C("Crit_Dmg", 1.25) : 1;
+            double critMul = crit ? Tables.C("Crit_Dmg", 1.25) + (Battle.I?.lo?.critDmg ?? 0) / 100.0 : 1;
             double weak = e.row.weak == t.row.elem ? Tables.C("Weak_Mul", 1.5) : e.row.resist == t.row.elem ? Tables.C("Resist_Mul", 0.6) : 1;
             float y = e.Pos.y;
             double pos = y < Tables.Cf("Pos_Near_Y") ? Tables.C("Pos_Near", 1.1) : y > Tables.Cf("Pos_Far_Y") ? Tables.C("Pos_Far", 0.9) : 1;
-            return Atk * ratePct / 100.0 * (1 + ordinary) * (1 + late) * critMul * weak * pos * t.Penalty * (1 + e.vuln) * (1 - e.row.armor);
+            double d = Atk * ratePct / 100.0 * (1 + ordinary) * (1 + late) * critMul * weak * pos * t.Penalty * (1 + e.vuln) * (1 - e.row.armor);
+            // 칩 "치명 때 적 최대 체력 N% 더" (상한 = 원래 피해 x Crit_Hp_Cap)
+            double ch = Battle.I?.lo?.B("crit_hp") ?? 0;
+            if (crit && ch > 0) d += Math.Min(e.maxHp * ch / 100.0, d * (Tables.C("Crit_Hp_Cap", 4) - 1));
+            return d;
         }
 
         /// <summary>터렛 공격 1번 → 피해 + 효과. 죽였으면 true</summary>
@@ -48,7 +69,7 @@ namespace EarthDef
         {
             if (e == null || e.dead) return false;
             bool killed = e.Damage(d);
-            if (number) Fx.Number(e.Pos + Vector2.up * e.radius, d, crit, e);
+            if (number && (SaveData.Cur == null || SaveData.Cur.nums)) Fx.Number(e.Pos + Vector2.up * e.radius, d, crit, e);
             if (killed) Battle.I?.OnKill(e, src);
             return killed;
         }
@@ -74,6 +95,8 @@ namespace EarthDef
                 Battle.I?.Add(new Beam(t, o, Mathf.Atan2(dv.y, dv.x) * Mathf.Rad2Deg, 0.28f, 0.28f, 0.2f, Tables.C("Mini_Laser_Rate", 80), mini: true, len: dv.magnitude + 0.6f));
             }
             if (t.Has("chain")) Chain(t, e, (int)t.S("chain"), Tables.C("Chain_Rate", 50) * (1 + t.S("chain_dmg") / 100.0));
+            // 2차: 밀어내기 카드(쾅쾅 대포가 아닌 터렛 — 대포는 자기 폭발에서 밀어냄)
+            if (!killed && t.Has("knock") && t.row.kind != "cannon") e.Knock(Tables.Cf("Knock_Base", 0.6f) * (float)t.S("knock") / 100f);
             if (t.Has("hit_chain") && R < t.S("hit_chain")) Chain(t, e, 2, Tables.C("Chain_Rate", 50));
         }
 
@@ -86,6 +109,7 @@ namespace EarthDef
         static void OnKill(TurretInst t, Enemy e, Vector2 at)
         {
             if (t.Has("kill_bolt") && R < t.S("kill_bolt")) Battle.I?.Add(new Strike(t, at.x, 0.5f, 0.3f, 0.3f, Tables.C("Mini_Bolt_Rate", 120), mini: true, y: at.y));
+            if (t.Has("kill_chain") && R < t.S("kill_chain")) Chain(t, e, 2, Tables.C("Chain_Rate", 50));
             if (t.Has("kill_explode") && R < t.S("kill_explode")) Explode(t, at, Tables.Cf("Explode_Radius", 0.9f) * 1.3f, Tables.C("Explode_Rate", 60) * 2);
             // 11-16 저녁: 벌도 적이 죽은 자리 대신 벌집에서 날아감 (사용자 "벌집에서 나가게")
             if (t.Has("kill_bee") && R < t.S("kill_bee")) Battle.I?.Add(new Bee(t, HiveHead(at), 3, Tables.TurretById["hive"].rate * 0.5));

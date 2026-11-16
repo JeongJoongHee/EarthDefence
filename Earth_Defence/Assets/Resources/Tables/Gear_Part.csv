@@ -1,0 +1,7 @@
+﻿Part,Name,Icon,Stat1,Base1,Per_Lv1,Stat2,Base2,Per_Lv2,,값 = (Base + Per_Lv x (Lv-1)) x 등급 Mul · Stat: atk 공격력 · hp 기지 체력 · reduce 받는 피해 - · crit 치명 % · crit_dmg 치명 피해 % · cd 공격 속도 %
+weapon,레이저 소총,g_weapon,atk,30,6,crit_dmg,3,0.3,,
+helmet,우주 헬멧,g_helmet,hp,300,60,atk,8,1.6,,
+suit,우주복,g_suit,hp,500,100,reduce,1,0.25,,
+shield,에너지 방패,g_shield,hp,400,80,reduce,1.5,0.3,,
+core,에너지 코어,g_core,atk,20,4,crit,0.5,0.05,,
+boots,점프 부츠,g_boots,atk,20,4,cd,0.5,0.08,,

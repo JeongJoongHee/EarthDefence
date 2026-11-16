@@ -88,3 +88,51 @@ Hud_H,210,"위쪽 UI 높이(1080 폭 기준 픽셀) — 적은 이 아래에서 
 Spawn_Below_Hud,0.6,UI 아래 끝에서 이만큼 아래가 적이 나오는 줄 (Spawn_Y 보다 낮을 때만)
 Guardian_Smooth,0.22,"대장 카피 이동이 목표에 닿는 시간(초) — 클수록 묵직 (11-16 ""무게감"")"
 Idle_Fx,1,"터렛 대기 효과 세기 배율 (1 = 기본 · 0.5 = 옅게 · 0 = 끄기) — 11-16 ""작동하는 느낌"""
+Stamina_On,1,1 = 전투마다 스태미나를 씀 (0 = 끔)
+Stamina_Max,60,스태미나 최대 (시간으로 차는 상한)
+Stamina_Cost,5,보통 난이도 한 판
+Stamina_Cost_Elite,8,엘리트 난이도 한 판
+Stamina_Regen_Sec,360,스태미나 1 차는 시간(초) — 6분
+Stamina_Ad,20,[초안] 광고 보고 받는 스태미나
+Stamina_Ad_Per_Day,3,하루 광고 스태미나 횟수
+Elite_Mode_HP,2.6,엘리트 난이도 적 체력 x
+Elite_Mode_Atk,1.6,엘리트 난이도 적 공격력 x
+Elite_Mode_Spawn,1.25,엘리트 난이도 나오는 적 수 x
+Elite_Mode_Reward,2,엘리트 난이도 골드 · 조각 x
+Elite_Mode_Grade,1,엘리트 난이도 떨어지는 장비 · 칩 등급 +
+Drop_Win_N,2,이기면 장비 · 칩 몇 개
+Drop_Elite_N,1,엘리트 난이도면 더
+Drop_First_N,1,처음 깨면 더
+Drop_Gear_Chance,0.4,떨어지는 것이 장비일 확률 (나머지 = 칩)
+Drop_Grade_Step,12,스테이지 몇 개마다 기본 등급 +1
+Drop_Grade_Up,0.2,한 등급 위로 나올 확률
+Drop_Grade_Down,0.25,한 등급 아래로 나올 확률
+Inv_Max,200,장비 · 칩 가방 최대 (넘으면 가장 낮은 등급을 부품으로)
+Gear_Up_Gold,150,장비 Lv1 → 2 골드 (등급 배율 곱함)
+Gear_Up_Gold_Growth,1.1,장비 레벨마다 골드 배율
+Gear_Up_Parts,1,장비 강화 부품 (레벨 5마다 +1)
+Gear_Scrap_Parts,2,장비 분해 부품 = 이 값 x 등급 + 레벨/2
+Merge_N,3,"같은 것 몇 개를 합쳐 한 등급 위로 (장비 = 같은 부위 · 같은 등급, 칩 = 같은 칩 · 같은 등급)"
+Chip_Slot_1,0,칩 칸 1 열림 (최고 스테이지)
+Chip_Slot_2,0,칩 칸 2
+Chip_Slot_3,3,칩 칸 3
+Chip_Slot_4,8,칩 칸 4
+Chip_Slot_5,15,칩 칸 5
+Chip_Slot_6,25,칩 칸 6
+Chip_Scrap_Parts,1,칩 분해 부품 = 이 값 x 등급
+Crit_Hp_Cap,4,"""치명 때 최대 체력 % 추가"" 상한 = 원래 피해 x"
+Extra_Shot_Max,0.5,"""추가 발사 확률"" 상한"
+Knock_Base,0.6,밀어내기 1 = 이만큼 위로 (월드 칸)
+Mine_Rate,120,부유 기뢰 폭발 %ATK
+Mine_Life,8,부유 기뢰 남는 시간(초)
+Scatter_Rate,60,산탄 1발 %ATK
+Focus_Ramp_Sec,3,집중 빔: 이 시간(초) 붙어 있으면 누적 최대
+Refract_Rate,0.5,굴절 빔 피해 = 빔 피해 x
+Blackhole_Time,5,블랙홀 시간(초)
+Vortex_Burst_Rate,300,중력 폭발 %ATK
+Wheel_Trail_Rate,25,불바퀴 자국 틱 %ATK
+Mini_Wheel_Gap,3,미니 불바퀴 나오는 간격(초)
+Trap_Rate,40,전기 덫 틱 %ATK
+Trap_Time,2,전기 덫 시간(초)
+Tutorial,1,1 = 처음 한 번씩 도움말 (0 = 끔)
+Attend_Days,7,출석 며칠 묶음 (다 받으면 1일부터 다시)

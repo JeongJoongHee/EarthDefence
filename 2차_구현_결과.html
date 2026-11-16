@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2차 구현 결과</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>카피바라 지구를 지켜라! — 2차 구현 결과</h1>
+<p class="note">2026-11-16 · Unity 6000.0.84f1 · 자동 시험 <b>112줄 통과 · 오류 0</b> (<code>bash tools/unity_batch.sh EarthDef.EditorTools.PlayTest.Run --play</code>) · 화면은 시험이 직접 찍은 1080x2340 캡처 · git 커밋 <code>tmp</code></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석 · 제가 정한 것)</b>
+<ul>
+  <li><b>소리는 이번에도 넣지 않았습니다.</b> "2차 작업 진행해줘" 라고 하셔서 2차를 먼저 했습니다 (지난번 추천 순서는 소리 → 2차). 다음 추천 = 소리.</li>
+  <li><b>git 저장소를 만들었습니다</b> (지난번 추천안: 로컬 git + 커밋은 제가). 2차 전 상태도 커밋해 두어 언제든 되돌릴 수 있습니다. GitHub 비공개 저장소는 아직 — 아래 결정 칸.</li>
+  <li>"나머지 터렛 6종"은 계획 ⑦ 이름안에서 2차 표시가 <b>5종</b>이라 5종입니다: 쾅쾅 대포 · 집중 빔 · 소용돌이포 · 불바퀴 · 찌릿 코일. 대장 카피 포함 <b>12종 완성</b>.</li>
+  <li>새 터렛은 <b>보통 스테이지 5 · 10 · 15 · 20 · 25 를 깨면 열림</b> (계획 ④ 추천). 열리기 전엔 카드에 안 나오고, 열리면 로비에서 한 번 알림. <code>Turret.xlsx</code> 의 Unlock 칸.</li>
+  <li><b>다이아(유료 재화)는 3차 상점 때</b> 넣기로 하고, 원작에서 다이아로 하던 것은 바꿨습니다: 칩 칸 = 최고 스테이지로 열림(칸 1·2 처음부터 · 3 · 8 · 15 · 25), 합성 = 같은 것 3개.</li>
+  <li><b>장비</b> = 부위 6 · 등급 7(일반 ~ 궁극) · 강화(골드 + 부품) · 분해 → 부품 · 같은 부위·등급 3개 합성 → 한 등급 위. 원작의 "장비마다 특수 스킬"은 칩이 맡게 해서 장비는 능력치 2개만.</li>
+  <li><b>칩</b> = 범용 33 + 터렛 전용 35 = 68종. 등급 n 의 값 = 궁극 값 x n/7. 기획서 9-2 의 "적용 경로"대로 보드 · 조건 피해 · 모든 터렛 · 터렛 전용 · 카드로 나눠 들어갑니다.</li>
+  <li><b>스태미나</b>: 최대 60 · 보통 5 · 엘리트 8 · 6분에 1 · [초안] 광고 +20 하루 3번. 기획서 · 영상에 숫자가 없어 처음 값입니다. <code>Stamina_On</code> 0 이면 끔.</li>
+  <li><b>엘리트 난이도</b>: 보통으로 깬 스테이지만 · 적 체력 x2.6 · 공격 x1.6 · 수 x1.25 · 골드 · 조각 x2 · 장비/칩 등급 +1 · 1개 더.</li>
+  <li><b>출석 7일은 처음 켠 날부터</b> 뜹니다 (숨은 조건 없음). 일일 미션 7개는 기기 시간 밤 12시에 새로.</li>
+  <li>설정의 <b>배경음 · 효과음은 값만 저장</b>합니다 (소리가 아직 없음).</li>
+  <li>밸런스는 아직 처음 값입니다 (맨 마지막에 시뮬레이터로).</li>
+</ul></div>
+
+<h2>① 로비 — 위 줄(골드 · 스태미나 · 설정) + 아래 탭 4개</h2>
+<div class="shots">
+<figure><img src="2차_캡처/01a_lobby_attend.png" loading="lazy"><figcaption>처음 켰을 때 — 출석 창이 먼저 뜸 · 엘리트는 잠김(회색)</figcaption></figure>
+<figure><img src="2차_캡처/18_lobby_battle.png" loading="lazy"><figcaption>전투 탭 — 스테이지 · 보통/엘리트 · [전투 시작] 오른쪽에 스태미나 5 · 순찰</figcaption></figure>
+<figure><img src="2차_캡처/18b_lobby_elite.png" loading="lazy"><figcaption>엘리트를 고르면 보라색 · "적이 강하고 보상이 2배" · 스태미나 8</figcaption></figure>
+<figure><img src="2차_캡처/19_lobby_turret.png" loading="lazy"><figcaption>터렛 탭 — 기지 + 터렛 12종 (스크롤)</figcaption></figure>
+<figure><img src="2차_캡처/20_lobby_mission.png" loading="lazy"><figcaption>미션 탭 — 출석 7일 + 일일 미션 7개 (받을 것은 빨간 점)</figcaption></figure>
+<figure><img src="2차_캡처/21_settings.png" loading="lazy"><figcaption>설정 — 배경음 · 효과음 · 진동 · 피해 숫자 · 프레임 60 · 도움말 다시 보기</figcaption></figure>
+<figure><img src="2차_캡처/15_stamina_lack.png" loading="lazy"><figcaption>스태미나가 모자라면 — 남은 시간 · [초안] 광고 +20 (하루 3번)</figcaption></figure>
+<figure><img src="2차_캡처/22_tutorial.png" loading="lazy"><figcaption>도움말 — 처음 한 번씩 말풍선 + 손가락 (눌러서 닫기)</figcaption></figure>
+</div>
+
+<h2>② 장비 · 칩</h2>
+<div class="shots">
+<figure><img src="2차_캡처/13_gear_tab.png" loading="lazy"><figcaption>장비 탭 — 대장 카피 둘레 6부위 · 아래 점 = 칩 6칸(색 = 등급) · 능력치 합계 · 가방</figcaption></figure>
+<figure><img src="2차_캡처/14_gear_part.png" loading="lazy"><figcaption>부위 창 — 강화(골드 + 부품) · 빼기 · 칩 6칸 · 끼운 칩 효과</figcaption></figure>
+<figure><img src="2차_캡처/14b_chip_bag.png" loading="lazy"><figcaption>칩 가방 — [모두 합성] · 3개 모이면 빨간 점</figcaption></figure>
+<figure><img src="2차_캡처/16_four_cards.png" loading="lazy"><figcaption>"첫 카드 칩"을 끼우면 첫 레벨업 카드 4장</figcaption></figure>
+</div>
+
+<h2>③ 새 터렛 5종</h2>
+<div class="shots">
+<figure><img src="2차_캡처/12_turrets2.png" loading="lazy"><figcaption>쾅쾅 대포(왼쪽 밖) · 소용돌이포(왼쪽 안 위 보라) · 집중 빔(오른쪽 안 하늘색 빔) · 불바퀴(오른쪽 밖) — 돌파까지 고른 모습</figcaption></figure>
+<figure><img src="2차_캡처/12c_tesla.png" loading="lazy"><figcaption>찌릿 코일(오른쪽 밖) — 번개가 적 사이를 튀며 폭발 · 집중 빔 굴절</figcaption></figure>
+<figure><img src="2차_캡처/17_result_elite.png" loading="lazy"><figcaption>엘리트 승리 — 보상 2배 · 얻은 장비 · 칩 4개</figcaption></figure>
+</div>
+<div class="shots">
+
+
+
+
+
+</div>
+<table><tr><th>터렛</th><th>속성</th><th>하는 일</th><th>열림</th><th>돌파 A / B</th></tr>
+<tr><td>쾅쾅 대포</td><td>물리</td><td>포탄이 터지며 둘레 적을 위로 밀어냄 (사거리 짧음)</td><td>스테이지 5</td><td>산탄 포화 / 부유 기뢰</td></tr>
+<tr><td>집중 빔</td><td>빛</td><td>한 적에 붙어 4초 동안 쏨 · 죽으면 다음 적으로</td><td>10</td><td>집중 누적(최대 +400%) / 빔 굴절</td></tr>
+<tr><td>소용돌이포</td><td>중력</td><td>천천히 나는 소용돌이가 적을 끌어모음 (보스는 안 끌림)</td><td>15</td><td>작은 블랙홀 / 중력 폭발</td></tr>
+<tr><td>불바퀴</td><td>불</td><td>벽 · 위 · 방어막에 튕기며 75번 맞힘</td><td>20</td><td>불꽃 자국 / 꼬마 바퀴</td></tr>
+<tr><td>찌릿 코일</td><td>번개</td><td>0.6초 충전 → 번개가 적 4마리를 튀며 폭발</td><td>25</td><td>전기 덫 / 과충전</td></tr></table>
+
+<h2>④ 2차에 들어간 것</h2>
+<table><tr><th>부분</th><th>내용</th></tr>
+<tr><td>터렛 5종 + 카드</td><td>새 카드 89장 (터렛마다 새 터렛 · 강화 7 · 돌파 2 · 연계 4 + 새 콤보 19) — 아래 ⑥ 목록 · 카드 전체 191장</td></tr>
+<tr><td>장비 · 칩</td><td>장비 6부위 · 7등급 · 강화 · 분해 · 합성 / 칩 68종 · 부위마다 6칸 · 합성 · 분해 · 전투 시작 때 Loadout 으로 모아 피해 공식(일반 브래킷) · 기지 체력 · 보호막 · 첫 피격 면역 · 카드(새로고침 · 첫 카드 4장 · 돌파 확률 · 놓으면 별)에 들어감</td></tr>
+<tr><td>떨어지는 보상</td><td>이기면 장비 · 칩 2개 (+엘리트 1 · +처음 깸 1) · 등급 = 스테이지 12개마다 +1 (가끔 위아래)</td></tr>
+<tr><td>엘리트 난이도</td><td>로비 보통/엘리트 · 엘리트 기록 따로 · 전투 화면에 왕관</td></tr>
+<tr><td>스테이지 100</td><td>31~100 추가 (51부터 적 세 묶음이 섞임) — 적 종류는 1차 19종 그대로</td></tr>
+<tr><td>스태미나</td><td>전투 시작 · 다음 스테이지 · 다시 하기 때 냄 · 모자라면 창</td></tr>
+<tr><td>출석 · 미션</td><td>출석 7일(골드 · 스태미나 · 조각 · 부품 · 칩 · 골드 · 장비) · 일일 미션 7개(판 · 승리 · 처치 · 강화 · 순찰 · 엘리트 · 모두)</td></tr>
+<tr><td>설정 · 도움말</td><td>설정 창 · 도움말 6개(끌어서 이동 · 첫 카드 · 별 4개 · 터렛 강화 · 장비 · 엘리트)</td></tr>
+<tr><td>표</td><td><code>tools/phase2_tables.py</code> — 기존 xlsx 엔 <b>없는 줄 · 칸만 더함</b>(손으로 고친 값을 지킴, 더한 줄은 연한 초록) + 새 표 Gear · Chip · Mission.xlsx</td></tr>
+<tr><td>그림</td><td>터렛 5종(받침 + 도는 조각) · 포탄 · 기뢰 · 소용돌이 · 불바퀴 · 아이콘 17개 (같은 낙서풍 도구)</td></tr>
+</table>
+<p class="note">2차 계획에 있었는데 줄인 것: 장비 제련(등급 23)은 7등급 + 합성으로 · 칩 재설정(에칭)은 뺌 · 다이아로 칩 칸 열기는 3차 상점 때.</p>
+
+<h2>⑤ 봐 주실 것 · 정해 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
+<ul class="todo">
+<li data-id="p-play"><label><input type="checkbox"><span><span class="tag">확인</span><b>Unity 에서 직접 해 보기</b> — 로비 탭 4개 · 장비 끼우기 · 칩 · 새 터렛(테스트로는 표 <code>Turret.xlsx</code> Unlock 을 0 으로 하면 바로 나옴)</span></label></li>
+<li data-id="p-turrets"><label><input type="checkbox"><span><span class="tag">확인</span><b>새 터렛 5종</b> 그림 · 공격 느낌 · 이름 (위 ③)</span></label></li>
+<li data-id="p-gear"><label><input type="checkbox"><span><span class="tag">확인</span><b>장비 · 칩 규칙</b> — 위 파란 칸 5~7번째 (다이아 없이 · 같은 것 3개 합성 · 칩 칸은 스테이지로 열림)</span></label></li>
+<li data-id="p-stamina"><label><input type="checkbox"><span><span class="tag">확인</span><b>스태미나 숫자</b> — 최대 60 · 보통 5 · 엘리트 8 · 6분에 1 (Config 에서 바꿈)</span></label></li>
+<li data-id="p-lobby"><label><input type="checkbox"><span><span class="tag">확인</span><b>로비 배치</b> — 위 줄 + 아래 탭 4개 · 전투 탭 아래가 비어 기지가 보임</span></label></li>
+<li data-id="p-github"><label><input type="checkbox"><span><span class="tag">결정</span><b>GitHub 비공개 저장소</b> — 로컬 git 은 만들었습니다. 추천: GitHub 에 비공개 저장소 <code>EarthDefence</code> 를 만들어 주시면 push 도 제가</span></label></li>
+<li data-id="p-next"><label><input type="checkbox"><span><span class="tag">결정</span><b>다음 순서</b> — 추천: ① 소리(배경음 · 효과음 · 보스 곡) → ② 3차(기지 외형 · 동료 스킬 · 터렛 스킨 · 무한 모드 · 상점 · 광고 · 결제 [초안] · 구글 로그인) → 밸런스는 맨 마지막</span></label></li>
+</ul>
+
+<h2>⑥ 2차 카드 목록 <small>Card.xlsx 그대로</small></h2>
+<h3>쾅쾅 대포 <small>(14장)</small></h3><table><tr><th>종류</th><th>이름</th><th>설명</th><th>최대</th><th>조건</th></tr><tr><td>새 터렛</td><td>쾅쾅 대포</td><td>새 터렛을 빈 칸에 놓아요</td><td>1</td><td></td></tr><tr><td>강화</td><td>강력 폭발</td><td>포탄 피해 +50%</td><td>3</td><td></td></tr><tr><td>강화</td><td>강력 폭발+</td><td>포탄 피해 +100%</td><td>1</td><td></td></tr><tr><td>강화</td><td>다중 포격</td><td>포탄 +1, 발당 피해 -15%</td><td>2</td><td></td></tr><tr><td>강화</td><td>충격 강화</td><td>밀어내기 +50%, 피해 +30%</td><td>2</td><td></td></tr><tr><td>강화</td><td>거대 폭발</td><td>폭발 범위 +70%</td><td>1</td><td></td></tr><tr><td>강화</td><td>사거리 확장</td><td>사거리 +70%</td><td>1</td><td></td></tr><tr><td>강화</td><td>빠른 장전</td><td>공격 속도 +25%</td><td>2</td><td></td></tr><tr><td>돌파</td><td>산탄 포화</td><td>쏜 뒤 꿰뚫는 산탄 5발</td><td>1</td><td>줄 A</td></tr><tr><td>연계</td><td>추가 장전</td><td>산탄 +3</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>연계</td><td>산탄 강화</td><td>산탄 피해 +100%</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>돌파</td><td>부유 기뢰</td><td>포탄마다 떠 있는 기뢰 2개</td><td>1</td><td>줄 B</td></tr><tr><td>연계</td><td>기뢰 지대</td><td>기뢰 +2, 기뢰 피해 +25%</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr><tr><td>연계</td><td>기뢰 충격파</td><td>기뢰 +2, 기뢰가 적을 밀어냄</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr></table><h3>집중 빔 <small>(14장)</small></h3><table><tr><th>종류</th><th>이름</th><th>설명</th><th>최대</th><th>조건</th></tr><tr><td>새 터렛</td><td>집중 빔</td><td>새 터렛을 빈 칸에 놓아요</td><td>1</td><td></td></tr><tr><td>강화</td><td>빔 강화</td><td>빔 피해 +50%</td><td>3</td><td></td></tr><tr><td>강화</td><td>빔 강화+</td><td>빔 피해 +100%</td><td>1</td><td></td></tr><tr><td>강화</td><td>고주파 빔</td><td>공격 속도 +30%</td><td>2</td><td></td></tr><tr><td>강화</td><td>효율 빔</td><td>쏘는 시간 +40%</td><td>2</td><td></td></tr><tr><td>강화</td><td>촘촘한 빔</td><td>틱 간격 -40%</td><td>1</td><td></td></tr><tr><td>강화</td><td>추가 빔</td><td>다른 적에게 빔 1줄 더</td><td>1</td><td></td></tr><tr><td>강화</td><td>빔 관통</td><td>맞은 적이 받는 피해 +15%</td><td>1</td><td></td></tr><tr><td>돌파</td><td>집중 누적</td><td>한 적에 오래 붙을수록 피해 최대 +200%</td><td>1</td><td>줄 A</td></tr><tr><td>연계</td><td>누적 유지</td><td>대상을 바꿔도 누적이 안 사라짐</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>연계</td><td>극한 집중</td><td>누적 최대 +200% 더 (최대 +400%)</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>돌파</td><td>빔 굴절</td><td>맞은 적에서 굴절 빔 2줄</td><td>1</td><td>줄 B</td></tr><tr><td>연계</td><td>굴절 추가</td><td>굴절 빔 +2</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr><tr><td>연계</td><td>굴절 증폭</td><td>굴절 빔 피해 +100%</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr></table><h3>소용돌이포 <small>(14장)</small></h3><table><tr><th>종류</th><th>이름</th><th>설명</th><th>최대</th><th>조건</th></tr><tr><td>새 터렛</td><td>소용돌이포</td><td>새 터렛을 빈 칸에 놓아요</td><td>1</td><td></td></tr><tr><td>강화</td><td>고출력 장</td><td>소용돌이 피해 +50%</td><td>3</td><td></td></tr><tr><td>강화</td><td>고출력 장+</td><td>소용돌이 피해 +100%</td><td>1</td><td></td></tr><tr><td>강화</td><td>광역 장</td><td>소용돌이 범위 +25%</td><td>2</td><td></td></tr><tr><td>강화</td><td>연장 장</td><td>나는 시간 +30%</td><td>2</td><td></td></tr><tr><td>강화</td><td>장 증폭</td><td>끌어당김 +100%, 피해 +30%</td><td>1</td><td></td></tr><tr><td>강화</td><td>추가 장</td><td>소용돌이 +1, 발당 피해 -15%</td><td>1</td><td></td></tr><tr><td>강화</td><td>빠른 회전</td><td>공격 속도 +25%</td><td>2</td><td></td></tr><tr><td>돌파</td><td>작은 블랙홀</td><td>사라진 자리에 5초 블랙홀</td><td>1</td><td>줄 A</td></tr><tr><td>연계</td><td>블랙홀 확장</td><td>블랙홀 범위, 끌어당김 +50%</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>연계</td><td>파괴 블랙홀</td><td>블랙홀 피해 +250%</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>돌파</td><td>중력 폭발</td><td>사라질 때 모은 적에게 큰 폭발</td><td>1</td><td>줄 B</td></tr><tr><td>연계</td><td>폭발 확장</td><td>중력 폭발 범위 +60%</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr><tr><td>연계</td><td>폭발 강화</td><td>중력 폭발 피해 +100%</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr></table><h3>불바퀴 <small>(14장)</small></h3><table><tr><th>종류</th><th>이름</th><th>설명</th><th>최대</th><th>조건</th></tr><tr><td>새 터렛</td><td>불바퀴</td><td>새 터렛을 빈 칸에 놓아요</td><td>1</td><td></td></tr><tr><td>강화</td><td>불바퀴 강화</td><td>불바퀴 피해 +50%</td><td>3</td><td></td></tr><tr><td>강화</td><td>불바퀴 강화+</td><td>불바퀴 피해 +100%</td><td>1</td><td></td></tr><tr><td>강화</td><td>크기 강화</td><td>불바퀴 크기 +25%</td><td>2</td><td></td></tr><tr><td>강화</td><td>지속 연장</td><td>맞히는 횟수 +30%</td><td>2</td><td></td></tr><tr><td>강화</td><td>스마트 가속</td><td>속도 +50%, 피해 +20%</td><td>1</td><td></td></tr><tr><td>강화</td><td>쌍바퀴</td><td>불바퀴 +1, 발당 피해 -15%</td><td>1</td><td></td></tr><tr><td>강화</td><td>빠른 점화</td><td>공격 속도 +25%</td><td>2</td><td></td></tr><tr><td>돌파</td><td>불꽃 자국</td><td>지나간 자리에 2초 불길</td><td>1</td><td>줄 A</td></tr><tr><td>연계</td><td>타오르는 자국</td><td>불길 피해 +60%</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>연계</td><td>자국 연장</td><td>불길 시간 +100%</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>돌파</td><td>꼬마 바퀴</td><td>3초마다 꼬마 불바퀴 2개</td><td>1</td><td>줄 B</td></tr><tr><td>연계</td><td>꼬마 바퀴 떼</td><td>꼬마 불바퀴 +2</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr><tr><td>연계</td><td>꼬마 바퀴 강화</td><td>꼬마 불바퀴 피해 +50%</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr></table><h3>찌릿 코일 <small>(14장)</small></h3><table><tr><th>종류</th><th>이름</th><th>설명</th><th>최대</th><th>조건</th></tr><tr><td>새 터렛</td><td>찌릿 코일</td><td>새 터렛을 빈 칸에 놓아요</td><td>1</td><td></td></tr><tr><td>강화</td><td>전기 부스트</td><td>번개 폭발 피해 +50%</td><td>3</td><td></td></tr><tr><td>강화</td><td>전기 부스트+</td><td>번개 폭발 피해 +100%</td><td>1</td><td></td></tr><tr><td>강화</td><td>전기 체인</td><td>튀기 +1, 발당 피해 -15%</td><td>2</td><td></td></tr><tr><td>강화</td><td>전기 체인+</td><td>번개 +1 (피해 그대로)</td><td>1</td><td></td></tr><tr><td>강화</td><td>전기 가속</td><td>공격 속도 +30%</td><td>2</td><td></td></tr><tr><td>강화</td><td>전기 간섭</td><td>폭발 범위 +30%, 10% 확률로 마비</td><td>1</td><td></td></tr><tr><td>강화</td><td>확장 충격파</td><td>폭발 바깥에 약한 충격파</td><td>1</td><td></td></tr><tr><td>돌파</td><td>전기 덫</td><td>폭발 자리에 2초 덫 (둔화)</td><td>1</td><td>줄 A</td></tr><tr><td>연계</td><td>강화 덫</td><td>덫 피해 +100%, 덫 시간 +50%</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>연계</td><td>덫 낙뢰</td><td>덫 위에 작은 낙뢰</td><td>1</td><td>돌파 뒤 (줄 A)</td></tr><tr><td>돌파</td><td>과충전</td><td>충전 +0.5초, 폭발 범위 +40%</td><td>1</td><td>줄 B</td></tr><tr><td>연계</td><td>과충전 파괴</td><td>폭발 피해 +100%</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr><tr><td>연계</td><td>연쇄 서지</td><td>튀기 +3 (피해 그대로)</td><td>1</td><td>돌파 뒤 (줄 B)</td></tr></table><h3>새 콤보 <small>(19장)</small></h3><table><tr><th>터렛</th><th>이름</th><th>설명</th><th>함께 있어야</th></tr><tr><td>대장 카피</td><td>전류 탄환</td><td>맞히면 5% 확률로 번개가 튐</td><td>찌릿 코일</td></tr><tr><td>대장 카피</td><td>쾅쾅 탄환</td><td>처치하면 15% 확률로 폭발</td><td>쾅쾅 대포</td></tr><tr><td>대장 카피</td><td>중력탄</td><td>맞은 적이 받는 피해 +10%</td><td>소용돌이포</td></tr><tr><td>관통포</td><td>불꽃 관통</td><td>관통 +1, 포탄 피해 +20%</td><td>불바퀴</td></tr><tr><td>관통포</td><td>서지 관통</td><td>처치하면 50% 확률로 번개가 튐</td><td>찌릿 코일</td></tr><tr><td>쾅쾅 대포</td><td>관통 포격</td><td>포탄이 적 1마리를 꿰뚫음</td><td>관통포</td></tr><tr><td>쾅쾅 대포</td><td>중력 폭탄</td><td>포탄 피해 +60%</td><td>소용돌이포</td></tr><tr><td>쾅쾅 대포</td><td>불씨 포탄</td><td>포탄에 맞은 적 화상</td><td>불바퀴</td></tr><tr><td>집중 빔</td><td>전기 빔</td><td>틱마다 3% 확률로 마비</td><td>벼락탑</td></tr><tr><td>집중 빔</td><td>끈끈 빔</td><td>맞은 적 둔화 +20%</td><td>끈끈이 드론</td></tr><tr><td>레이저 포</td><td>빛 공명</td><td>레이저 피해 +40%</td><td>집중 빔</td></tr><tr><td>소용돌이포</td><td>불 소용돌이</td><td>소용돌이에 맞은 적 화상</td><td>유도 미사일</td></tr><tr><td>소용돌이포</td><td>번개 소용돌이</td><td>처치하면 30% 확률로 작은 낙뢰</td><td>벼락탑</td></tr><tr><td>불바퀴</td><td>끈끈 바퀴</td><td>맞은 적 둔화 +15%</td><td>끈끈이 드론</td></tr><tr><td>불바퀴</td><td>폭발 바퀴</td><td>처치하면 25% 확률로 폭발</td><td>쾅쾅 대포</td></tr><tr><td>찌릿 코일</td><td>벼락 코일</td><td>마비된 적에게 피해 +80%</td><td>벼락탑</td></tr><tr><td>찌릿 코일</td><td>빛 코일</td><td>맞히면 15% 확률로 작은 레이저</td><td>레이저 포</td></tr><tr><td>유도 미사일</td><td>충격 미사일</td><td>미사일이 적을 밀어냄</td><td>쾅쾅 대포</td></tr><tr><td>벌집</td><td>벌떼 소용돌이</td><td>벌 피해 +40%</td><td>소용돌이포</td></tr></table>
+
+<h2>⑦ 범용 칩 목록 <small>Chip.xlsx 그대로</small></h2>
+<table><tr><th>이름</th><th>궁극(7등급) 값</th><th>어디에</th><th>끼울 수 있는 부위</th></tr><tr><td>공격 칩</td><td>공격력 +70</td><td>보드</td><td>모두</td></tr><tr><td>무기 공격 칩</td><td>공격력 +140</td><td>보드</td><td>레이저 소총</td></tr><tr><td>공격 증폭 칩</td><td>장비, 칩 공격력 +100%</td><td>보드</td><td>우주복</td></tr><tr><td>치명 칩</td><td>치명 확률 +7%</td><td>보드</td><td>모두</td></tr><tr><td>치명 피해 칩</td><td>치명 피해 +70%</td><td>보드</td><td>점프 부츠, 에너지 코어</td></tr><tr><td>기지 칩</td><td>기지 체력 +1400</td><td>보드</td><td>모두</td></tr><tr><td>장갑 칩</td><td>받는 피해 -14</td><td>보드</td><td>모두</td></tr><tr><td>보호막 칩</td><td>시작할 때 보호막 2800</td><td>보드</td><td>우주복, 우주 헬멧, 에너지 방패</td></tr><tr><td>반사막 칩</td><td>처음 7번 맞아도 피해 없음</td><td>보드</td><td>모두</td></tr><tr><td>회복 칩</td><td>중간 보스, 보스를 잡으면 기지 체력 14% 회복</td><td>보드</td><td>에너지 방패</td></tr><tr><td>돌파 회복 칩</td><td>돌파를 고르면 기지 체력 12% 회복</td><td>보드</td><td>우주복, 우주 헬멧, 에너지 방패</td></tr><tr><td>처형 칩</td><td>치명 때 적 최대 체력 8% 피해 더</td><td>보드</td><td>점프 부츠, 에너지 코어, 레이저 소총</td></tr><tr><td>연사 칩</td><td>6% 확률로 한 번 더 쏨 (대장 카피 빼고)</td><td>보드</td><td>점프 부츠</td></tr><tr><td>새로고침 칩</td><td>카드 새로고침 +6번</td><td>카드</td><td>에너지 방패</td></tr><tr><td>첫 카드 칩</td><td>첫 레벨업 카드 1장 더</td><td>카드</td><td>에너지 방패</td></tr><tr><td>돌파 칩</td><td>돌파 카드가 나올 확률 +200%</td><td>카드</td><td>에너지 코어</td></tr><tr><td>피해 칩</td><td>피해 +14%</td><td>조건 피해</td><td>점프 부츠, 에너지 코어</td></tr><tr><td>불 칩</td><td>불 속성 피해 +28%</td><td>조건 피해</td><td>모두</td></tr><tr><td>번개 칩</td><td>번개 속성 피해 +28%</td><td>조건 피해</td><td>모두</td></tr><tr><td>중력 칩</td><td>중력 속성 피해 +28%</td><td>조건 피해</td><td>모두</td></tr><tr><td>빛 칩</td><td>빛 속성 피해 +28%</td><td>조건 피해</td><td>모두</td></tr><tr><td>물리 칩</td><td>물리 속성 피해 +21%</td><td>조건 피해</td><td>모두</td></tr><tr><td>선제 칩</td><td>체력 70% 넘는 적에게 피해 +70%</td><td>조건 피해</td><td>모두</td></tr><tr><td>보스 사냥 칩</td><td>중간 보스, 보스에게 피해 +140%</td><td>조건 피해</td><td>점프 부츠, 에너지 코어, 레이저 소총</td></tr><tr><td>기선 칩</td><td>처음 2분 동안 피해 +84%</td><td>조건 피해</td><td>우주복, 우주 헬멧, 에너지 방패</td></tr><tr><td>역습 칩</td><td>기지 체력 30% 아래면 피해 +110%</td><td>조건 피해</td><td>점프 부츠, 에너지 코어, 레이저 소총</td></tr><tr><td>약점 공략 칩</td><td>상태이상 걸린 적에게 피해 +42%</td><td>조건 피해</td><td>점프 부츠, 에너지 코어, 레이저 소총</td></tr><tr><td>근접 방어 칩</td><td>기지 근처 적에게 피해 +42%</td><td>조건 피해</td><td>우주복, 점프 부츠, 에너지 코어</td></tr><tr><td>긴장 칩</td><td>중간 보스, 보스가 있으면 피해 +50%</td><td>조건 피해</td><td>점프 부츠</td></tr><tr><td>포대 칩</td><td>터렛 1기마다 피해 +4.5%</td><td>조건 피해</td><td>우주 헬멧</td></tr><tr><td>수집 칩</td><td>고른 카드 1장마다 피해 +1%</td><td>조건 피해</td><td>우주복</td></tr><tr><td>가속 칩</td><td>모든 터렛 공격 속도 +7%</td><td>모든 터렛</td><td>우주복, 우주 헬멧, 에너지 방패</td></tr><tr><td>지속 칩</td><td>모든 터렛 지속 시간 +21%</td><td>모든 터렛</td><td>모두</td></tr></table><p class="note">터렛 전용 칩 35개는 터렛 12종마다 <b>피해 +42%</b> · <b>놓으면 별 +2</b>(대장 카피 빼고) · <b>특수 1개</b>(예: 관통포 관통 +4 · 벌집 벌 공격 +5 · 찌릿 코일 튀기 +2) — 카드와 같은 효과 키를 써서 그대로 들어감.</p>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-2nd-1116', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

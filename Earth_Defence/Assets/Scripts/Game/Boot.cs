@@ -13,10 +13,10 @@ namespace EarthDef
     {
         void Awake()
         {
-            Application.targetFrameRate = 60;
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             Tables.Load();
             SaveData.Load();
+            Settings.Apply();
             var cam = Camera.main;
             cam.backgroundColor = Art.Night;
             new GameObject("World").AddComponent<World>().Build(cam);
@@ -44,6 +44,7 @@ namespace EarthDef
         public static void ToLobby()
         {
             Popup.CloseAll();
+            Tutorial.CloseCur();
             if (BattleUI) { UnityEngine.Object.Destroy(BattleUI.gameObject); BattleUI = null; }
             Battle.I?.Close();
             if (Lobby) UnityEngine.Object.Destroy(Lobby.gameObject);
@@ -52,14 +53,24 @@ namespace EarthDef
             World.I.ShowSlots(0, false);
         }
 
-        public static void StartStage(int stage, int seed = 0)
+        /// <summary>로비 · 결과 창에서: 스태미나를 내고 시작 (모자라면 스태미나 창)</summary>
+        public static bool TryStart(int stage, bool elite)
+        {
+            if (elite && !Meta.EliteOpen(stage)) elite = false;
+            if (!Meta.Pay(elite)) { Popup.CloseAll(); if (!Lobby) ToLobby(); EarthDef.Lobby.ShowStamina(true); return false; }
+            StartStage(stage, 0, elite);
+            return true;
+        }
+
+        public static void StartStage(int stage, int seed = 0, bool elite = false)
         {
             Popup.CloseAll();
             if (Lobby) { UnityEngine.Object.Destroy(Lobby.gameObject); Lobby = null; }
             if (BattleUI) UnityEngine.Object.Destroy(BattleUI.gameObject);
             Battle.I?.Close();
             SaveData.Cur.stage = stage;
-            var b = Battle.Begin(stage, seed);
+            Tutorial.CloseCur();
+            var b = Battle.Begin(stage, seed, elite);
             BattleUI = UIKit.Rect(UIRoot.I.pages, "BattleUI").Fill().gameObject.AddComponent<BattleUI>();
             BattleUI.Build(b);
         }

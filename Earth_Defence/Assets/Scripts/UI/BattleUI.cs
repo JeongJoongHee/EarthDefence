@@ -13,7 +13,7 @@ namespace EarthDef
     public class BattleUI : MonoBehaviour, IPointerDownHandler, IDragHandler
     {
         public Battle b;
-        Text stageT, timeT, lvT, hpT, speedT, banner;
+        Text stageT, timeT, lvT, hpT, speedT, banner, shieldT;
         Image expFill, chargeFill;
         RectTransform hpBox, chargeBox, bannerBox;
         float bannerT;
@@ -31,7 +31,8 @@ namespace EarthDef
             var sp = UIKit.Btn(root, "pill", null, 38, ToggleSpeed, "Speed"); ((RectTransform)sp.transform).TL(140, 46, 134, 78);
             speedT = UIKit.Label(sp.transform, "x1", 38, Art.Ink, TextAnchor.MiddleCenter, false); speedT.rectTransform.Fill(0, 6, 0, 0);
             var mid = UIKit.Panel(root, "pill", "Stage"); mid.rectTransform.TL(296, 30, 488, 108);
-            stageT = UIKit.Label(mid.transform, L.F("stage_n", b.stageNo), 42, Art.Ink, TextAnchor.UpperCenter, false); stageT.rectTransform.Fill(0, 40, 0, 10);
+            stageT = UIKit.Label(mid.transform, L.F("stage_n", b.stageNo), 42, b.eliteMode ? Art.Purple : Art.Ink, TextAnchor.UpperCenter, false); stageT.rectTransform.Fill(0, 40, 0, 10);
+            if (b.eliteMode) { var cr = UIKit.Img(mid.transform, Art.Icon("crown"), "Elite"); cr.raycastTarget = false; cr.rectTransform.Place(0, 0.5f, new Vector2(14, 4), new Vector2(70, 70), new Vector2(0, 0.5f)); }
             timeT = UIKit.Label(mid.transform, "", 30, Art.Soft, TextAnchor.LowerCenter, false); timeT.rectTransform.Fill(0, 10, 0, 50);
             var cards = UIKit.Tile(root, "btn_orange", Color.white, Art.Icon("cards"), 0.6f, "Cards"); cards.rectTransform.TL(954, 34, 100, 100);
             UIKit.Clickable(cards, ShowCards);
@@ -42,6 +43,7 @@ namespace EarthDef
             hpBox = UIKit.Rect(root, "BaseHp"); hpBox.sizeDelta = new Vector2(400, 70); hpBox.anchorMin = hpBox.anchorMax = new Vector2(0.5f, 0.5f);
             var heart = UIKit.Img(hpBox, Art.Icon("heart"), "Heart"); heart.rectTransform.Place(0.5f, 0.5f, new Vector2(-120, 0), new Vector2(62, 62));
             hpT = UIKit.Label(hpBox, "", 48, Color.white, TextAnchor.MiddleLeft); hpT.rectTransform.Place(0.5f, 0.5f, new Vector2(80, 0), new Vector2(300, 70));
+            shieldT = UIKit.Label(hpBox, "", 30, Art.Sky, TextAnchor.MiddleLeft); shieldT.rectTransform.Place(0.5f, 0.5f, new Vector2(80, -50), new Vector2(300, 40));
             // 충전 게이지 (가디언 아래)
             chargeFill = UIKit.Bar(root, Art.Gold, "Charge");
             chargeBox = chargeFill.transform.parent.GetComponent<RectTransform>();
@@ -54,6 +56,8 @@ namespace EarthDef
             b.Changed += OnChanged;
             b.Banner += s => { banner.text = s; bannerBox.gameObject.SetActive(true); bannerT = 2f; };
             Refresh();
+            // 2차 도움말: 처음 전투 = 끌어서 이동 (손가락이 좌우로)
+            Tutorial.Show("t_move", L.T("tut_move"), null, 5f, true, 0.42f);
         }
 
         void OnDestroy() { if (b) b.Changed -= OnChanged; }
@@ -64,6 +68,7 @@ namespace EarthDef
         void MoveTo(Vector2 screen)
         {
             if (b == null || b.st != Battle.St.Play || b.Guardian == null) return;
+            if (Tutorial.Cur && Tutorial.Cur.name == "Tutorial_t_move") Tutorial.CloseCur();
             b.Guardian.targetX = World.I.ScreenToWorld(screen).x;
         }
 
@@ -86,6 +91,7 @@ namespace EarthDef
             lvT.text = b.level >= b.LevelMax ? L.F("lv", b.level) + " MAX" : L.F("lv", b.level);
             UIKit.SetBar(expFill, b.level >= b.LevelMax ? 1 : (float)(b.exp / b.need));
             hpT.text = Num.Comma(b.baseHp);
+            shieldT.text = b.shield > 0 ? "+" + Num.Comma(b.shield) : "";
             hpBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(0, World.ShieldY + 0.7f));
             var g = b.Guardian;
             bool showCharge = g != null && g.t.Has("charge");
@@ -100,6 +106,9 @@ namespace EarthDef
 
         void OnChanged()
         {
+            if (b.st == Battle.St.Play)
+                foreach (var t in b.run.turrets)
+                    if (t.stars >= Tables.Ci("Stars_Per_Tier", 4) && t.tier < Tables.Ci("Tier_Max", 3)) { Tutorial.Show("t_star", L.T("tut_star"), null, 4f, false, 0.62f); break; }
             if (b.st == Battle.St.Pick) ShowPick();
             else if (pick != null) { pick.Close(false); pick = null; }
             if (b.st == Battle.St.End) ShowResult();
@@ -129,7 +138,9 @@ namespace EarthDef
                 Stars(w, x + 2, 372, t.tier, t.stars, 20);
             }
             // 카드 3장
-            for (int i = 0; i < b.offer.Count; i++) Card(w, i, b.offer[i]);
+            // 칩 "첫 카드 N장 더" — 4장이면 조금 좁게
+            for (int i = 0; i < b.offer.Count; i++) Card(w, i, b.offer[i], b.offer.Count);
+            if (Tutorial.Want("t_card")) Tutorial.Show("t_card", L.T("tut_card"), null, 5f, false, 0.86f);
             // 새로고침 (원작대로 광고만 — Refresh_Ad 번)
             var rb = p.Btn(b.CanRefresh ? "btn_orange" : "btn_gray", null, 0, 100, 420, () =>
             {
@@ -149,9 +160,10 @@ namespace EarthDef
             ["chain"] = ("kind_chain", Art.Purple), ["combo"] = ("kind_combo", Art.Red),
         };
 
-        void Card(RectTransform w, int i, CardRow c)
+        void Card(RectTransform w, int i, CardRow c, int count = 3)
         {
-            float x = 35 + i * 320, y = 476, cw = 290, ch = 660;
+            float cw = count > 3 ? 226 : 290, gap = count > 3 ? 14 : 30;
+            float x = (1000 - (count * cw + (count - 1) * gap)) / 2 + i * (cw + gap), y = 476, ch = 660;
             var turret = Tables.TurretById[c.turret];
             var card = UIKit.Panel(w, "card_white", "Card" + i); card.rectTransform.TL(x, y, cw, ch);
             UIKit.Clickable(card, () => b.Choose(i));
@@ -182,7 +194,8 @@ namespace EarthDef
             else
             {
                 int tier = t?.tier ?? 1, st = t?.stars ?? 0, after = Mathf.Min(Tables.Ci("Stars_Per_Tier", 4), st + 1);
-                Stars(card.transform, 40, 600, tier, after, 26, st < after ? after - 1 : -1);
+                int ss = cw < 250 ? 20 : 26;   // 카드 4장(첫 카드 칩)이면 별을 작게 — 카드 밖으로 안 나가게
+                Stars(card.transform, (cw - (ss * 2 + 6 + ss * 1.4f * 3 + ss * 1.5f)) / 2, 600, tier, after, ss, st < after ? after - 1 : -1);
             }
         }
 
@@ -246,7 +259,7 @@ namespace EarthDef
         {
             Popup.CloseAll();
             var s = SaveData.Cur;
-            var p = Popup.Make(b.won ? L.T("win") : L.T("lose"), 900, 980, null, false);
+            var p = Popup.Make(b.won ? L.T("win") : L.T("lose"), 900, b.drops.Count > 0 ? 1180 : 980, null, false);
             var ic = UIKit.Img(p.win, Art.Icon(b.won ? "trophy" : "skull"), "Icon"); ic.rectTransform.Place(0.5f, 1, new Vector2(0, -130), new Vector2(150, 150), new Vector2(0.5f, 1));
             p.Text(L.F("stage_n", b.stageNo) + "   " + L.F("kills", b.kills) + "   " + L.F("lv", b.level), 300, 34, Art.Brown);
             if (b.FirstClear) p.Text(L.F("first_clear", Tables.Ci("First_Clear_Mul", 2)), 350, 30, Art.Green2);
@@ -254,10 +267,19 @@ namespace EarthDef
             var g = UIKit.Label(p.win, "+" + Num.F(b.RewardGold), 60, Art.Gold); g.rectTransform.Place(0.5f, 1, new Vector2(50, -420), new Vector2(360, 100), new Vector2(0.5f, 1));
             var shard = UIKit.Img(p.win, Art.Icon("shard"), "Shard"); shard.rectTransform.Place(0.5f, 1, new Vector2(-170, -540), new Vector2(90, 90), new Vector2(0.5f, 1));
             var sh = UIKit.Label(p.win, "+" + b.RewardShards, 52, Art.Sky); sh.rectTransform.Place(0.5f, 1, new Vector2(50, -540), new Vector2(360, 90), new Vector2(0.5f, 1));
+            if (b.drops.Count > 0)
+            {
+                p.Text(L.T("drops"), 650, 32, Art.Brown);
+                var dl = p.Text(string.Join(", ", b.drops), 696, 28, Art.Ink, 150);
+                dl.horizontalOverflow = HorizontalWrapMode.Wrap; dl.verticalOverflow = VerticalWrapMode.Overflow;
+            }
+            if (b.eliteMode) { var cr = UIKit.Img(p.win, Art.Icon("crown"), "Elite"); cr.rectTransform.Place(0.5f, 1, new Vector2(110, -120), new Vector2(80, 80), new Vector2(0.5f, 1)); }
             p.Btn("btn_orange", L.T("to_lobby"), -200, 70, 340, Game.ToLobby);
-            int stage = b.stageNo;
-            bool next = b.won && stage < Tables.Stages.Count;
-            p.Btn("btn_green", next ? L.T("next") : L.T("retry"), 200, 70, 340, () => Game.StartStage(next ? stage + 1 : stage));
+            int stage = b.stageNo; bool elite = b.eliteMode;
+            bool next = b.won && stage < Tables.Stages.Count && (!elite || Meta.EliteOpen(stage + 1));
+            var nb = p.Btn("btn_green", next ? L.T("next") : L.T("retry"), 200, 70, 340, () => Game.TryStart(next ? stage + 1 : stage, elite));
+            var ne = UIKit.Img(nb.transform, Art.Icon("energy"), "Energy"); ne.raycastTarget = false; ne.rectTransform.Place(1, 1, new Vector2(10, 22), new Vector2(56, 56), new Vector2(1, 1));
+            var nc = UIKit.Label(ne.transform, Meta.StaminaCost(elite).ToString(), 26); nc.rectTransform.Place(0.5f, 0, new Vector2(0, -16), new Vector2(60, 34), new Vector2(0.5f, 0.5f));
         }
     }
 }

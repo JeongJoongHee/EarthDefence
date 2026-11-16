@@ -45,7 +45,7 @@ namespace EarthDef
         public static void CloseAll()
         {
             if (UIRoot.I == null) return;
-            foreach (var p in UIRoot.I.popups.GetComponentsInChildren<Popup>()) p.Close();
+            foreach (var p in UIRoot.I.popups.GetComponentsInChildren<Popup>()) p.Close(false);   // 2차: 화면을 바꿀 때 닫기 뒤 할 일(출석 → 다음 알림)이 다시 창을 열지 않게
         }
 
         bool closed;

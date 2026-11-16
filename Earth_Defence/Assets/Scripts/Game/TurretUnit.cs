@@ -17,7 +17,7 @@ namespace EarthDef
         public float ChargeK => Charging ? chargeT / Tables.Cf("Charge_Time", 5f) : (float)(charge / Tables.C("Charge_Need", 120));
         public float targetX;
         int muzzle;
-        public int shotsFired, fired;
+        public int shotsFired, fired, extraShots;
         bool IsGuardian => t.row.kind == "gun";
         float baseY, baseScale = 1f;
 
@@ -152,6 +152,9 @@ namespace EarthDef
             Fire(target);
             fired++;
             kick = 0.1f;
+            // 2차 칩 "N% 확률로 한 번 더 쏨" (대장 카피 빼고)
+            double ex = b.lo != null ? System.Math.Min(Tables.C("Extra_Shot_Max", 0.5), b.lo.B("extra_shot") / 100.0) : 0;
+            if (!IsGuardian && ex > 0 && Combat.R < ex && target != null && !target.dead) { Fire(target); extraShots++; }
         }
 
         void Move(float dt)
@@ -220,6 +223,67 @@ namespace EarthDef
                         b.Add(m);
                     }
                     break;
+                case "cannon":
+                    for (int i = 0; i < t.Shots; i++)
+                    {
+                        var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 9f);
+                        var pr = new Projectile(t, "cannonball", Head, d, t.row.speed, t.row.rate, t.Pierce, 1f) { hitR = 0.3f, life = 2.5f };
+                        if (i == 0) Fx.Muzzle(Head, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, Projectile.ShotColor("cannonball"), 1.2f);
+                        bool first = true;
+                        pr.onHit = (p, e) => { CannonHit(p.pos, p.dir, e, first); first = false; };
+                        b.Add(pr);
+                    }
+                    break;
+                case "focus":
+                {
+                    float w = t.row.radius * t.Area;
+                    b.Add(new FocusBeam(t, target, t.Duration, w));
+                    int extra = (int)t.S("beams");
+                    var skip = new System.Collections.Generic.HashSet<Enemy> { target };
+                    for (int i = 0; i < extra; i++)
+                    {
+                        var e2 = b.Nearest(Head, t.Range, skip); if (e2 == null) break; skip.Add(e2);
+                        b.Add(new FocusBeam(t, e2, t.Duration, w * 0.8f, target));
+                    }
+                    break;
+                }
+                case "vortex":
+                {
+                    float spd = t.row.speed, pull = 2.4f * (1 + (float)t.S("pull_pow") / 100f);
+                    for (int i = 0; i < t.Shots; i++)
+                    {
+                        var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 18f);
+                        b.Add(new Vortex(t, Head + d * 0.3f, d, spd, t.Duration, t.row.radius * t.Area, t.row.rate, pull));
+                    }
+                    Fx.Glow(Head, 0.6f, new Color(0.8f, 0.7f, 1f, 0.7f), 0.2f);
+                    break;
+                }
+                case "wheel":
+                {
+                    float spd = t.row.speed * (1 + (float)t.S("speed") / 100f);
+                    int hits = Mathf.RoundToInt(t.row.hits * (1 + (float)t.S("hits_pct") / 100f) + (float)t.S("hits"));
+                    for (int i = 0; i < t.Shots; i++)
+                    {
+                        var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 30f + Random.Range(-12f, 12f));
+                        b.Add(new FireWheel(t, Head, d * spd, t.row.radius * t.Area, hits, t.Duration, t.row.rate));
+                    }
+                    Fx.Sparks(Head, Art.Hex("#ffb35c"), 6, 3f, 1f, 120f, 90f);
+                    break;
+                }
+                case "tesla":
+                {
+                    bool oc = t.Has("overcharge");
+                    float charge = t.row.dur + (oc ? 0.5f : 0f);
+                    float rad = t.row.radius * t.Area * (oc ? 1.4f : 1f);
+                    int bounces = t.row.hits + (int)t.S("bounce") + (int)t.S("bounce_free");
+                    int n = 1 + (int)t.S("shots_free");
+                    for (int i = 0; i < n; i++)
+                    {
+                        var tg = i == 0 ? target : (b.RandomEnemy() ?? target);
+                        b.Add(new TeslaBolt(t, tg, Head, charge + i * 0.12f, bounces, t.row.rate, rad));
+                    }
+                    break;
+                }
                 case "bolt":
                 {
                     float w = t.row.radius * 2 * t.Area;
@@ -302,6 +366,36 @@ namespace EarthDef
             }
             if (mul >= 1 && t.Has("fire_zone"))
                 Battle.I.Add(new Zone(t, at, 1.0f * t.Area, 5f, 0.5f, 30, Elem.Color("fire")));
+        }
+
+        // ---------- 쾅쾅 대포 (2차) ----------
+        /// <summary>포탄이 맞으면: 충격 피해 + 둥근 폭발(Rate2) + 폭발 안 적을 위로 밀어냄 · 첫 적중에 산탄 · 기뢰</summary>
+        void CannonHit(Vector2 at, Vector2 dir, Enemy e, bool first)
+        {
+            Combat.Hit(t, e, t.row.rate);
+            float r = t.row.radius * t.Area;
+            Combat.Explode(t, at, r, t.row.rate2, Art.Hex("#ffcf6b"));
+            float kn = Tables.Cf("Knock_Base", 0.6f) * t.row.knock * (1 + (float)t.S("knock") / 100f);
+            foreach (var en in Battle.I.enemies) if (!en.dead && Vector2.Distance(en.Pos, at) <= r + en.radius) en.Knock(kn);
+            if (!first) return;
+            int sc = (int)t.S("scatter");
+            if (sc > 0)
+            {
+                double sr = Tables.C("Scatter_Rate", 60) * (1 + t.S("scatter_dmg") / 100.0);
+                for (int i = 0; i < sc; i++)
+                {
+                    var d = Rot(dir, (i - (sc - 1) / 2f) * (60f / Mathf.Max(1, sc - 1)));
+                    var pr = new Projectile(t, "shell", at + d * 0.3f, d, t.row.speed * 1.2f, sr, 3, 0.5f) { life = 0.7f, hitR = 0.16f };
+                    pr.onHit = (p, en) => Combat.Hit(t, en, p.rate, false);
+                    Battle.I.Add(pr);
+                }
+            }
+            int mines = (int)t.S("mines");
+            for (int i = 0; i < mines; i++)
+            {
+                float a = (i / (float)mines) * Mathf.PI * 2 + Random.Range(0f, 0.6f);
+                Battle.I.Add(new Mine(t, at, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 2.2f, Tables.C("Mine_Rate", 120) * (1 + t.S("mine_dmg") / 100.0), t.Has("mine_knock")));
+            }
         }
 
         static Vector2 Rot(Vector2 v, float deg)

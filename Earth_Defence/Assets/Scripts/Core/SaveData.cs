@@ -22,6 +22,23 @@ namespace EarthDef
         public int runs, wins;
         public long kills;
         public string lang = "ko";
+        // ---------- 2차 ----------
+        public int stamina = -1;          // -1 = 처음 (최대로 채움)
+        public long staminaAt;            // 스태미나를 마지막으로 계산한 시각
+        public int staminaAdDay, staminaAdN;
+        public int eliteBest;             // 엘리트 난이도로 깬 가장 높은 스테이지
+        public bool elite;                // 로비에서 고른 난이도
+        public List<GearItem> gear = new();
+        public List<ChipItem> chips = new();
+        public int nextUid = 1;
+        public double parts;              // 부품 (장비 강화 재료 — 분해로 얻음)
+        public int attendN, attendLast = -1;   // 받은 출석 일수 · 마지막으로 받은 날
+        public int missionDay = -1;
+        public List<int> mProg = new(), mGot = new();
+        public List<string> tut = new();  // 본 도움말
+        public List<string> seen = new(); // 알림을 본 것 (열린 터렛 · 엘리트)
+        public float bgm = 0.8f, sfx = 0.8f;
+        public bool vib = true, nums = true, fps60 = true;
 
         public static long Now => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         /// <summary>시험에서 시간을 앞당길 때</summary>
@@ -56,7 +73,16 @@ namespace EarthDef
             stage = Mathf.Clamp(stage, 1, Mathf.Min(Tables.Stages.Count, best + 1));
             baseLv = Mathf.Max(1, baseLv);
             if (patrolFrom <= 0) patrolFrom = Clock;
+            if (stamina < 0) { stamina = Tables.Ci("Stamina_Max", 60); staminaAt = Clock; }
+            gear ??= new(); chips ??= new(); mProg ??= new(); mGot ??= new(); tut ??= new(); seen ??= new();
+            foreach (var g in gear) if (g.uid >= nextUid) nextUid = g.uid + 1;
+            foreach (var c in chips) if (c.uid >= nextUid) nextUid = c.uid + 1;
         }
+
+        /// <summary>오늘 날짜 번호 (기기 시간대 기준 · 시험에서 NowOffset 으로 넘김)</summary>
+        public static int Today => (int)(DateTimeOffset.FromUnixTimeSeconds(Clock).ToLocalTime().Date - new DateTime(2020, 1, 1)).TotalDays;
+        public bool Unlocked(TurretRow t) => t.unlock <= 0 || best >= t.unlock;
+        public bool Tut(string key) => tut.Contains(key);
 
         public void Save()
         {

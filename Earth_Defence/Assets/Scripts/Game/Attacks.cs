@@ -49,6 +49,7 @@ namespace EarthDef
             "bullet_charge" => Art.Hex("#ffc04a"),
             "shell" => Art.Hex("#ffa860"),     // 11-16 저녁: 대장 탄(금빛)과 헷갈리지 않게 주황
             "missile" or "mini_missile" => Art.Hex("#ff9a5a"),
+            "cannonball" => Art.Hex("#ffcf6b"),
             _ => Color.white,
         };
 
@@ -58,16 +59,16 @@ namespace EarthDef
             MakeSprite("shot_" + sprite, Art.Shot(sprite), p, 31);
             go.transform.localScale = Vector3.one * scale;
             glowCol = ShotColor(sprite);
-            exhaust = sprite == "missile" || sprite == "mini_missile";
+            exhaust = sprite == "missile" || sprite == "mini_missile" || sprite == "cannonball";
             // 머리 둘레 빛 번짐 (자식 → 같이 움직임)
             var g = new GameObject("glow");
             g.transform.SetParent(go.transform, false);
             var gs = g.AddComponent<SpriteRenderer>();
             gs.sprite = Art.Fx("glow"); gs.sortingOrder = 30; Art.Additive(gs);
             var gc = glowCol; gc.a = 0.45f; gs.color = gc;
-            float gk = sprite == "bullet_charge" ? 0.85f : sprite == "bullet" ? 0.38f : exhaust ? 0.6f : sprite == "shell" ? 0.9f : 0.55f;
+            float gk = sprite == "bullet_charge" ? 0.85f : sprite == "bullet" ? 0.38f : sprite == "cannonball" ? 0.75f : exhaust ? 0.6f : sprite == "shell" ? 0.9f : 0.55f;
             g.transform.localScale = Vector3.one * gk;
-            if (exhaust) g.transform.localPosition = new Vector3(-0.32f * (sprite == "missile" ? 1f : 0.6f), 0, 0);
+            if (exhaust && sprite != "cannonball") g.transform.localPosition = new Vector3(-0.32f * (sprite == "missile" ? 1f : 0.6f), 0, 0);
             Face();
         }
 
@@ -360,10 +361,13 @@ namespace EarthDef
     /// <summary>불바다 · 둥근 장판: 틱마다 원 안의 적</summary>
     public class Zone : Attack
     {
-        Vector2 pos; float r, dur, t, tick, tickT; double rate;
-        public Zone(TurretInst tr, Vector2 p, float radius, float duration, float tickSec, double rate, Color c)
+        Vector2 pos; float r, dur, t, tick, tickT, slow, boltT; double rate; bool bolts;
+        /// <summary>가장 진할 때 투명도 (불바퀴 자국처럼 많이 깔리는 것은 옅게)</summary>
+        public float alpha = 0.8f;
+        /// <summary>slow = 틱마다 둔화 (2차 전기 덫) · bolts = 0.5초마다 작은 낙뢰 (덫 낙뢰)</summary>
+        public Zone(TurretInst tr, Vector2 p, float radius, float duration, float tickSec, double rate, Color c, float slow = 0, bool bolts = false)
         {
-            src = tr; pos = p; r = radius; dur = duration; tick = tickSec; this.rate = rate;
+            src = tr; pos = p; r = radius; dur = duration; tick = tickSec; this.rate = rate; this.slow = slow; this.bolts = bolts;
             MakeSprite("zone", Art.Fx("zone"), p, 7);
             Art.Additive(sr);
             sr.color = c;
@@ -373,11 +377,21 @@ namespace EarthDef
         {
             if (dead) return;
             t += dt; tickT -= dt;
-            var c = sr.color; c.a = 0.8f * Mathf.Clamp01(Mathf.Min(t / 0.2f, (dur - t) / 0.4f)); sr.color = c;
+            var c = sr.color; c.a = alpha * Mathf.Clamp01(Mathf.Min(t / 0.2f, (dur - t) / 0.4f)); sr.color = c;
             if (tickT <= 0)
             {
                 tickT += tick;
-                foreach (var e in Battle.I.enemies) if (!e.dead && Vector2.Distance(e.Pos, pos) <= r + e.radius) Combat.Hit(src, e, rate, false, false);
+                foreach (var e in Battle.I.enemies)
+                {
+                    if (e.dead || Vector2.Distance(e.Pos, pos) > r + e.radius) continue;
+                    if (slow > 0) e.AddSlow(slow, tick + 0.2f, Tables.Cf("Slow_Max", 0.5f));
+                    Combat.Hit(src, e, rate, false, false);
+                }
+            }
+            if (bolts && (boltT -= dt) <= 0)
+            {
+                boltT = 0.5f;
+                Battle.I.Add(new Strike(src, pos.x + UnityEngine.Random.Range(-r, r) * 0.6f, 0.4f, 0.25f, 0.25f, Tables.C("Mini_Bolt_Rate", 120) * 0.5, mini: true, y: pos.y));
             }
             if (t >= dur) Kill();
         }

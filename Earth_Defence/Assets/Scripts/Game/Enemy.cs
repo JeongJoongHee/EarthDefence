@@ -24,6 +24,8 @@ namespace EarthDef
         public double vuln;
         float burnT, burnTick; double burnDps; TurretInst burnSrc;
         public bool Paralyzed => para > 0;
+        public static int Knocks;   // 시험용: 밀어낸 횟수
+        public bool Debuffed => slow > 0 || para > 0 || burnT > 0 || vuln > 0;
 
         public void Init(EnemyRow r, Vector2 p, double hp, double atk)
         {
@@ -143,6 +145,18 @@ namespace EarthDef
         }
         public void Burn(double dps, float time, TurretInst src) { burnDps = Mathf.Max((float)burnDps, (float)dps); burnT = time; burnSrc = src; }
         public void Vulnerable(double amt, float time) { vuln = System.Math.Max(vuln, amt); vulnT = time; }
+        /// <summary>밀어내기 (쾅쾅 대포 · 기뢰 충격파 · 충격 미사일): 위로 d 칸. 보스는 안 밀림 · 중간 보스는 30%만</summary>
+        public void Knock(float d)
+        {
+            if (row.IsBoss || d <= 0 || dead) return;
+            if (row.IsElite) d *= 0.3f;
+            Knocks++;
+            var p = transform.position;
+            p.y = Mathf.Min(p.y + d, World.SpawnY - 0.3f);
+            transform.position = p;
+            if (atShield && p.y - radius > World.ShieldY + 0.05f) atShield = false;
+        }
+
         /// <summary>끌어당김 (장판 · 소용돌이)</summary>
         public void Pull(Vector2 to, float amt)
         {

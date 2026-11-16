@@ -84,11 +84,14 @@ namespace EarthDef.EditorTools
         IEnumerator IdleShots()
         {
             yield return null;
+            Lobby.NoIntro = true; Popup.CloseAll();
             Directory.CreateDirectory(OutDir + "/idle");
             SetupCapture();
             yield return Wait(0.5f);
-            var sets = new[] { new[] { "new_laser", "new_bolt", "new_rail", "new_drone" }, new[] { "new_hive", "new_missile" } };
-            for (int run = 0; run < 4; run++)
+            var sets = new[] { new[] { "new_laser", "new_bolt", "new_rail", "new_drone" }, new[] { "new_hive", "new_missile" },
+                               new[] { "new_cannon", "new_focus", "new_vortex", "new_wheel" }, new[] { "new_tesla" } };
+            S.best = 30;   // 2차 터렛 열기
+            for (int run = 0; run < sets.Length * 2; run++)
             {
                 int set = run / 2, pass = run % 2;
                 Tables.SetC("Idle_Fx", pass);
@@ -105,7 +108,7 @@ namespace EarthDef.EditorTools
                 }
                 Time.captureDeltaTime = 0;
                 if (pass == 1)
-                    foreach (var u in B.units) if (u != B.Guardian) Check(u.idle != null && u.idle.Parts >= 4, $"{u.t.row.name} 대기 효과 조각 {u.idle?.Parts}");
+                    foreach (var u in B.units) if (u != B.Guardian) Check(u.idle != null && u.idle.Parts >= 2, $"{u.t.row.name} 대기 효과 조각 {u.idle?.Parts}");
                 Game.ToLobby(); yield return null;
             }
             Tables.SetC("Idle_Fx", 1);
@@ -121,8 +124,25 @@ namespace EarthDef.EditorTools
 
             // 1) 로비
             Check(Game.Lobby != null && World.I != null && UIRoot.I != null, "로비 · 전장 · 화면 만들어짐");
-            Check(S.stage == 1 && S.best == 0 && Tables.Stages.Count == 30, $"스테이지 1 부터 (표 {Tables.Stages.Count}개)");
-            Check(Tables.Turrets.Count == 7 && Tables.Cards.Count >= 90 && Tables.Enemies.Count >= 18, $"표: 터렛 {Tables.Turrets.Count} · 카드 {Tables.Cards.Count} · 적 {Tables.Enemies.Count}");
+            Check(S.stage == 1 && S.best == 0 && Tables.Stages.Count == 100, $"스테이지 1 부터 (표 {Tables.Stages.Count}개)");
+            Check(Tables.Turrets.Count == 12 && Tables.Cards.Count >= 180 && Tables.Enemies.Count >= 18, $"표: 터렛 {Tables.Turrets.Count} · 카드 {Tables.Cards.Count} · 적 {Tables.Enemies.Count}");
+            Check(Tables.GearParts.Count == 6 && Tables.Grades.Count == 7 && Tables.Chips.Count >= 60 && Tables.Missions.Count >= 6 && Tables.Attend.Count == 7,
+                  $"2차 표: 부위 {Tables.GearParts.Count} · 등급 {Tables.Grades.Count} · 칩 {Tables.Chips.Count} · 미션 {Tables.Missions.Count} · 출석 {Tables.Attend.Count}");
+            foreach (var c in Tables.Chips)
+            {
+                bool known = c.scope is "turret" or "all" ? KnownStats.Contains(c.stat) || c.stat == "start_stars" : BoardStats.Contains(c.stat);
+                if (!known) Check(false, $"칩 {c.id} 의 모르는 키 {c.stat} ({c.scope})");
+                if (c.scope == "turret" && !Tables.TurretById.ContainsKey(c.turret)) Check(false, $"칩 {c.id} 의 터렛 없음 {c.turret}");
+                foreach (var pt in c.parts) if (pt != "all" && Tables.Part(pt) == null) Check(false, $"칩 {c.id} 의 부위 없음 {pt}");
+            }
+            foreach (var gp in Tables.GearParts) if (Art.Icon(gp.icon) == null) Check(false, "장비 아이콘 없음 " + gp.icon);
+            foreach (var n in new[] { "cannonball", "mine", "vortex", "wheel" }) if (Art.Fx(n) == null) Check(false, "2차 효과 그림 없음 " + n);
+            foreach (var n in new[] { "cannon_base", "cannon_barrel", "focus_base", "vortex_base", "wheel_base", "tesla_base", "tesla_orb" }) if (Art.Turret(n) == null) Check(false, "2차 터렛 조각 없음 " + n);
+            // 처음 켜면 출석 창이 뜸 (숨은 조건 없이 첫날부터)
+            Check(Popup.Open != null && Meta.AttendReady && S.stamina == Meta.StaminaMax, $"처음 로비 = 출석 창 · 스태미나 {S.stamina}/{Meta.StaminaMax}");
+            Capture("01a_lobby_attend");
+            Popup.CloseAll(); yield return null;
+            Lobby.NoIntro = true;   // 이 뒤로는 로비에 들어올 때 창을 안 띄움 (출석 · 미션은 2차 단계에서 직접 시험)
             foreach (var e in Tables.Enemies.Values) if (Art.Enemy(e) == null) Check(false, "적 그림 없음 " + e.id);
             foreach (var t in Tables.Turrets) if (Art.TurretUI(t.art) == null) Check(false, "터렛 그림 없음 " + t.id);
             foreach (var c in Tables.Cards) foreach (var (k, _) in c.stats) if (!KnownStats.Contains(k)) Check(false, $"카드 {c.id} 의 모르는 키 {k}");
@@ -311,7 +331,196 @@ namespace EarthDef.EditorTools
             Check(B.level >= 5 && peak <= Tables.Ci("Max_Alive") + 30, $"한 판 진행 (Lv {B.level})");
             yield return Wait(0.4f);
             Capture("11_auto_run");
+            yield return Phase2();
             running = false;
+        }
+
+        // =============================================================== 2차
+        IEnumerator Phase2()
+        {
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            // --- 스태미나
+            S.stamina = 3; S.staminaAt = SaveData.Clock;
+            Check(!Game.TryStart(1, false) && Popup.Open != null && Battle.I == null, "스태미나 3 < 5 → 시작 못 함 · 스태미나 창");
+            yield return Wait(0.3f);
+            Capture("15_stamina_lack");
+            Popup.CloseAll();
+            S.staminaAt -= 360 * 2;
+            Check(Meta.Stamina == 5, $"6분마다 1 → 12분 뒤 {Meta.Stamina}");
+            int ad0 = Meta.StaminaAdLeft; Meta.StaminaAd();
+            Check(Meta.Stamina == 25 && Meta.StaminaAdLeft == ad0 - 1, $"[초안] 광고 +20 → {Meta.Stamina} (오늘 남은 {Meta.StaminaAdLeft})");
+            Check(Game.TryStart(1, false) && Battle.I != null && Meta.Stamina == 20, $"시작하면 -5 → {Meta.Stamina}");
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+
+            // --- 출석 · 미션 (날짜를 넘김)
+            int an = S.attendN; string got = Meta.AttendReady ? Meta.AttendClaim() : null;
+            Check(got != null && !Meta.AttendReady && S.attendN == an + 1, $"출석 1일 받음 ({got})");
+            SaveData.NowOffset += 86400;
+            Check(Meta.AttendReady && Meta.AttendIdx == 1, "다음 날 → 출석 2일");
+            Meta.MissionAdd("play", 3);
+            int mi = Tables.Missions.FindIndex(m => m.kind == "play");
+            double g0 = S.gold;
+            Check(Meta.MissionReady(mi) && Meta.MissionClaim(mi) != null && S.gold > g0 && Meta.MissionGot(mi), "미션 전투 3판 → 받기 → 골드");
+            SaveData.NowOffset += 86400;
+            Check(!Meta.MissionGot(mi) && Meta.MissionProg(mi) == 0, "다음 날 미션 새로");
+
+            // --- 터렛 열림 (스테이지 5 · 10 · 15 · 20 · 25)
+            var cannonRow = Tables.TurretById["cannon"];
+            S.best = 1;
+            Game.StartStage(1, 5); yield return null;
+            Check(!S.Unlocked(cannonRow) && !B.run.Eligible(Tables.CardById["new_cannon"]), "스테이지 5 전엔 쾅쾅 대포 카드 안 나옴");
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            S.best = 30;
+            Check(Meta.NewUnlock() != null, $"새로 열린 터렛 알림 ({Meta.NewUnlock()?.name})");
+
+            // --- 장비 · 칩
+            S.gold += 1e7; S.parts += 500;
+            var w = Gear.NewGear(3, "weapon"); Gear.Equip(w);
+            var lo = Loadout.Build(S);
+            Check(System.Math.Abs(lo.atk - w.V1) < 0.01 && lo.critDmg > 0, $"희귀 무기 → 공격력 +{lo.atk:0} · 치명 피해 +{lo.critDmg:0.#}%");
+            int wl = w.lv; Check(Gear.Up(w) && w.lv == wl + 1, $"장비 강화 Lv {w.lv}");
+            for (int i = 0; i < 3; i++) Gear.NewGear(2, "boots");
+            var bt = S.gear.Find(x => x.part == "boots" && x.grade == 2);
+            var merged = Gear.Merge(bt);
+            Check(merged != null && merged.grade == 3 && S.gear.FindAll(x => x.part == "boots" && x.grade == 2).Count == 0, "같은 부위 · 등급 3개 합성 → 한 등급 위");
+            Gear.Equip(merged);
+            foreach (var p in new[] { "helmet", "suit", "shield", "core" }) Gear.Equip(Gear.NewGear(4, p));
+            double pr0 = S.parts; var sc = Gear.NewGear(1, "helmet"); Gear.Scrap(sc);
+            Check(S.parts > pr0, $"분해 → 부품 +{S.parts - pr0}");
+            int core = Tables.PartIdx("core"), shield = Tables.PartIdx("shield"), suit = Tables.PartIdx("suit"), weapon = Tables.PartIdx("weapon");
+            var cd = Gear.NewChip(7, "ch_dmg");
+            Check(!Gear.CanPut(cd, weapon, 0) && Gear.PutChip(cd, core, 0), "피해 칩: 무기엔 못 끼고 코어엔 낌");
+            Check(Gear.SlotOpen(4) && !Gear.SlotOpen(5) == (S.best < Gear.SlotNeed(5)), $"칩 칸 6 = 스테이지 {Gear.SlotNeed(5)}");
+            for (int i = 0; i < 3; i++) Gear.NewChip(2, "ch_atk");
+            var ca = S.chips.Find(x => x.id == "ch_atk" && x.q == 2 && x.at < 0);
+            var cm = Gear.MergeChip(ca);
+            Check(cm != null && cm.q == 3, "같은 칩 3개 합성 → 등급 3");
+            Gear.PutChip(Gear.NewChip(7, "tc_rail_star"), suit, 0);
+            Gear.PutChip(Gear.NewChip(7, "ch_immune"), suit, 1);
+            Gear.PutChip(Gear.NewChip(7, "ch_refresh"), shield, 0);
+            Gear.PutChip(Gear.NewChip(7, "ch_choice"), shield, 1);
+            Gear.PutChip(Gear.NewChip(7, "ch_elite"), core, 1);
+            Gear.PutChip(Gear.NewChip(7, "ch_shield"), shield, 2);
+            lo = Loadout.Build(S);
+            Check(System.Math.Abs(lo.C("dmg") - 14) < 0.01 && lo.TS("rail", "start_stars") == 2 && lo.B("refresh") == 6, $"칩 합계: 피해 +{lo.C("dmg")}% · 관통포 별 +{lo.TS("rail", "start_stars")} · 새로고침 +{lo.B("refresh")}");
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            GearTab.showChips = false; Game.Lobby.SetTab(2); yield return Wait(0.4f);
+            Capture("13_gear_tab");
+            Game.Lobby.gearTab.PartWindow(shield); yield return Wait(0.4f);
+            Capture("14_gear_part");
+            Popup.CloseAll(); GearTab.showChips = true; Game.Lobby.SetTab(2); yield return Wait(0.3f);
+            Capture("14b_chip_bag");
+
+            // 장비 · 칩이 전투에 들어감
+            Game.StartStage(3, 31); yield return null;
+            Check(System.Math.Abs(B.atk - (S.Atk + lo.AtkTotal)) < 0.01 && B.baseMax > S.BaseHp, $"전투 공격력 {B.atk:0} (기지 {S.Atk:0} + 장비 · 칩) · 기지 체력 {B.baseMax:0}");
+            Check(B.immune == 7 && B.shield > 0 && B.run.refreshFree == 6, $"반사막 {B.immune}번 · 보호막 {B.shield:0} · 새로고침 무료 {B.run.refreshFree}");
+            double h0 = B.baseHp; for (int i = 0; i < 7; i++) B.HurtBase(500, Vector2.zero);
+            Check(B.baseHp == h0 && B.immune == 0, "처음 7번은 피해 없음");
+            B.HurtBase(100, Vector2.zero);
+            Check(B.baseHp == h0 && B.shield < B.shieldMax, "그다음은 보호막이 먼저 받음");
+            B.GainExp(B.need + 0.1); B.Tick(Battle.StepSec);
+            Check(B.st == Battle.St.Pick && B.offer.Count == 4, $"첫 카드 칩 → 첫 레벨업 카드 {B.offer.Count}장");
+            Game.BattleUI.ShowPick(); yield return Wait(0.4f);
+            Capture("16_four_cards");
+            B.offer[0] = Tables.CardById["new_rail"]; B.Choose(0);
+            Check(B.run.Get("rail")?.stars == 3, $"관통포 별 칩 → 놓자마자 별 {B.run.Get("rail")?.stars}");
+            {
+                var g = B.run.turrets[0];
+                var el = B.Spawn("big", new Vector2(0, 3)); var nm = B.Spawn("moth", new Vector2(1, 3)); B.Tick(Battle.StepSec);
+                double de = 0, dn = 0;
+                for (int i = 0; i < 40; i++) { de = System.Math.Max(de, Combat.Calc(g, el, 100, out bool c1) / (c1 ? 2 : 1)); dn = System.Math.Max(dn, Combat.Calc(g, nm, 100, out bool c2) / (c2 ? 2 : 1)); }
+                Check(de > dn * 1.5, $"보스 사냥 칩: 중간 보스에게 피해 {de / dn:0.00}배");
+                el.dead = true; nm.dead = true;
+            }
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+
+            // --- 2차 터렛 5종이 실제로 쏨
+            Enemy.Knocks = 0; FireWheel.LastBounces = 0; Vortex.LastPulled = 0; TeslaBolt.LastJumps = 0; FocusBeam.LastRefract = 0;
+            Game.StartStage(12, 4321); yield return null;
+            foreach (var id in new[] { "new_cannon", "new_focus", "new_vortex", "new_wheel" }) Force(id);
+            foreach (var id in new[] { "c_dmg", "c_dmg", "c_cd", "c_bB", "f_dmg", "f_cd", "f_dur", "f_bA", "v_dmg", "v_area", "v_cd", "v_bA", "w_dmg", "w_size", "w_cd", "w_bA" }) Force(id);
+            Check(B.run.Get("cannon").tier == 2 && B.run.Get("focus").Has("focus_ramp") && B.run.Get("vortex").Has("blackhole") && B.run.Get("wheel").Has("wheel_trail"), "2차 터렛 4종 돌파");
+            // 쾅쾅 대포 · 소용돌이포는 사거리가 짧아(9 · 8칸) 장비를 낀 대장 카피가 멀리서 다 잡으면 못 쏨 → 사거리 안에 단단한 적 무리를 둠
+            for (int i = 0; i < 12; i++) { var bt2 = B.Spawn("beetle", new Vector2(-4f + (i % 6) * 1.6f, -1.5f + (i / 6) * 1.2f)); bt2.hp = bt2.maxHp = bt2.maxHp * 400; }
+            FF(30f);
+            foreach (var u in B.units) Check(u.fired > 0, $"{u.t.row.name} 쏨 ({u.fired}번)");
+            Check(Enemy.Knocks > 0, $"쾅쾅 대포가 적을 밀어냄 ({Enemy.Knocks}번)");
+            Check(FireWheel.LastBounces > 0, $"불바퀴가 벽에 튕김 ({FireWheel.LastBounces}번)");
+            Check(Vortex.LastPulled > 0, $"소용돌이가 적을 끌어당김 (최대 {Vortex.LastPulled}마리)");
+            foreach (var u in B.units) if (u != B.Guardian) Check(u.idle != null && u.idle.Parts >= 2, $"{u.t.row.name} 대기 효과 조각 {u.idle?.Parts}");
+            {   // 집중 누적: 한 적에 붙어 있으면 피해가 오름
+                var tg = B.enemies.Find(e => !e.dead && e.Pos.y < World.SpawnY - 1f);
+                if (tg != null)
+                {
+                    tg.hp = tg.maxHp = 1e15;
+                    var fb = new FocusBeam(B.run.Get("focus"), tg, 4f, 0.22f);
+                    for (int i = 0; i < 200; i++) fb.Step(Battle.StepSec);
+                    Check(FocusBeam.LastRamp > 0.5f, $"집중 누적: 3초 붙으면 +{FocusBeam.LastRamp * 100:0}%");
+                    fb.Kill();
+                }
+            }
+            yield return Wait(0.3f);
+            Capture("12_turrets2");
+            yield return Wait(0.3f);
+            Capture("12b_turrets2");
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            Game.StartStage(25, 99); yield return null;
+            foreach (var id in new[] { "new_tesla", "t_dmg", "t_dmg", "t_bounce", "t_bA", "new_focus", "f_dmg", "f_dmg", "f_cd", "f_bB" }) Force(id);
+            FF(25f);
+            Check(B.run.Get("tesla").unit.fired > 0 && TeslaBolt.LastJumps >= 3, $"찌릿 코일 번개가 튐 (최대 {TeslaBolt.LastJumps}번)");
+            Check(FocusBeam.LastRefract > 0, $"굴절 빔 ({FocusBeam.LastRefract}줄)");
+            yield return Wait(0.3f);
+            Capture("12c_tesla");
+
+            // --- 엘리트 난이도
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            Game.StartStage(2, 77, false); yield return null;
+            var en = B.Spawn("moth", new Vector2(0, 5)); double hpN = en.maxHp;
+            Game.StartStage(2, 77, true); yield return null;
+            var ee = B.Spawn("moth", new Vector2(0, 5));
+            Check(ee.maxHp / hpN > 2.5, $"엘리트 난이도 적 체력 x{ee.maxHp / hpN:0.0}");
+            int g1 = S.gear.Count + S.chips.Count; double gold1 = S.gold;
+            FF(2f);
+            Combat.Raw(B.Spawn(Tables.Stage(2).boss, new Vector2(0, 4)), 1e30, false, B.run.turrets[0]);
+            B.boss = null; B.Tick(Battle.StepSec);
+            int want = Tables.Ci("Drop_Win_N") + Tables.Ci("Drop_Elite_N") + Tables.Ci("Drop_First_N");
+            Check(B.st == Battle.St.End && B.won && S.eliteBest == 2 && B.drops.Count == want && S.gear.Count + S.chips.Count == g1 + want,
+                  $"엘리트 승리 → 기록 {S.eliteBest} · 장비/칩 {B.drops.Count}개 ({string.Join(", ", B.drops)})");
+            yield return Wait(0.5f);
+            Capture("17_result_elite");
+
+            // --- 스테이지 100
+            Game.StartStage(100, 5, true); yield return null;
+            FF(5f);
+            Check(B.st == Battle.St.Play && B.enemies.Count > 0 && B.stage.stage == 100, $"스테이지 100 (엘리트) 적 {B.enemies.Count} · 이름 {B.stage.name}");
+
+            // --- 로비 탭 · 설정 · 도움말
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            Game.Lobby.SetTab(0); yield return Wait(0.3f);
+            Capture("18_lobby_battle");
+            S.elite = true; Game.Lobby.Refresh(); yield return Wait(0.2f);
+            Capture("18b_lobby_elite");
+            S.elite = false;
+            Game.Lobby.SetTab(1); yield return Wait(0.3f);
+            Capture("19_lobby_turret");
+            Meta.MissionAdd("kill", 9999);
+            Game.Lobby.SetTab(3); yield return Wait(0.3f);
+            Capture("20_lobby_mission");
+            Settings.Open(); yield return Wait(0.3f);
+            Capture("21_settings");
+            Popup.CloseAll();
+            S.tut.Clear(); S.runs = 1;
+            Check(Tutorial.Want("t_turret") && Tutorial.Show("t_turret", L.T("tut_turret"), null) != null && !Tutorial.Want("t_turret"), "도움말 한 번만");
+            yield return Wait(0.3f);
+            Capture("22_tutorial");
+            Tutorial.CloseCur();
+            // 세이브 → 다시 읽기 (장비 · 칩 · 출석 · 미션)
+            S.Save();
+            var back = JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveData.Key));
+            Check(back.gear.Count == S.gear.Count && back.chips.Count == S.chips.Count && back.chips.Exists(c => c.at >= 0) && back.eliteBest == S.eliteBest && back.attendN == S.attendN,
+                  $"세이브 → 다시 읽기: 장비 {back.gear.Count} · 칩 {back.chips.Count} · 엘리트 {back.eliteBest}");
+            SaveData.NowOffset = 0;
         }
 
         // ---------- 시험 도우미 ----------
@@ -321,6 +530,16 @@ namespace EarthDef.EditorTools
             "explode", "explode_dmg", "explode_area", "split", "split_dmg", "burn", "burn_amp", "fire_zone", "paralyze", "para_time", "vuln",
             "chain", "chain_dmg", "beam_split", "sweep", "dmg_by_slow", "field_explode", "pull", "pulse", "pulse_area", "pulse_end", "echo",
             "echo_hits", "charge", "charge_speed", "charge_shots", "dmg_vs_para", "hit_laser", "kill_bolt", "kill_bee", "kill_explode", "fire_add", "hit_chain",
+            // 2차 터렛 5종 · 콤보
+            "knock", "scatter", "scatter_dmg", "mines", "mine_dmg", "mine_knock", "beams", "focus_ramp", "focus_keep", "refract", "refract_dmg",
+            "pull_pow", "blackhole", "bh_area", "bh_dmg", "vortex_burst", "burst_area", "burst_dmg", "hits_pct", "speed", "wheel_trail", "trail_dmg",
+            "trail_dur", "mini_wheel", "mini_dmg", "bounce", "bounce_free", "shockwave", "trap", "trap_dmg", "trap_dur", "trap_bolt", "overcharge", "kill_chain",
+        };
+        /// <summary>칩 board · card · cond 키 (Loadout · Combat · Battle 이 읽음)</summary>
+        static readonly HashSet<string> BoardStats = new()
+        {
+            "atk", "atk_pct", "crit", "crit_dmg", "hp", "reduce", "shield", "immune", "heal_elite", "heal_break", "crit_hp", "extra_shot", "refresh", "choices", "break_rate",
+            "dmg", "el_fire", "el_bolt", "el_grav", "el_light", "el_phys", "hp70", "elite_dmg", "early", "low_hp", "debuff", "near", "boss_on", "per_turret", "per_card", "cd",
         };
 
         /// <summary>카드 고르기를 건너뛰고 바로 (시험용)</summary>

@@ -18,6 +18,8 @@ namespace EarthDef
         readonly Dictionary<string, double> stat = new();
         public int shotsCards;            // "탄 +1(-15%)" 카드 수 (발당 감소)
         public TurretUnit unit;           // 화면 물체
+        /// <summary>2차: 장비 · 칩이 이 터렛에 더하는 값 (카드와 같은 키 — 판 내내 그대로)</summary>
+        public Dictionary<string, double> chip;
 
         public double S(string k) => stat.TryGetValue(k, out var v) ? v : 0;
         public bool Has(string k) => S(k) > 0;
@@ -26,13 +28,14 @@ namespace EarthDef
         public void Recalc()
         {
             stat.Clear(); shotsCards = 0;
+            if (chip != null) foreach (var kv in chip) if (kv.Key != "start_stars") stat[kv.Key] = S(kv.Key) + kv.Value;
             foreach (var kv in picks)
             {
                 if (!Tables.CardById.TryGetValue(kv.Key, out var c)) continue;
                 foreach (var (key, val) in c.stats)
                 {
                     stat[key] = S(key) + val * kv.Value;
-                    if (key == "shots" || key == "count") shotsCards += kv.Value;
+                    if (key == "shots" || key == "count" || key == "bounce") shotsCards += kv.Value;
                 }
             }
         }
@@ -64,12 +67,17 @@ namespace EarthDef
         public readonly List<CardRow> history = new();
         public System.Random rnd;
         public int refreshAd, refreshFree;
+        public readonly Loadout lo;
+        /// <summary>2차 칩 "첫 카드 N장 더" — 첫 레벨업에만</summary>
+        public int firstExtra;
 
-        public Run(int seed)
+        public Run(int seed, Loadout loadout = null)
         {
             rnd = new System.Random(seed);
+            lo = loadout ?? new Loadout();
             refreshAd = Tables.Ci("Refresh_Ad", 1);
-            refreshFree = Tables.Ci("Refresh_Free", 0);
+            refreshFree = Tables.Ci("Refresh_Free", 0) + (int)Math.Round(lo.B("refresh"));
+            firstExtra = (int)Math.Round(lo.B("choices"));
             Add(Tables.TurretById["guardian"]);
         }
 
@@ -81,6 +89,15 @@ namespace EarthDef
         TurretInst Add(TurretRow r)
         {
             var t = new TurretInst { row = r, slot = turrets.Count, metaLv = SaveData.Cur != null ? SaveData.Cur.TurretLv(r.id) : 1 };
+            // 장비 · 칩: 모든 터렛("*") + 이 터렛 전용
+            var all = lo.For("*"); var mine = lo.For(r.id);
+            if (all != null || mine != null)
+            {
+                t.chip = new Dictionary<string, double>();
+                if (all != null) foreach (var kv in all) t.chip[kv.Key] = kv.Value;
+                if (mine != null) foreach (var kv in mine) t.chip[kv.Key] = (t.chip.TryGetValue(kv.Key, out var o) ? o : 0) + kv.Value;
+            }
+            t.Recalc();
             turrets.Add(t);
             return t;
         }
@@ -96,7 +113,7 @@ namespace EarthDef
             var t = Get(c.turret);
             switch (c.kind)
             {
-                case "new": return t == null && FreeSlots > 0;
+                case "new": return t == null && FreeSlots > 0 && (SaveData.Cur == null || SaveData.Cur.Unlocked(Tables.TurretById[c.turret]));
                 case "normal": return t != null && !Blocked(t) && t.Picked(c.id) < c.max;
                 case "break": return t != null && StarsFull(t) && t.tier < TierMax && t.Picked(c.id) == 0;
                 case "chain": return t != null && !Blocked(t) && t.Picked(c.id) < c.max && t.Picked(c.req) > 0;
@@ -108,7 +125,7 @@ namespace EarthDef
         double Weight(CardRow c, bool bossBonus)
         {
             double w = c.weight;
-            if (c.kind == "break") w *= Tables.C("Break_Weight_Mul", 4);
+            if (c.kind == "break") w *= Tables.C("Break_Weight_Mul", 4) * (1 + lo.B("break_rate") / 100.0);
             if (bossBonus && (c.kind == "break" || c.kind == "chain" || c.kind == "combo")) w *= 3;
             return w;
         }
@@ -145,7 +162,8 @@ namespace EarthDef
             {
                 if (FreeSlots <= 0 || Owns(c.turret)) { Debug.LogWarning("빈 칸이 없거나 이미 있는 터렛: " + c.id); return null; }
                 t = Add(Tables.TurretById[c.turret]);
-                t.stars = 1;
+                // 칩 "놓으면 별 +N" — 돌파를 기다리는 별 최대에서 멈춤 (기획서 3장)
+                t.stars = Mathf.Min(StarsPer, 1 + (int)Math.Round(lo.TS(c.turret, "start_stars")));
                 return t;
             }
             t = Get(c.turret);

@@ -9,8 +9,9 @@ namespace EarthDef
     public class TurretRow
     {
         public string id, name, elem, art, kind, desc;
-        public float rate, rate2, tick, cd, range, dur, radius, speed;
+        public float rate, rate2, tick, cd, range, dur, radius, speed, knock;
         public int count, hits, pierce;
+        public int unlock;                // 2차: 이 스테이지(보통)를 깨면 열림 (0 = 처음부터)
     }
     public class TurretLvRow { public int lv, shards; public double dmgBonus, cdMul, gold; }
     public class CardRow
@@ -30,6 +31,25 @@ namespace EarthDef
         public bool IsElite => rank == "elite";
     }
     public class StageRow { public int stage; public string name, swarm, elite, boss; public string[] enemies; public float hpMul; }
+    // ---------- 2차: 장비 · 칩 · 미션 · 출석 ----------
+    public class GearPartRow { public string part, name, icon, stat1, stat2; public double base1, perLv1, base2, perLv2; }
+    public class GradeRow { public int grade, lvMax; public string name; public Color color; public double mul; }
+    public class ChipRow
+    {
+        public string id, name, desc, scope, turret, stat; public double max; public int weight;
+        public string[] parts;
+        public bool Fits(string part) => Array.IndexOf(parts, "all") >= 0 || Array.IndexOf(parts, part) >= 0;
+        /// <summary>등급 q(1~7) 값 = Max x q/7 (작은 값은 소수 둘째 자리까지)</summary>
+        public double Val(int q) { double v = max * q / 7.0; return max >= 20 ? Math.Round(v) : Math.Round(v, max < 1 ? 3 : 1); }
+        public string Desc(int q)
+        {
+            double v = Val(q);
+            string s = stat == "paralyze" ? Math.Round(v * 100) + "%" : v.ToString(v == Math.Floor(v) ? "0" : "0.#");
+            return desc.Replace("{0}", s);
+        }
+    }
+    public class MissionRow { public string id, kind, name, reward; public int target; public double value; }
+    public class AttendRow { public int day; public string reward; public double value; }
 
     /// <summary>
     /// 기획 표 (원본 = Earth_Defence/Table/*.xlsx → [지구 방위대 → 표 변환] 또는 재생할 때 자동으로 Resources/Tables/*.csv).
@@ -47,6 +67,12 @@ namespace EarthDef
         public static readonly Dictionary<string, EnemyRow> Enemies = new();
         public static readonly List<StageRow> Stages = new();
         public static readonly Dictionary<string, (string ko, string en)> Strings = new();
+        public static readonly List<GearPartRow> GearParts = new();
+        public static readonly List<GradeRow> Grades = new();
+        public static readonly List<ChipRow> Chips = new();
+        public static readonly Dictionary<string, ChipRow> ChipById = new();
+        public static readonly List<MissionRow> Missions = new();
+        public static readonly List<AttendRow> Attend = new();
 
         public static void Load(bool force = false)
         {
@@ -54,6 +80,7 @@ namespace EarthDef
             loaded = true;
             config.Clear(); Turrets.Clear(); TurretById.Clear(); TurretLv.Clear(); Cards.Clear(); CardById.Clear();
             Enemies.Clear(); Stages.Clear(); Strings.Clear();
+            GearParts.Clear(); Grades.Clear(); Chips.Clear(); ChipById.Clear(); Missions.Clear(); Attend.Clear();
 
             foreach (var r in Read("Config")) config[r.S("Key")] = r.D("Value");
             foreach (var r in Read("Turret"))
@@ -63,6 +90,7 @@ namespace EarthDef
                     id = r.S("Id"), name = r.S("Name"), elem = r.S("Elem"), art = r.S("Art"), kind = r.S("Kind"), desc = r.S("Desc"),
                     rate = r.F("Rate"), rate2 = r.F("Rate2"), tick = r.F("Tick"), cd = r.F("Cooldown"), range = r.F("Range"),
                     count = r.I("Count"), hits = r.I("Hits"), dur = r.F("Duration"), radius = r.F("Radius"), pierce = r.I("Pierce"), speed = r.F("Speed"),
+                    unlock = r.I("Unlock"), knock = r.F("Knock"),
                 };
                 Turrets.Add(t); TurretById[t.id] = t;
             }
@@ -101,6 +129,27 @@ namespace EarthDef
                     enemies = r.S("Enemies").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries),
                 });
             foreach (var r in Read("String")) Strings[r.S("Key")] = (r.S("KO"), r.S("EN"));
+            foreach (var r in Read("Gear_Part"))
+                GearParts.Add(new GearPartRow
+                {
+                    part = r.S("Part"), name = r.S("Name"), icon = r.S("Icon"), stat1 = r.S("Stat1"), base1 = r.D("Base1"), perLv1 = r.D("Per_Lv1"),
+                    stat2 = r.S("Stat2"), base2 = r.D("Base2"), perLv2 = r.D("Per_Lv2"),
+                });
+            foreach (var r in Read("Gear_Grade"))
+                Grades.Add(new GradeRow { grade = r.I("Grade"), name = r.S("Name"), color = Art.Hex(r.S("Color")), mul = r.D("Mul"), lvMax = r.I("Lv_Max") });
+            foreach (var r in Read("Chip"))
+            {
+                var c = new ChipRow
+                {
+                    id = r.S("Id"), name = r.S("Name"), desc = r.S("Desc"), scope = r.S("Scope"), turret = r.S("Turret"), stat = r.S("Stat"),
+                    max = r.D("Max"), weight = Mathf.Max(1, r.I("Weight")),
+                    parts = r.S("Parts").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries),
+                };
+                Chips.Add(c); ChipById[c.id] = c;
+            }
+            foreach (var r in Read("Mission"))
+                Missions.Add(new MissionRow { id = r.S("Id"), kind = r.S("Kind"), target = Mathf.Max(1, r.I("Target")), name = r.S("Name"), reward = r.S("Reward"), value = r.D("Value") });
+            foreach (var r in Read("Attend")) Attend.Add(new AttendRow { day = r.I("Day"), reward = r.S("Reward"), value = r.D("Value") });
         }
 
         public static double C(string key, double def = 0)
@@ -118,6 +167,10 @@ namespace EarthDef
         public static StageRow Stage(int n) => Stages[Mathf.Clamp(n - 1, 0, Stages.Count - 1)];
         public static TurretLvRow Lv(int lv) => TurretLv[Mathf.Clamp(lv - 1, 0, TurretLv.Count - 1)];
         public static int MaxTurretLv => TurretLv.Count;
+        public static GradeRow Grade(int g) => Grades[Mathf.Clamp(g - 1, 0, Grades.Count - 1)];
+        public static int GradeMax => Grades.Count;
+        public static GearPartRow Part(string p) => GearParts.Find(x => x.part == p);
+        public static int PartIdx(string p) => GearParts.FindIndex(x => x.part == p);
 
         // ---------- csv ----------
         public class Row
@@ -192,6 +245,7 @@ namespace EarthDef
     public static class Elem
     {
         public static string Name(string e) => e switch { "phys" => "물리", "light" => "빛", "grav" => "중력", "fire" => "불", "bolt" => "번개", _ => "" };
+        public static readonly string[] All = { "phys", "light", "grav", "fire", "bolt" };
         public static Color Color(string e) => e switch
         {
             "phys" => Art.Hex("#d9c19a"), "light" => Art.Hex("#8fd6ff"), "grav" => Art.Hex("#b9a6e0"),

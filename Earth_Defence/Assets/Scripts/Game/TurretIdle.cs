@@ -15,7 +15,8 @@ namespace EarthDef
     /// </summary>
     public class TurretIdle : MonoBehaviour
     {
-        public static bool Has(string art) => art is "laser" or "bolt" or "rail" or "drone" or "hive" or "missile";
+        public static bool Has(string art) => art is "laser" or "bolt" or "rail" or "drone" or "hive" or "missile"
+                                                  or "cannon" or "focus" or "vortex" or "wheel" or "tesla";
         public int Parts { get; private set; }
         public float Intensity { get; private set; }
 
@@ -44,6 +45,9 @@ namespace EarthDef
         SpriteRenderer[] bees;
         // 미사일
         SpriteRenderer[] mis, misGlow;
+        // 2차 5종: 도는 조각 · 빛 · 포신
+        SpriteRenderer spin, spinGlow, barrel, fuse;
+        float spinAng, recoil;
 
         // 그림 좌표(로컬 200x222, 받침 바닥 y 213.8) → 터렛 발에서의 칸 : x (px-100)·1.56/200 , y (213.8-py)·1.56/200
         static Vector2 L2U(float x, float y) => new((x - 100f) * 1.56f / 200f, (213.8f - y) * 1.56f / 200f);
@@ -94,6 +98,29 @@ namespace EarthDef
                 misGlow = new[] { Part("Light0", Art.Fx("glow"), 4, true), Part("Light1", Art.Fx("glow"), 4, true) };
                 misGlow[0].transform.localPosition = L2U(76, 136); misGlow[1].transform.localPosition = L2U(124, 136);
             }
+            else if (art == "cannon")
+            {
+                barrel = Part("Barrel", Art.Turret("cannon_barrel"), 4, false);
+                fuse = Part("Fuse", Art.Fx("glow"), 5, true); fuse.transform.localPosition = L2U(100, 40);
+            }
+            else if (art is "focus" or "vortex" or "wheel")
+            {
+                Vector2 c0 = art == "focus" ? L2U(100, 70) : art == "vortex" ? L2U(100, 74) : L2U(100, 76);
+                spinGlow = Part("SpinGlow", Art.Fx("glow"), 4, true); spinGlow.transform.localPosition = c0;   // 빛은 조각 뒤 (앞이면 하얗게 탐)
+                spin = Part("Spin", Art.Get("Turret/" + art + "_spin", Art.PPU), 5, false); spin.transform.localPosition = c0;
+            }
+            else if (art == "tesla")
+            {
+                orbGlow = Part("OrbGlow", Art.Fx("glow"), 4, true);
+                orb = Part("Orb", Art.Turret("tesla_orb"), 5, false);
+                orbGlow.transform.localPosition = L2U(100, 46);
+                arcs = new SpriteRenderer[4]; arcT = new float[4];
+                for (int i = 0; i < arcs.Length; i++)
+                {
+                    arcs[i] = Part("Arc" + i, Art.Get("Turret/spark_arc_" + (i % 3), Art.PPU, new Vector2(0.02f, 0.5f)), 6, true);
+                    arcs[i].enabled = false; arcT[i] = Random.Range(0f, 0.2f);
+                }
+            }
             else
             {
                 orbGlow = Part("OrbGlow", Art.Fx("glow"), 4, true);            // 구슬 뒤 (앞에 두면 구슬이 하얗게 탐 — 촬영으로 확인)
@@ -119,7 +146,7 @@ namespace EarthDef
             return r;
         }
 
-        public void OnFire() => flash = 1f;
+        public void OnFire() { flash = 1f; recoil = 1f; }
 
         void Update()
         {
@@ -138,6 +165,9 @@ namespace EarthDef
                 case "drone": Drone(dt, a); break;
                 case "hive": Hive(dt, a); break;
                 case "missile": Missile(dt, a, ch); break;
+                case "cannon": Cannon(dt, a); break;
+                case "focus": case "vortex": case "wheel": Spin(dt, a); break;
+                case "tesla": Bolt(dt, a, 46f); break;
             }
         }
 
@@ -232,13 +262,39 @@ namespace EarthDef
             }
         }
 
-        void Bolt(float dt, float a)
+        /// <summary>쾅쾅 대포: 쏘면 포신이 뒤로 밀렸다 돌아옴 · 심지 빛이 충전될수록 셈</summary>
+        void Cannon(float dt, float a)
+        {
+            recoil = Mathf.Max(0, recoil - dt * 4f);
+            barrel.transform.localPosition = new Vector3(0, -0.09f * recoil * recoil + Mathf.Sin(t * 2f) * 0.006f, 0);
+            float fl = 0.8f + 0.2f * Mathf.Sin(t * 23f) * Mathf.Sin(t * 7f);
+            fuse.color = A(new Color(1f, 0.7f, 0.35f), (0.12f + 0.6f * a) * fl);
+            fuse.transform.localScale = Vector3.one * (0.22f + 0.2f * a) * fl;
+            if (a > 0.6f && Random.value < dt * 5f * a) Fx.Sparks((Vector2)transform.TransformPoint(L2U(100, 40)), new Color(1f, 0.75f, 0.4f), 1, 1.6f, 0.6f, 80f, 90f);
+        }
+
+        /// <summary>집중 빔 렌즈 · 소용돌이 원반 · 불바퀴: 가운데 조각이 돎(충전될수록 빨리) + 뒤 빛 숨쉬기</summary>
+        void Spin(float dt, float a)
+        {
+            float sp = art == "focus" ? SpinDeg(a) * 0.6f : art == "vortex" ? 60f + 420f * a * a : SpinDeg(a) * 1.4f;
+            spinAng -= sp * dt;
+            spin.transform.localRotation = Quaternion.Euler(0, 0, spinAng);
+            if (art == "focus") spin.transform.localPosition = (Vector3)L2U(100, 70) + new Vector3(0, Mathf.Sin(t * 2.2f) * 0.02f, 0);
+            var gc = art == "wheel" ? new Color(1f, 0.55f, 0.3f) : Color.Lerp(col, Color.white, 0.3f);
+            float fl = art == "wheel" ? 0.8f + 0.2f * Mathf.Sin(t * 19f) : 0.88f + 0.12f * Mathf.Sin(t * 4f);
+            spinGlow.color = A(gc, (0.12f + 0.45f * a) * fl);
+            spinGlow.transform.localPosition = spin.transform.localPosition;
+            spinGlow.transform.localScale = Vector3.one * (0.7f + 0.35f * a);
+            if (art == "wheel" && Random.value < dt * (2f + 6f * a)) Fx.Sparks((Vector2)transform.TransformPoint(spin.transform.localPosition), new Color(1f, 0.7f, 0.35f), 1, 1.8f, 0.6f, 120f, 90f);
+        }
+
+        void Bolt(float dt, float a, float orbY = 52f)
         {
             if ((flickT -= dt) <= 0) { flickT = Random.Range(0.04f, 0.09f); flick = Random.Range(0.6f, 1f); }   // 불규칙 떨림
             var oc = Color.Lerp(col, Color.white, 0.2f); oc.a = (0.25f + 0.5f * a) * flick;
             orbGlow.color = oc;
             orbGlow.transform.localScale = Vector3.one * (1.0f + 0.45f * a) * (0.9f + 0.1f * flick);
-            Vector2 c0 = L2U(100, 52); float rr = 22f * 1.56f / 200f;
+            Vector2 c0 = L2U(100, orbY); float rr = 22f * 1.56f / 200f;
             for (int i = 0; i < arcs.Length; i++)
             {
                 if ((arcT[i] -= dt) > 0) continue;

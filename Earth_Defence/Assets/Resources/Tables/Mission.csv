@@ -1,0 +1,8 @@
+﻿Id,Kind,Target,Name,Reward,Value,,Kind: play · win · kill · up · patrol · elite · all · Reward: gold · shards · stamina · parts · chip(값 = 등급) · gear(값 = 등급)
+m_play,play,3,전투 {0}판 하기,gold,1500,,
+m_win,win,1,스테이지 {0}번 이기기,shards,10,,
+m_kill,kill,500,적 {0}마리 처치,gold,2000,,
+m_up,up,3,강화 {0}번 하기,parts,5,,
+m_patrol,patrol,1,순찰 보상 {0}번 받기,stamina,10,,
+m_elite,elite,1,엘리트 난이도 {0}판 하기,chip,2,,
+m_all,all,6,오늘 미션 모두 끝내기,gear,3,,

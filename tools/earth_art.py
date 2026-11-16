@@ -393,9 +393,129 @@ def spark_arc(seed, w=64, h=28):
     return blur(''.join(s_glow), 2.2, .7) + ''.join(s_core)
 
 
+# ------------------------------------------------------------------ 2차 터렛 5종 (11-16) — 1차와 같은 받침 · 같은 캔버스 200x222
+# 쾅쾅 대포: 둥근 몸 + 굵은 포신(쏘면 뒤로 밀림) · 집중 빔: 받침대 + 도는 렌즈 고리 · 소용돌이포: 그릇 + 도는 소용돌이 원반
+# 불바퀴: 아치 틀 + 도는 불바퀴 · 찌릿 코일: 구리 코일 기둥 + 고리 + 위 구슬(작은 번개)
+CANNON_MUZ = (100, 34)
+
+
+def t_cannon_base():
+    c = ELEM['phys']
+    return (pedestal(c) + C(100, 128, 42, G(METAL, 'r'), 5.5) + rr(64, 132, 72, 26, 10, G(METAL2), 5)
+            + C(78, 145, 4, shade(METAL2, .7), 0) + C(122, 145, 4, shade(METAL2, .7), 0)
+            + F('M74 104 Q86 92 102 92 Q88 100 82 112 Z', '#ffffff', .55) + neon_dot(100, 122, 6, '#ffd9a0'))
+
+
+def t_cannon_barrel():
+    c = ELEM['phys']
+    return (rr(76, 44, 48, 62, 12, G(c, 'v', .78, .3), 5.5) + L('M76 64 L124 64 M76 84 L124 84', 3.2)
+            + rr(68, 26, 64, 24, 10, G(METAL), 5.5) + E(100, 34, 20, 7, INK, 0) + F('M84 50 L90 50 L90 100 L84 100 Z', '#ffffff', .45))
+
+
+def t_cannon():
+    return t_cannon_barrel() + t_cannon_base()
+
+
+FOCUS_C = (100, 70)
+
+
+def t_focus_base():
+    c = ELEM['light']
+    return (pedestal(c) + rr(90, 98, 20, 66, 7, G(METAL), 5.5) + P('M70 104 Q100 120 130 104 L126 96 Q100 108 74 96 Z', G(METAL2), 4.5)
+            + L('M74 96 L66 70 M126 96 L134 70', 6) + C(66, 70, 6, G(METAL2, 'r'), 4) + C(134, 70, 6, G(METAL2, 'r'), 4))
+
+
+def t_focus_spin():
+    """도는 렌즈: 바깥 고리(살 3개) + 가운데 빛나는 렌즈"""
+    c = ELEM['light']; cx, cy = FOCUS_C
+    s = C(cx, cy, 34, 'none', 6) + C(cx, cy, 34, 'none', 0)
+    s = f'<circle cx="{cx}" cy="{cy}" r="34" fill="none" stroke="{INK}" stroke-width="13"/><circle cx="{cx}" cy="{cy}" r="34" fill="none" stroke="{mix(c, "#ffffff", .2)}" stroke-width="6"/>'
+    for i in range(3):
+        a = math.radians(-90 + i * 120)
+        s += C(cx + 34 * math.cos(a), cy + 34 * math.sin(a), 7, G(METAL2, 'r'), 4)
+    return (s + blur(C(cx, cy, 20, '#c8f6ff', 0), 6, .9) + C(cx, cy, 18, G('#c8f6ff', 'r', .85, .7), 5)
+            + F(f'M{cx - 10} {cy - 6} Q{cx - 6} {cy - 14} {cx + 2} {cy - 14} Q{cx - 4} {cy - 9} {cx - 6} {cy - 2} Z', '#ffffff', .9))
+
+
+def t_focus():
+    return t_focus_base() + t_focus_spin()
+
+
+VORTEX_C = (100, 74)
+
+
+def t_vortex_base():
+    c = ELEM['grav']
+    return (pedestal(c) + P('M48 104 Q52 160 100 160 Q148 160 152 104 Z', G(c, 'v', .8, .3), 5.5)
+            + E(100, 104, 52, 14, G(shade(c, .75), 'v', .8, .4), 5) + neon_dot(76, 136, 5, '#e0d4ff') + neon_dot(124, 136, 5, '#e0d4ff'))
+
+
+def t_vortex_spin():
+    """도는 소용돌이 원반 (팔 4개)"""
+    c = ELEM['grav']; cx, cy = VORTEX_C
+    s = C(cx, cy, 40, G(mix(c, '#ffffff', .35), 'r', .85, .5), 5.5)
+    for i in range(4):
+        a = i * 90
+        s += f'<path d="M{cx} {cy} Q{cx + 30} {cy - 6} {cx + 34} {cy - 30}" transform="rotate({a} {cx} {cy})" fill="none" stroke="{shade(c, .6)}" stroke-width="6" stroke-linecap="round"/>'
+    return s + blur(C(cx, cy, 12, '#f2ecff', 0), 4, .9) + C(cx, cy, 9, '#f6f2ff', 3.6)
+
+
+def t_vortex():
+    return t_vortex_base() + t_vortex_spin()
+
+
+WHEEL_C = (100, 76)
+
+
+def t_wheel_base():
+    c = ELEM['fire']
+    return (pedestal(c) + P('M46 162 L46 92 Q46 34 100 34 Q154 34 154 92 L154 162 L136 162 L136 92 Q136 52 100 52 Q64 52 64 92 L64 162 Z', G(shade(c, .9), 'v', .82, .3), 5.5)
+            + neon_dot(55, 120, 5, '#ffc0a0') + neon_dot(145, 120, 5, '#ffc0a0'))
+
+
+def t_wheel_spin():
+    """도는 불바퀴: 바퀴 + 살 + 불꽃 끝 6개"""
+    c = ELEM['fire']; cx, cy = WHEEL_C
+    s = ''
+    for i in range(6):
+        a = math.radians(i * 60)
+        x, y = cx + 34 * math.cos(a), cy + 34 * math.sin(a)
+        s += f'<path d="M{x:.1f} {y:.1f} q{8 * math.cos(a + 1.2):.1f} {8 * math.sin(a + 1.2):.1f} {14 * math.cos(a + .5):.1f} {14 * math.sin(a + .5):.1f}" fill="none" stroke="#ffb35c" stroke-width="9" stroke-linecap="round"/>'
+    s = blur(s, 2.5, .9) + s
+    s += C(cx, cy, 30, G('#ffb36b', 'r', .8, .45), 5.5)
+    for i in range(3):
+        s += L(f'M{cx - 26 * math.cos(math.radians(i * 60)):.1f} {cy - 26 * math.sin(math.radians(i * 60)):.1f} L{cx + 26 * math.cos(math.radians(i * 60)):.1f} {cy + 26 * math.sin(math.radians(i * 60)):.1f}', 4.4, shade('#ffb36b', .6))
+    return s + C(cx, cy, 9, G('#fff0c0', 'r'), 4)
+
+
+def t_wheel():
+    return t_wheel_base() + t_wheel_spin()
+
+
+def t_tesla_base():
+    c = ELEM['bolt']; cu = '#e0a060'
+    s = pedestal(c) + rr(84, 72, 32, 92, 10, G(cu, 'v', .8, .3), 5.5)
+    for y in range(80, 160, 13):
+        s += L(f'M86 {y} L114 {y + 7}', 3.2, shade(cu, .55))
+    s += E(100, 74, 38, 11, G(METAL, 'v', .85, .35), 5) + E(100, 74, 22, 5, shade(METAL2, .75), 0)
+    return s
+
+
+def t_tesla_orb():
+    return (blur(C(100, 46, 28, '#fff2b8', 0), 8, .85) + C(100, 46, 21, G('#fff2b8', 'r', .9, .7), 5)
+            + L('M92 38 L100 48 L96 50 L106 58', 3, shade(GOLD2, .8)) + F('M88 40 Q92 30 102 30 Q94 34 92 44 Z', '#ffffff', .9))
+
+
+def t_tesla():
+    return t_tesla_base() + t_tesla_orb()
+
+
 TURRETS = [  # id, 이름, 속성, 그림
     ('rail', '관통포', 'phys', t_rail), ('laser', '레이저 포', 'light', t_laser), ('drone', '끈끈이 드론', 'grav', t_drone),
-    ('hive', '벌집', 'grav', t_hive), ('missile', '유도 미사일', 'fire', t_missile), ('bolt', '벼락탑', 'bolt', t_bolt)]
+    ('hive', '벌집', 'grav', t_hive), ('missile', '유도 미사일', 'fire', t_missile), ('bolt', '벼락탑', 'bolt', t_bolt),
+    # 2차 (11-16)
+    ('cannon', '쾅쾅 대포', 'phys', t_cannon), ('focus', '집중 빔', 'light', t_focus), ('vortex', '소용돌이포', 'grav', t_vortex),
+    ('wheel', '불바퀴', 'fire', t_wheel), ('tesla', '찌릿 코일', 'bolt', t_tesla)]
 TUR = {t[0]: t for t in TURRETS}
 
 
