@@ -17,6 +17,8 @@ namespace EarthDef
         float baseY;
         public float X => x;
         public bool Walking => wait <= 0;
+        /// <summary>시험용: 바로 tx 로 걷기 시작</summary>
+        public void Go(float tx) { wait = 0; target = tx; left = tx < x; }
 
         public static void Show(bool on)
         {

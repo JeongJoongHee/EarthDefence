@@ -86,6 +86,27 @@ namespace EarthDef
         public float TimeLeft => Mathf.Max(0, RunTime - time);
         public int LevelMax => Tables.Ci("Level_Max", 20);
 
+        /// <summary>터렛 시험장 (11-16 밤, Game/Lab.cs) — null 이 아니면 적 나오기 · 경험치 · 기지 피해를 시험장 규칙으로</summary>
+        public Lab lab;
+
+        /// <summary>시험장: slot(1~4)에 터렛을 놓음 (있던 것은 뺌) · preset = base · A · B · all</summary>
+        public TurretInst LabPlace(int slot, string id, string preset)
+        {
+            LabRemove(slot);
+            var t = run.AddAt(Tables.TurretById[id], slot);
+            Lab.ApplyPreset(t, preset);
+            AddUnit(t);
+            World.I.ShowSlots(0, false);
+            return t;
+        }
+        public void LabRemove(int slot)
+        {
+            var t = run.turrets.Find(x => x.slot == slot);
+            if (t == null) return;
+            if (t.unit) { units.Remove(t.unit); Destroy(t.unit.gameObject); }
+            run.turrets.Remove(t);
+        }
+
         TurretUnit AddUnit(TurretInst t)
         {
             var go = new GameObject("Turret_" + t.row.id);
@@ -111,7 +132,7 @@ namespace EarthDef
         public void Tick(float dt)
         {
             time += dt;
-            Spawning(dt);
+            if (lab != null) lab.Spawn(this, dt); else Spawning(dt);
             foreach (var u in units) u.Step(dt);
             foreach (var a in attacks) if (!a.dead) a.Step(dt);
             foreach (var e in enemies) if (!e.dead) e.Step(dt);
@@ -202,12 +223,13 @@ namespace EarthDef
                 for (int i = 0; i < e.row.splitN; i++) Spawn(e.row.split, e.Pos + new Vector2((i - (e.row.splitN - 1) / 2f) * 0.6f, 0.1f), true);
             GainExp(e.row.exp);
             if ((e.row.IsBoss || e.row.IsElite) && lo.B("heal_elite") > 0) Heal(lo.B("heal_elite") / 100.0);
-            if (e.row.IsBoss) { if (e == boss || boss == null || boss.dead) End(true); return; }
-            if (e.row.IsElite && Tables.Ci("Boss_Extra_Card", 1) == 1) pendingBoss++;
+            if (e.row.IsBoss && lab == null) { if (e == boss || boss == null || boss.dead) End(true); return; }
+            if (e.row.IsElite && lab == null && Tables.Ci("Boss_Extra_Card", 1) == 1) pendingBoss++;
         }
 
         public void GainExp(double v)
         {
+            if (lab != null) return;
             if (level >= LevelMax) return;
             exp += v;
             while (exp >= need && level < LevelMax)
@@ -221,6 +243,7 @@ namespace EarthDef
         public void HurtBase(double d, Vector2 at)
         {
             if (st == St.End) return;
+            if (lab != null) { Fx.Hit(at + Vector2.down * 0.3f, 0.8f); return; }   // 시험장: 기지는 안 닳음
             // 2차 칩: 처음 N번 막음 → 받는 피해 -N(최소 1) → 보호막이 먼저 받음
             if (immune > 0) { immune--; Fx.Ring(at + Vector2.down * 0.2f, 0.8f, Art.Sky); return; }
             d = Math.Max(1, d - lo.reduce);

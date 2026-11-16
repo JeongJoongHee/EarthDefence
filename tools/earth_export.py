@@ -351,20 +351,33 @@ def ic_calendar(w, h, f, s): return (A.rr(w * .1, h * .16, w * .8, h * .74, 10, 
 def ic_parts(w, h, f, s): return P(' '.join(('M' if i == 0 else 'L') + f'{w*.5 + w*.42*math.cos(math.radians(30 + i*60)):.1f} {h*.5 + h*.42*math.sin(math.radians(30 + i*60)):.1f}' for i in range(6)) + ' Z', '#c9c1b3', s) + C(w * .5, h * .5, w * .16, '#5b4433', s * .8)
 def ic_crown(w, h, f, s): return P(f'M{w*.1} {h*.3} L{w*.32} {h*.52} L{w*.5} {h*.2} L{w*.68} {h*.52} L{w*.9} {h*.3} L{w*.82} {h*.82} L{w*.18} {h*.82} Z', GOLD, s) + C(w * .5, h * .62, w * .07, RED, s * .6)
 def ic_hand(w, h, f, s): return P(f'M{w*.36} {h*.5} L{w*.36} {h*.12} Q{w*.36} {h*.04} {w*.44} {h*.04} Q{w*.52} {h*.04} {w*.52} {h*.12} L{w*.52} {h*.4} L{w*.72} {h*.44} Q{w*.86} {h*.48} {w*.84} {h*.62} L{w*.78} {h*.86} L{w*.4} {h*.86} L{w*.2} {h*.62} Q{w*.16} {h*.52} {w*.26} {h*.5} Z', '#fff4dc', s)
+def _gem(w, h, s, top, mid, bot, line, op=1.0):
+    """보석 (단계 별 · 11-16 밤 "다이아 모양 퀄리티가 아쉬움"): 위 면 · 왼/오 면 · 반짝"""
+    T, Lp, R, B, C = (w*.5, h*.06), (w*.06, h*.4), (w*.94, h*.4), (w*.5, h*.95), (w*.5, h*.4)
+    P2 = lambda pts: 'M' + ' L'.join(f'{x:.1f} {y:.1f}' for x, y in pts) + ' Z'
+    g = f'<g opacity="{op}">'
+    g += P(P2([T, R, B, Lp]), mid, s)
+    g += F(P2([T, (w*.72, h*.4), (w*.28, h*.4)]), top) + F(P2([(w*.28, h*.4), (w*.72, h*.4), B]), mid)
+    g += F(P2([(w*.72, h*.4), R, B]), bot) + F(P2([Lp, (w*.28, h*.4), B]), bot, .55)
+    g += L(f'M{Lp[0]} {Lp[1]} L{R[0]} {R[1]} M{w*.28} {h*.4} L{w*.5} {h*.95} L{w*.72} {h*.4} M{w*.28} {h*.4} L{w*.5} {h*.06} L{w*.72} {h*.4}', s * .45, line)
+    g += P(P2([T, R, B, Lp]), 'none', s)
+    return g + '</g>'
+def ic_gem_on(w, h, f, s): return _gem(w, h, s, '#fff1a8', GOLD, '#e0a722', '#b07a10') + F(f'M{w*.36} {h*.2} L{w*.44} {h*.14} L{w*.4} {h*.32} Z', '#ffffff', .9)
+def ic_gem_off(w, h, f, s): return _gem(w, h, s, '#8a7462', '#6b5646', '#5b4433', '#3b281c', .9)
 def ic_tab_turret(w, h, f, s): return P(f'M{w*.18} {h*.9} L{w*.26} {h*.6} L{w*.74} {h*.6} L{w*.82} {h*.9} Z', '#c9c1b3', s) + C(w * .5, h * .5, w * .22, '#d9c19a', s) + A.rr(w * .44, h * .08, w * .12, h * .36, 4, '#a9b1bb', s)
 
 
 EXTRA = dict(cards=ic_cards, coin=ic_coin, shard=ic_shard, star_on=ic_dia(GOLD), star_off=ic_dia(TRACK), ad=ic_ad, plus=ic_plus,
              home=ic_home, retry=ic_retry, base=ic_base, patrol=ic_patrol,
              g_weapon=ic_g_weapon, g_helmet=ic_g_helmet, g_suit=ic_g_suit, g_shield=ic_g_shield, g_core=ic_g_core, g_boots=ic_g_boots,
-             chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret)
+             gem_on=ic_gem_on, gem_off=ic_gem_off, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret)
 ICONS.update(EXTRA)
 ICON_LIST = {'pause': CREAM, 'play': CREAM, 'cards': CREAM, 'heart': RED, 'coin': GOLD, 'shard': SKY, 'star_on': GOLD, 'star_off': TRACK,
              'ad': CREAM, 'plus': CREAM, 'x': CREAM, 'lock': CREAM, 'home': CREAM, 'retry': CREAM, 'check': CREAM, 'skull': CREAM,
              'base': CREAM, 'patrol': CREAM, 'trophy': GOLD, 'bolt': GOLD, 'star': GOLD,
              'g_weapon': CREAM, 'g_helmet': CREAM, 'g_suit': CREAM, 'g_shield': CREAM, 'g_core': CREAM, 'g_boots': CREAM,
              'chip': CREAM, 'energy': CREAM, 'mission': CREAM, 'calendar': CREAM, 'parts': CREAM, 'crown': GOLD, 'hand': CREAM,
-             'tab_turret': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
+             'gem_on': GOLD, 'gem_off': TRACK, 'tab_turret': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
 
 
 def export_icon():

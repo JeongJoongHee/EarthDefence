@@ -18,6 +18,7 @@ namespace EarthDef
         readonly Dictionary<string, double> stat = new();
         public int shotsCards;            // "탄 +1(-15%)" 카드 수 (발당 감소)
         public TurretUnit unit;           // 화면 물체
+        public double dmgDone;            // 준 피해 합 (터렛 시험장 초당 피해)
         /// <summary>2차: 장비 · 칩이 이 터렛에 더하는 값 (카드와 같은 키 — 판 내내 그대로)</summary>
         public Dictionary<string, double> chip;
 
@@ -85,6 +86,9 @@ namespace EarthDef
         public int FreeSlots => MaxSlots - (turrets.Count - 1);
         public TurretInst Get(string id) => turrets.Find(t => t.row.id == id);
         public bool Owns(string id) => Get(id) != null;
+
+        /// <summary>터렛 시험장: 정한 칸에 놓기</summary>
+        public TurretInst AddAt(TurretRow r, int slot) { var t = Add(r); t.slot = slot; return t; }
 
         TurretInst Add(TurretRow r)
         {

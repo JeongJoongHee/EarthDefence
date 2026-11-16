@@ -34,6 +34,8 @@ namespace EarthDef.EditorTools
         public static void RunIdle() => Start("idle");
         /// <summary>11-16 저녁 소리 검토: Logs/Sound/ 에 배경음 · 효과음 wav + 전투 장면 효과음 기록(json) → tools/sound_review.py</summary>
         public static void RunSound() => Start("sound");
+        /// <summary>11-16 밤 터렛 시험장 씬 시험 (Assets/Scenes/TurretLab.unity)</summary>
+        public static void RunLab() => Start("lab");
 
         static void Start(string mode)
         {
@@ -41,7 +43,8 @@ namespace EarthDef.EditorTools
             TableConverter.Convert(true);
             SaveData.ResetAll();
             SessionState.SetBool(Key, true);
-            EditorSceneManager.OpenScene("Assets/Scenes/Main.unity");
+            if (mode == "lab") SceneBuilder.BuildLab();
+            EditorSceneManager.OpenScene(mode == "lab" ? "Assets/Scenes/TurretLab.unity" : "Assets/Scenes/Main.unity");
             EditorApplication.EnterPlaymode();
         }
 
@@ -74,7 +77,7 @@ namespace EarthDef.EditorTools
         {
             float timeout = Time.realtimeSinceStartup + 420f;
             string mode = SessionState.GetString(PlayTest.ModeKey, "");
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -82,6 +85,48 @@ namespace EarthDef.EditorTools
         }
 
         bool running = true;
+
+        // ---------- 터렛 시험장 (RunLab) ----------
+        IEnumerator LabSteps()
+        {
+            yield return null; yield return null;
+            Directory.CreateDirectory(OutDir);
+            SetupCapture();
+            var b = LabBoot.B; var ui = Object.FindFirstObjectByType<LabUI>();
+            Check(b != null && b.lab != null && ui != null, "시험장 씬: 전투(시험장 규칙) + 화면");
+            for (int i = 0; i < 90; i++) b.Tick(Battle.StepSec);
+            int dummies = b.enemies.FindAll(e => !e.dead && e.hold).Count;
+            Check(dummies == 15, $"허수아비 3줄 x 5 ({dummies})");
+            ui.Place(1, "cannon"); ui.Place(3, "vortex"); ui.Place(4, "tesla");
+            {   // 끌어 놓기: 집중 빔 칸을 칸 2 자리로 끌어 놓음
+                var drag = System.Array.Find(Object.FindObjectsByType<LabDrag>(FindObjectsSortMode.None), d => d.name == "T_focus");
+                var pe = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
+                { position = Camera.main.WorldToScreenPoint(new Vector3(World.SlotX[1], World.GroundY + 0.5f, 0)) };
+                drag.OnBeginDrag(pe); drag.OnEndDrag(pe);
+            }
+            Check(b.run.turrets.Find(t => t.slot == 2)?.row.id == "focus" && b.units.Count == 5, $"끌어서 칸 2 에 집중 빔 · 터렛 {b.units.Count - 1}");
+            double h0 = b.baseHp;
+            for (int i = 0; i < 60 * 12; i++) b.Tick(Battle.StepSec);
+            foreach (var t in b.run.turrets) if (t.slot > 0) Check(t.unit.fired > 0 && t.dmgDone > 0, $"{t.row.name} 쏨 {t.unit.fired} · 피해 {Num.F(t.dmgDone)}");
+            Check(b.st == Battle.St.Play && b.baseHp == h0 && b.enemies.TrueForAll(e => e.dead || e.hold), "끝나지 않음 · 기지 그대로 · 허수아비는 제자리");
+            Check(b.run.Get("guardian").unit.fired == 0, "대장 카피 쏘기 끔 (처음)");
+            ui.SetPreset("all");
+            Check(b.run.turrets.TrueForAll(t => t.slot == 0 || t.tier == 3), "카드 모두 → 3단계");
+            ui.SetSpeed(2f);
+            Check(b.speed == 2f, "속도 x2");
+            yield return Wait(2.5f);
+            Capture("23_lab_dummy");
+            ui.SetMode("boss"); ui.SetSpeed(1f);
+            for (int i = 0; i < 90; i++) b.Tick(Battle.StepSec);
+            var boss = b.enemies.Find(e => !e.dead && e.row.IsBoss);
+            Check(boss != null && boss.hold, $"보스 모드 ({boss?.row.name})");
+            ui.SetMode("swarm");
+            for (int i = 0; i < 60 * 6; i++) b.Tick(Battle.StepSec);
+            Check(b.enemies.Exists(e => !e.dead && !e.hold), "무리 모드: 적이 내려옴");
+            yield return Wait(1.5f);
+            Capture("23b_lab_swarm");
+            running = false;
+        }
 
         // ---------- 소리 검토 (RunSound) ----------
         static void Wav(string path, float[] d)
@@ -508,11 +553,15 @@ namespace EarthDef.EditorTools
             }
             yield return Wait(0.3f);
             Capture("12_turrets2");
+            Game.BattleUI.ShowCards(); yield return Wait(0.4f);
+            Capture("12d_cards");
+            Popup.CloseAll(); B.Pause(false);
             yield return Wait(0.3f);
             Capture("12b_turrets2");
             Game.ToLobby(); yield return null; Popup.CloseAll();
             Game.StartStage(25, 99); yield return null;
             foreach (var id in new[] { "new_tesla", "t_dmg", "t_dmg", "t_bounce", "t_bA", "new_focus", "f_dmg", "f_dmg", "f_cd", "f_bB" }) Force(id);
+            for (int i = 0; i < 12; i++) { var bt3 = B.Spawn("beetle", new Vector2(-4f + (i % 6) * 1.6f, -0.5f + (i / 6) * 1.2f)); bt3.hp = bt3.maxHp = bt3.maxHp * 400; }   // 굴절 · 튐을 운에 안 기대게
             FF(25f);
             Check(B.run.Get("tesla").unit.fired > 0 && TeslaBolt.LastJumps >= 3, $"찌릿 코일 번개가 튐 (최대 {TeslaBolt.LastJumps}번)");
             Check(FocusBeam.LastRefract > 0, $"굴절 빔 ({FocusBeam.LastRefract}줄)");
@@ -545,6 +594,9 @@ namespace EarthDef.EditorTools
             Game.ToLobby(); yield return null; Popup.CloseAll();
             Game.Lobby.SetTab(0); yield return Wait(0.3f);
             Capture("18_lobby_battle");
+            Lobby.enemiesOpen = true; Game.Lobby.SetTab(0); yield return Wait(0.3f);
+            Capture("18d_lobby_enemies_open");
+            Lobby.enemiesOpen = false; Game.Lobby.SetTab(0);
             S.elite = true; Game.Lobby.Refresh(); yield return Wait(0.2f);
             Capture("18b_lobby_elite");
             S.elite = false;
@@ -553,7 +605,7 @@ namespace EarthDef.EditorTools
                 S.best = 0; int m0 = Meta.StaminaMax; S.best = 30; int m30 = Meta.StaminaMax; S.best = 99; int m99 = Meta.StaminaMax; S.best = b0;
                 Check(m0 == 30 && m30 == 60 && m99 == 80, $"스태미나 최대: 처음 {m0} · 30스테이지 {m30} · 끝 {m99}");
                 Check(LobbyWalker.I != null, "로비에 대장 카피가 있음");
-                float wx0 = LobbyWalker.I.X; yield return Wait(4f);
+                float wx0 = LobbyWalker.I.X; LobbyWalker.I.Go(wx0 > 0 ? -1.4f : 1.4f); yield return Wait(4f);
                 Check(LobbyWalker.I != null && Mathf.Abs(LobbyWalker.I.X - wx0) > 0.05f, $"대장 카피가 어슬렁 걸음 ({wx0:0.00} > {LobbyWalker.I?.X:0.00})");
                 Capture("18c_lobby_walk");
             }

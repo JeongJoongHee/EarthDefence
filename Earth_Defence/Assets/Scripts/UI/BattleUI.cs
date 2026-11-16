@@ -135,7 +135,7 @@ namespace EarthDef
                     continue;
                 }
                 var tile = UIKit.Tile(w, "slot", Color.white, Art.TurretUI(t.row.art), 0.86f, "Slot" + i); tile.rectTransform.TL(x, 214, 150, 150);
-                Stars(w, x + 2, 372, t.tier, t.stars, 20);
+                Stars(w, x + (150 - StarsW(17)) / 2, 380, t.tier, t.stars, 17);
             }
             // 카드 3장
             // 칩 "첫 카드 N장 더" — 4장이면 조금 좁게
@@ -195,7 +195,7 @@ namespace EarthDef
             {
                 int tier = t?.tier ?? 1, st = t?.stars ?? 0, after = Mathf.Min(Tables.Ci("Stars_Per_Tier", 4), st + 1);
                 int ss = cw < 250 ? 20 : 26;   // 카드 4장(첫 카드 칩)이면 별을 작게 — 카드 밖으로 안 나가게
-                Stars(card.transform, (cw - (ss * 2 + 6 + ss * 1.4f * 3 + ss * 1.5f)) / 2, 600, tier, after, ss, st < after ? after - 1 : -1);
+                Stars(card.transform, (cw - StarsW(ss)) / 2, 600, tier, after, ss, st < after ? after - 1 : -1);
             }
         }
 
@@ -206,21 +206,24 @@ namespace EarthDef
             UIKit.Label(c.transform, n.ToString(), 30, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
         }
 
-        /// <summary>단계 숫자 + 별 4칸 (hl = 새로 켜질 별)</summary>
-        static void Stars(Transform p, float x, float y, int tier, int stars, int size, int hl = -1)
+        /// <summary>단계 + 별 칸 너비</summary>
+        public static float StarsW(int size) => size * 2.6f + 6 + Tables.Ci("Stars_Per_Tier", 4) * size * 1.5f;
+
+        /// <summary>단계 "Lv.N" + 보석 4칸 (hl = 새로 켜질 보석) — 11-16 밤 "등급과 다이아 모양이 아쉬움 · 더 크게 · Lv.1 ◆◇◇◇ 강조"</summary>
+        public static void Stars(Transform p, float x, float y, int tier, int stars, int size, int hl = -1)
         {
-            var c = UIKit.Panel(p, "pill", "Tier"); c.rectTransform.TL(x, y - size, size * 2, size * 2);
-            UIKit.Label(c.transform, tier.ToString(), Mathf.RoundToInt(size * 1.2f), Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 2, 0, 0);
+            var c = UIKit.Panel(p, "pill", "Tier"); c.color = Art.Hex("#c9b4f0"); c.rectTransform.TL(x, y - size * 0.85f, size * 2.6f, size * 1.7f);
+            UIKit.Label(c.transform, "Lv." + tier, Mathf.RoundToInt(size * 1.05f)).rectTransform.Fill(0, 3, 0, 0);
             int n = Tables.Ci("Stars_Per_Tier", 4);
             for (int i = 0; i < n; i++)
             {
-                var s = UIKit.Img(p, Art.Icon(i < stars ? "star_on" : "star_off"), "Star" + i);
-                float sx = x + size * 2 + 6 + i * (size * 1.4f);
-                s.rectTransform.TL(sx, y - size * 0.75f, size * 1.5f, size * 1.5f);
+                float sx = x + size * 2.6f + 6 + i * (size * 1.5f);
+                var s = UIKit.Img(p, Art.Icon(i < stars ? "gem_on" : "gem_off"), "Star" + i); s.raycastTarget = false;
+                s.rectTransform.TL(sx, y - size * 0.85f, size * 1.6f, size * 1.7f);
                 if (i == hl)
                 {
-                    var ring = UIKit.Img(p, Art.Fx("ring"), "New"); ring.color = Art.Green2;
-                    ring.rectTransform.TL(sx - size * 0.35f, y - size * 1.1f, size * 2.2f, size * 2.2f);
+                    var ring = UIKit.Img(p, Art.Fx("ring"), "New"); ring.color = Art.Green2; ring.raycastTarget = false;
+                    ring.rectTransform.TL(sx - size * 0.35f, y - size * 1.2f, size * 2.3f, size * 2.4f);
                 }
             }
         }
@@ -235,22 +238,24 @@ namespace EarthDef
             p.Btn("btn_red", L.T("give_up"), 0, 100, 460, () => { p.Close(false); b.End(false); });
         }
 
-        void ShowCards()
+        public void ShowCards()
         {
             if (b.st != Battle.St.Play) return;
             b.Pause(true);
             var p = Popup.Make(L.T("cards_title"), 960, 1300, () => b.Pause(false));
-            float y = 130;
+            // 11-16 밤 "고른 카드: 단계 · 보석을 크게 · 터렛마다 구분선"
+            float y = 128;
             foreach (var t in b.run.turrets)
             {
-                var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretUI(t.row.art), 0.86f, "T"); tile.rectTransform.TL(40, y, 120, 120);
-                var nm = UIKit.Label(p.win, t.row.name, 34, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(180, y, 400, 50);
-                Stars(p.win, 520, y + 26, t.tier, t.stars, 20);
+                var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretUI(t.row.art), 0.86f, "T"); tile.rectTransform.TL(40, y, 124, 124);
+                var nm = UIKit.Label(p.win, t.row.name, 38, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(184, y, 380, 56);
+                Stars(p.win, 920 - StarsW(32), y + 34, t.tier, t.stars, 32);
+                var dv = UIKit.Plain(p.win, new Color(0.23f, 0.16f, 0.11f, 0.2f), "Divider"); dv.rectTransform.TL(40, y + 138, 880, 3);
                 var names = new List<string>();
                 foreach (var kv in t.picks) if (Tables.CardById.TryGetValue(kv.Key, out var c)) names.Add(kv.Value > 1 ? $"{c.name} x{kv.Value}" : c.name);
                 var d = UIKit.Label(p.win, names.Count > 0 ? string.Join(", ", names) : "-", 24, Art.Soft, TextAnchor.UpperLeft, false);
-                d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(180, y + 54, 740, 70);
-                y += 140;
+                d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(184, y + 62, 736, 70);
+                y += 148;
             }
         }
 

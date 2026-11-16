@@ -25,6 +25,8 @@ namespace EarthDef
         float burnT, burnTick; double burnDps; TurretInst burnSrc;
         public bool Paralyzed => para > 0;
         public static int Knocks;   // 시험용: 밀어낸 횟수
+        /// <summary>터렛 시험장 허수아비: 제자리에 서 있음</summary>
+        public bool hold;
         public bool Debuffed => slow > 0 || para > 0 || burnT > 0 || vuln > 0;
 
         public void Init(EnemyRow r, Vector2 p, double hp, double atk)
@@ -95,7 +97,7 @@ namespace EarthDef
                 if (hitT <= 0 && !Paralyzed) { hitT = Tables.Cf("Enemy_Hit_Interval", 1f); Battle.I?.HurtBase(atk, Pos); Wobble(); }
                 return;
             }
-            if (Paralyzed) return;
+            if (Paralyzed || hold) return;
 
             float spd = row.speed * (1 - slow);
             var p = transform.position;

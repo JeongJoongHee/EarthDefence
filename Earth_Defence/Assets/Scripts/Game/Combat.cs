@@ -69,6 +69,7 @@ namespace EarthDef
         {
             if (e == null || e.dead) return false;
             bool killed = e.Damage(d);
+            if (src != null) src.dmgDone += d;
             if (number) Audio.Play(Audio.Sfx.Hit);
             if (number && (SaveData.Cur == null || SaveData.Cur.nums)) Fx.Number(e.Pos + Vector2.up * e.radius, d, crit, e);
             if (killed) Battle.I?.OnKill(e, src);

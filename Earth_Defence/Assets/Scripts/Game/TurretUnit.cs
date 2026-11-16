@@ -141,6 +141,7 @@ namespace EarthDef
         {
             if (!IsGuardian && kick > 0) { kick -= dt; transform.position = new Vector3(transform.position.x, baseY - 0.06f * kick / 0.1f, 0); }
             if (IsGuardian) { Move(dt); AimStep(dt); }
+            if (IsGuardian && Battle.I.lab != null && !Battle.I.lab.guardianFire) return;   // 시험장: 대장 카피 쏘기 끔
             if (Charging) { ChargeStep(dt); return; }
             cd -= dt;
             if (cd > 0) return;

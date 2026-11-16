@@ -144,7 +144,8 @@ namespace EarthDef
         {
             var t = Img(parent, Art.UI("tag"), "Elem_" + elem); t.raycastTarget = false; t.color = Elem.Color(elem);
             t.rectTransform.TL(x, y, w, h);
-            Label(t.transform, Elem.Name(elem), size, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(h * 0.42f, 2, 4, 0);
+            // 11-16 밤 "글자가 조금씩 어긋남 → 가운데": 구멍(왼쪽 38px) 오른쪽 몸통의 가운데 · 주아는 살짝 아래로 쏠려 2px 올림
+            Label(t.transform, Elem.Name(elem), size, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(Mathf.Min(34f, w * 0.3f), 4, 6, 0);
             return t;
         }
 

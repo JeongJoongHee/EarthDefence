@@ -12,6 +12,40 @@ namespace EarthDef.EditorTools
     {
         const string ScenePath = "Assets/Scenes/Main.unity";
 
+        const string LabPath = "Assets/Scenes/TurretLab.unity";
+
+        /// <summary>터렛 시험장 씬 (카메라 + LabBoot) — 메뉴 · 배치: EarthDef.EditorTools.SceneBuilder.BuildLab</summary>
+        public static void BuildLab()
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            Camera(); new GameObject("LabBoot").AddComponent<LabBoot>();
+            EditorSceneManager.SaveScene(scene, LabPath);
+            Debug.Log("[SceneBuilder] 만들었음: " + LabPath);
+        }
+
+        [MenuItem("지구 방위대/터렛 시험장 열기 (재생)", priority = 1)]
+        public static void OpenLab()
+        {
+            if (!System.IO.File.Exists(LabPath)) BuildLab();
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            EditorSceneManager.OpenScene(LabPath);
+            EditorApplication.EnterPlaymode();
+        }
+
+        static Camera Camera()
+        {
+            var camGo = new GameObject("Main Camera");
+            camGo.tag = "MainCamera";
+            var cam = camGo.AddComponent<Camera>();
+            cam.orthographic = true; cam.orthographicSize = 9.6f;
+            cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = new Color(0.18f, 0.22f, 0.4f);
+            camGo.transform.position = new Vector3(0, 0, -10);
+            camGo.AddComponent<AudioListener>();
+            var urp = System.Type.GetType("UnityEngine.Rendering.Universal.UniversalAdditionalCameraData, Unity.RenderPipelines.Universal.Runtime");
+            if (urp != null) camGo.AddComponent(urp);
+            return cam;
+        }
+
         [MenuItem("지구 방위대/씬 다시 만들기")]
         public static void BuildAll()
         {
@@ -42,6 +76,8 @@ namespace EarthDef.EditorTools
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             AssetDatabase.SaveAssets();
             Debug.Log("[SceneBuilder] 만들었음: " + ScenePath);
+            BuildLab();
+            EditorSceneManager.OpenScene(ScenePath);
         }
     }
 }
