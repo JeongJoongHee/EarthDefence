@@ -39,7 +39,6 @@ namespace EarthDef
                 idle.Setup(this, t.row.art);
             }
             RefreshTier();
-            if (t.skin != null) ApplySkin(t.skin);
         }
 
         // ---------- 3차: 스킨 (색 돌리기) · 필살기 ----------
@@ -47,18 +46,45 @@ namespace EarthDef
         public int ults;                   // 필살기 쓴 횟수 (시험용)
         public float UltK => t.skin == null ? 0 : (float)ult / t.skin.ultCharge;
 
-        void ApplySkin(SkinRow k)
+        /// <summary>터렛 색: 스킨 = 색 돌리기 · 돌파(2단계 이상) = 붉게 (2차 수정안 "돌파하면 붉은색" — 스킨보다 먼저)</summary>
+        public bool Broken => t.tier >= 2 && !IsGuardian;
+        public Color LookColor
         {
+            get
+            {
+                var c = Elem.Color(t.row.elem);
+                if (Broken) { Color.RGBToHSV(c, out _, out var s, out var v); return Color.HSVToRGB(Tables.Cf("Break_Hue", 0f), Mathf.Clamp01(Mathf.Max(0.45f, s) * Tables.Cf("Break_Sat", 1.25f)), v); }
+                return t.skin != null ? Art.HueShift(c, t.skin.hue, t.skin.sat) : c;
+            }
+        }
+        readonly System.Collections.Generic.Dictionary<SpriteRenderer, Color> addBase = new();
+        bool looked;
+
+        void ApplyLook()
+        {
+            if (IsGuardian || (t.skin == null && !Broken && !looked)) return;   // 한 번도 안 바꿨으면 그대로 (시험장에서 돌파 → 기본으로 돌아오면 원래 색으로)
+            looked = true;
             var mat = Art.HueMat; var mpb = new MaterialPropertyBlock();
+            float sat = Broken ? Tables.Cf("Break_Sat", 1.25f) * (t.tier >= 3 ? 1.2f : 1f) : t.skin != null ? t.skin.sat : 1f;
             foreach (var r in GetComponentsInChildren<SpriteRenderer>(true))
             {
-                if (r.sharedMaterial == Art.AddMat) { r.color = Art.HueShift(r.color, k.hue, k.sat); continue; }
+                if (r.sharedMaterial == Art.AddMat)
+                {
+                    if (!addBase.ContainsKey(r)) addBase[r] = r.color;
+                    var c0 = addBase[r];
+                    if (Broken) { Color.RGBToHSV(c0, out _, out var s0, out var v0); var c1 = Color.HSVToRGB(Tables.Cf("Break_Hue", 0f), Mathf.Clamp01(s0 * sat), v0); c1.a = c0.a; r.color = c1; }
+                    else r.color = t.skin != null ? Art.HueShift(c0, t.skin.hue, t.skin.sat) : c0;
+                    continue;
+                }
                 if (!mat) continue;
                 r.sharedMaterial = mat;
-                r.GetPropertyBlock(mpb); mpb.SetFloat("_Hue", k.hue / 360f); mpb.SetFloat("_Sat", k.sat); r.SetPropertyBlock(mpb);
+                r.GetPropertyBlock(mpb);
+                mpb.SetFloat("_Hue", t.skin != null ? t.skin.hue / 360f : 0f); mpb.SetFloat("_Sat", sat);
+                mpb.SetFloat("_SetHue", Broken ? Tables.Cf("Break_Hue", 0f) : -1f);
+                r.SetPropertyBlock(mpb);
+                if (r == sr || r.transform.parent == transform) r.color = Broken ? (t.tier >= 3 ? new Color(1f, 0.8f, 0.78f) : new Color(1f, 0.88f, 0.86f)) : Color.white;   // 회색 쇠 부분도 살짝 붉게
             }
-            if (idle) idle.Tint(Art.HueShift(Elem.Color(t.row.elem), k.hue, k.sat));
-            Fx.Ring((Vector2)transform.position + Vector2.up * 0.8f, 1.3f, Art.HueShift(Elem.Color(t.row.elem), k.hue, k.sat));
+            if (idle) idle.Tint(LookColor);
         }
 
         void UltStep(Enemy target)
@@ -73,7 +99,7 @@ namespace EarthDef
         void CastUlt(Enemy target)
         {
             var b = Battle.I; var k = t.skin; double rate = k.ultRate;
-            var col = Art.HueShift(Elem.Color(t.row.elem), k.hue, k.sat);
+            var col = LookColor;
             Fx.Word(Head + Vector2.up * 0.6f, k.ultName, Color.Lerp(col, Color.white, 0.3f));
             Fx.Ring(Head, 2.2f, col); Fx.Glow(Head, 1.2f, new Color(col.r, col.g, col.b, 0.8f), 0.4f);
             Audio.Play(Audio.Sfx.Break);
@@ -220,7 +246,8 @@ namespace EarthDef
             float s = 1 + 0.1f * (t.tier - 1);
             baseScale = s;
             transform.localScale = Vector3.one * s;
-            if (t.tier > 1) Fx.Ring((Vector2)transform.position + Vector2.up * 0.8f, 1.2f, Elem.Color(t.row.elem));
+            ApplyLook();
+            if (t.tier > 1 || t.skin != null) Fx.Ring((Vector2)transform.position + Vector2.up * 0.8f, 1.2f, LookColor);
         }
 
         public Vector2 Head => IsGuardian ? (Vector2)gunT.TransformPoint(Art.GunMuzzle)

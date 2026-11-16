@@ -50,6 +50,8 @@ def export_bg():
     y0 = 1360   # 1920 캔버스의 이 높이부터 아래(월드 -4.0 ~ -9.6)
     out('Bg', 'ground', Rr(f'<g transform="translate(0,{-y0})">{A.ground() + A.base_back()}</g>', 1080, 560, A.WOB['bg'], .01))
     out('Bg', 'dome', Rr(f'<g transform="translate(0,{-y0})">{A.dome_front()}</g>', 1080, 560, A.WOB['ui'], .02))
+    for f in (0, 1):   # 달토끼 2장 (공이 위 · 아래) — World 가 번갈아 보여 줌
+        out('Bg', f'moon_rabbit_{f}', Rr(A.moon_rabbit(f == 1), 160, 160, A.WOB['char'], .02))
     out('Bg', 'slot', Rr(f'<g transform="translate(-{A.SLOT_X[3] - 80},{-(A.GROUND_Y - 40)})">{A.slot_empty(A.SLOT_X[3])}</g>', 160, 80, A.WOB['ui'], .02))
     print('bg')
 
@@ -369,9 +371,94 @@ def ic_brush(w, h, f, s): return (P(f'M{w*.62} {h*.08} L{w*.9} {h*.36} L{w*.5} {
 def ic_tab_turret(w, h, f, s): return P(f'M{w*.18} {h*.9} L{w*.26} {h*.6} L{w*.74} {h*.6} L{w*.82} {h*.9} Z', '#c9c1b3', s) + C(w * .5, h * .5, w * .22, '#d9c19a', s) + A.rr(w * .44, h * .08, w * .12, h * .36, 4, '#a9b1bb', s)
 
 
+
+# ------------------------------------------------------------------ 2차 수정안 (11-17): 장비 그림 퀄업 + 모든 아이콘 입체감
+# 장비 6부위 = 명암 그라데이션 · 반짝임 · 빛나는 부분 (A.G · A.blur) — 아이콘 함수 모양 그대로 (w, h, fill, stroke)
+def gx_weapon(w, h, f, s):
+    G = A.G
+    return (A.blur(C(w * .9, h * .4, w * .09, '#ffe28a', 0), 4, .9)
+            + A.rr(w * .08, h * .36, w * .62, h * .2, 8, G('#e8edf2', 'v', .78, .5), s)
+            + A.rr(w * .62, h * .3, w * .3, h * .14, 6, G('#ffd75e', 'v', .8, .5), s * .9)
+            + A.rr(w * .2, h * .24, w * .26, h * .1, 4, G('#a9b1bb', 'v'), s * .8)
+            + P(f'M{w*.24} {h*.56} L{w*.44} {h*.56} L{w*.38} {h*.88} Q{w*.3} {h*.92} {w*.2} {h*.86} Z', G('#8a929c', 'v'), s)
+            + A.rr(w * .44, h * .43, w * .2, h * .06, 3, '#f0a06a', 0)
+            + C(w * .9, h * .37, w * .045, '#fffbe0', 0)
+            + F(f'M{w*.14} {h*.39} L{w*.58} {h*.39} L{w*.58} {h*.42} L{w*.14} {h*.42} Z', '#ffffff', .75))
+def gx_helmet(w, h, f, s):
+    G = A.G
+    return (L(f'M{w*.66} {h*.2} L{w*.78} {h*.04}', s * .9) + A.blur(C(w * .78, h * .05, w * .05, '#7ff0ff', 0), 3, 1) + C(w * .78, h * .05, w * .035, '#e0ffff', 0)
+            + C(w * .5, h * .54, w * .42, G('#f6f7f8', 'r', .82, .3), s)
+            + P(f'M{w*.2} {h*.5} Q{w*.5} {h*.26} {w*.8} {h*.5} Q{w*.8} {h*.76} {w*.5} {h*.78} Q{w*.2} {h*.76} {w*.2} {h*.5} Z', G('#5fb7ea', 'v', .7, .45), s * .8)
+            + F(f'M{w*.28} {h*.5} Q{w*.36} {h*.36} {w*.52} {h*.36} Q{w*.38} {h*.42} {w*.34} {h*.56} Z', '#ffffff', .85)
+            + A.rr(w * .12, h * .82, w * .76, h * .1, 5, G('#f0a06a', 'v'), s * .7))
+def gx_suit(w, h, f, s):
+    G = A.G
+    return (P(f'M{w*.3} {h*.14} L{w*.7} {h*.14} L{w*.92} {h*.36} L{w*.8} {h*.48} L{w*.76} {h*.92} L{w*.24} {h*.92} L{w*.2} {h*.48} L{w*.08} {h*.36} Z', G('#f6f7f8', 'v', .8, .3), s)
+            + E(w * .5, h * .16, w * .2, h * .07, G('#cfd8de', 'v'), s * .8)
+            + A.rr(w * .34, h * .36, w * .32, h * .22, 6, G('#9aa3ad', 'v'), s * .8)
+            + A.blur(C(w * .42, h * .47, w * .05, '#7ff0ff', 0), 2.5, 1) + C(w * .42, h * .47, w * .035, '#c8ffff', 0)
+            + A.blur(C(w * .58, h * .47, w * .05, '#ffb36b', 0), 2.5, 1) + C(w * .58, h * .47, w * .035, '#ffe0b8', 0)
+            + A.rr(w * .22, h * .64, w * .56, h * .1, 4, G('#f0a06a', 'v'), s * .7)
+            + F(f'M{w*.28} {h*.2} L{w*.36} {h*.2} L{w*.3} {h*.6} L{w*.24} {h*.6} Z', '#ffffff', .6))
+def gx_shield(w, h, f, s):
+    G = A.G
+    sh = f'M{w*.5} {h*.06} L{w*.9} {h*.2} Q{w*.92} {h*.66} {w*.5} {h*.94} Q{w*.08} {h*.66} {w*.1} {h*.2} Z'
+    inn = f'M{w*.5} {h*.18} L{w*.78} {h*.28} Q{w*.78} {h*.62} {w*.5} {h*.82} Q{w*.22} {h*.62} {w*.22} {h*.28} Z'
+    return (P(sh, G('#a9b1bb', 'v', .75, .4), s) + A.blur(P(inn, '#7fd0ff', 0), 5, .8) + P(inn, G('#9fdcff', 'v', .7, .55), s * .7)
+            + P(f'M{w*.5} {h*.32} L{w*.56} {h*.46} L{w*.7} {h*.47} L{w*.59} {h*.56} L{w*.63} {h*.7} L{w*.5} {h*.62} L{w*.37} {h*.7} L{w*.41} {h*.56} L{w*.3} {h*.47} L{w*.44} {h*.46} Z', '#ffffff', s * .5)
+            + F(f'M{w*.18} {h*.24} L{w*.42} {h*.14} L{w*.3} {h*.4} Z', '#ffffff', .55))
+def gx_core(w, h, f, s):
+    G = A.G
+    hexd = ' '.join(('M' if i == 0 else 'L') + f'{w*.5 + w*.44*math.cos(math.radians(-90 + i*60)):.1f} {h*.5 + h*.44*math.sin(math.radians(-90 + i*60)):.1f}' for i in range(6)) + ' Z'
+    bolts = ''.join(C(w * .5 + w * .34 * math.cos(math.radians(-90 + i * 60)), h * .5 + h * .34 * math.sin(math.radians(-90 + i * 60)), w * .035, '#6b737d', 0) for i in range(6))
+    return (P(hexd, G('#a9b1bb', 'v', .72, .4), s) + bolts
+            + A.blur(C(w * .5, h * .5, w * .26, '#ffd34d', 0), 6, .9) + C(w * .5, h * .5, w * .2, G('#ffe58a', 'r', .85, .7), s * .8)
+            + C(w * .5, h * .5, w * .08, '#fffbe0', 0) + C(w * .43, h * .43, w * .045, '#ffffff', 0))
+def gx_boots(w, h, f, s):
+    G = A.G
+    return (A.blur(E(w * .3, h * .95, w * .14, h * .05, '#7ff0ff', 0), 3, .9)
+            + P(f'M{w*.3} {h*.08} L{w*.6} {h*.08} L{w*.6} {h*.54} L{w*.88} {h*.64} Q{w*.94} {h*.84} {w*.8} {h*.86} L{w*.24} {h*.86} Q{w*.18} {h*.86} {w*.2} {h*.68} Z', G('#f6f7f8', 'v', .8, .3), s)
+            + A.rr(w * .18, h * .78, w * .74, h * .12, 5, G('#f0a06a', 'v'), s * .7)
+            + A.rr(w * .28, h * .26, w * .34, h * .08, 3, G('#9aa3ad', 'v'), s * .6)
+            + C(w * .34, h * .46, w * .04, '#7ff0ff', 0)
+            + F(f'M{w*.34} {h*.12} L{w*.4} {h*.12} L{w*.38} {h*.5} L{w*.33} {h*.5} Z', '#ffffff', .6))
+
+
+def pop3d(im):
+    """모든 아이콘 입체감 (2차 수정안 "아이콘을 조금 더 퀄리티 있게 — 입체적으로"):
+    선(진갈색)이 아닌 색 부분에 위→아래 명암 · 왼쪽 위 반짝임 · 아래로 그림자"""
+    from PIL import ImageFilter, ImageDraw
+    a = np.asarray(im.convert('RGBA')).astype(np.float64)
+    al = a[..., 3] / 255
+    ys, xs = np.where(al > 0.1)
+    if len(ys) == 0:
+        return im
+    y0, y1, x0, x1 = ys.min(), ys.max(), xs.min(), xs.max()
+    hgt = max(1, y1 - y0)
+    lum = (a[..., 0] * .3 + a[..., 1] * .59 + a[..., 2] * .11) / 255
+    colored = (lum > 0.32).astype(np.float64) * al
+    yy = np.arange(a.shape[0])[:, None]
+    k = np.clip(1.16 - 0.42 * (yy - y0) / hgt, 0.74, 1.16)
+    a[..., :3] = a[..., :3] * (1 - colored[..., None]) + np.clip(a[..., :3] * k[..., None], 0, 255) * colored[..., None]
+    # 반짝임 (왼쪽 위 타원, 색 부분 안에서만)
+    hl = Image.new('L', im.size, 0); d = ImageDraw.Draw(hl)
+    cx, cy = x0 + (x1 - x0) * .34, y0 + hgt * .26
+    d.ellipse([cx - (x1 - x0) * .26, cy - hgt * .14, cx + (x1 - x0) * .26, cy + hgt * .14], fill=255)
+    hl = np.asarray(hl.filter(ImageFilter.GaussianBlur(4))).astype(np.float64) / 255 * colored * 0.45
+    a[..., :3] = a[..., :3] * (1 - hl[..., None]) + 255 * hl[..., None]
+    body = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), 'RGBA')
+    # 그림자 (진갈색 · 아래로 4px)
+    sh = Image.new('RGBA', im.size, (0, 0, 0, 0))
+    sa = Image.fromarray((al * 255 * 0.35).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.5))
+    shadow = Image.new('RGBA', im.size, (59, 40, 28, 255)); shadow.putalpha(sa)
+    sh.alpha_composite(shadow, (0, 4))
+    sh.alpha_composite(body)
+    return sh
+
+
 EXTRA = dict(cards=ic_cards, coin=ic_coin, shard=ic_shard, star_on=ic_dia(GOLD), star_off=ic_dia(TRACK), ad=ic_ad, plus=ic_plus,
              home=ic_home, retry=ic_retry, base=ic_base, patrol=ic_patrol,
-             g_weapon=ic_g_weapon, g_helmet=ic_g_helmet, g_suit=ic_g_suit, g_shield=ic_g_shield, g_core=ic_g_core, g_boots=ic_g_boots,
+             g_weapon=gx_weapon, g_helmet=gx_helmet, g_suit=gx_suit, g_shield=gx_shield, g_core=gx_core, g_boots=gx_boots,
              gem_on=ic_gem_on, gem_off=ic_gem_off, brush=ic_brush, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret)
 ICONS.update(EXTRA)
 ICON_LIST = {'pause': CREAM, 'play': CREAM, 'cards': CREAM, 'heart': RED, 'coin': GOLD, 'shard': SKY, 'star_on': GOLD, 'star_off': TRACK,
@@ -382,9 +469,13 @@ ICON_LIST = {'pause': CREAM, 'play': CREAM, 'cards': CREAM, 'heart': RED, 'coin'
              'gem_on': GOLD, 'gem_off': TRACK, 'tab_turret': CREAM, 'diamond': '#8fd6ff', 'shop': CREAM, 'brush': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
 
 
+FLAT_ICONS = {'star_off', 'gem_off', 'plus', 'x', 'check'}   # 입체감을 안 넣는 것 (빈 칸 · 기호)
+
+
 def export_icon():
     for n, f in ICON_LIST.items():
-        out('Icon', n, Rr(f'<g transform="translate(8,8)">{ICONS[n](96, 96, f, 5)}</g>', 112, 112, A.WOB['icon']))
+        im = Rr(f'<g transform="translate(8,8)">{ICONS[n](96, 96, f, 5)}</g>', 112, 112, A.WOB['icon'])
+        out('Icon', n, im if n in FLAT_ICONS else pop3d(im))
     print('icon', len(ICON_LIST))
 
 

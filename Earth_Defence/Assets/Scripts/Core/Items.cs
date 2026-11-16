@@ -19,6 +19,15 @@ namespace EarthDef
         public double V2 => (Row.base2 + Row.perLv2 * (lv - 1)) * G.mul;
     }
 
+    /// <summary>받은 것 1개 (상자 · 합성 결과를 아이콘으로 하나씩 보여 줄 때 — 2차 수정안)</summary>
+    public class GotItem
+    {
+        public string name, icon; public Color bg = Color.white; public int grade;
+        public static GotItem Of(GearItem g) => new() { name = g.Row.name, icon = g.Row.icon, bg = g.G.color, grade = g.grade };
+        public static GotItem Of(ChipItem c) => new() { name = c.Row.name, icon = "chip", bg = Tables.Grade(c.q).color, grade = c.q };
+        public static GotItem Res(string icon, string text) => new() { name = text, icon = icon };
+    }
+
     /// <summary>칩 1개 (2차). at = 끼운 곳 (부위 번호 x 6 + 칸, -1 = 가방)</summary>
     [Serializable]
     public class ChipItem
@@ -121,6 +130,44 @@ namespace EarthDef
             foreach (var x in set) S.chips.Remove(x);
             var n = NewChip(c.q + 1, c.id); S.Save(); Audio.Play(Audio.Sfx.Merge); return n;
         }
+        /// <summary>일괄 합성 (2차 수정안): 끼우지 않은 장비를 같은 부위 · 등급 3개씩 되는 데까지 → 새로 생긴 장비 (중간 단계는 빼고 마지막 것만)</summary>
+        public static List<GearItem> MergeAllGear()
+        {
+            var made = new List<GearItem>();
+            for (int guard = 0; guard < 500; guard++)
+            {
+                var g = S.gear.Find(x => !x.on && MergeSet(x) != null);
+                if (g == null) break;
+                var n = Merge(g); if (n == null) break;
+                made.Add(n);
+            }
+            made.RemoveAll(x => !S.gear.Contains(x));      // 다시 합성 재료가 된 것은 빼고
+            return made;
+        }
+        public static int GearMergeCount() { int n = 0; foreach (var grp in GroupCount(true)) n += grp; return n; }
+        public static int ChipMergeCount() { int n = 0; foreach (var grp in GroupCount(false)) n += grp; return n; }
+        /// <summary>지금 바로 합성할 수 있는 횟수 (한 단계만 셈)</summary>
+        static IEnumerable<int> GroupCount(bool gear)
+        {
+            var d = new Dictionary<string, int>();
+            if (gear) foreach (var g in S.gear) { if (g.on || g.grade >= Tables.GradeMax) continue; var k = g.part + g.grade; d[k] = (d.TryGetValue(k, out var v) ? v : 0) + 1; }
+            else foreach (var c in S.chips) { if (c.at >= 0 || c.q >= Tables.GradeMax) continue; var k = c.id + c.q; d[k] = (d.TryGetValue(k, out var v) ? v : 0) + 1; }
+            foreach (var v in d.Values) yield return v / MergeN;
+        }
+        /// <summary>칩 일괄 합성 → 새로 생긴 칩 (마지막 것만)</summary>
+        public static List<ChipItem> MergeAllChipList()
+        {
+            var made = new List<ChipItem>();
+            for (int guard = 0; guard < 500; guard++)
+            {
+                var c = S.chips.Find(x => x.at < 0 && ChipMergeSet(x) != null);
+                if (c == null) break;
+                var n = MergeChip(c); if (n == null) break; made.Add(n);
+            }
+            made.RemoveAll(x => !S.chips.Contains(x));
+            return made;
+        }
+
         /// <summary>가방의 칩을 되는 데까지 모두 합성 → 합성 횟수</summary>
         public static int MergeAllChips()
         {

@@ -16,6 +16,7 @@ namespace EarthDef
         Text stageT, timeT, lvT, hpT, speedT, banner, shieldT;
         Image expFill, chargeFill;
         RectTransform hpBox, chargeBox, bannerBox;
+        CanvasGroup bannerGroup;
         float bannerT;
         public Popup pick;
         RectTransform root;
@@ -50,12 +51,16 @@ namespace EarthDef
             chargeBox = chargeFill.transform.parent.GetComponent<RectTransform>();
             chargeBox.anchorMin = chargeBox.anchorMax = new Vector2(0.5f, 0.5f); chargeBox.sizeDelta = new Vector2(150, 26);
             // 가운데 알림
-            bannerBox = UIKit.Panel(root, "night", "Banner").rectTransform; bannerBox.Place(0.5f, 0.62f, Vector2.zero, new Vector2(620, 120));
-            banner = UIKit.Label(bannerBox, "", 52, Art.Gold); banner.rectTransform.Fill(0, 10, 0, 0);
+            // 2차 수정안: 가운데 네모 판 대신 위에서 내려오는 토스트 (경고 아이콘 + 글자, 2초 뒤 사라짐)
+            var bp = UIKit.Panel(root, "pill_dark", "Banner"); bannerBox = bp.rectTransform; bp.color = new Color(0.55f, 0.24f, 0.2f, 0.92f);
+            bannerBox.Place(0.5f, 1, new Vector2(0, -250), new Vector2(560, 92), new Vector2(0.5f, 0.5f));
+            var wi = UIKit.Img(bannerBox, Art.Icon("skull"), "Warn"); wi.raycastTarget = false; wi.rectTransform.Place(0, 0.5f, new Vector2(24, 0), new Vector2(64, 64), new Vector2(0, 0.5f));
+            banner = UIKit.Label(bannerBox, "", 40, Art.Gold); banner.rectTransform.Fill(80, 6, 20, 0);
+            bannerGroup = bannerBox.gameObject.AddComponent<CanvasGroup>();
             bannerBox.gameObject.SetActive(false);
 
             b.Changed += OnChanged;
-            b.Banner += s => { banner.text = s; bannerBox.gameObject.SetActive(true); bannerT = 2f; };
+            b.Banner += s => { banner.text = s; bannerBox.gameObject.SetActive(true); bannerT = 2.2f; };
             Refresh();
             // 2차 도움말: 처음 전투 = 끌어서 이동 (손가락이 좌우로)
             Tutorial.Show("t_move", L.T("tut_move"), null, 5f, true, 0.42f);
@@ -83,7 +88,15 @@ namespace EarthDef
         {
             if (b == null) return;
             Refresh();
-            if (bannerT > 0) { bannerT -= Time.unscaledDeltaTime; if (bannerT <= 0) bannerBox.gameObject.SetActive(false); }
+            if (bannerT > 0)
+            {
+                bannerT -= Time.unscaledDeltaTime;
+                float age = 2.2f - bannerT;
+                float k = Mathf.Clamp01(age / 0.25f); k = 1 - (1 - k) * (1 - k);
+                bannerBox.anchoredPosition = new Vector2(0, Mathf.Lerp(-150, -250, k));
+                bannerGroup.alpha = Mathf.Clamp01(age / 0.15f) * Mathf.Clamp01(bannerT / 0.4f);
+                if (bannerT <= 0) bannerBox.gameObject.SetActive(false);
+            }
         }
 
         void Refresh()
@@ -249,6 +262,7 @@ namespace EarthDef
             foreach (var t in b.run.turrets)
             {
                 var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretUI(t.row.art), 0.86f, "T"); tile.rectTransform.TL(40, y, 124, 124);
+                var tt = t; UIKit.Clickable(tile, () => CardList(tt));
                 var nm = UIKit.Label(p.win, t.row.name, 38, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(184, y, 380, 56);
                 Stars(p.win, 920 - StarsW(32), y + 34, t.tier, t.stars, 32);
                 var dv = UIKit.Plain(p.win, new Color(0.23f, 0.16f, 0.11f, 0.2f), "Divider"); dv.rectTransform.TL(40, y + 138, 880, 3);
@@ -258,6 +272,31 @@ namespace EarthDef
                 d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(184, y + 62, 736, 70);
                 y += 148;
             }
+        }
+
+        /// <summary>고른 카드 목록 (2차 수정안 "고른 카드에서 이미지를 누르면 먹은 카드를 리스트로")</summary>
+        public void CardList(TurretInst t)
+        {
+            var list = new List<(CardRow c, int n)>();
+            foreach (var kv in t.picks) if (Tables.CardById.TryGetValue(kv.Key, out var c)) list.Add((c, kv.Value));
+            if (t.slot > 0 && Tables.CardById.TryGetValue("new_" + t.row.id, out var nc)) list.Insert(0, (nc, 1));
+            var p = Popup.Make(t.row.name, 940, Mathf.Clamp(300 + list.Count * 120, 520, 1500));
+            p.Text(L.F("picked_cards", list.Count), 116, 30, Art.Soft);
+            var area = UIKit.Rect(p.win, "Area"); area.Fill(24, 130, 24, 170);
+            var c0 = UIKit.Scroll(area, "Scroll"); c0.parent.GetComponent<RectTransform>().Fill();
+            float y = 4;
+            foreach (var (c, n) in list)
+            {
+                var tag = KindTag[c.kind];
+                var r = UIKit.Panel(c0, "card_white", "C_" + c.id); r.rectTransform.TL(0, y, 892, 108);
+                var tg = UIKit.Panel(r.transform, "pill", "Kind"); tg.color = tag.col; tg.rectTransform.TL(16, 30, 118, 48);
+                UIKit.Label(tg.transform, L.T(tag.label), 24).rectTransform.Fill(0, 3, 0, 0);
+                UIKit.Label(r.transform, c.name + (n > 1 ? "  " + L.F("kind_times", n) : ""), 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(150, 8, 720, 48);
+                var d = UIKit.Label(r.transform, c.desc, 24, Art.Soft, TextAnchor.MiddleLeft, false); d.rectTransform.TL(150, 54, 720, 44);
+                y += 116;
+            }
+            UIKit.SetScrollH(c0, y + 8);
+            p.Btn("btn_green", L.T("ok"), 0, 40, 300, p.Close, 100);
         }
 
         // ---------- 결과 ----------

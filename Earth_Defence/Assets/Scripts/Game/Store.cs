@@ -20,33 +20,33 @@ namespace EarthDef
         public static bool CanBuy(ShopItemRow it) => Left(it) > 0 && S.dia >= it.costDia;
 
         /// <summary>상점 물건 사기 → 받은 것 글자 목록 (못 사면 null)</summary>
-        public static List<string> Buy(ShopItemRow it, System.Random rnd = null)
+        public static List<GotItem> Buy(ShopItemRow it, System.Random rnd = null)
         {
             if (!CanBuy(it)) return null;
             if (it.kind == "ad_box" && !Ads.Draft) { }   // 광고는 부른 쪽에서 (Ads.Show) 성공한 뒤에 Buy
             S.dia -= it.costDia;
             if (it.perDay > 0) S.DailyAdd("shop:" + it.id);
             rnd ??= new System.Random(Environment.TickCount);
-            var got = new List<string>();
+            var got = new List<GotItem>();
             int n = Mathf.Max(1, (int)it.value);
             switch (it.kind)
             {
-                case "gear_box": for (int i = 0; i < n; i++) { var g = Gear.NewGear(BoxGrade(rnd), null, rnd); got.Add($"{g.Row.name} ({g.G.name})"); } break;
-                case "chip_box": for (int i = 0; i < n; i++) { var c = Gear.NewChip(BoxGrade(rnd), null, rnd); got.Add($"{c.Row.name} ({Tables.Grade(c.q).name})"); } break;
+                case "gear_box": for (int i = 0; i < n; i++) { var g = Gear.NewGear(BoxGrade(rnd), null, rnd); got.Add(GotItem.Of(g)); } break;
+                case "chip_box": for (int i = 0; i < n; i++) { var c = Gear.NewChip(BoxGrade(rnd), null, rnd); got.Add(GotItem.Of(c)); } break;
                 case "free_box":
                 case "ad_box":
                     for (int i = 0; i < n; i++)
                     {
                         int g = Gear.DropGrade(Mathf.Max(1, S.best), false, rnd);
-                        if (rnd.NextDouble() < 0.5) { var x = Gear.NewGear(g, null, rnd); got.Add($"{x.Row.name} ({x.G.name})"); }
-                        else { var c = Gear.NewChip(g, null, rnd); got.Add($"{c.Row.name} ({Tables.Grade(c.q).name})"); }
+                        if (rnd.NextDouble() < 0.5) { var x = Gear.NewGear(g, null, rnd); got.Add(GotItem.Of(x)); }
+                        else { var c = Gear.NewChip(g, null, rnd); got.Add(GotItem.Of(c)); }
                     }
                     break;
-                case "stamina": Meta.AddStamina((int)it.value); got.Add($"{L.T("r_stamina")} +{it.value:0}"); break;
+                case "stamina": Meta.AddStamina((int)it.value); got.Add(GotItem.Res("energy", $"{L.T("r_stamina")} +{it.value:0}")); break;
                 case "gold":
                 {
                     double g = Math.Floor(it.value * (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * Math.Max(0, S.best - 1)));
-                    S.gold += g; got.Add($"{L.T("r_gold")} +{Num.F(g)}"); break;
+                    S.gold += g; got.Add(GotItem.Res("coin", $"{L.T("r_gold")} +{Num.F(g)}")); break;
                 }
             }
             Audio.Play(Audio.Sfx.Merge);

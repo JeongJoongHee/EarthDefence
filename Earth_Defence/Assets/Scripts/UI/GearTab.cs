@@ -15,6 +15,7 @@ namespace EarthDef
         Lobby lobby;
         RectTransform root, grid;
         Text statT, partsT;
+        readonly Text[] statV = new Text[6];
         Button gearB, chipB, mergeB;
         readonly List<(Image tile, Image icon, Text lv, Image[] dots)> slots = new();
         public static bool showChips;
@@ -45,14 +46,22 @@ namespace EarthDef
             var me = UIKit.Img(top.transform, Art.TurretUI("guardian"), "Guardian"); me.raycastTarget = false;
             me.rectTransform.Place(0.5f, 1, new Vector2(0, -20), new Vector2(330, 330), new Vector2(0.5f, 1));
             for (int i = 0; i < 3; i++) { Slot(top.transform, Left[i], 34, 22 + i * 192); Slot(top.transform, Right[i], 856, 22 + i * 192); }
-            statT = UIKit.Label(top.transform, "", 28, Art.Ink, TextAnchor.UpperCenter, false); statT.rectTransform.TL(210, 360, 620, 230);
+            // 2차 수정안: 능력치를 네모 칸으로 (3 x 2 + 칩 수)
+            string[] keys = { "st_atk", "st_hp", "st_reduce", "st_crit", "st_crit_dmg", "st_cd" };
+            for (int i = 0; i < keys.Length; i++)
+            {
+                var box = UIKit.Panel(top.transform, "card_white", "Stat" + i); box.rectTransform.TL(206 + i % 3 * 210, 352 + i / 3 * 118, 200, 108);
+                UIKit.Label(box.transform, L.T(keys[i]).TrimEnd(' ', '-'), 22, Art.Soft, TextAnchor.UpperCenter, false).rectTransform.Fill(4, 50, 4, 12);
+                statV[i] = UIKit.Label(box.transform, "", 34, Art.Ink, TextAnchor.LowerCenter, false); statV[i].rectTransform.Fill(4, 18, 4, 40);
+            }
+            statT = UIKit.Label(top.transform, "", 22, Art.Soft, TextAnchor.MiddleCenter, false); statT.rectTransform.TL(206, 588, 620, 20);
 
             gearB = UIKit.Btn(root, "btn_orange", "", 34, () => { showChips = false; Refresh(); }, "GearList"); ((RectTransform)gearB.transform).TL(26, 626, 300, 96);
             chipB = UIKit.Btn(root, "btn_cream", "", 34, () => { showChips = true; Refresh(); }, "ChipList"); ((RectTransform)chipB.transform).TL(336, 626, 300, 96);
             var pp = UIKit.Panel(root, "pill", "Parts"); pp.rectTransform.TL(648, 632, 222, 84);
             var pi = UIKit.Img(pp.transform, Art.Icon("parts"), "Icon"); pi.rectTransform.Place(0, 0.5f, new Vector2(8, 0), new Vector2(70, 70), new Vector2(0, 0.5f));
             partsT = UIKit.Label(pp.transform, "", 34, Art.Ink, TextAnchor.MiddleLeft, false); partsT.rectTransform.Fill(84, 6, 10, 0);
-            mergeB = UIKit.Btn(root, "btn_green", L.T("merge_all"), 28, MergeAll, "MergeAll"); ((RectTransform)mergeB.transform).TL(880, 626, 176, 96);
+            mergeB = UIKit.Btn(root, "btn_green", L.T("merge_title"), 28, MergeAll, "MergeAll"); ((RectTransform)mergeB.transform).TL(880, 626, 176, 96);
 
             var inv = UIKit.Panel(root, "card_white", "Bag");
             inv.rectTransform.anchorMin = Vector2.zero; inv.rectTransform.anchorMax = Vector2.one;
@@ -95,17 +104,16 @@ namespace EarthDef
                 }
             }
             var lo = Loadout.Build(S);
-            statT.text = $"{L.T("st_atk")} +{Num.F(lo.AtkTotal)}   {L.T("st_hp")} +{Num.F(lo.hp)}\n"
-                       + $"{L.T("st_reduce")}{lo.reduce:0.#}   {L.T("st_crit")} +{lo.TS("*", "crit"):0.#}%\n"
-                       + $"{L.T("st_crit_dmg")} +{lo.critDmg:0.#}%   {L.T("st_cd")} +{lo.TS("*", "cd"):0.#}%\n"
-                       + $"{L.T("chip")} {lo.ChipCount}";
+            statV[0].text = "+" + Num.F(lo.AtkTotal); statV[1].text = "+" + Num.F(lo.hp); statV[2].text = "-" + lo.reduce.ToString("0.#");
+            statV[3].text = $"+{lo.TS("*", "crit"):0.#}%"; statV[4].text = $"+{lo.critDmg:0.#}%"; statV[5].text = $"+{lo.TS("*", "cd"):0.#}%";
+            statT.text = $"{L.T("chip")} {lo.ChipCount}";
             partsT.text = Num.F(S.parts);
             int ng = S.gear.FindAll(x => !x.on).Count, nc = S.chips.FindAll(x => x.at < 0).Count;
             UIKit.LabelOf(gearB).text = L.F("gear_list", ng);
             UIKit.LabelOf(chipB).text = L.F("chip_list", nc);
             UIKit.SetKind(gearB, showChips ? "btn_cream" : "btn_orange");
             UIKit.SetKind(chipB, showChips ? "btn_orange" : "btn_cream");
-            mergeB.gameObject.SetActive(showChips);
+            UIKit.SetKind(mergeB, Gear.GearMergeCount() + Gear.ChipMergeCount() > 0 ? "btn_green" : "btn_gray");
             // 가방
             for (int c = grid.childCount - 1; c >= 0; c--) Destroy(grid.GetChild(c).gameObject);
             int n = 0; const float cell = 196f;
@@ -146,11 +154,30 @@ namespace EarthDef
 
         static string Short(string s) => s.Length > 7 ? s.Substring(0, 7) : s;
 
-        void MergeAll()
+        /// <summary>일괄 합성 창 (2차 수정안 "장비창에 일괄합성창 추가"): 장비 · 칩 각각 몇 번 되는지 → [합성] → 새로 생긴 것을 아이콘으로</summary>
+        public void MergeAll()
         {
-            int n = Gear.MergeAllChips();
-            Toast.Show(n > 0 ? $"{L.T("merge")} x{n}" : "-");
-            Refresh(); lobby.Refresh();
+            var p = Popup.Make(L.T("merge_title"), 860, 640, () => { Refresh(); lobby.Refresh(); });
+            void Row(float y, string icon, string title, int n, System.Action act)
+            {
+                var r = UIKit.Panel(p.win, "card", "Row"); r.rectTransform.TL(40, y, 780, 170);
+                var ic = UIKit.Img(r.transform, Art.Icon(icon), "Icon"); ic.rectTransform.TL(24, 30, 110, 110);
+                UIKit.Label(r.transform, title, 36, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(150, 22, 360, 60);
+                UIKit.Label(r.transform, n > 0 ? L.F("merge_can", n) : L.T("merge_none"), 26, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(150, 86, 360, 50);
+                var b = UIKit.Btn(r.transform, n > 0 ? "btn_purple" : "btn_gray", L.T("merge"), 36, () => { if (n > 0) act(); }, "Go"); ((RectTransform)b.transform).TL(540, 40, 210, 96);
+            }
+            Row(130, "g_suit", L.T("merge_gear"), Gear.GearMergeCount(), () =>
+            {
+                var made = Gear.MergeAllGear(); p.Close(false); Refresh(); lobby.Refresh();
+                var got = new List<GotItem>(); foreach (var g in made) got.Add(GotItem.Of(g));
+                if (got.Count > 0) ShopTab.GotPopup(got, L.T("merge_title"));
+            });
+            Row(320, "chip", L.T("merge_chip"), Gear.ChipMergeCount(), () =>
+            {
+                var made = Gear.MergeAllChipList(); p.Close(false); Refresh(); lobby.Refresh();
+                var got = new List<GotItem>(); foreach (var c in made) got.Add(GotItem.Of(c));
+                if (got.Count > 0) ShopTab.GotPopup(got, L.T("merge_title"));
+            });
         }
 
         // ---------- 부위 창 ----------

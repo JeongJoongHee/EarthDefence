@@ -13,6 +13,8 @@ namespace EarthDef
         public double hp, maxHp, atk;
         public bool dead;
         public float radius;
+        public float size;            // 그림 크기 (표 Size x 보스 배율)
+        float barK = 1f;
         public Vector2 Pos => transform.position;
 
         SpriteRenderer sr, white;
@@ -33,13 +35,15 @@ namespace EarthDef
         {
             row = r; this.hp = maxHp = hp; this.atk = atk;
             transform.position = p;
-            transform.localScale = Vector3.one * r.size;
+            // 2차 수정안: 중간 보스 x3 · 보스 x3.5 (Config Elite_Size_Mul · Boss_Size_Mul)
+            size = r.size * (r.IsBoss ? Tables.Cf("Boss_Size_Mul", 3.5f) : r.IsElite ? Tables.Cf("Elite_Size_Mul", 3f) : 1f);
+            transform.localScale = Vector3.one * size;
             sr = gameObject.AddComponent<SpriteRenderer>();
             sr.sprite = Art.Enemy(r); sr.sortingOrder = r.IsBoss ? 12 : r.IsElite ? 11 : 10;
             var w = new GameObject("White"); w.transform.SetParent(transform, false);
             white = w.AddComponent<SpriteRenderer>(); white.sprite = Art.Enemy(r, true); white.sortingOrder = sr.sortingOrder; white.color = new Color(1, 1, 1, 0);
             // 맞는 크기: 그림 242px(PPU200) = 1.21칸 → 반지름 약 0.42 x Size (보스 그림은 2배)
-            radius = (r.IsBoss && r.art == "planet" ? 0.95f : 0.42f) * r.size;
+            radius = (r.IsBoss && r.art == "planet" ? 0.95f : 0.42f) * size;
             x0 = p.x; phase = Random.Range(0f, 6.28f);
             summonT = Tables.Cf("Boss_Summon_Gap", 4f);
             if (r.IsBoss || r.IsElite)
@@ -57,7 +61,8 @@ namespace EarthDef
             b.sprite = s; b.drawMode = SpriteDrawMode.Sliced; b.sortingOrder = order;
             float top = (row.art == "planet" ? 1.25f : 0.75f);
             go.transform.localPosition = new Vector3(0, top, 0);
-            go.transform.localScale = Vector3.one / row.size;
+            barK = Mathf.Max(1f, size * 0.5f);                 // 큰 보스는 체력 줄도 크게
+            go.transform.localScale = Vector3.one / size * barK;
             b.size = new Vector2(1.6f, 0.3f);
             return b;
         }
@@ -112,7 +117,7 @@ namespace EarthDef
             transform.position = p;
             if (p.y - radius <= World.ShieldY)
             {
-                if (row.crash) { Battle.I?.HurtBase(atk * Tables.C("Crash_Mul", 3), Pos, this); Fx.Burst(Pos, 0.6f * row.size); dead = true; return; }
+                if (row.crash) { Battle.I?.HurtBase(atk * Tables.C("Crash_Mul", 3), Pos, this); Fx.Burst(Pos, 0.6f * size); dead = true; return; }
                 atShield = true; hitT = 0.3f;
             }
         }
@@ -122,7 +127,7 @@ namespace EarthDef
         void LateUpdate()
         {
             if (wob > 0) { wob -= Time.deltaTime; transform.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(wob * 60) * 8 * wob / 0.15f); }
-            if (barFill) { float k = (float)(hp / maxHp); barFill.size = new Vector2(1.6f * Mathf.Clamp01(k), 0.3f); barFill.transform.localPosition = barBg.transform.localPosition + new Vector3(-0.8f * (1 - k) / row.size, 0, 0); }
+            if (barFill) { float k = (float)(hp / maxHp); barFill.size = new Vector2(1.6f * Mathf.Clamp01(k), 0.3f); barFill.transform.localPosition = barBg.transform.localPosition + new Vector3(-0.8f * (1 - k) * barK / size, 0, 0); }
         }
 
         /// <summary>피해 → 죽으면 true</summary>

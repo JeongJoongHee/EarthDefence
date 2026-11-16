@@ -125,6 +125,53 @@ namespace EarthDef.EditorTools
             int n1 = Store.Purchase(p1), n2 = Store.Purchase(p1);
             Check(n1 == p1.dia * 2 && n2 == p1.dia && S.dia == d0 + n1 + n2, $"[초안] 결제: 첫 구매 2배 {n1} → 다음 {n2}");
 
+            // ---- 2차 수정안 (11-17)
+            Check(L.T("equip") == "착용" && L.T("equipped") == "착용 중" && L.T("frame_change") == "변경", "글자: 착용 · 착용 중 · 변경");
+            Check(Tables.Grade(3).color.b > Tables.Grade(3).color.r + 0.3f && Tables.Grade(4).color.b > Tables.Grade(4).color.g + 0.2f, "등급 색: 희귀 파랑 · 영웅 보라");
+            {
+                var got = Store.Buy(Tables.ShopItems.Find(i => i.id == "i_chip10"));
+                Check(got != null && got.Count == 11 && got.TrueForAll(g => g.icon == "chip" && g.grade > 0), "상자 → 아이콘 11개 (등급)");
+                Game.ToLobby(); yield return null; Popup.CloseAll();
+                ShopTab.GotPopup(got); yield return Wait(2.2f);
+                Capture("40_box_icons");
+                Popup.CloseAll();
+                for (int i = 0; i < 3; i++) Gear.NewGear(2, "helmet"); for (int i = 0; i < 3; i++) Gear.NewChip(1, "ch_crit");
+                Check(Gear.GearMergeCount() >= 1 && Gear.ChipMergeCount() >= 1, $"일괄 합성: 장비 {Gear.GearMergeCount()} · 칩 {Gear.ChipMergeCount()}");
+                Game.Lobby.SetTab(2); yield return Wait(0.3f);
+                Capture("41_gear_stats");
+                Game.Lobby.gearTab.MergeAll(); yield return Wait(0.3f);
+                Capture("42_merge_popup");
+                Popup.CloseAll();
+                var mg = Gear.MergeAllGear(); var mc = Gear.MergeAllChipList();
+                Check(mg.Count >= 1 && mc.Count >= 1 && Gear.GearMergeCount() == 0, $"일괄 합성 → 새 장비 {mg.Count} · 칩 {mc.Count}");
+                Game.Lobby.SetTab(1); yield return null;
+                Game.Lobby.UpPopup(Tables.TurretById["rail"]); yield return Wait(0.3f);
+                Capture("43_up_popup");
+                int lv0 = S.TurretLv("rail"); S.shards[S.TIdx("rail")] += 999;
+                Check(Meta.UpgradeTurret("rail") && S.TurretLv("rail") == lv0 + 1, "강화 창에서 강화");
+                Popup.CloseAll();
+                Game.Lobby.SetTab(0); yield return Wait(0.3f);
+                Capture("44_lobby_small");
+                Check(World.I != null && GameObject.Find("MoonRabbit") != null, "달토끼");
+                bool rd0 = World.I.RabbitDown, changed = false; float w0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - w0 < 2f) { if (World.I.RabbitDown != rd0) changed = true; yield return null; }
+                Check(changed, "달토끼가 방아를 찧음 (그림이 바뀜)");
+                Game.StartStage(5, 11); yield return null;
+                var met = B.Spawn("fire", new Vector2(0, 5)); var el = B.Spawn("big", new Vector2(0, 6)); var bo = B.Spawn("queen", new Vector2(0, 7));
+                Check(System.Math.Abs(met.size - 1.06f) < 0.01f && System.Math.Abs(el.size - 1.35f * 3f) < 0.01f && System.Math.Abs(bo.size - 1.9f * 3.5f) < 0.01f,
+                      $"크기: 운석 {met.size} · 중간 보스 {el.size} · 보스 {bo.size}");
+                foreach (var id in new[] { "new_rail", "r_dmg", "r_dmg", "r_dmg", "r_bA" }) Force(id);
+                var ru = B.run.Get("rail").unit; var mpb2 = new MaterialPropertyBlock(); ru.GetComponent<SpriteRenderer>().GetPropertyBlock(mpb2);
+                Check(ru.Broken && ru.GetComponent<SpriteRenderer>().sharedMaterial == Art.HueMat && mpb2.GetFloat("_SetHue") >= 0, "돌파한 관통포 = 붉은색");
+                B.Tick(Battle.StepSec);
+                Game.BattleUI.CardList(B.run.Get("rail")); yield return Wait(0.3f);
+                Capture("45_card_list");
+                Popup.CloseAll();
+                B.time = Tables.Cf("Mid_Boss_Time") - 0.1f; FF(0.3f, 2); yield return Wait(0.4f);
+                Capture("46_elite_toast");
+                B.time = Tables.Cf("Boss_Time") - 0.1f; FF(1.5f, 2); yield return Wait(0.5f);
+                Capture("47_boss_big");
+            }
             Game.ToLobby(); yield return null; Popup.CloseAll();
             Game.Lobby.SetTab(5); yield return Wait(0.4f);
             Capture("30_shop");
@@ -208,9 +255,9 @@ namespace EarthDef.EditorTools
             Check(Game.StartMode("survival") && B.mode == "survival", "엘리트 군단 시작");
             B.immune = 1 << 30;
             int elites = 0;
-            for (int i = 0; i < 200 && B.st == Battle.St.Play; i++) { FF(1f); B.baseHp = B.baseMax; elites = System.Math.Max(elites, B.enemies.FindAll(x => !x.dead && x.row.IsElite).Count); }
+            for (int i = 0; i < 200 && B.st != Battle.St.End; i++) { FF(1f); B.baseHp = B.baseMax; elites = System.Math.Max(elites, B.enemies.FindAll(x => !x.dead && x.row.IsElite).Count); }
             Check(B.st == Battle.St.End && B.won && S.survWins == 1 && B.drops.Count == Tables.Ci("Survival_Drops") && B.rewardDia == Tables.C("Survival_Dia"),
-                  $"3분 버팀 → 승리 · 장비/칩 {B.drops.Count} · 다이아 {B.rewardDia} (중간 보스 동시 최대 {elites})");
+                  $"3분 버팀 → 승리 · 장비/칩 {B.drops.Count} · 다이아 {B.rewardDia} (중간 보스 동시 최대 {elites}) [st {B.st} won {B.won} t {B.time:0} hp {B.baseHp:0} imm {B.immune}]");
             yield return Wait(0.4f);
             Capture("36_survival_result");
             Game.StartMode("survival");

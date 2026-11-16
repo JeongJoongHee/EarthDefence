@@ -79,10 +79,12 @@ namespace EarthDef
     public class PopIn : MonoBehaviour
     {
         public float delay; float t;
+        public bool sound;    // 나타날 때 "뾱" (받은 것 하나씩)
         void Start() { transform.localScale = Vector3.zero; }
         void Update()
         {
             t += Time.unscaledDeltaTime;
+            if (sound && t >= delay) { sound = false; Audio.Play(Audio.Sfx.Coin, 0.7f); }
             float k = Mathf.Clamp01((t - delay) / 0.18f);
             float s = k < 1 ? Mathf.Sin(k * Mathf.PI * 0.75f) / Mathf.Sin(Mathf.PI * 0.75f) : 1;
             transform.localScale = Vector3.one * s;

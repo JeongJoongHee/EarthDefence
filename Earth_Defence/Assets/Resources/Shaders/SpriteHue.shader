@@ -9,6 +9,7 @@ Shader "EarthDef/SpriteHue"
         _Color ("Tint", Color) = (1,1,1,1)
         _Hue ("Hue (0~1)", Float) = 0
         _Sat ("Saturation x", Float) = 1
+        _SetHue ("Set hue (0~1, -1 = rotate)", Float) = -1
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
         [HideInInspector] _Flip ("Flip", Vector) = (1,1,1,1)
         [PerRendererData] _AlphaTex ("External Alpha", 2D) = "white" {}
@@ -31,7 +32,7 @@ Shader "EarthDef/SpriteHue"
             #pragma multi_compile_local _ PIXELSNAP_ON
             #pragma multi_compile _ ETC1_EXTERNAL_ALPHA
             #include "UnitySprites.cginc"
-            float _Hue, _Sat;
+            float _Hue, _Sat, _SetHue;
             float3 rgb2hsv(float3 c)
             {
                 float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -52,7 +53,9 @@ Shader "EarthDef/SpriteHue"
                 float3 g = LinearToGammaSpace(c.rgb / max(c.a, 0.001));
                 float3 h = rgb2hsv(g);
                 float k = smoothstep(0.12, 0.3, h.y) * smoothstep(0.18, 0.38, h.z);
-                float3 r = hsv2rgb(float3(frac(h.x + _Hue), saturate(h.y * _Sat), h.z));
+                // 2차 수정안: 돌파한 터렛 = 색을 한 색(빨강)으로 맞춤 (_SetHue >= 0)
+                float hh = _SetHue >= 0 ? _SetHue : frac(h.x + _Hue);
+                float3 r = hsv2rgb(float3(hh, saturate(h.y * _Sat), h.z));
                 g = lerp(g, r, k);
                 c.rgb = GammaToLinearSpace(g) * c.a;
                 return c;

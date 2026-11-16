@@ -146,12 +146,28 @@ namespace EarthDef
             return y + 152;
         }
 
-        static void GotPopup(List<string> got)
+        /// <summary>받은 것을 아이콘으로 하나씩 (2차 수정안 "아이템 구매 시 아이콘 형태로 하나하나") — 상자 · 일괄 합성 같이 씀</summary>
+        public static void GotPopup(List<GotItem> got, string title = null)
         {
-            var p = Popup.Make(L.T("reward_get"), 900, Mathf.Min(1500, 300 + got.Count * 52));
-            var t = p.Text(string.Join("\n", got), 130, 32, Art.Ink, got.Count * 52);
-            t.verticalOverflow = VerticalWrapMode.Overflow;
-            p.Btn("btn_green", L.T("ok"), 0, 40, 320, p.Close, 100);
+            int cols = got.Count <= 3 ? got.Count : 4, rows = Mathf.CeilToInt(got.Count / (float)cols);
+            float cell = 210, h = Mathf.Min(1700, 330 + rows * (cell + 46));
+            var p = Popup.Make(title ?? L.T("reward_get"), Mathf.Max(640, cols * cell + 80), h);
+            var area = UIKit.Rect(p.win, "Area"); area.Fill(20, 160, 20, 116);
+            var c = UIKit.Scroll(area, "Scroll"); c.parent.GetComponent<RectTransform>().Fill();
+            float x0 = (p.win.sizeDelta.x - 40 - cols * cell) / 2;
+            for (int i = 0; i < got.Count; i++)
+            {
+                var g = got[i];
+                float x = x0 + i % cols * cell, y = 8 + i / cols * (cell + 46);
+                var t = UIKit.Tile(c, "slot", Color.Lerp(Color.white, g.bg, 0.8f), Art.Icon(g.icon), 0.6f, "Got" + i); t.rectTransform.TL(x + 10, y, cell - 20, cell - 20);
+                var pi = t.gameObject.AddComponent<PopIn>(); pi.delay = 0.12f * i; pi.sound = true;
+                string gname = g.grade > 0 ? $"\n<color=#{ColorUtility.ToHtmlStringRGB(Color.Lerp(Tables.Grade(g.grade).color, Art.Ink, 0.35f))}>{Tables.Grade(g.grade).name}</color>" : "";
+                var nm = UIKit.Label(c, g.name + gname, 22, Art.Ink, TextAnchor.UpperCenter, false); nm.rectTransform.TL(x, y + cell - 16, cell, 50);
+                nm.horizontalOverflow = HorizontalWrapMode.Wrap;
+                nm.gameObject.AddComponent<PopIn>().delay = 0.12f * i;
+            }
+            UIKit.SetScrollH(c, rows * (cell + 46) + 20);
+            p.Btn("btn_green", L.T("ok"), 0, 30, 320, p.Close, 96);
         }
 
         /// <summary>상자 등급 확률 (확률형 아이템 표시 — Shop.xlsx Box_Rate 그대로)</summary>
@@ -216,7 +232,7 @@ namespace EarthDef
             }
             else
             {
-                var eb = UIKit.Btn(r.transform, on ? "btn_purple" : "btn_cream", on ? L.T("equipped") : L.T("equip"), 30, () => { Store.EquipFrame(f.id); Re(); }, "Equip");
+                var eb = UIKit.Btn(r.transform, on ? "btn_purple" : "btn_cream", on ? L.T("frame_using") : L.T("frame_change"), 30, () => { Store.EquipFrame(f.id); Re(); }, "Equip");
                 ((RectTransform)eb.transform).TL(740, 14, 220, 72);
                 if (f.id != "basic" && star < 5)
                 {

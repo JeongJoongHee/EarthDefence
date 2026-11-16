@@ -717,6 +717,33 @@ def sky():
     return ''.join(s)
 
 
+def moon_rabbit(down):
+    """달토끼 (2차 수정안 11-17): 달(지름 156px) 위에 앉아 절구에 방아를 찧음. down = 공이가 내려온 그림 (번갈아 → 찧는 모습)
+    로컬 160x160 · 달 가운데 = (80, 80). 달 무늬처럼 보이게 달보다 조금 진한 색 + 얇은 선"""
+    ink, body, dark = '#7a6248', '#cdb88a', '#b59f72'
+    sw = 3.2
+    s = ''
+    # 절구 (왼쪽 아래)
+    s += P('M30 112 L70 112 L64 138 L36 138 Z', dark, sw, ink=ink) + E(50, 112, 20, 6, '#a48f63', sw, ink=ink)
+    # 귀 (뒤로 살짝 젖힘)
+    s += E(104, 34, 7, 20, body, sw, -14, ink=ink) + E(118, 36, 7, 20, body, sw, 10, ink=ink)
+    s += E(104, 36, 3, 13, '#e8c9b0', 0, -14) + E(118, 38, 3, 13, '#e8c9b0', 0, 10)
+    # 몸 · 꼬리 · 머리
+    s += C(132, 118, 9, body, sw, ink=ink)
+    s += E(110, 112, 25, 28, body, sw, ink=ink)
+    s += C(108, 70, 19, body, sw, ink=ink) + C(99, 68, 2.6, ink, 0) + E(92, 76, 3, 2, '#e8a9a0', 0)
+    # 공이 (팔 + 자루 + 머리)
+    if down:
+        s += L('M96 98 L66 104', 6, ink) + L('M96 98 L66 104', 3.4, '#a48f63')
+        s += rr(52, 94, 22, 18, 6, '#a48f63', sw, ) .replace(INK, ink)
+        s += E(92, 98, 7, 6, body, sw, ink=ink)
+    else:
+        s += L('M98 92 L72 60', 6, ink) + L('M98 92 L72 60', 3.4, '#a48f63')
+        s += f'<g transform="rotate(-38 66 54)">' + rr(54, 44, 24, 18, 6, '#a48f63', sw).replace(INK, ink) + '</g>'
+        s += E(96, 92, 7, 6, body, sw, ink=ink)
+    return s
+
+
 def base_back():
     """돔 안 기지 건물 + 돔 안쪽 칠"""
     cx = W_ / 2

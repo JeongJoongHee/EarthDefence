@@ -32,7 +32,9 @@ namespace EarthDef
         public static readonly float[] SlotX = { -2.72f, 2.72f, -4.3f, 4.3f };
         public float Top => cam.transform.position.y + cam.orthographicSize;
         readonly SpriteRenderer[] slotMarks = new SpriteRenderer[4];
-        SpriteRenderer dome, domeGlow;
+        SpriteRenderer dome, domeGlow, rabbit;
+        float rabbitT;
+        public bool RabbitDown { get; private set; }
         float glowT; Color glowCol;
 
         /// <summary>기지 외형 (3차): 돔 색 + 둘레 은은한 빛 (보통 그리기 — 빛 더하기는 밝은 땅에서 하얗게 탐)</summary>
@@ -48,6 +50,8 @@ namespace EarthDef
             I = this; cam = c;
             Fit();
             Spr("Sky", Art.Get("Bg/sky", 100f), new Vector2(0, Bottom + 12f), -100);
+            // 2차 수정안: 달토끼 — 하늘 그림의 달(915, 780px) 위에서 방아를 찧음 (공이 위 · 아래 두 장을 번갈아)
+            rabbit = Spr("MoonRabbit", Art.Get("Bg/moon_rabbit_0", 100f), new Vector2((915 - 540) / 100f, Bottom + 24f - 7.8f), -99);
             Spr("Ground", Art.Get("Bg/ground", 100f), new Vector2(0, Bottom + 2.8f), -50);
             domeGlow = Spr("DomeGlow", Art.Fx("glow"), new Vector2(0, Bottom + 3.1f), -41);
             domeGlow.transform.localScale = new Vector3(15f, 7.5f, 1); domeGlow.color = new Color(1, 1, 1, 0);
@@ -72,6 +76,12 @@ namespace EarthDef
         float lastAspect;
         void Update()
         {
+            if (rabbit)
+            {
+                rabbitT += Time.deltaTime;
+                bool down = Mathf.Repeat(rabbitT, 0.7f) > 0.45f;
+                if (down != RabbitDown) { RabbitDown = down; rabbit.sprite = Art.Get("Bg/moon_rabbit_" + (down ? 1 : 0), 100f); }
+            }
             if (domeGlow) { glowT += Time.deltaTime; var c = glowCol; c.a = glowCol.a > 0 ? 0.22f + 0.08f * Mathf.Sin(glowT * 1.6f) : 0; domeGlow.color = c; }
             if (cam && Mathf.Abs(cam.aspect - lastAspect) > 0.001f) { lastAspect = cam.aspect; Fit(); }
         }

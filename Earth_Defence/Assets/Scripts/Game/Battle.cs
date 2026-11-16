@@ -310,7 +310,7 @@ namespace EarthDef
             kills++;
             Audio.Play(e.row.IsBoss || e.row.IsElite ? Audio.Sfx.BigBoom : Audio.Sfx.Kill);
             goldGot += Tables.C("Kill_Gold", 1) * (1 + 0.1 * (stageNo - 1)) * (e.row.IsBoss ? 30 : e.row.IsElite ? 10 : 1);
-            Fx.Hit(e.Pos, e.row.size * 1.3f);
+            Fx.Hit(e.Pos, e.size * 1.3f);
             if (!string.IsNullOrEmpty(e.row.split))
                 for (int i = 0; i < e.row.splitN; i++) Spawn(e.row.split, e.Pos + new Vector2((i - (e.row.splitN - 1) / 2f) * 0.6f, 0.1f), true);
             GainExp(e.row.exp);

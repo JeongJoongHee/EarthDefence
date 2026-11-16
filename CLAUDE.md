@@ -1,6 +1,11 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
-## ▶ 재개 메모 (2026-11-17 — 3차 구현 끝)
+## ▶ 재개 메모 (2026-11-17 — 2차 수정안 17개 반영)
+- 요청 = `요청 사항/2차 수정안.docx`. 보고 = `2차_수정안_결과.html` (키 earthdef-req2-1117, 캡처 `캡쳐본 모음/2차_수정안_캡처/`). 시험 120 + 13 + 47 오류 0.
+- 표 고치기 tools/fix2_tables.py · 아이콘 입체감 = earth_export.py pop3d (FLAT_ICONS 는 뺌) · 장비 그림 gx_* · 달토끼 earth_art.moon_rabbit + World · 돌파 붉은색 = SpriteHue _SetHue (Config Break_Hue · Break_Sat) · 보스 크기 Config Elite_Size_Mul 3 · Boss_Size_Mul 3.5.
+- 해석: "기지 끼움 – 변경" = 외형 단추 "변경 / 사용 중" · 돌파 붉은색이 스킨 색보다 먼저.
+
+## (지난) 재개 메모 (2026-11-17 — 3차 구현 끝)
 - 사용자 "동료 액티브 스킬 빼고 3차 (동료는 출시 뒤)". 끝낸 것: 다이아 · 기지 외형 6종(Frame.xlsx, 효과 부활 · 별똥별 · 얼림 · 반격 · 회복 · 골드, 별 1~5) · 터렛 스킨 11종(Skin.xlsx, 셰이더 SpriteHue · UI 그림 tools/skin_preview.py · 필살기 · 피해 +10%) · 도전 탭(무한 모드 · 엘리트 군단, 하루 입장) · 상점 탭(Shop.xlsx 다이아 [결제 초안] · 상자 확률 · 무료/광고 상자 · 스태미나 · 골드 · 스킨 · 외형) · 결과 창 광고 2배 [초안] · 설정 구글 계정 · 클라우드 [초안]. 표 = tools/phase3_tables.py. 코드 Game/Store.cs · UI/ShopTab.cs(+ChallengeTab).
 - 시험: 기존 120줄 · 시험장 13줄 · 3차 37줄(`PlayTest.RunP3`) 모두 오류 0. 캡처 `3차_캡처/`.
 - 보고 = `3차_구현_결과.html` (키 earthdef-3rd-1117, 캡처 `캡쳐본 모음/3차_캡처/`). 다음 추천 = 밸런스 시뮬레이터 → 영어 → 출시 준비 (결정 t-next 대기).
