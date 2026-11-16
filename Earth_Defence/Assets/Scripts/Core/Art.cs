@@ -76,6 +76,7 @@ namespace EarthDef
             Vector4 b = name switch
             {
                 "pill" or "pill_dark" => new Vector4(40, 39, 40, 39),
+                "tag" => new Vector4(38, 20, 20, 20),     // 11-16 속성 태그 (왼쪽 뾰족 + 구멍)
                 "track" or "fill" => new Vector4(19, 19, 19, 19),
                 "white" => new Vector4(26, 26, 26, 26),
                 "window" => new Vector4(40, 40, 40, 40),

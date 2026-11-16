@@ -23,7 +23,7 @@ namespace EarthDef
         readonly List<(Image bg, Text label, string id)> tabBtns = new();
         Image missionDot, gearDot;
         // 전투 탭
-        Text stageT, stageName, bestT, weakT, patrolT, patrolAmt, costT, nextUnlockT;
+        Text stageT, stageName, bestT, weakT, patrolT, patrolAmt, costT;
         Button startB, prevB, nextB, patrolB, normalB, eliteB;
         // 터렛 탭
         Text baseLvT, baseDescT, baseCostT;
@@ -96,38 +96,66 @@ namespace EarthDef
         }
 
         // ---------- 전투 탭 ----------
+        // 11-16 저녁 사용자 의견: 제목 · "스테이지 N 을 깨면 열려요" 빼기 · 스테이지 정보를 풍부하게(이름 · 약점 강조) ·
+        //   [전투 시작]은 아래 · 순찰 칸은 [전투 시작] 정도 폭 · 기지 쪽은 비워 대장 카피가 어슬렁거리게 (LobbyWalker)
+        RectTransform enemyRow, weakRow;
+        Image eliteTile, bossTile;
+        Text eliteName, bossName;
         void BuildBattle(RectTransform page)
         {
-            var title = UIKit.Label(page, L.T("title"), 60); title.rectTransform.TL(0, 4, 1080, 90); title.color = Art.Cream;
-            var card = UIKit.Panel(page, "card", "StageCard"); card.rectTransform.TL(90, 110, 900, 420);
-            stageT = UIKit.Label(card.transform, "", 64, Art.Ink, TextAnchor.MiddleCenter, false); stageT.rectTransform.TL(0, 24, 900, 80);
-            stageName = UIKit.Label(card.transform, "", 38, Art.Brown, TextAnchor.MiddleCenter, false); stageName.rectTransform.TL(0, 106, 900, 54);
-            weakT = UIKit.Label(card.transform, "", 30, Art.Soft, TextAnchor.MiddleCenter, false); weakT.rectTransform.TL(0, 166, 900, 46);
-            bestT = UIKit.Label(card.transform, "", 28, Art.Soft, TextAnchor.MiddleCenter, false); bestT.rectTransform.TL(0, 214, 900, 44);
-            prevB = UIKit.Btn(card.transform, "btn_orange", null, 48, () => Move(-1), "Prev"); ((RectTransform)prevB.transform).TL(30, 90, 110, 110); Arrow(prevB, true);
-            nextB = UIKit.Btn(card.transform, "btn_orange", null, 48, () => Move(1), "Next"); ((RectTransform)nextB.transform).TL(760, 90, 110, 110); Arrow(nextB, false);
-            // 보통 / 엘리트
-            normalB = UIKit.Btn(card.transform, "btn_green", L.T("normal"), 36, () => SetElite(false), "Normal"); ((RectTransform)normalB.transform).TL(150, 290, 290, 96);
-            eliteB = UIKit.Btn(card.transform, "btn_purple", L.T("elite_mode"), 36, () => SetElite(true), "Elite"); ((RectTransform)eliteB.transform).TL(460, 290, 290, 96);
-            var crown = UIKit.Img(eliteB.transform, Art.Icon("crown"), "Crown"); crown.raycastTarget = false; crown.rectTransform.Place(0, 1, new Vector2(-12, 22), new Vector2(64, 64), new Vector2(0, 1));
+            var card = UIKit.Panel(page, "card", "StageCard"); card.rectTransform.TL(30, 14, 1020, 676);
+            stageT = UIKit.Label(card.transform, "", 34, Art.Brown, TextAnchor.MiddleCenter, false); stageT.rectTransform.TL(0, 20, 1020, 46);
+            stageName = UIKit.Label(card.transform, "", 64); stageName.rectTransform.TL(130, 62, 760, 84);
+            prevB = UIKit.Btn(card.transform, "btn_orange", null, 48, () => Move(-1), "Prev"); ((RectTransform)prevB.transform).TL(22, 34, 100, 100); Arrow(prevB, true);
+            nextB = UIKit.Btn(card.transform, "btn_orange", null, 48, () => Move(1), "Next"); ((RectTransform)nextB.transform).TL(898, 34, 100, 100); Arrow(nextB, false);
+            var ln = UIKit.Plain(card.transform, new Color(0.23f, 0.16f, 0.11f, 0.25f), "Line"); ln.rectTransform.TL(40, 158, 940, 4);
+            // 약점 (속성 태그로 크게)
+            var wl = UIKit.Label(card.transform, L.T("weak_title"), 34, Art.Ink, TextAnchor.MiddleLeft, false); wl.rectTransform.TL(44, 176, 200, 60);
+            weakRow = UIKit.Rect(card.transform, "Weak"); weakRow.TL(220, 176, 760, 60);
+            // 나오는 적
+            var el = UIKit.Label(card.transform, L.T("enemies_title"), 30, Art.Ink, TextAnchor.MiddleLeft, false); el.rectTransform.TL(44, 250, 400, 44);
+            enemyRow = UIKit.Rect(card.transform, "Enemies"); enemyRow.TL(40, 298, 940, 110);
+            weakT = UIKit.Label(card.transform, "", 22, Art.Soft, TextAnchor.MiddleRight, false); weakT.rectTransform.TL(500, 250, 476, 44);
+            // 중간 보스 · 보스
+            (eliteTile, eliteName) = BossTile(card.transform, 44, L.T("elite_title"));
+            (bossTile, bossName) = BossTile(card.transform, 524, L.T("boss_title"));
+            // 보통 / 엘리트 + 기록
+            normalB = UIKit.Btn(card.transform, "btn_green", L.T("normal"), 34, () => SetElite(false), "Normal"); ((RectTransform)normalB.transform).TL(200, 548, 290, 86);
+            eliteB = UIKit.Btn(card.transform, "btn_purple", L.T("elite_mode"), 34, () => SetElite(true), "Elite"); ((RectTransform)eliteB.transform).TL(530, 548, 290, 86);
+            var crown = UIKit.Img(eliteB.transform, Art.Icon("crown"), "Crown"); crown.raycastTarget = false; crown.rectTransform.Place(0, 1, new Vector2(-12, 22), new Vector2(60, 60), new Vector2(0, 1));
+            bestT = UIKit.Label(card.transform, "", 24, Art.Soft, TextAnchor.MiddleCenter, false); bestT.rectTransform.TL(0, 634, 1020, 34);
+
+            // 아래: 순찰(위) + [전투 시작](아래) — 기지 · 대장 카피가 보이게 그 아래는 비움
+            var pc = UIKit.Panel(page, "card", "Patrol"); pc.rectTransform.Place(0.5f, 0, new Vector2(0, 368), new Vector2(660, 116), new Vector2(0.5f, 0));
+            var pi = UIKit.Img(pc.transform, Art.Icon("patrol"), "Icon"); pi.rectTransform.TL(14, 16, 80, 80);
+            var pt = UIKit.Label(pc.transform, L.T("patrol"), 30, Art.Ink, TextAnchor.MiddleLeft, false); pt.rectTransform.TL(104, 10, 300, 46);
+            patrolT = UIKit.Label(pc.transform, "", 21, Art.Soft, TextAnchor.MiddleLeft, false); patrolT.rectTransform.TL(104, 56, 330, 40);
+            patrolAmt = UIKit.Label(pc.transform, "", 24, Art.Brown, TextAnchor.MiddleRight, false); patrolAmt.rectTransform.TL(330, 10, 160, 90);
+            patrolB = UIKit.Btn(pc.transform, "btn_orange", L.T("claim"), 32, Claim, "Claim"); ((RectTransform)patrolB.transform).TL(500, 14, 146, 84);
 
             startB = UIKit.Btn(page, "btn_green", null, 60, StartBattle, "Start");
-            ((RectTransform)startB.transform).TL(250, 556, 580, 150);
+            ((RectTransform)startB.transform).Place(0.5f, 0, new Vector2(0, 204), new Vector2(600, 150), new Vector2(0.5f, 0));
             var sl = UIKit.Label(startB.transform, L.T("start"), 58); sl.rectTransform.Fill(10, 14, 150, 4);
             var ce = UIKit.Img(startB.transform, Art.Icon("energy"), "Energy"); ce.raycastTarget = false; ce.rectTransform.Place(1, 0.5f, new Vector2(-84, 6), new Vector2(64, 64), new Vector2(1, 0.5f));
             costT = UIKit.Label(startB.transform, "", 40); costT.rectTransform.Place(1, 0.5f, new Vector2(-18, 6), new Vector2(70, 60), new Vector2(1, 0.5f));
+        }
 
-            // 순찰
-            var pc = UIKit.Panel(page, "card", "Patrol"); pc.rectTransform.TL(90, 730, 900, 120);
-            var pi = UIKit.Img(pc.transform, Art.Icon("patrol"), "Icon"); pi.rectTransform.TL(20, 14, 84, 84);
-            var pt = UIKit.Label(pc.transform, L.T("patrol"), 34, Art.Ink, TextAnchor.MiddleLeft, false); pt.rectTransform.TL(120, 10, 420, 50);
-            patrolT = UIKit.Label(pc.transform, "", 24, Art.Soft, TextAnchor.MiddleLeft, false); patrolT.rectTransform.TL(120, 58, 440, 40);
-            patrolAmt = UIKit.Label(pc.transform, "", 28, Art.Brown, TextAnchor.MiddleRight, false); patrolAmt.rectTransform.TL(440, 10, 230, 90);
-            patrolB = UIKit.Btn(pc.transform, "btn_orange", L.T("claim"), 34, Claim, "Claim"); ((RectTransform)patrolB.transform).TL(690, 14, 190, 86);
+        (Image, Text) BossTile(Transform p, float x, string title)
+        {
+            var t = UIKit.Img(p, Art.UI("slot"), "BossTile"); t.rectTransform.TL(x, 416, 120, 120); t.raycastTarget = false;
+            var ic = UIKit.Img(t.transform, null, "Icon"); ic.rectTransform.Fill(10, 14, 10, 8); ic.raycastTarget = false; ic.preserveAspect = true;
+            var tl = UIKit.Label(p, title, 26, Art.Soft, TextAnchor.MiddleLeft, false); tl.rectTransform.TL(x + 136, 424, 320, 40);
+            var nm = UIKit.Label(p, "", 34, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(x + 136, 466, 330, 56);
+            return (ic, nm);
+        }
 
-            // 다음에 열리는 터렛
-            var nu = UIKit.Panel(page, "night", "NextUnlock"); nu.rectTransform.TL(90, 868, 900, 96);
-            nextUnlockT = UIKit.Label(nu.transform, "", 30, Art.Cream, TextAnchor.MiddleCenter, true); nextUnlockT.rectTransform.Fill(20, 8, 20, 0);
+        /// <summary>적 그림 칸 + 아래에 약점 색 띠</summary>
+        static void EnemyTile(Transform p, EnemyRow e, float x, float size)
+        {
+            var t = UIKit.Img(p, Art.UI("slot"), "E_" + e.id); t.rectTransform.TL(x, 0, size, size); t.raycastTarget = false;
+            var ic = UIKit.Img(t.transform, Art.Enemy(e), "Icon"); ic.preserveAspect = true; ic.raycastTarget = false; ic.rectTransform.Fill(8, 16, 8, 6);
+            var w = UIKit.Img(t.transform, Art.UI("white"), "Weak"); w.type = Image.Type.Simple; w.raycastTarget = false; w.color = Elem.Color(e.weak);
+            w.rectTransform.Place(0.5f, 0, new Vector2(0, 6), new Vector2(size * 0.55f, 12), new Vector2(0.5f, 0));
         }
 
         static void Arrow(Button b, bool left)
@@ -174,6 +202,7 @@ namespace EarthDef
                 baseDescT = UIKit.Label(r, "", 26, Art.Soft, TextAnchor.MiddleLeft, false); baseDescT.rectTransform.TL(126, 58, 560, 44);
                 baseB = UIKit.Btn(r, "btn_green", null, 30, () => { if (Meta.UpgradeBase()) Refresh(); }, "Up"); ((RectTransform)baseB.transform).TL(730, 12, 250, 96);
                 baseCostT = CostLabel(baseB.transform);
+                Divider(c, y + h + 3);
                 y += h + 8;
             }
             foreach (var t in Tables.Turrets)
@@ -181,14 +210,14 @@ namespace EarthDef
                 var r = UIKit.Rect(c, "Row_" + t.id); r.TL(10, y, 1000, h);
                 bool open = S.Unlocked(t);
                 var tile = UIKit.Tile(r, "slot", open ? Color.white : new Color(0.75f, 0.72f, 0.68f), Art.TurretUI(t.art), 0.86f, "Icon"); tile.rectTransform.TL(0, 4, 108, 108);
+                var tt = t; UIKit.Clickable(tile, () => TurretInfo(tt));
+                Divider(c, y + h + 3);
                 if (!open) { var lk = UIKit.Img(tile.transform, Art.Icon("lock"), "Lock"); lk.raycastTarget = false; lk.rectTransform.Place(1, 0, new Vector2(4, -4), new Vector2(52, 52), new Vector2(1, 0)); }
                 var name = UIKit.Label(r, t.name, 34, open ? Art.Ink : Art.Soft, TextAnchor.MiddleLeft, false); name.rectTransform.TL(126, 4, 300, 50);
-                var el = UIKit.Panel(r, "pill", "Elem"); el.color = Elem.Color(t.elem); el.rectTransform.TL(126 + Mathf.Min(300, name.preferredWidth + 14), 12, 90, 38);
-                UIKit.Label(el.transform, Elem.Name(t.elem), 22, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 2, 0, 0);
+                UIKit.ElemTag(r, t.elem, 126 + Mathf.Min(300, name.preferredWidth + 14), 10, 104, 42, 22);
                 if (!open)
                 {
                     var why = UIKit.Label(r, L.F("unlock_at", t.unlock), 28, Art.Brown, TextAnchor.MiddleLeft, false); why.rectTransform.TL(126, 60, 600, 44);
-                    var d = UIKit.Label(r, t.desc.Replace(" · ", ", "), 24, Art.Soft, TextAnchor.MiddleRight, false); d.rectTransform.TL(560, 10, 420, 44);
                     y += h + 8; continue;
                 }
                 var lv = UIKit.Label(r, "", 30, Art.Brown, TextAnchor.MiddleLeft, false); lv.rectTransform.TL(470, 4, 220, 50);
@@ -199,6 +228,34 @@ namespace EarthDef
                 y += h + 8;
             }
             UIKit.SetScrollH(c, y + 10);
+        }
+
+        static void Divider(Transform c, float y)
+        {
+            var d = UIKit.Plain(c, new Color(0.23f, 0.16f, 0.11f, 0.18f), "Divider"); d.rectTransform.TL(20, y, 980, 3);
+        }
+
+        /// <summary>터렛 설명 창 (11-16 저녁 사용자 "터렛 그림을 누르면 어떤 방식으로 공격하는지")</summary>
+        public static void TurretInfo(TurretRow t)
+        {
+            var p = Popup.Make(t.name, 960, 1180);
+            var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretUI(t.art), 0.86f, "Pic"); tile.rectTransform.TL(46, 130, 250, 250);
+            var nm = UIKit.Label(p.win, t.name, 50, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(320, 140, 600, 64);
+            UIKit.ElemTag(p.win, t.elem, 320, 214, 130, 52, 28);
+            bool open = SaveData.Cur.Unlocked(t);
+            var lv = UIKit.Label(p.win, open ? L.F("lv", SaveData.Cur.TurretLv(t.id)) : L.F("unlock_at", t.unlock), 30, open ? Art.Brown : Art.Red, TextAnchor.MiddleLeft, false);
+            lv.rectTransform.TL(470, 214, 460, 52);
+            var st = UIKit.Label(p.win, t.kind == "field" ? L.F("tinfo_stat_field", Num.F(t.rate), t.cd) : L.F("tinfo_stat", Num.F(t.rate + t.rate2), t.cd, t.range),
+                                 26, Art.Soft, TextAnchor.UpperLeft, false);
+            st.horizontalOverflow = HorizontalWrapMode.Wrap; st.rectTransform.TL(320, 282, 600, 100);
+            var info = UIKit.Label(p.win, string.IsNullOrEmpty(t.info) ? t.desc : t.info, 32, Art.Ink, TextAnchor.UpperLeft, false);
+            info.horizontalOverflow = HorizontalWrapMode.Wrap; info.rectTransform.TL(50, 410, 860, 170);
+            var lines = new List<string>();
+            foreach (var c in Tables.Cards)
+                if (c.turret == t.id && c.kind == "break") lines.Add($"{L.T("kind_break")} {c.line}: {c.name} - {c.desc}");
+            var bl = UIKit.Label(p.win, string.Join("\n", lines), 28, Art.Purple, TextAnchor.UpperLeft, false);
+            bl.horizontalOverflow = HorizontalWrapMode.Wrap; bl.rectTransform.TL(50, 600, 860, 200);
+            p.Btn("btn_green", L.T("ok"), 0, 60, 360, p.Close);
         }
 
         Text CostLabel(Transform b)
@@ -244,11 +301,20 @@ namespace EarthDef
                 if (S.elite && !Meta.EliteOpen(1)) S.elite = false;
                 S.stage = Mathf.Clamp(S.stage, 1, Mathf.Max(1, MaxStage));
                 var st = Tables.Stage(S.stage);
-                stageT.text = L.F("stage_n", S.stage);
+                stageT.text = L.F("stage_n", S.stage) + (S.elite ? "  " + L.T("elite_mode") : "");
+                stageT.color = S.elite ? Art.Purple : Art.Brown;
                 stageName.text = st.name;
                 var weak = new List<string>();
-                foreach (var id in st.enemies) if (Tables.Enemies.TryGetValue(id, out var e) && !weak.Contains(Elem.Name(e.weak))) weak.Add(Elem.Name(e.weak));
-                weakT.text = L.F("enemy_weak", string.Join(", ", weak));
+                foreach (var id in st.enemies) if (Tables.Enemies.TryGetValue(id, out var e) && !weak.Contains(e.weak)) weak.Add(e.weak);
+                for (int c = weakRow.childCount - 1; c >= 0; c--) Destroy(weakRow.GetChild(c).gameObject);
+                for (int i = 0; i < weak.Count; i++) UIKit.ElemTag(weakRow, weak[i], i * 150, 2, 138, 56, 30);
+                for (int c = enemyRow.childCount - 1; c >= 0; c--) Destroy(enemyRow.GetChild(c).gameObject);
+                int ne = Mathf.Min(8, st.enemies.Length);
+                float sz = ne > 7 ? 104 : 110;
+                for (int i = 0; i < ne; i++) if (Tables.Enemies.TryGetValue(st.enemies[i], out var e2)) EnemyTile(enemyRow, e2, i * (sz + 12), sz);
+                weakT.text = L.T("weak_hint");
+                if (Tables.Enemies.TryGetValue(st.elite, out var el)) { eliteTile.sprite = Art.Enemy(el); eliteName.text = el.name; }
+                if (Tables.Enemies.TryGetValue(st.boss, out var bo)) { bossTile.sprite = Art.Enemy(bo); bossName.text = bo.name; }
                 bestT.text = S.elite ? L.T("elite_desc") + "  " + L.F("best", S.eliteBest) : L.F("best", S.best);
                 bestT.color = S.elite ? Art.Purple : Art.Soft;
                 bool canPrev = S.stage > 1, canNext = S.stage < MaxStage;
@@ -259,9 +325,6 @@ namespace EarthDef
                 UIKit.SetKind(eliteB, !eo ? "btn_gray" : S.elite ? "btn_purple" : "btn_cream");
                 UIKit.SetKind(startB, S.elite ? "btn_purple" : "btn_green");
                 costT.text = Meta.StaminaCost(S.elite).ToString();
-                TurretRow nxt = null; foreach (var t in Tables.Turrets) if (!S.Unlocked(t) && (nxt == null || t.unlock < nxt.unlock)) nxt = t;
-                nextUnlockT.text = nxt != null ? $"{nxt.name}: {L.F("unlock_at", nxt.unlock)}" : L.T("unlocked");
-                nextUnlockT.transform.parent.gameObject.SetActive(nxt != null);
                 RefreshPatrol();
             }
             if (baseLvT)

@@ -96,7 +96,9 @@ def new_book(path, sheets):
 CONFIG = [
     # 스태미나 (기획서 2장 · 16장 — 숫자는 영상·문서에 없어 처음 값)
     ('Stamina_On', 1, '1 = 전투마다 스태미나를 씀 (0 = 끔)'),
-    ('Stamina_Max', 60, '스태미나 최대 (시간으로 차는 상한)'),
+    ('Stamina_Max', 60, '(11-16 저녁부터 안 씀 — Stamina_Base · Per_Stage · Cap)'),
+    ('Stamina_Base', 30, '스태미나 최대 시작 값 (11-16 저녁 사용자 "시작 30")'),
+    ('Stamina_Per_Stage', 1, '보통 스테이지를 처음 깰 때마다 최대 +'), ('Stamina_Cap', 80, '스태미나 최대의 끝 (30 + 50스테이지)'),
     ('Stamina_Cost', 5, '보통 난이도 한 판'), ('Stamina_Cost_Elite', 8, '엘리트 난이도 한 판'),
     ('Stamina_Regen_Sec', 360, '스태미나 1 차는 시간(초) — 6분'),
     ('Stamina_Ad', 20, '[초안] 광고 보고 받는 스태미나'), ('Stamina_Ad_Per_Day', 3, '하루 광고 스태미나 횟수'),
@@ -130,11 +132,29 @@ CONFIG = [
     ('Trap_Rate', 40, '전기 덫 틱 %ATK'), ('Trap_Time', 2, '전기 덫 시간(초)'),
     # 튜토리얼 · 출석
     ('Tutorial', 1, '1 = 처음 한 번씩 도움말 (0 = 끔)'),
+    # 소리 (11-16 저녁)
+    ('Bgm_Volume', 0.7, '배경음 기본 음량 (설정 배경음 % 를 곱함)'), ('Sfx_Volume', 0.75, '효과음 기본 음량 (설정 효과음 % 를 곱함)'),
     ('Attend_Days', 7, '출석 며칠 묶음 (다 받으면 1일부터 다시)'),
 ]
 
 # ================================================================== 2차 터렛 5종 (기획서 4-1 기본 수치 · 4-4 · 4-5 · 4-8 · 4-10 · 4-12)
 # Kind: cannon 포탄 + 폭발 + 밀어냄 · focus 한 적에 붙는 빔 · vortex 느리게 나는 소용돌이(끌어당김) · wheel 벽에 튕기는 불바퀴 · tesla 충전 → 튀는 번개 폭발
+# 터렛 탭에서 그림을 누르면 나오는 설명 (11-16 저녁 사용자 "어떠한 방식으로 공격하는지 정보 팝업")
+TURRET_INFO = dict(
+    guardian='레이저 소총으로 가장 가까운 적을 빠르게 연사해요. 화면을 끌면 좌우로 움직이고, 충전 사격을 배우면 충전탄을 쏟아내요.',
+    rail='가장 가까운 적에게 꿰뚫는 포탄을 쏴요. 일렬로 선 적을 한꺼번에 뚫고, 돌파하면 폭발하거나 작은 포탄으로 갈라져요.',
+    laser='일직선 레이저를 2초 동안 쏴서 선 위의 모든 적을 지져요. 돌파하면 갈래 레이저나 휘두르기 레이저가 돼요.',
+    drone='적이 가장 많이 모인 높이에 화면 폭만 한 가로 띠 장판을 깔아요. 장판 안의 적은 틱마다 피해를 받고 점점 느려져요.',
+    hive='꼬마 벌 로봇 3마리를 내보내요. 벌은 적을 쫓아가 7번씩 쏘아요.',
+    missile='적을 쫓아가는 미사일을 쏴요. 맞으면 둥글게 폭발하고, 돌파하면 작은 미사일이나 화상이 더해져요.',
+    bolt='적이 있는 세로줄에 낙뢰를 떨어뜨려 그 줄의 모든 적을 맞혀요. 사거리가 가장 길어요.',
+    cannon='사거리가 짧은 큰 포탄을 쏴요. 맞으면 크게 폭발하고 둘레 적을 위로 밀어내요 (보스는 안 밀려요).',
+    focus='한 적에게 빔을 붙여 4초 동안 지져요. 오래 붙을수록 강해지는 보스 사냥용이에요.',
+    vortex='천천히 나는 소용돌이를 쏴서 둘레 적을 가운데로 끌어모으고 피해를 줘요. 폭발하는 터렛과 잘 맞아요.',
+    wheel='벽과 방어막에 튕기며 굴러다니는 불바퀴를 굴려요. 적을 75번 맞히면 사라져요.',
+    tesla='0.6초 충전한 번개를 쏴요. 번개는 적 사이를 튀며 맞은 자리마다 폭발해요.',
+)
+
 TURRET_NEW = [
     dict(Id='cannon', Name='쾅쾅 대포', Elem='phys', Art='cannon', Kind='cannon', Rate=421.1, Rate2=294.8, Tick=0, Cooldown=7, Range=9,
          Count=1, Hits=0, Duration=0, Radius=1.0, Pierce=0, Speed=13, Desc='포탄이 터지며 적을 밀어냄', Unlock=5, Knock=1.0),
@@ -386,6 +406,10 @@ STRINGS = [
     ('tap_close', '눌러서 닫기'), ('reward_get', '받았어요!'), ('grade_n', '{0}등급'),
     ('r_gold', '골드'), ('r_shards', '조각'), ('r_stamina', '스태미나'), ('r_parts', '부품'), ('r_chip', '칩'), ('r_gear', '장비'),
     ('enemy_weak', '적 약점: {0}'), ('cost_n', '{0}'),
+    # 11-16 저녁 (2차 의견 반영)
+    ('weak_title', '적 약점'), ('enemies_title', '나오는 적'), ('weak_hint', '칸 아래 색 = 그 적의 약점'),
+    ('elite_title', '중간 보스 (2분)'), ('boss_title', '보스 (3분 30초)'),
+    ('tinfo_stat', '피해 {0}% (공격력 기준), 쿨다운 {1}초, 사거리 {2}'), ('tinfo_stat_field', '틱마다 피해 {0}%, 쿨다운 {1}초, 사거리 화면 전체'),
 ]
 
 
@@ -400,6 +424,11 @@ def main():
     wb = load_workbook(os.path.join(TB, 'Turret.xlsx')); ws = wb['Turret']
     ensure_col(ws, 'Unlock', 0); ensure_col(ws, 'Knock', 0)
     print('Turret +', add_rows(ws, 'Id', TURRET_NEW))
+    ci = ensure_col(ws, 'Info'); cs = cols(ws); ii = cs.index('Id') + 1
+    for r in range(2, ws.max_row + 1):
+        tid = ws.cell(r, ii).value
+        if tid in TURRET_INFO and not ws.cell(r, ci).value:
+            ws.cell(r, ci, TURRET_INFO[tid])
     wb.save(os.path.join(TB, 'Turret.xlsx'))
     # ---- Card
     wb = load_workbook(os.path.join(TB, 'Card.xlsx')); ws = wb['Card']

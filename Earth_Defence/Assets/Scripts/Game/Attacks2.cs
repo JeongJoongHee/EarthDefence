@@ -56,9 +56,14 @@ namespace EarthDef
         public static int LastRefract;      // 시험용
         public static float LastRamp;       // 시험용: 지금 누적 배율
 
+        float sizzleT, flick = 1f;
+        Vector2 lastHit;
+
         public FocusBeam(TurretInst tr, Enemy tg, float duration, float width, Enemy avoid = null)
         {
-            src = tr; target = tg; dur = duration; this.width = width; this.avoid = avoid;
+            // 11-16 저녁 사용자 "너무 단순함 · 두께는 1/2 · 쏘는 동안 레이저로 지글지글 지지는 연출"
+            //   → 굵기 절반 · 빛이 빠르게 깜빡 · 맞는 곳에 불꽃이 계속 튀고 빛이 일렁 · 가끔 연기
+            src = tr; target = tg; dur = duration; this.width = width * 0.5f; this.avoid = avoid;
             MakeSprite("focus", Art.Fx("beam", new Vector4(40, 8, 40, 8)), tr.unit ? tr.unit.Head : Vector2.zero, 28);
             sr.drawMode = SpriteDrawMode.Sliced; Art.Additive(sr);
             var g = col; g.a = 0.85f; sr.color = g;
@@ -96,7 +101,18 @@ namespace EarthDef
             }
             onTarget += dt;
             float fade = Mathf.Clamp01(Mathf.Min(t / 0.08f, (dur - t) / 0.15f));
-            float w = Mathf.Max(0.12f, width) * (0.5f + 0.5f * fade) * (1 + 0.5f * Ramp / 4f) * (1 + 0.08f * Mathf.Sin(t * 50f));
+            if ((sizzleT -= dt) <= 0)
+            {
+                sizzleT = 0.035f;
+                flick = Random.Range(0.65f, 1.15f);
+                var at0 = target.Pos + Random.insideUnitCircle * target.radius * 0.25f;
+                var dir = (head - target.Pos).normalized;
+                Fx.Sparks(at0, Color.Lerp(col, Color.white, Random.value * 0.6f), 2, Random.Range(2.5f, 5f), 0.7f, 110f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
+                Fx.Glow(at0, Random.Range(0.18f, 0.3f) * (1 + Ramp * 0.15f), new Color(0.75f, 1f, 0.95f, 0.75f), 0.08f);
+                if (Random.value < 0.12f) Fx.Puff(at0 + Vector2.up * 0.1f, 0.35f);
+                lastHit = at0;
+            }
+            float w = Mathf.Max(0.07f, width) * (0.5f + 0.5f * fade) * (1 + 0.5f * Ramp / 4f) * flick;
             Line(sr, head, target.Pos, w);
             core.transform.localScale = Vector3.one; core.size = new Vector2(sr.size.x - w, Mathf.Max(0.04f, w * 0.32f));
             flare.transform.position = head; flare.transform.localScale = Vector3.one * (w * 2.2f / 0.64f);
@@ -143,14 +159,15 @@ namespace EarthDef
     /// hole = 블랙홀(돌파 A, 제자리 · 5초). 끝날 때 중력 폭발(돌파 B)</summary>
     public class Vortex : Attack
     {
-        Vector2 pos, dir; float speed, life, t, tickT, r, pull; double rate; readonly bool hole;
+        Vector2 pos, dir; float speed, life, t, tickT, r, pull, suckT; double rate; readonly bool hole;
         public static int LastPulled;   // 시험용
 
         public Vortex(TurretInst tr, Vector2 p, Vector2 d, float speed, float life, float radius, double rate, float pull, bool hole = false)
         {
             src = tr; pos = p; dir = d.normalized; this.speed = speed; this.life = life; r = radius; this.rate = rate; this.pull = pull; this.hole = hole;
             MakeSprite(hole ? "blackhole" : "vortex", Art.Fx("vortex"), p, 9);
-            sr.color = hole ? Art.Hex("#8d79c9") : Elem.Color("grav");
+            // 11-16 저녁 "희미해 보여서 조금 더 선명하고 끌어들이는 효과를 더 강하게": 진한 보라 + 둘레에서 가운데로 빨려드는 빛 알갱이
+            sr.color = hole ? Art.Hex("#7d62d8") : Art.Hex("#a68bff");
             go.transform.localScale = Vector3.one * (r / 0.9f);
         }
 
@@ -165,6 +182,14 @@ namespace EarthDef
             float a = Mathf.Clamp01(Mathf.Min(t / 0.2f, life / 0.3f));
             var c = sr.color; c.a = 0.9f * a; sr.color = c;
             go.transform.localScale = Vector3.one * (r / 0.9f) * (0.6f + 0.4f * a);
+            if ((suckT -= dt) <= 0)
+            {
+                suckT = 0.03f;
+                float a0 = Random.Range(0f, Mathf.PI * 2), rr = r * Random.Range(1.3f, 1.8f);
+                var p0 = pos + new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)) * rr;
+                float toC = Mathf.Atan2(pos.y - p0.y, pos.x - p0.x) * Mathf.Rad2Deg + 35f;   // 살짝 비틀려 소용돌이처럼
+                Fx.Sparks(p0, Color.Lerp(Art.Hex("#c8b6ff"), Color.white, Random.value * 0.5f), 1, rr / 0.32f, 0.9f, 8f, toC);
+            }
             int pulled = 0;
             foreach (var e in Battle.I.enemies)
             {
@@ -213,6 +238,43 @@ namespace EarthDef
             var g = new GameObject("glow"); g.transform.SetParent(go.transform, false);
             var gs = g.AddComponent<SpriteRenderer>(); gs.sprite = Art.Fx("glow"); gs.sortingOrder = 26; Art.Additive(gs);
             gs.color = new Color(1f, 0.55f, 0.3f, 0.5f); g.transform.localScale = Vector3.one * 1.6f;
+            glowR = gs;
+            // 11-16 저녁 사용자 "바퀴 주변에 불꽃이 이글이글": 테두리에 불꽃 8개 (바퀴와 따로 돌며 크기가 빠르게 일렁 · 빛 더하기)
+            int nf = mini ? 5 : 8;
+            flames = new SpriteRenderer[nf]; fph = new float[nf];
+            for (int i = 0; i < nf; i++)
+            {
+                var f = new GameObject("flame"); f.transform.SetParent(go.transform.parent, false);
+                var fs = f.AddComponent<SpriteRenderer>(); fs.sprite = Art.Fx("flame"); fs.sortingOrder = 28; Art.Additive(fs);
+                flames[i] = fs; fph[i] = Random.Range(0f, 10f);
+            }
+        }
+
+        SpriteRenderer glowR;
+        SpriteRenderer[] flames; float[] fph; float fAng;
+
+        void Flames(float dt)
+        {
+            fAng += dt * 140f;
+            float k = r / 0.45f;
+            for (int i = 0; i < flames.Length; i++)
+            {
+                float a = (fAng + i * 360f / flames.Length) * Mathf.Deg2Rad;
+                float n = 0.75f + 0.35f * Mathf.Sin(t * 23f + fph[i]) * Mathf.Sin(t * 9f + fph[i] * 2f);   // 이글이글
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                var ft = flames[i].transform;
+                ft.position = pos + d * r * 0.92f;
+                ft.rotation = Quaternion.Euler(0, 0, a * Mathf.Rad2Deg - 90f + Mathf.Sin(t * 17f + fph[i]) * 12f);   // 바깥쪽을 봄 + 흔들
+                ft.localScale = new Vector3(0.55f * k * (0.8f + 0.2f * n), 0.75f * k * n, 1);
+                flames[i].color = new Color(1f, Mathf.Lerp(0.45f, 0.75f, n - 0.4f), 0.25f, 0.85f);
+            }
+            if (glowR) { var c = glowR.color; c.a = 0.4f + 0.2f * Mathf.Sin(t * 19f); glowR.color = c; }
+        }
+
+        public override void Kill()
+        {
+            if (flames != null) foreach (var f in flames) if (f) Object.Destroy(f.gameObject);
+            base.Kill();
         }
 
         public override void Step(float dt)
@@ -227,6 +289,7 @@ namespace EarthDef
             if (pos.y < bot) { pos.y = bot; vel.y = Mathf.Abs(vel.y); Bounce(); }
             go.transform.position = pos;
             go.transform.rotation = Quaternion.Euler(0, 0, -t * 720f * Mathf.Sign(vel.x == 0 ? 1 : vel.x));
+            Flames(dt);
             if ((trailT -= dt) <= 0 && !mini)
             {
                 trailT = 0.12f;
@@ -306,6 +369,7 @@ namespace EarthDef
             if (target == null || left <= 0) { Kill(); return; }
             var at = target.Pos;
             Battle.I.Add(new Zap(from, at));
+            Audio.Play(Audio.Sfx.Zap);
             Blast(at);
             jumps++; LastJumps = Mathf.Max(LastJumps, jumps);
             left--;

@@ -277,9 +277,15 @@ def export_fx():
     spikes = ''.join(L(f'M{64 + 22 * math.cos(a):.1f} {64 + 22 * math.sin(a):.1f} L{64 + 34 * math.cos(a):.1f} {64 + 34 * math.sin(a):.1f}', 5) for a in [i * math.pi / 4 for i in range(8)])
     out('Fx', 'mine', Rr(blur('<circle cx="64" cy="64" r="34" fill="#ffb35c"/>', 10, .6) + spikes
                          + C(64, 64, 24, A.G('#9aa3ad', 'r', .7, .35), 4.5) + blur(C(64, 64, 8, '#ff7a5a', 0), 3, .9) + C(64, 64, 6, '#ffd0b8', 0), 128, 128, 0))
-    arms = ''.join(f'<path d="M180 180 Q260 160 268 70" transform="rotate({i * 72} 180 180)" fill="none" stroke="#ffffff" stroke-width="{16 - i}" stroke-linecap="round" opacity=".8"/>' for i in range(5))
-    out('Fx', 'vortex', Rr(f'<circle cx="180" cy="180" r="170" fill="{_rgrad("#ffffff", .5, .03, .45)}"/>'
-                           + blur(arms, 6, .9) + arms + blur('<circle cx="180" cy="180" r="40" fill="#ffffff"/>', 14, .9), 360, 360, 0))
+    # 11-16 저녁 "희미해 보여서 조금 더 선명하게": 팔을 굵고 진하게 · 바깥 테 · 가운데는 어두운 구멍 + 밝은 테 (색은 코드에서 곱함)
+    arms = ''.join(f'<path d="M180 180 Q262 168 272 74" transform="rotate({i * 60} 180 180)" fill="none" stroke="#ffffff" stroke-width="{24 - i * 2}" stroke-linecap="round"/>' for i in range(6))
+    out('Fx', 'vortex', Rr(f'<circle cx="180" cy="180" r="172" fill="{_rgrad("#ffffff", .75, .12, .5)}"/>'
+                           + '<circle cx="180" cy="180" r="166" fill="none" stroke="#ffffff" stroke-width="7" opacity=".9"/>'
+                           + blur(arms, 7, 1) + arms
+                           + '<circle cx="180" cy="180" r="44" fill="#2a2140"/><circle cx="180" cy="180" r="44" fill="none" stroke="#ffffff" stroke-width="8"/>', 360, 360, 0))
+    # 불바퀴 둘레 이글이글 불꽃 (흰 → 코드에서 주황 · 빛 더하기): 아래 둥근 · 위 뾰족
+    out('Fx', 'flame', Rr(blur('<path d="M32 92 C10 92 6 66 18 50 C26 38 28 22 32 4 C38 24 46 36 50 50 C60 68 54 92 32 92 Z" fill="#ffffff"/>', 4, .8)
+                          + '<path d="M32 88 C18 88 14 70 22 58 C28 48 30 36 32 22 C36 36 42 46 44 58 C50 72 46 88 32 88 Z" fill="#ffffff"/>', 64, 96, 0))
     out('Fx', 'wheel', Rr(f'<g transform="translate({100 - A.WHEEL_C[0] * 1.9},{100 - A.WHEEL_C[1] * 1.9}) scale(1.9)">{A.t_wheel_spin()}</g>', 200, 200, 0))
     out('Fx', 'puff', Rr(puff(50, 50, 40, '#ffffff', 5, 7, 3), 100, 100, 1.0))
     out('Fx', 'dot', Rr(f'<circle cx="16" cy="16" r="14" fill="#ffffff"/>', 32, 32, 0))
@@ -300,11 +306,14 @@ def export_ui():
         'white': rrf(0, 0, 80, 80, 24, '#ffffff'), 'window': A.rr(4, 4, 232, 232, 30, CREAM, 6),
         'slot_dash': f'<rect x="4" y="4" width="112" height="112" rx="22" fill="{CREAM2}" stroke="{INK}" stroke-width="5" stroke-dasharray="14 9"/>',
         'band': f'<path d="M3 30 Q3 3 30 3 L90 3 Q117 3 117 30 L117 117 L3 117 Z" fill="#ffffff"/>',
+        # 11-16 저녁 사용자 "속성이 이쁘게 안 보임 — 타원이 아닌 네모(태그를 붙이는 느낌)": 흰 바탕(코드에서 속성 색) + 왼쪽 뾰족 + 구멍
+        'tag': f'<path d="M28 5 L106 5 Q115 5 115 14 L115 58 Q115 67 106 67 L28 67 L6 36 Z" fill="#ffffff" stroke="{INK}" stroke-width="5" stroke-linejoin="round"/>'
+               f'<circle cx="26" cy="36" r="6.5" fill="{INK}"/><path d="M34 13 L104 13" stroke="#ffffff" stroke-width="4" opacity=".5"/>',
     }
-    sizes = {'pill': (120, 80), 'pill_dark': (120, 80), 'track': (80, 40), 'fill': (80, 40), 'white': (80, 80), 'window': (240, 240)}
+    sizes = {'tag': (120, 72), 'pill': (120, 80), 'pill_dark': (120, 80), 'track': (80, 40), 'fill': (80, 40), 'white': (80, 80), 'window': (240, 240)}
     for n, svg in items.items():
         w, h = sizes.get(n, (120, 120))
-        out('UI', n, Rr(svg, w, h, A.WOB['ui'] if n not in ('fill', 'white', 'band') else 0, .04))
+        out('UI', n, Rr(svg, w, h, A.WOB['ui'] if n not in ('fill', 'white', 'band', 'tag') else 0, .04))
     print('ui', len(items))
 
 

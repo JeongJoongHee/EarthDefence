@@ -172,6 +172,12 @@ namespace EarthDef
         void Fire(Enemy target)
         {
             var b = Battle.I;
+            Audio.Play(t.row.kind switch
+            {
+                "rail" => Audio.Sfx.Rail, "laser" => Audio.Sfx.Laser, "field" => Audio.Sfx.Field, "hive" => Audio.Sfx.Bee, "missile" => Audio.Sfx.Missile,
+                "bolt" => Audio.Sfx.Bolt, "cannon" => Audio.Sfx.BigBoom, "focus" => Audio.Sfx.Focus, "vortex" => Audio.Sfx.Vortex, "wheel" => Audio.Sfx.Wheel,
+                "tesla" => Audio.Sfx.Tesla, _ => Audio.Sfx.Gun,
+            });
             switch (t.row.kind)
             {
                 case "gun": Gun(target, 1, t.row.rate); break;
@@ -227,7 +233,8 @@ namespace EarthDef
                     for (int i = 0; i < t.Shots; i++)
                     {
                         var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 9f);
-                        var pr = new Projectile(t, "cannonball", Head, d, t.row.speed, t.row.rate, t.Pierce, 1f) { hitR = 0.3f, life = 2.5f };
+                        // 11-16 저녁 사용자 "발사체 크기 2배"
+                        var pr = new Projectile(t, "cannonball", Head, d, t.row.speed, t.row.rate, t.Pierce, 2f) { hitR = 0.42f, life = 2.5f };
                         if (i == 0) Fx.Muzzle(Head, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, Projectile.ShotColor("cannonball"), 1.2f);
                         bool first = true;
                         pr.onHit = (p, e) => { CannonHit(p.pos, p.dir, e, first); first = false; };
@@ -249,7 +256,7 @@ namespace EarthDef
                 }
                 case "vortex":
                 {
-                    float spd = t.row.speed, pull = 2.4f * (1 + (float)t.S("pull_pow") / 100f);
+                    float spd = t.row.speed, pull = 3.6f * (1 + (float)t.S("pull_pow") / 100f);   // 11-16 저녁 "끌어들이는 효과를 조금 더 강하게" 2.4 → 3.6
                     for (int i = 0; i < t.Shots; i++)
                     {
                         var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 18f);
@@ -308,6 +315,7 @@ namespace EarthDef
             if (chargeShot) shots = Mathf.CeilToInt(shots * (1 + (float)t.S("charge_shots") / 100f));
             var from = Head;
             var dir = (target.Pos - from).normalized;
+            if (chargeShot) Audio.Play(Audio.Sfx.Gun, 0.8f);
             Fx.Muzzle(from, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg, Projectile.ShotColor(chargeShot ? "bullet_charge" : "bullet"), chargeShot ? 1.3f : 0.9f);
             for (int i = 0; i < shots; i++)
             {

@@ -26,7 +26,7 @@ namespace EarthDef
             if (!CanUpgradeTurret(id)) return false;
             var c = Cost(id); int i = S.TIdx(id);
             S.shards[i] -= c.shards; S.gold -= c.gold; S.tLv[i]++;
-            MissionAdd("up");
+            MissionAdd("up"); Audio.Play(Audio.Sfx.Upgrade);
             S.Save();
             return true;
         }
@@ -35,7 +35,7 @@ namespace EarthDef
         {
             if (!CanUpgradeBase) return false;
             S.gold -= S.BaseCost; S.baseLv++;
-            MissionAdd("up");
+            MissionAdd("up"); Audio.Play(Audio.Sfx.Upgrade);
             S.Save();
             return true;
         }
@@ -50,14 +50,15 @@ namespace EarthDef
             var open = Tables.Turrets.FindAll(t => S.Unlocked(t));
             for (int i = 0; i < sh; i++) S.shards[S.TIdx(open[rnd.Next(open.Count)].id)]++;
             S.patrolFrom = SaveData.Clock;
-            MissionAdd("patrol");
+            MissionAdd("patrol"); Audio.Play(Audio.Sfx.Coin);
             S.Save();
             return (g, sh);
         }
 
         // ---------- 스태미나 (기획서 2장: 전투마다 씀 · 시간으로 참) ----------
         public static bool StaminaOn => Tables.Ci("Stamina_On", 1) == 1;
-        public static int StaminaMax => Tables.Ci("Stamina_Max", 60);
+        /// <summary>11-16 저녁 사용자 "시작 30, 스테이지를 깰 때마다 +1, 최대 80"</summary>
+        public static int StaminaMax => Mathf.Min(Tables.Ci("Stamina_Cap", 80), Tables.Ci("Stamina_Base", 30) + Tables.Ci("Stamina_Per_Stage", 1) * (S != null ? S.best : 0));
         static long RegenSec => Math.Max(1, (long)Tables.C("Stamina_Regen_Sec", 360));
         /// <summary>지금 스태미나 (흐른 시간만큼 채워서 돌려줌 · 최대 넘게 받은 것은 그대로 둠)</summary>
         public static int Stamina
@@ -129,6 +130,7 @@ namespace EarthDef
             S.mGot[i] = 1;
             var m = Tables.Missions[i];
             var s = Gear.Give(m.reward, m.value);
+            Audio.Play(Audio.Sfx.Coin);
             S.Save();
             return s;
         }
@@ -145,6 +147,7 @@ namespace EarthDef
             var row = Tables.Attend[S.attendN % AttendDays % Tables.Attend.Count];
             S.attendN++; S.attendLast = SaveData.Today;
             var s = Gear.Give(row.reward, row.value);
+            Audio.Play(Audio.Sfx.Coin);
             S.Save();
             return s;
         }

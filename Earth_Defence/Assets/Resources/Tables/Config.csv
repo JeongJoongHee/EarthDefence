@@ -89,7 +89,7 @@ Spawn_Below_Hud,0.6,UI 아래 끝에서 이만큼 아래가 적이 나오는 줄
 Guardian_Smooth,0.22,"대장 카피 이동이 목표에 닿는 시간(초) — 클수록 묵직 (11-16 ""무게감"")"
 Idle_Fx,1,"터렛 대기 효과 세기 배율 (1 = 기본 · 0.5 = 옅게 · 0 = 끄기) — 11-16 ""작동하는 느낌"""
 Stamina_On,1,1 = 전투마다 스태미나를 씀 (0 = 끔)
-Stamina_Max,60,스태미나 최대 (시간으로 차는 상한)
+Stamina_Max,30,스태미나 최대 (시간으로 차는 상한)
 Stamina_Cost,5,보통 난이도 한 판
 Stamina_Cost_Elite,8,엘리트 난이도 한 판
 Stamina_Regen_Sec,360,스태미나 1 차는 시간(초) — 6분
@@ -136,3 +136,8 @@ Trap_Rate,40,전기 덫 틱 %ATK
 Trap_Time,2,전기 덫 시간(초)
 Tutorial,1,1 = 처음 한 번씩 도움말 (0 = 끔)
 Attend_Days,7,출석 며칠 묶음 (다 받으면 1일부터 다시)
+Stamina_Base,30,"스태미나 최대 시작 값 (11-16 저녁 사용자 ""시작 30"")"
+Stamina_Per_Stage,1,보통 스테이지를 처음 깰 때마다 최대 +
+Stamina_Cap,80,스태미나 최대의 끝 (30 + 50스테이지)
+Bgm_Volume,0.7,배경음 기본 음량 (설정 배경음 % 를 곱함)
+Sfx_Volume,0.75,효과음 기본 음량 (설정 효과음 % 를 곱함)

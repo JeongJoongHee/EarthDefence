@@ -17,6 +17,7 @@ namespace EarthDef
             Tables.Load();
             SaveData.Load();
             Settings.Apply();
+            Audio.Ensure();
             var cam = Camera.main;
             cam.backgroundColor = Art.Night;
             new GameObject("World").AddComponent<World>().Build(cam);
@@ -51,6 +52,8 @@ namespace EarthDef
             Lobby = UIKit.Rect(UIRoot.I.pages, "Lobby").Fill().gameObject.AddComponent<Lobby>();
             Lobby.Build();
             World.I.ShowSlots(0, false);
+            LobbyWalker.Show(true);       // 11-16 저녁: 기지 앞을 대장 카피가 어슬렁어슬렁
+            Audio.Music("lobby");
         }
 
         /// <summary>로비 · 결과 창에서: 스태미나를 내고 시작 (모자라면 스태미나 창)</summary>
@@ -70,7 +73,9 @@ namespace EarthDef
             Battle.I?.Close();
             SaveData.Cur.stage = stage;
             Tutorial.CloseCur();
+            LobbyWalker.Show(false);
             var b = Battle.Begin(stage, seed, elite);
+            Audio.Music("battle");
             BattleUI = UIKit.Rect(UIRoot.I.pages, "BattleUI").Fill().gameObject.AddComponent<BattleUI>();
             BattleUI.Build(b);
         }

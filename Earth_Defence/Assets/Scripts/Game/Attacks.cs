@@ -266,7 +266,7 @@ namespace EarthDef
             // 그림 160x600 @PPU200 = 0.8 x 3칸 (11-16 네온: 번짐 포함이라 넓어짐)
             float h = mini ? 3.5f : top - bottom;
             go.transform.localScale = new Vector3(width / 0.8f * 1.5f, h / 3f, 1);
-            if (mini) go.transform.position = new Vector3(x, y + 1.2f, 0);
+            if (mini) { go.transform.position = new Vector3(x, y + 1.2f, 0); Audio.Play(Audio.Sfx.Zap, 0.7f); }
             Fx.Glow(new Vector2(x, mini ? y : bottom + 0.2f), mini ? 0.5f : 0.9f, Art.Hex("#ffd84a"), 0.25f);
         }
 

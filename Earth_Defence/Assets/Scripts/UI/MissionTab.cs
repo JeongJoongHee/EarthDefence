@@ -125,7 +125,6 @@ namespace EarthDef
             Toggle(p, ref y, L.T("set_vib"), () => S.vib, v => S.vib = v);
             Toggle(p, ref y, L.T("set_nums"), () => S.nums, v => S.nums = v);
             Toggle(p, ref y, L.T("set_fps"), () => S.fps60, v => { S.fps60 = v; Apply(); });
-            p.Text(L.T("sound_soon"), y + 10, 26, Art.Soft);
             p.Btn("btn_orange", L.T("set_tutorial"), 0, 70, 520, () => { S.tut.Clear(); S.Save(); Toast.Show(L.T("ok")); p.Close(); }, 110);
         }
 

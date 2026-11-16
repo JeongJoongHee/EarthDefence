@@ -69,6 +69,7 @@ namespace EarthDef
         {
             if (e == null || e.dead) return false;
             bool killed = e.Damage(d);
+            if (number) Audio.Play(Audio.Sfx.Hit);
             if (number && (SaveData.Cur == null || SaveData.Cur.nums)) Fx.Number(e.Pos + Vector2.up * e.radius, d, crit, e);
             if (killed) Battle.I?.OnKill(e, src);
             return killed;
@@ -120,6 +121,7 @@ namespace EarthDef
         public static void Explode(TurretInst t, Vector2 at, float radius, double ratePct, Color? c = null)
         {
             Fx.Burst(at, radius, c);
+            Audio.Play(Audio.Sfx.Boom, Mathf.Clamp(radius / 1.2f, 0.4f, 1f));
             var list = Battle.I?.enemies;
             if (list == null) return;
             for (int i = list.Count - 1; i >= 0; i--)

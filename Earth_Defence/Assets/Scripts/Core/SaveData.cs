@@ -73,7 +73,7 @@ namespace EarthDef
             stage = Mathf.Clamp(stage, 1, Mathf.Min(Tables.Stages.Count, best + 1));
             baseLv = Mathf.Max(1, baseLv);
             if (patrolFrom <= 0) patrolFrom = Clock;
-            if (stamina < 0) { stamina = Tables.Ci("Stamina_Max", 60); staminaAt = Clock; }
+            if (stamina < 0) { stamina = Tables.Ci("Stamina_Base", 30); staminaAt = Clock; }
             gear ??= new(); chips ??= new(); mProg ??= new(); mGot ??= new(); tut ??= new(); seen ??= new();
             foreach (var g in gear) if (g.uid >= nextUid) nextUid = g.uid + 1;
             foreach (var c in chips) if (c.uid >= nextUid) nextUid = c.uid + 1;

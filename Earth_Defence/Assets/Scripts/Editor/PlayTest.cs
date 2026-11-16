@@ -32,6 +32,8 @@ namespace EarthDef.EditorTools
         public static void Run() => Start("");
         /// <summary>11-16 밤 터렛 대기 효과 촬영: Logs/PlayTest/idle/p0_*.png(효과 끔) · p1_*.png(켬) → tools/idle_gif.py 가 GIF 비교 HTML</summary>
         public static void RunIdle() => Start("idle");
+        /// <summary>11-16 저녁 소리 검토: Logs/Sound/ 에 배경음 · 효과음 wav + 전투 장면 효과음 기록(json) → tools/sound_review.py</summary>
+        public static void RunSound() => Start("sound");
 
         static void Start(string mode)
         {
@@ -71,7 +73,8 @@ namespace EarthDef.EditorTools
         IEnumerator Start()
         {
             float timeout = Time.realtimeSinceStartup + 420f;
-            var main = StartCoroutine(SessionState.GetString(PlayTest.ModeKey, "") == "idle" ? IdleShots() : Steps());
+            string mode = SessionState.GetString(PlayTest.ModeKey, "");
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -79,6 +82,49 @@ namespace EarthDef.EditorTools
         }
 
         bool running = true;
+
+        // ---------- 소리 검토 (RunSound) ----------
+        static void Wav(string path, float[] d)
+        {
+            using var f = new BinaryWriter(File.Create(path));
+            int n = d.Length;
+            f.Write(System.Text.Encoding.ASCII.GetBytes("RIFF")); f.Write(36 + n * 2); f.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "));
+            f.Write(16); f.Write((short)1); f.Write((short)1); f.Write(Audio.SR); f.Write(Audio.SR * 2); f.Write((short)2); f.Write((short)16);
+            f.Write(System.Text.Encoding.ASCII.GetBytes("data")); f.Write(n * 2);
+            foreach (var v in d) f.Write((short)Mathf.RoundToInt(Mathf.Clamp(v, -1f, 1f) * 32767));
+        }
+
+        static void SaveEvents(string path, List<(float t, Audio.Sfx s, float vol, float pitch)> ev, float t0)
+        {
+            var sb = new System.Text.StringBuilder("[");
+            for (int i = 0; i < ev.Count; i++)
+                sb.Append(i > 0 ? "," : "").Append($"{{\"t\":{(ev[i].t - t0).ToString(System.Globalization.CultureInfo.InvariantCulture)},\"s\":\"{ev[i].s}\",\"v\":{ev[i].vol.ToString(System.Globalization.CultureInfo.InvariantCulture)},\"p\":{ev[i].pitch.ToString(System.Globalization.CultureInfo.InvariantCulture)}}}");
+            File.WriteAllText(path, sb.Append("]").ToString());
+        }
+
+        IEnumerator SoundDump()
+        {
+            yield return null;
+            Lobby.NoIntro = true; Popup.CloseAll();
+            string dir = "Logs/Sound"; Directory.CreateDirectory(dir);
+            foreach (var kv in Audio.SfxData) Wav($"{dir}/sfx_{kv.Key}.wav", kv.Value);
+            foreach (var n in new[] { "lobby", "battle", "boss" }) { var d = Audio.Song(n); Wav($"{dir}/bgm_{n}.wav", d); Log($"배경음 {n} {d.Length / (float)Audio.SR:0.0}초"); }
+            Check(Audio.SfxData.Count == System.Enum.GetValues(typeof(Audio.Sfx)).Length, $"효과음 {Audio.SfxData.Count}개 wav");
+            // 전투 장면: 스테이지 8 · 터렛 4칸(관통포 · 레이저 · 벌집 · 쾅쾅 대포) · 30초 / 보스 장면: 보스 2초 전부터 20초
+            S.best = 30;
+            Game.StartStage(8, 808); yield return null;
+            foreach (var id in new[] { "new_rail", "new_laser", "new_hive", "new_cannon", "g_shot", "r_bA" }) Force(id);
+            Audio.Record = new List<(float, Audio.Sfx, float, float)>();
+            float t0 = B.time; FF(30f);
+            SaveEvents($"{dir}/events_battle.json", Audio.Record, t0);
+            Log($"전투 30초 효과음 {Audio.Record.Count}번");
+            Audio.Record = new List<(float, Audio.Sfx, float, float)>();
+            B.time = Tables.Cf("Boss_Time") - 2f; t0 = B.time; FF(20f);
+            SaveEvents($"{dir}/events_boss.json", Audio.Record, t0);
+            Log($"보스 20초 효과음 {Audio.Record.Count}번");
+            Audio.Record = null;
+            running = false;
+        }
 
         /// <summary>대기 효과 촬영: 같은 판을 효과 끔(p0) · 켬(p1) 으로 3초씩, 1/30초 고정 간격 · 묶음 s0 = 레이저 · 벼락 · 관통포 · 드론, s1 = 벌집 · 미사일</summary>
         IEnumerator IdleShots()
@@ -502,8 +548,20 @@ namespace EarthDef.EditorTools
             S.elite = true; Game.Lobby.Refresh(); yield return Wait(0.2f);
             Capture("18b_lobby_elite");
             S.elite = false;
+            {   // 11-16 저녁 의견: 스태미나 최대 = 30 + 깬 스테이지 (최대 80) · 기지 앞을 걷는 대장 카피
+                int b0 = S.best;
+                S.best = 0; int m0 = Meta.StaminaMax; S.best = 30; int m30 = Meta.StaminaMax; S.best = 99; int m99 = Meta.StaminaMax; S.best = b0;
+                Check(m0 == 30 && m30 == 60 && m99 == 80, $"스태미나 최대: 처음 {m0} · 30스테이지 {m30} · 끝 {m99}");
+                Check(LobbyWalker.I != null, "로비에 대장 카피가 있음");
+                float wx0 = LobbyWalker.I.X; yield return Wait(4f);
+                Check(LobbyWalker.I != null && Mathf.Abs(LobbyWalker.I.X - wx0) > 0.05f, $"대장 카피가 어슬렁 걸음 ({wx0:0.00} > {LobbyWalker.I?.X:0.00})");
+                Capture("18c_lobby_walk");
+            }
             Game.Lobby.SetTab(1); yield return Wait(0.3f);
             Capture("19_lobby_turret");
+            Lobby.TurretInfo(Tables.TurretById["vortex"]); yield return Wait(0.3f);
+            Capture("19b_turret_info");
+            Popup.CloseAll();
             Meta.MissionAdd("kill", 9999);
             Game.Lobby.SetTab(3); yield return Wait(0.3f);
             Capture("20_lobby_mission");
@@ -521,6 +579,21 @@ namespace EarthDef.EditorTools
             Check(back.gear.Count == S.gear.Count && back.chips.Count == S.chips.Count && back.chips.Exists(c => c.at >= 0) && back.eliteBest == S.eliteBest && back.attendN == S.attendN,
                   $"세이브 → 다시 읽기: 장비 {back.gear.Count} · 칩 {back.chips.Count} · 엘리트 {back.eliteBest}");
             SaveData.NowOffset = 0;
+            // 소리 (11-16 저녁)
+            Check(Audio.I != null && Audio.SfxData.Count == System.Enum.GetValues(typeof(Audio.Sfx)).Length, $"효과음 {Audio.SfxData.Count}개 만들어짐");
+            Check(Audio.Played > 100, $"시험 동안 효과음 {Audio.Played}번 재생");
+            Game.ToLobby(); yield return null;
+            float w0 = Time.realtimeSinceStartup;
+            while (Audio.Playing != "lobby" && Time.realtimeSinceStartup - w0 < 20f) yield return null;
+            Check(Audio.Playing == "lobby", $"로비 배경음 ({Audio.Playing}, {Time.realtimeSinceStartup - w0:0.0}초)");
+            Game.StartStage(1, 3); yield return null;
+            w0 = Time.realtimeSinceStartup;
+            while (Audio.Playing != "battle" && Time.realtimeSinceStartup - w0 < 20f) yield return null;
+            Check(Audio.Playing == "battle", "전투 배경음");
+            B.time = Tables.Cf("Boss_Time") - 0.1f; FF(0.5f, 1);
+            w0 = Time.realtimeSinceStartup;
+            while (Audio.Playing != "boss" && Time.realtimeSinceStartup - w0 < 20f) yield return null;
+            Check(Audio.Playing == "boss", "보스가 나오면 보스 배경음");
         }
 
         // ---------- 시험 도우미 ----------

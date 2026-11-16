@@ -61,6 +61,7 @@ namespace EarthDef
         {
             if (!CanUp(g)) return false;
             S.gold -= UpGold(g); S.parts -= UpParts(g); g.lv++;
+            Audio.Play(Audio.Sfx.Upgrade);
             Meta.MissionAdd("up");
             S.Save(); return true;
         }
@@ -82,6 +83,7 @@ namespace EarthDef
             var set = MergeSet(g); if (set == null) return null;
             int lv = 1; foreach (var x in set) { lv = Mathf.Max(lv, x.lv); S.gear.Remove(x); }
             var n = NewGear(g.grade + 1, g.part); n.lv = Mathf.Min(lv, n.LvMax);
+            Audio.Play(Audio.Sfx.Merge);
             S.Save(); return n;
         }
 
@@ -117,7 +119,7 @@ namespace EarthDef
         {
             var set = ChipMergeSet(c); if (set == null) return null;
             foreach (var x in set) S.chips.Remove(x);
-            var n = NewChip(c.q + 1, c.id); S.Save(); return n;
+            var n = NewChip(c.q + 1, c.id); S.Save(); Audio.Play(Audio.Sfx.Merge); return n;
         }
         /// <summary>가방의 칩을 되는 데까지 모두 합성 → 합성 횟수</summary>
         public static int MergeAllChips()

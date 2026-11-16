@@ -159,12 +159,15 @@ namespace EarthDef
                 eliteSpawned = true;
                 Spawn(stage.elite, new Vector2(0, World.SpawnY + 0.5f));
                 Banner?.Invoke(L.T("elite_warn"));
+                Audio.Play(Audio.Sfx.EliteWarn);
             }
             if (!bossSpawned && time >= Tables.Cf("Boss_Time", 210))
             {
                 bossSpawned = true;
                 boss = Spawn(stage.boss, new Vector2(0, World.SpawnY + 1f));
                 Banner?.Invoke(L.T("boss_warn"));
+                Audio.Play(Audio.Sfx.BossWarn);
+                Audio.Music("boss");
             }
         }
 
@@ -192,6 +195,7 @@ namespace EarthDef
         public void OnKill(Enemy e, TurretInst src)
         {
             kills++;
+            Audio.Play(e.row.IsBoss || e.row.IsElite ? Audio.Sfx.BigBoom : Audio.Sfx.Kill);
             goldGot += Tables.C("Kill_Gold", 1) * (1 + 0.1 * (stageNo - 1)) * (e.row.IsBoss ? 30 : e.row.IsElite ? 10 : 1);
             Fx.Hit(e.Pos, e.row.size * 1.3f);
             if (!string.IsNullOrEmpty(e.row.split))
@@ -223,6 +227,7 @@ namespace EarthDef
             if (shield > 0) { double s = Math.Min(shield, d); shield -= s; d -= s; if (d <= 0) { Fx.Ring(at + Vector2.down * 0.2f, 0.6f, Art.Sky); return; } }
             baseHp = Math.Max(0, baseHp - d);
             Fx.Hit(at + Vector2.down * 0.3f, 1.2f);
+            Audio.Play(Audio.Sfx.BaseHit);
         }
 
         public void Heal(double frac) { if (st != St.End) baseHp = Math.Min(baseMax, baseHp + baseMax * frac); }
@@ -280,6 +285,7 @@ namespace EarthDef
             offer = run.Roll(Choices, offerIsBoss);
             if (offer.Count == 0) { pendingLevel = 0; pendingBoss = 0; return; }   // 고를 카드가 없으면 넘어감
             st = St.Pick;
+            Audio.Play(Audio.Sfx.LevelUp);
             Changed?.Invoke();
         }
 
@@ -291,6 +297,7 @@ namespace EarthDef
             if (st != St.Pick || i < 0 || i >= offer.Count) return;
             var c = offer[i];
             picks++;
+            Audio.Play(c.kind == "break" ? Audio.Sfx.Break : c.kind == "new" ? Audio.Sfx.Place : Audio.Sfx.CardPick);
             if (c.kind == "break" && lo.B("heal_break") > 0) Heal(lo.B("heal_break") / 100.0);
             int before = run.turrets.Count;
             var t = run.Pick(c);
@@ -318,6 +325,8 @@ namespace EarthDef
         {
             if (st == St.End) return;
             st = St.End; won = win;
+            Audio.Duck(0.35f);
+            Audio.Play(win ? Audio.Sfx.Victory : Audio.Sfx.Defeat);
             Time.timeScale = 1;
             var s = SaveData.Cur;
             FirstClear = win && stageNo > s.best;

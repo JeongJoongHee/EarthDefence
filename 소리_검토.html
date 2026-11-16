@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>소리 검토</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>소리 검토 — 잔잔하고 몽환적으로</h1>
+<p class="note">2026-11-16 · 사용자 "카치건과 비슷한데 잔잔함에 약간 몽환적인 느낌" · 소리는 전부 코드 합성(<code>Core/Audio.cs</code>) · 아래 wav 는 게임이 실제로 만든 소리를 뽑은 것(<code>PlayTest.RunSound</code>) · 숫자는 <code>tools/sound_review.py</code> 가 잰 값</p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>어떻게 만들었나</b><ul>
+<li><b>몽환</b> = 종소리 멜로디에 <b>메아리</b>(점4분 · 여러 번 되울림) + 곡 전체에 <b>큰 잔향</b> · 패드는 살짝 어긋난 두 음이 천천히 일렁임 · 반복 이음새는 두 바퀴 돌려 매끈하게 (이음새 값 0.03~0.15 = 끊김 없음)</li>
+<li><b>잔잔</b> = 로비 68 BPM 드럼 없음 · 전투 84 BPM 아주 약한 킥 · 쉐이커 · 보스 96 BPM 단조 낮은 맥박 (카치건 전투 곡 126 BPM 보다 느림)</li>
+<li><b>효과음</b> = 사인 · 삼각파로 둥글게, 톱니 · 거친 잡음은 줄임 · 레벨 업 · 돌파 · 승리는 종소리 + 잔향</li>
+<li>카치건에서 배운 것: <b>폰 스피커는 400Hz 아래가 거의 안 나와서</b> 폭발 · 보스 등장처럼 낮은 소리는 한 옥타브 위 소리를 섞음 (아래 "고치기 전 → 뒤") · 전투 소리는 채널 10개까지 · 같은 소리 간격 제한</li>
+<li>기본 음량: 배경음 <code>Bgm_Volume</code> 0.7 · 효과음 <code>Sfx_Volume</code> 0.75 (Config) x 설정 창 80%. 전투 장면에서 배경음과 효과음 체감 크기가 비슷(-28.7 / -28.8 dB)하게 맞춤</li>
+</ul></div>
+<h2>① 장면으로 듣기 <small>게임과 같은 음량 · 같은 순서</small></h2>
+<table><tr><th>장면</th><th>듣기</th><th>배경음 / 효과음 체감</th></tr>
+<tr><td>로비 30초</td><td><audio controls preload="none" src="소리_검토/scene_lobby.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>배경음만</td></tr>
+<tr><td>전투 30초 (스테이지 8 · 대장 카피 + 관통포 · 레이저 · 벌집 · 쾅쾅 대포)</td><td><audio controls preload="none" src="소리_검토/scene_battle.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>-28.7 / -28.8 dB · 효과음 472번</td></tr>
+<tr><td>보스 20초 (보스 등장 → 보스전)</td><td><audio controls preload="none" src="소리_검토/scene_boss.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>-27.6 / -28.7 dB · 효과음 417번</td></tr>
+<tr><td>(고치기 전) 전투 30초</td><td><audio controls preload="none" src="소리_검토/before/scene_battle.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>폭발 · 장판 소리가 폰에서 안 들리던 판 · 음량도 3dB 작음</td></tr>
+</table>
+<h2>② 배경음 3곡</h2>
+<table><tr><th>곡</th><th>듣기</th><th>길이</th><th>체감 · 폰</th><th>이음새</th></tr><tr><td>로비 &quot;별빛 기지&quot;</td><td><audio controls preload="none" src="소리_검토/bgm_lobby.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>56초 반복</td><td>-28.7 · -29.8 dB</td><td>0.03</td></tr><tr><td>전투 &quot;꿈속 순찰&quot;</td><td><audio controls preload="none" src="소리_검토/bgm_battle.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>57초 반복</td><td>-27.3 · -28.5 dB</td><td>0.06</td></tr><tr><td>보스 &quot;검은 행성&quot;</td><td><audio controls preload="none" src="소리_검토/bgm_boss.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>40초 반복</td><td>-26.6 · -29.0 dB</td><td>0.15</td></tr></table><p class="note">로비 = D장조 Dmaj7 · Bm7 · Gmaj7 · Asus (드럼 없음) / 전투 = Bm · G · D · A + Em9 · F#m 구간 (유리 같은 분산화음 · 약한 킥) / 보스 = Bm · G · Em · F# 단조 (낮은 8분 맥박 · 북)</p><h2>③ 효과음 29개</h2><table><tr><th>소리</th><th>어디서</th><th>듣기</th><th>길이(꼬리)</th><th>체감 · 폰</th><th>고치기 전</th></tr><tr><td>UiClick</td><td>버튼</td><td><audio controls preload="none" src="소리_검토/sfx_UiClick.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.04초 (0.04)</td><td>-34.8 · -34.8</td><td></td></tr><tr><td>Gun</td><td>대장 카피 소총</td><td><audio controls preload="none" src="소리_검토/sfx_Gun.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.05초 (0.04)</td><td>-33.7 · -33.7</td><td></td></tr><tr><td>Rail</td><td>관통포</td><td><audio controls preload="none" src="소리_검토/sfx_Rail.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.08초 (0.72)</td><td>-23.5 · -23.5</td><td></td></tr><tr><td>Laser</td><td>레이저 포</td><td><audio controls preload="none" src="소리_검토/sfx_Laser.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.28초 (0.97)</td><td>-24.8 · -24.8</td><td></td></tr><tr><td>Field</td><td>끈끈이 드론 장판</td><td><audio controls preload="none" src="소리_검토/sfx_Field.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.41초 (1.05)</td><td>-27.7 · -27.9</td><td><audio controls preload="none" src="소리_검토/before/sfx_Field.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>220Hz 웅 → 한 옥타브 위가 주인공</small></td></tr><tr><td>Bee</td><td>벌집 벌</td><td><audio controls preload="none" src="소리_검토/sfx_Bee.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.14초 (0.13)</td><td>-34.9 · -34.9</td><td></td></tr><tr><td>Missile</td><td>유도 미사일</td><td><audio controls preload="none" src="소리_검토/sfx_Missile.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.32초 (0.32)</td><td>-30.8 · -33.0</td><td><audio controls preload="none" src="소리_검토/before/sfx_Missile.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>쉬익을 조금 밝게</small></td></tr><tr><td>Boom</td><td>폭발</td><td><audio controls preload="none" src="소리_검토/sfx_Boom.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.19초 (0.68)</td><td>-29.5 · -30.1</td><td><audio controls preload="none" src="소리_검토/before/sfx_Boom.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>낮은 &quot;쿵&quot;만 있어 폰에서 거의 안 들림 → 가운데 소리를 섞음</small></td></tr><tr><td>BigBoom</td><td>쾅쾅 대포 · 보스 처치</td><td><audio controls preload="none" src="소리_검토/sfx_BigBoom.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.30초 (0.80)</td><td>-27.8 · -28.2</td><td><audio controls preload="none" src="소리_검토/before/sfx_BigBoom.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>같은 이유로 가운데 소리를 섞음</small></td></tr><tr><td>Bolt</td><td>벼락탑</td><td><audio controls preload="none" src="소리_검토/sfx_Bolt.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.76초 (0.54)</td><td>-30.0 · -30.0</td><td></td></tr><tr><td>Focus</td><td>집중 빔 (지글지글)</td><td><audio controls preload="none" src="소리_검토/sfx_Focus.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.45초 (0.44)</td><td>-30.2 · -30.2</td><td></td></tr><tr><td>Vortex</td><td>소용돌이포</td><td><audio controls preload="none" src="소리_검토/sfx_Vortex.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.42초 (1.20)</td><td>-30.4 · -30.4</td><td></td></tr><tr><td>Wheel</td><td>불바퀴</td><td><audio controls preload="none" src="소리_검토/sfx_Wheel.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.45초 (0.45)</td><td>-26.8 · -26.9</td><td><audio controls preload="none" src="소리_검토/before/sfx_Wheel.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>불길을 조금 크고 밝게</small></td></tr><tr><td>Tesla</td><td>찌릿 코일 충전</td><td><audio controls preload="none" src="소리_검토/sfx_Tesla.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.42초 (0.41)</td><td>-26.6 · -26.6</td><td></td></tr><tr><td>Zap</td><td>번개 튐 · 작은 낙뢰</td><td><audio controls preload="none" src="소리_검토/sfx_Zap.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.09초 (0.08)</td><td>-39.5 · -39.5</td><td></td></tr><tr><td>Hit</td><td>맞음</td><td><audio controls preload="none" src="소리_검토/sfx_Hit.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.03초 (0.02)</td><td>-45.5 · -45.5</td><td></td></tr><tr><td>Kill</td><td>적 처치</td><td><audio controls preload="none" src="소리_검토/sfx_Kill.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.16초 (0.16)</td><td>-32.3 · -32.4</td><td></td></tr><tr><td>BaseHit</td><td>기지가 맞음</td><td><audio controls preload="none" src="소리_검토/sfx_BaseHit.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>0.22초 (0.15)</td><td>-34.7 · -35.4</td><td><audio controls preload="none" src="소리_검토/before/sfx_BaseHit.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>먹먹한 &quot;퉁&quot;에 가운데 소리를 섞음</small></td></tr><tr><td>LevelUp</td><td>레벨 업</td><td><audio controls preload="none" src="소리_검토/sfx_LevelUp.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.96초 (1.48)</td><td>-22.2 · -22.2</td><td></td></tr><tr><td>CardPick</td><td>카드 고름</td><td><audio controls preload="none" src="소리_검토/sfx_CardPick.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.31초 (1.00)</td><td>-23.6 · -23.6</td><td></td></tr><tr><td>Break</td><td>돌파</td><td><audio controls preload="none" src="소리_검토/sfx_Break.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.89초 (1.44)</td><td>-22.9 · -22.9</td><td></td></tr><tr><td>Place</td><td>새 터렛 놓임</td><td><audio controls preload="none" src="소리_검토/sfx_Place.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.19초 (0.91)</td><td>-25.7 · -25.7</td><td></td></tr><tr><td>BossWarn</td><td>보스 등장</td><td><audio controls preload="none" src="소리_검토/sfx_BossWarn.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>2.57초 (2.19)</td><td>-21.9 · -25.0</td><td><audio controls preload="none" src="소리_검토/before/sfx_BossWarn.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>낮은 화음 → 한 옥타브 위가 주인공 (중간 보스 등장보다 작던 것)</small></td></tr><tr><td>EliteWarn</td><td>중간 보스 등장</td><td><audio controls preload="none" src="소리_검토/sfx_EliteWarn.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.92초 (1.63)</td><td>-23.2 · -23.6</td><td><audio controls preload="none" src="소리_검토/before/sfx_EliteWarn.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>한 옥타브 위로</small></td></tr><tr><td>Victory</td><td>승리</td><td><audio controls preload="none" src="소리_검토/sfx_Victory.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>3.63초 (3.04)</td><td>-20.9 · -21.1</td><td></td></tr><tr><td>Defeat</td><td>패배</td><td><audio controls preload="none" src="소리_검토/sfx_Defeat.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>3.34초 (2.81)</td><td>-26.7 · -27.1</td><td><audio controls preload="none" src="소리_검토/before/sfx_Defeat.wav" style="height:32px;width:100%;max-width:330px"></audio><br><small>아래 화음을 한 옥타브 위로</small></td></tr><tr><td>Coin</td><td>보상 받기</td><td><audio controls preload="none" src="소리_검토/sfx_Coin.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.55초 (1.21)</td><td>-25.4 · -25.4</td><td></td></tr><tr><td>Upgrade</td><td>강화</td><td><audio controls preload="none" src="소리_검토/sfx_Upgrade.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.61초 (1.16)</td><td>-23.9 · -23.9</td><td></td></tr><tr><td>Merge</td><td>합성</td><td><audio controls preload="none" src="소리_검토/sfx_Merge.wav" style="height:32px;width:100%;max-width:330px"></audio></td><td>1.68초 (1.25)</td><td>-23.2 · -23.2</td><td></td></tr></table><h2>④ 들어 보시고 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2><ul class="todo"><li data-id="s-feel"><label><input type="checkbox"><span><span class="tag">확인</span><b>전체 느낌</b> — 잔잔하고 약간 몽환적인가 (장면 ① 부터)</span></label></li><li data-id="s-lobby"><label><input type="checkbox"><span><span class="tag">확인</span><b>로비 곡</b> "별빛 기지" — 드럼 없는 느린 곡</span></label></li><li data-id="s-battle"><label><input type="checkbox"><span><span class="tag">확인</span><b>전투 곡</b> "꿈속 순찰" — 너무 처지거나 졸리지 않은지</span></label></li><li data-id="s-boss"><label><input type="checkbox"><span><span class="tag">확인</span><b>보스 곡</b> "검은 행성" — 긴장감이 충분한지 (단조 · 낮은 맥박)</span></label></li><li data-id="s-sfx"><label><input type="checkbox"><span><span class="tag">확인</span><b>효과음</b> — 거슬리거나 너무 큰/작은 소리 (이름을 적어 주세요)</span></label></li><li data-id="s-vol"><label><input type="checkbox"><span><span class="tag">확인</span><b>배경음 · 효과음 크기 비율</b> — 지금은 전투에서 비슷하게. 설정 창에서 각각 10% 씩 바꿀 수 있음</span></label></li></ul></main>
+<script>
+(function(){
+  var KEY='earthdef-sound-1116', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

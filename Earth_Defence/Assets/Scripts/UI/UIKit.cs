@@ -78,7 +78,7 @@ namespace EarthDef
             var b = im.gameObject.AddComponent<Button>();
             b.transition = Selectable.Transition.None;
             im.gameObject.AddComponent<PressFx>();
-            if (onClick != null) b.onClick.AddListener(() => onClick());
+            if (onClick != null) b.onClick.AddListener(() => { Audio.Play(Audio.Sfx.UiClick); onClick(); });
             if (label != null)
             {
                 var t = Label(im.transform, label, size);
@@ -109,7 +109,7 @@ namespace EarthDef
             var b = g.gameObject.AddComponent<Button>();
             b.transition = Selectable.Transition.None;
             g.gameObject.AddComponent<PressFx>();
-            b.onClick.AddListener(() => onClick());
+            b.onClick.AddListener(() => { Audio.Play(Audio.Sfx.UiClick); onClick(); });
             return b;
         }
 
@@ -138,6 +138,15 @@ namespace EarthDef
             return content;
         }
         public static void SetScrollH(RectTransform content, float h) => content.sizeDelta = new Vector2(0, h);
+
+        /// <summary>속성 태그 (11-16 저녁 "타원이 아닌 네모 — 태그를 붙이는 느낌"): 왼쪽 뾰족 + 구멍 · 속성 색 · 이름</summary>
+        public static Image ElemTag(Transform parent, string elem, float x, float y, float w, float h, int size)
+        {
+            var t = Img(parent, Art.UI("tag"), "Elem_" + elem); t.raycastTarget = false; t.color = Elem.Color(elem);
+            t.rectTransform.TL(x, y, w, h);
+            Label(t.transform, Elem.Name(elem), size, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(h * 0.42f, 2, 4, 0);
+            return t;
+        }
 
         /// <summary>둥근 빨간 점 (받을 것이 있음)</summary>
         public static Image Dot(Transform parent, float x, float y, float size = 34)
