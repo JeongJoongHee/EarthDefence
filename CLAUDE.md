@@ -1,6 +1,12 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
-## ▶ 재개 메모 (2026-11-17 — 4차 수정안 21개 반영)
+## ▶ 재개 메모 (2026-11-17 밤 — 치트 · 코어 그림 · 요청 사항_05)
+- 치트 = UI/Cheat.cs (설정 창 맨 아래 [치트] — 에디터 · 개발용 빌드 · Config Cheat_On 1). 장비(등급 · 부위) · 회로 · 터렛 조각 · 강화 부품. **스토어 빌드 전 Cheat_On 0 확인**.
+- 코어 그림 = gear_tiers.core (세로 에너지 캡슐, 육각 부품과 구분). 빈 칸 g_core 도 같은 그림.
+- 요청 = `요청 사항/요청 사항_05.pptx` (슬라이드 6장 · 그림에 글 상자로 지시). 보고 = `요청05_결과.html` (키 earthdef-req5-1117, 캡처 `캡쳐본 모음/요청05_캡처/`). 시험 120 + 13 + 78 오류 0. 표 = tools/fix5_tables.py.
+- 바뀐 것: 토스트 글자만 · 아래 탭 판 안 · 적 약점 → [적 정보] 안(스테이지 칸 300) · 터렛 정보 칸(능력 · 설명 · 돌파, Lobby.Section) · 장비 능력치 판 아래 3x2 · 부품 "강화 재료" · 부위 창 다시 배치 · GearTab.Equipped(착용되었습니다) · ChipConfirm(확인/취소) · 상점 광고 제거(Product Kind noads, iapOnce "noads", Store.NoAds) · parts_box · shard_box(하루 10) · 큰 골드 · Lv 표시 UI/badge(돌파 단계 붉게) · 마지막 보석 gem_red_* · 돌파 카드 붉은 GlowPulse.
+
+## (지난) 재개 메모 (2026-11-17 — 4차 수정안 21개 반영)
 - 요청 = `요청 사항/4차 수정안.docx`. 보고 = `4차_수정안_결과.html` (키 earthdef-req4-1117, 캡처 `캡쳐본 모음/4차_수정안_캡처/`, 전 = before_*.png). 시험 120 + 13 + 67 오류 0. 결정 대기 r4-art.
 - 표 = tools/fix4_tables.py (회로 이름 짧게 · 장비 이름 = 등급 이름 + 그림 이름 · Chip_Prefix 비움 · Config Attend_Auto 1 · Patrol_Ad_Mul 2). 아이콘 = tools/gear_tiers.py (등급마다 모양 늘어남, 224px, `TIERS_ONLY=1` 이면 등급 아이콘만).
 - 코드: UIKit.SoftOutline(8방향 글자 테두리 — Unity Outline 은 4방향이라 찢겨 보였음) · Art.Soft 진하게 · 팝업 제목 띠 90 · Toast.Show(s, life) 는 로비 전투 탭이면 Lobby.ToastSpot(스테이지 칸 ↔ [전투 시작] 사이) · 탭 7개(Tabs 끝에 "looks", 보이는 순서 TabOrder) · Looks.Build(탭 화면) · 순찰은 [전투 시작] 아래 + [광고 2배] · 출석 자동 받기(Intro) · Lobby.LvTable · GearTab.GearUpPopup · ChipWindow 새 모양 · Gear.StatName 끝 "-" 뗌(StatVal reduce 가 "-6").

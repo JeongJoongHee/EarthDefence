@@ -44,28 +44,31 @@ namespace EarthDef
             lobby = l; root = (RectTransform)transform;
             var top = UIKit.Panel(root, "card", "Top"); top.rectTransform.TL(20, 4, 1040, 610);
             var me = UIKit.Img(top.transform, Art.TurretUI("guardian"), "Guardian"); me.raycastTarget = false;
-            me.rectTransform.Place(0.5f, 1, new Vector2(0, -20), new Vector2(330, 330), new Vector2(0.5f, 1));
+            me.rectTransform.Place(0.5f, 1, new Vector2(0, -36), new Vector2(560, 560), new Vector2(0.5f, 1));   // 요청 사항_05: 능력치 칸을 판 밖으로 빼고 대장 카피를 크게
             for (int i = 0; i < 3; i++) { Slot(top.transform, Left[i], 34, 22 + i * 192); Slot(top.transform, Right[i], 856, 22 + i * 192); }
             // 2차 수정안: 능력치를 네모 칸으로 (3 x 2 + 칩 수)
             string[] keys = { "st_atk", "st_hp", "st_reduce", "st_crit", "st_crit_dmg", "st_cd" };
             for (int i = 0; i < keys.Length; i++)
             {
-                var box = UIKit.Panel(top.transform, "card_white", "Stat" + i); box.rectTransform.TL(206 + i % 3 * 210, 352 + i / 3 * 118, 200, 108);
-                UIKit.Label(box.transform, L.T(keys[i]).TrimEnd(' ', '-'), 22, Art.Soft, TextAnchor.UpperCenter, false).rectTransform.Fill(4, 50, 4, 12);
-                statV[i] = UIKit.Label(box.transform, "", 34, Art.Ink, TextAnchor.LowerCenter, false); statV[i].rectTransform.Fill(4, 18, 4, 40);
+                var box = UIKit.Panel(root, "card_white", "Stat" + i); box.rectTransform.TL(24 + i % 3 * 346, 624 + i / 3 * 70, 336, 62);
+                UIKit.Label(box.transform, L.T(keys[i]).TrimEnd(' ', '-'), 26, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.Fill(20, 6, 120, 2);
+                statV[i] = UIKit.Label(box.transform, "", 32, Art.Ink, TextAnchor.MiddleRight, false); statV[i].rectTransform.Fill(120, 6, 20, 2);
             }
             statT = UIKit.Label(top.transform, "", 22, Art.Soft, TextAnchor.MiddleCenter, false); statT.rectTransform.TL(206, 588, 620, 20); statT.gameObject.SetActive(false);
 
-            gearB = UIKit.Btn(root, "btn_orange", "", 34, () => { showChips = false; Refresh(); }, "GearList"); ((RectTransform)gearB.transform).TL(26, 626, 300, 96);
-            chipB = UIKit.Btn(root, "btn_cream", "", 34, () => { showChips = true; Refresh(); }, "ChipList"); ((RectTransform)chipB.transform).TL(336, 626, 300, 96);
-            var pp = UIKit.Panel(root, "pill", "Parts"); pp.rectTransform.TL(648, 632, 222, 84);
+            gearB = UIKit.Btn(root, "btn_orange", "", 34, () => { showChips = false; Refresh(); }, "GearList"); ((RectTransform)gearB.transform).TL(26, 768, 300, 96);
+            chipB = UIKit.Btn(root, "btn_cream", "", 34, () => { showChips = true; Refresh(); }, "ChipList"); ((RectTransform)chipB.transform).TL(336, 768, 300, 96);
+            // 부품 (요청 사항_05 "장비 강화 재료라는 안내 필요"): 위에 "강화 재료" 글자 · 누르면 설명 토스트
+            var pp = UIKit.Panel(root, "pill", "Parts"); pp.rectTransform.TL(648, 770, 222, 92);
             var pi = UIKit.Img(pp.transform, Art.Icon("parts"), "Icon"); pi.rectTransform.Place(0, 0.5f, new Vector2(8, 0), new Vector2(70, 70), new Vector2(0, 0.5f));
-            partsT = UIKit.Label(pp.transform, "", 34, Art.Ink, TextAnchor.MiddleLeft, false); partsT.rectTransform.Fill(84, 6, 10, 0);
-            mergeB = UIKit.Btn(root, "btn_green", L.T("merge_title"), 28, MergeAll, "MergeAll"); ((RectTransform)mergeB.transform).TL(880, 626, 176, 96);
+            UIKit.Label(pp.transform, L.T("parts_label"), 20, Art.Brown, TextAnchor.UpperLeft, false).rectTransform.Fill(84, 46, 6, 8);
+            partsT = UIKit.Label(pp.transform, "", 32, Art.Ink, TextAnchor.LowerLeft, false); partsT.rectTransform.Fill(84, 12, 10, 36);
+            UIKit.Clickable(pp, () => Toast.Show(L.T("parts_info"), 2.6f));
+            mergeB = UIKit.Btn(root, "btn_green", L.T("merge_title"), 28, MergeAll, "MergeAll"); ((RectTransform)mergeB.transform).TL(880, 768, 176, 96);
 
             var inv = UIKit.Panel(root, "card_white", "Bag");
             inv.rectTransform.anchorMin = Vector2.zero; inv.rectTransform.anchorMax = Vector2.one;
-            inv.rectTransform.offsetMin = new Vector2(20, 6); inv.rectTransform.offsetMax = new Vector2(-20, -734);
+            inv.rectTransform.offsetMin = new Vector2(20, 6); inv.rectTransform.offsetMax = new Vector2(-20, -876);
             grid = UIKit.Scroll(inv.transform, "Scroll"); grid.parent.GetComponent<RectTransform>().Fill(8, 14, 8, 8);
         }
 
@@ -187,49 +190,84 @@ namespace EarthDef
             });
         }
 
-        // ---------- 부위 창 ----------
+        // ---------- 부위 창 (요청 사항_05: 장비 정보 → [강화] [빼기] → 회로 칸 → 회로 설명, 위에서부터 겹치지 않게) ----------
         public void PartWindow(int pi)
         {
             var row = Tables.GearParts[pi];
-            var p = Popup.Make(row.name, 960, 1240, () => { Refresh(); lobby.Refresh(); });
             var g = Gear.On(row.part);
+            var p = Popup.Make(row.name, 960, g != null ? 1010 : 720, () => { Refresh(); lobby.Refresh(); });
+            float cy;
             if (g != null)
             {
                 GearInfo(p.win, g, 116);
-                var up = p.Btn(g.lv < g.LvMax ? "btn_green" : "btn_gray", L.T("enhance"), -200, 770, 400, () => { p.Close(false); GearUpPopup(g, () => PartWindow(pi)); }, 110);
-                p.Btn("btn_orange", L.T("unequip"), 230, 770, 300, () => { Gear.Unequip(g); p.Close(false); PartWindow(pi); }, 110);
+                var up = UIKit.Btn(p.win, g.lv < g.LvMax ? "btn_green" : "btn_gray", L.T("enhance"), 40, () => { p.Close(false); GearUpPopup(g, () => PartWindow(pi)); }, "Up");
+                ((RectTransform)up.transform).TL(60, 356, 420, 100);
+                var un = UIKit.Btn(p.win, "btn_orange", L.T("unequip"), 40, () => { Gear.Unequip(g); p.Close(false); PartWindow(pi); }, "Unequip");
+                ((RectTransform)un.transform).TL(500, 356, 400, 100);
+                cy = 484;
             }
-            else p.Text(L.T("empty_part"), 200, 40, Art.Soft, 60);
-            // 칩 칸
-            var cl = UIKit.Label(p.win, L.T("chip_slots"), 34, Art.Ink, TextAnchor.MiddleLeft, false); cl.rectTransform.TL(50, 380, 400, 50);
+            else { p.Text(L.T("empty_part"), 130, 40, Art.Soft, 60); cy = 214; }
+            var ln = UIKit.Plain(p.win, new Color(0.23f, 0.16f, 0.11f, 0.2f), "ChipLine"); ln.rectTransform.TL(40, cy - 14, 880, 3);
+            var cl = UIKit.Label(p.win, L.T("chip_slots"), 32, Art.Ink, TextAnchor.MiddleLeft, false); cl.rectTransform.TL(50, cy, 400, 48);
             var desc = new List<string>();
+            float sy = cy + 56;
             for (int i = 0; i < Gear.Slots; i++)
             {
                 int si = i;
-                float x = 46 + i * 150;
+                float x = 46 + i * 148;
                 if (!Gear.SlotOpen(i))
                 {
-                    var lk = UIKit.Tile(p.win, "slot", new Color(0.7f, 0.66f, 0.6f), Art.Icon("lock"), 0.5f, "Lock" + i); lk.rectTransform.TL(x, 436, 136, 136);
-                    UIKit.Label(p.win, L.F("chip_locked", Gear.SlotNeed(i)), 22, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(x - 6, 576, 148, 34);
+                    var lk = UIKit.Tile(p.win, "slot", new Color(0.7f, 0.66f, 0.6f), Art.Icon("lock"), 0.5f, "Lock" + i); lk.rectTransform.TL(x, sy, 132, 132);
+                    UIKit.Label(p.win, L.F("chip_locked", Gear.SlotNeed(i)), 22, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(x - 8, sy + 136, 148, 34);
                     continue;
                 }
                 var c = Gear.ChipAt(pi, i);
                 if (c != null && c.Row != null)
                 {
-                    var t = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.5f, "Chip" + i); t.rectTransform.TL(x, 436, 136, 136);
+                    var t = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.62f, "Chip" + i); t.rectTransform.TL(x, sy, 132, 132);
                     UIKit.Clickable(t, () => { p.Close(false); ChipWindow(c, () => PartWindow(pi)); });
-                    UIKit.Label(p.win, Short(c.Name), 22, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.TL(x - 6, 576, 148, 34);
+                    UIKit.Label(p.win, Short(c.Name), 22, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.TL(x - 8, sy + 136, 148, 34);
                     desc.Add($"{c.Name} ({Tables.Grade(c.q).name}): {c.Row.Desc(c.q)}");
                 }
                 else
                 {
-                    var e = UIKit.Panel(p.win, "slot_dash", "Empty" + i); e.rectTransform.TL(x, 436, 136, 136);
-                    var plus = UIKit.Img(e.transform, Art.Icon("plus"), "Plus"); plus.color = new Color(1, 1, 1, 0.5f); plus.rectTransform.Fill(36, 36, 36, 36);
+                    var e = UIKit.Panel(p.win, "slot_dash", "Empty" + i); e.rectTransform.TL(x, sy, 132, 132);
+                    var plus = UIKit.Img(e.transform, Art.Icon("plus"), "Plus"); plus.color = new Color(1, 1, 1, 0.5f); plus.rectTransform.Fill(34, 34, 34, 34);
                     UIKit.Clickable(e, () => { p.Close(false); ChipChooser(pi, si); });
                 }
             }
             var dt = UIKit.Label(p.win, desc.Count > 0 ? string.Join("\n", desc) : "", 28, Art.Ink, TextAnchor.UpperLeft, false);
-            dt.horizontalOverflow = HorizontalWrapMode.Wrap; dt.rectTransform.TL(50, 620, 860, 140);
+            dt.horizontalOverflow = HorizontalWrapMode.Wrap; dt.rectTransform.TL(50, sy + 184, 860, 170);
+        }
+
+        /// <summary>착용 완료 창 (요청 사항_05 "장비 착용 시 '착용되었습니다.' + 확인")</summary>
+        public static void Equipped(string icon, string name, Color bg, System.Action after = null)
+        {
+            var p = Popup.Make(L.T("equip"), 700, 560, after);
+            var t = UIKit.Tile(p.win, "slot", bg, Art.Icon(icon), 0.7f, "Pic"); t.rectTransform.Place(0.5f, 1, new Vector2(0, -112), new Vector2(150, 150), new Vector2(0.5f, 1));
+            t.gameObject.AddComponent<PopIn>();
+            p.Text(name, 276, 34, Art.Ink, 50);
+            p.Text(L.T("equipped_done"), 330, 38, Art.Green2, 56);
+            p.Btn("btn_green", L.T("ok"), 0, 36, 320, p.Close, 100);
+        }
+
+        /// <summary>회로 착용 확인 (요청 사항_05 "회로를 + 칸이나 회로가 있는 칸에 넣을 때 옵션 안내 → [확인] 착용되었습니다 · [취소] 이전 단계")</summary>
+        static void ChipConfirm(ChipItem c, int part, int slot, System.Action ok)
+        {
+            var cur = Gear.ChipAt(part, slot);
+            var p = Popup.Make(L.T("chip_confirm"), 860, cur != null && cur != c ? 660 : 590);
+            var t = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.7f, "Pic"); t.rectTransform.TL(40, 116, 150, 150);
+            UIKit.Label(p.win, $"{c.Name} ({Tables.Grade(c.q).name})", 36, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(214, 122, 620, 54);
+            var d = UIKit.Label(p.win, c.Row.Desc(c.q), 32, Art.Green2, TextAnchor.UpperLeft, false); d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(214, 182, 610, 90);
+            var q = UIKit.Label(p.win, L.F("chip_confirm_q", Tables.GearParts[part].name, slot + 1), 32, Art.Ink, TextAnchor.MiddleCenter, false);
+            q.horizontalOverflow = HorizontalWrapMode.Wrap; q.rectTransform.TL(30, 292, 800, 90);
+            if (cur != null && cur != c)
+            {
+                var sw = UIKit.Label(p.win, L.F("chip_swap", $"{cur.Name} ({Tables.Grade(cur.q).name})"), 28, Art.Red, TextAnchor.MiddleCenter, false);
+                sw.horizontalOverflow = HorizontalWrapMode.Wrap; sw.rectTransform.TL(30, 384, 800, 70);
+            }
+            p.Btn("btn_cream", L.T("cancel"), -200, 40, 340, p.Close, 104);
+            p.Btn("btn_green", L.T("ok"), 200, 40, 340, () => { p.Close(); ok(); }, 104);
         }
 
         void UpLabel(Button b, GearItem g)
@@ -315,7 +353,7 @@ namespace EarthDef
             var on = Gear.On(g.part);
             GearInfo(p.win, g, 116, on);
             if (on != null) p.Text($"{L.T("equip")}: {on.Name} Lv {on.lv}", 350, 28, Art.Soft);
-            p.Btn("btn_green", L.T("equip"), -230, 380, 400, () => { Gear.Equip(g); p.Close(); }, 110);
+            p.Btn("btn_green", L.T("equip"), -230, 380, 400, () => { Gear.Equip(g); p.Close(); Equipped(g.Icon, g.Name, Color.Lerp(Color.white, g.G.color, 0.75f)); }, 110);
             p.Btn(g.lv < g.LvMax ? "btn_orange" : "btn_gray", L.T("enhance"), 230, 380, 400, () => { p.Close(false); GearUpPopup(g, () => GearWindow(g)); }, 110);
             var set = Gear.MergeSet(g);
             int same = S.gear.FindAll(x => !x.on && x.part == g.part && x.grade == g.grade).Count;
@@ -332,7 +370,7 @@ namespace EarthDef
         public void ChipWindow(ChipItem c, System.Action back = null)
         {
             var r = c.Row;
-            var p = Popup.Make(c.Name, 940, 960, () => { Refresh(); lobby.Refresh(); back?.Invoke(); });
+            var p = Popup.Make(c.Name, 940, 1000, () => { Refresh(); lobby.Refresh(); back?.Invoke(); });
             var t = UIKit.Tile(p.win, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.7f, "Pic"); t.rectTransform.TL(40, 116, 190, 190);
             var gr = UIKit.Panel(p.win, "pill", "Grade"); gr.color = Tables.Grade(c.q).color; gr.rectTransform.TL(256, 120, 150, 48);
             UIKit.Label(gr.transform, Tables.Grade(c.q).name, 28, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
@@ -342,17 +380,18 @@ namespace EarthDef
                 UIKit.Label(p.win, tr.name, 28, Art.Brown, TextAnchor.MiddleLeft, false).rectTransform.TL(490, 120, 400, 48);
             }
             // 능력 (흰 칸 · 큰 글자)
-            var ab = UIKit.Panel(p.win, "card_white", "Ability"); ab.rectTransform.TL(256, 180, 644, 126);
-            UIKit.Label(ab.transform, L.T("chip_ability"), 24, Art.Soft, TextAnchor.UpperLeft, false).rectTransform.TL(20, 10, 300, 34);
-            var d = UIKit.Label(ab.transform, r.Desc(c.q), 38, Art.Ink, TextAnchor.MiddleLeft, false); d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(20, 40, 610, 76);
-            d.resizeTextForBestFit = true; d.resizeTextMinSize = Art.FontSize(26); d.resizeTextMaxSize = Art.FontSize(38);
+            var ab = UIKit.Panel(p.win, "card_white", "Ability"); ab.rectTransform.TL(256, 180, 644, 156);
+            UIKit.Label(ab.transform, L.T("chip_ability"), 24, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(22, 8, 300, 34);
+            var d = UIKit.Label(ab.transform, r.Desc(c.q), 36, Art.Ink, TextAnchor.MiddleLeft, false); d.horizontalOverflow = HorizontalWrapMode.Wrap; d.verticalOverflow = VerticalWrapMode.Truncate;
+            d.rectTransform.TL(22, 44, 604, 98);
+            d.resizeTextForBestFit = true; d.resizeTextMinSize = Art.FontSize(24); d.resizeTextMaxSize = Art.FontSize(36);
             // 착용 가능 부위
-            UIKit.Label(p.win, L.T("chip_fit"), 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(44, 326, 600, 48);
+            UIKit.Label(p.win, L.T("chip_fit"), 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(44, 354, 600, 48);
             int n = 0;
             foreach (var gp in Tables.GearParts)
             {
                 if (!r.Fits(gp.part)) continue;
-                var pill = UIKit.Panel(p.win, "card_white", "Fit_" + gp.part); pill.rectTransform.TL(40 + n % 3 * 290, 380 + n / 3 * 92, 280, 82);
+                var pill = UIKit.Panel(p.win, "card_white", "Fit_" + gp.part); pill.rectTransform.TL(40 + n % 3 * 290, 408 + n / 3 * 92, 280, 82);
                 var on = Gear.On(gp.part);
                 var ic = UIKit.Img(pill.transform, Art.Icon(on != null ? on.Icon : gp.icon), "Icon"); ic.rectTransform.TL(10, 8, 64, 64);
                 UIKit.Label(pill.transform, gp.name, 28, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(80, 6, 196, 66);
@@ -399,7 +438,11 @@ namespace EarthDef
                     sl.rectTransform.TL(x, 14, 110, 110);
                     if (!open) { UIKit.Label(sl.transform, L.F("chip_locked", Gear.SlotNeed(si)), 18, Art.Ink, TextAnchor.LowerCenter, false).rectTransform.Fill(0, 12, 0, 0); continue; }
                     if (cur == c) { UIKit.Panel(sl.transform, "glow_frame", "Here").rectTransform.Fill(-14, -14, -14, -14); continue; }
-                    UIKit.Clickable(sl, () => { Gear.PutChip(c, ppi, ssi); p.Close(); });
+                    UIKit.Clickable(sl, () => ChipConfirm(c, ppi, ssi, () =>
+                    {
+                        Gear.PutChip(c, ppi, ssi); p.Close();
+                        Equipped(c.Icon, $"{c.Name} ({Tables.Grade(c.q).name})", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f));
+                    }));
                 }
             }
         }
@@ -421,7 +464,11 @@ namespace EarthDef
                 var t = UIKit.Tile(row.transform, "slot", Color.Lerp(Color.white, Tables.Grade(c.q).color, 0.75f), Art.Icon(c.Icon), 0.5f, "Pic"); t.rectTransform.TL(14, 12, 106, 106);
                 UIKit.Label(row.transform, c.Name, 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(140, 14, 760, 48);
                 var ds = UIKit.Label(row.transform, c.Row.Desc(c.q), 26, Art.Soft, TextAnchor.MiddleLeft, false); ds.rectTransform.TL(140, 66, 760, 44);
-                var cc = c; UIKit.Clickable(row, () => { Gear.PutChip(cc, pi, slot); p.Close(); });
+                var cc = c; UIKit.Clickable(row, () => ChipConfirm(cc, pi, slot, () =>
+                {
+                    Gear.PutChip(cc, pi, slot); p.Close();
+                    Equipped(cc.Icon, $"{cc.Name} ({Tables.Grade(cc.q).name})", Color.Lerp(Color.white, Tables.Grade(cc.q).color, 0.75f));
+                }));
                 y += 140;
             }
             UIKit.SetScrollH(c0, y + 10);

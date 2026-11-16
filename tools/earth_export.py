@@ -315,14 +315,16 @@ def export_ui():
         'glow_frame': blur('<rect x="22" y="22" width="116" height="116" rx="30" fill="none" stroke="#ffffff" stroke-width="14"/>', 7, 1)
                       + '<rect x="22" y="22" width="116" height="116" rx="30" fill="none" stroke="#ffffff" stroke-width="5"/>',
         'minislot': f'<rect x="3" y="3" width="42" height="42" rx="11" fill="{CREAM}" stroke="{INK}" stroke-width="4"/>',
+        # 요청 사항_05 "Lv 표시는 타원이 아닌 직사각형으로": 흰 바탕(코드에서 색) 둥근 모서리 직사각형 + 위쪽 윤기
+        'badge': f'<rect x="3" y="3" width="74" height="42" rx="9" fill="#ffffff" stroke="{INK}" stroke-width="4.5"/><rect x="10" y="8" width="60" height="7" rx="3" fill="#ffffff" opacity=".5"/>',
         # 11-16 저녁 사용자 "속성이 이쁘게 안 보임 — 타원이 아닌 네모(태그를 붙이는 느낌)": 흰 바탕(코드에서 속성 색) + 왼쪽 뾰족 + 구멍
         'tag': f'<path d="M28 5 L106 5 Q115 5 115 14 L115 58 Q115 67 106 67 L28 67 L6 36 Z" fill="#ffffff" stroke="{INK}" stroke-width="5" stroke-linejoin="round"/>'
                f'<circle cx="26" cy="36" r="6.5" fill="{INK}"/><path d="M34 13 L104 13" stroke="#ffffff" stroke-width="4" opacity=".5"/>',
     }
-    sizes = {'glow_frame': (160, 160), 'minislot': (48, 48), 'tag': (120, 72), 'pill': (120, 80), 'pill_dark': (120, 80), 'track': (80, 40), 'fill': (80, 40), 'white': (80, 80), 'window': (240, 240)}
+    sizes = {'glow_frame': (160, 160), 'minislot': (48, 48), 'badge': (80, 48), 'tag': (120, 72), 'pill': (120, 80), 'pill_dark': (120, 80), 'track': (80, 40), 'fill': (80, 40), 'white': (80, 80), 'window': (240, 240)}
     for n, svg in items.items():
         w, h = sizes.get(n, (120, 120))
-        out('UI', n, Rr(svg, w, h, A.WOB['ui'] if n not in ('fill', 'white', 'band', 'tag', 'glow_frame', 'minislot') else 0, .04))
+        out('UI', n, Rr(svg, w, h, A.WOB['ui'] if n not in ('fill', 'white', 'band', 'tag', 'glow_frame', 'minislot', 'badge') else 0, .04))
     print('ui', len(items))
 
 
@@ -373,6 +375,9 @@ def _gem(w, h, s, top, mid, bot, line, op=1.0):
     return g + '</g>'
 def ic_gem_on(w, h, f, s): return _gem(w, h, s, '#fff1a8', GOLD, '#e0a722', '#b07a10') + F(f'M{w*.36} {h*.2} L{w*.44} {h*.14} L{w*.4} {h*.32} Z', '#ffffff', .9)
 def ic_gem_off(w, h, f, s): return _gem(w, h, s, '#8a7462', '#6b5646', '#5b4433', '#3b281c', .9)
+# 요청 사항_05 "마지막 칸(돌파 칸)은 붉은색": 붉은 보석 켜짐 · 꺼짐
+def ic_gem_red_on(w, h, f, s): return _gem(w, h, s, '#ffc2b8', '#ee5a48', '#c23a2c', '#7a1e14') + F(f'M{w*.36} {h*.2} L{w*.44} {h*.14} L{w*.4} {h*.32} Z', '#ffffff', .9)
+def ic_gem_red_off(w, h, f, s): return _gem(w, h, s, '#a0645a', '#7e4038', '#66302a', '#3b1c16', .9)
 def ic_brush(w, h, f, s): return (P(f'M{w*.62} {h*.08} L{w*.9} {h*.36} L{w*.5} {h*.66} L{w*.34} {h*.5} Z', '#c99260', s)
                                    + P(f'M{w*.34} {h*.5} L{w*.5} {h*.66} Q{w*.4} {h*.94} {w*.08} {h*.92} Q{w*.16} {h*.62} {w*.34} {h*.5} Z', '#a68bd6', s))
 def ic_info(w, h, f, s):   # 4차 수정안: 레벨별 능력 보기 (i)
@@ -549,17 +554,17 @@ def pop3d(im):
 EXTRA = dict(cards=ic_cards, coin=ic_coin, shard=ic_shard, star_on=ic_dia(GOLD), star_off=ic_dia(TRACK), ad=ic_ad, plus=ic_plus,
              home=ic_home, retry=ic_retry, base=ic_base, patrol=ic_patrol,
              g_weapon=gx_weapon, g_helmet=gx_helmet, g_suit=gx_suit, g_shield=gx_shield, g_core=(lambda w, h, f, s: __import__('gear_tiers').core(2, plain=True)), g_boots=gx_boots,
-             gem_on=ic_gem_on, gem_off=ic_gem_off, brush=ic_brush, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret, info=ic_info)
+             gem_on=ic_gem_on, gem_off=ic_gem_off, brush=ic_brush, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret, info=ic_info, gem_red_on=ic_gem_red_on, gem_red_off=ic_gem_red_off)
 ICONS.update(EXTRA)
 ICON_LIST = {'pause': CREAM, 'play': CREAM, 'cards': CREAM, 'heart': RED, 'coin': GOLD, 'shard': SKY, 'star_on': GOLD, 'star_off': TRACK,
              'ad': CREAM, 'plus': CREAM, 'x': CREAM, 'lock': CREAM, 'home': CREAM, 'retry': CREAM, 'check': CREAM, 'skull': CREAM,
              'base': CREAM, 'patrol': CREAM, 'trophy': GOLD, 'bolt': GOLD, 'star': GOLD,
              'g_weapon': CREAM, 'g_helmet': CREAM, 'g_suit': CREAM, 'g_shield': CREAM, 'g_core': CREAM, 'g_boots': CREAM,
              'chip': CREAM, 'energy': CREAM, 'mission': CREAM, 'calendar': CREAM, 'parts': CREAM, 'crown': GOLD, 'hand': CREAM,
-             'gem_on': GOLD, 'gem_off': TRACK, 'tab_turret': CREAM, 'info': CREAM, 'diamond': '#8fd6ff', 'shop': CREAM, 'brush': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
+             'gem_on': GOLD, 'gem_off': TRACK, 'gem_red_on': RED, 'gem_red_off': TRACK, 'tab_turret': CREAM, 'info': CREAM, 'diamond': '#8fd6ff', 'shop': CREAM, 'brush': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
 
 
-FLAT_ICONS = {'star_off', 'gem_off', 'plus', 'x', 'check'}   # 입체감을 안 넣는 것 (빈 칸 · 기호)
+FLAT_ICONS = {'star_off', 'gem_off', 'gem_red_off', 'plus', 'x', 'check'}   # 입체감을 안 넣는 것 (빈 칸 · 기호)
 
 
 def export_icon():

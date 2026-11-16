@@ -29,6 +29,7 @@ namespace EarthDef
         public static GotItem Of(GearItem g) => new() { name = g.Name, icon = g.Icon, bg = g.G.color, grade = g.grade };
         public static GotItem Of(ChipItem c) => new() { name = c.Name, icon = c.Icon, bg = Tables.Grade(c.q).color, grade = c.q };
         public static GotItem Res(string icon, string text) => new() { name = text, icon = icon };
+        public string turret;   // 터렛 조각이면 그 터렛 (그림을 터렛으로)
     }
 
     /// <summary>칩 1개 (2차). at = 끼운 곳 (부위 번호 x 6 + 칸, -1 = 가방)</summary>

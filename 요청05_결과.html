@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>요청 사항 05 반영</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>요청 사항 05 반영 (+ 치트 · 코어 그림)</h1>
+<p class="note">2026-11-17 · <code>요청 사항/요청 사항_05.pptx</code> (슬라이드 6장) · 자동 시험 <b>기존 120줄 + 시험장 13줄 + 3차 78줄 통과 · 오류 0</b></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>"Lv2 부분도 붉은색"</b> → 돌파한 단계(Lv 2 이상) 표시를 붉게, 마지막 보석 칸(다 차면 돌파)은 늘 붉은 보석으로 했습니다.</li>
+<li><b>"골드 구매 가능"</b> → 골드 주머니(다이아 100)는 원래 있어서, 큰 골드 주머니(다이아 450 · 순찰 20시간치)를 더했습니다.</li>
+<li>상자 값(다이아 100 · 부품 50개 · 조각 10개)과 광고 제거 가격(5,900원)은 처음 값입니다. <code>Shop.xlsx</code> 에서 바꿀 수 있고 밸런스는 마지막에.</li>
+<li><b>광고 제거</b>는 [초안]입니다(에디터에서만 바로 구매). 실제 광고를 붙일 때 "광고 제거를 샀으면 광고 없이 바로 보상"으로 이어집니다. 기록은 세이브의 기존 목록(iapOnce)에 넣어 세이브 판 번호는 그대로입니다.</li>
+<li><b>회로 확인 창</b>은 착용 안내 창에서 칸을 누를 때와, 부위 창의 빈 칸 → 회로 고를 때 둘 다 뜹니다.</li>
+<li>표 고치기 <code>tools/fix5_tables.py</code>.</li>
+</ul></div>
+<h2>로비 · 토스트 · 아래 탭</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/요청05_캡처/before_lobby.png" loading="lazy"><figcaption><span class="b">전</span> 적 약점 줄 · 판 있는 토스트</figcaption></figure><figure><img src="캡쳐본 모음/요청05_캡처/70_lobby.png" loading="lazy"><figcaption><span class="a">뒤</span> 약점 줄 없음(352 → 300) · 글자만 토스트 · 탭이 판 안</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/요청05_캡처/62_lobby_enemies.png" loading="lazy"><figcaption>[적 정보] 펼침 — 맨 위에 적 약점</figcaption></figure><figure><img src="캡쳐본 모음/요청05_캡처/71_turret_info.png" loading="lazy"><figcaption>터렛 정보: 능력 · 설명 · 돌파 칸</figcaption></figure></div>
+<h2>장비 탭 · 부위 창 · 착용</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/요청05_캡처/before_gear.png" loading="lazy"><figcaption><span class="b">전</span> 능력치 칸이 판 안</figcaption></figure><figure><img src="캡쳐본 모음/요청05_캡처/72_gear_tab.png" loading="lazy"><figcaption><span class="a">뒤</span> 능력치는 판 아래 한 줄 칸 · 대장 카피 크게 · 부품 칸에 "강화 재료"</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/요청05_캡처/73_part_window.png" loading="lazy"><figcaption>부위 창 (겹침 없음)</figcaption></figure><figure><img src="캡쳐본 모음/요청05_캡처/74_chip_confirm.png" loading="lazy"><figcaption>회로 착용 확인 [취소][확인]</figcaption></figure><figure><img src="캡쳐본 모음/요청05_캡처/75_equipped.png" loading="lazy"><figcaption>착용되었습니다 + 확인</figcaption></figure><figure><img src="캡쳐본 모음/요청05_캡처/64_chip_window.png" loading="lazy"><figcaption>회로 창 ("능력" 안 겹침)</figcaption></figure></div>
+<h2>상점</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/요청05_캡처/76_shop.png" loading="lazy"><figcaption>광고 제거 [초안]</figcaption></figure><figure><img src="캡쳐본 모음/요청05_캡처/76b_shop_bottom.png" loading="lazy"><figcaption>강화 재료 상자 · 터렛 조각 상자 (하루 10번) · 큰 골드 주머니</figcaption></figure></div>
+<h2>카드 · 단계 표시</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/요청05_캡처/77_break_card.png" loading="lazy"><figcaption>돌파 카드 붉은 빛 테두리 · Lv 직사각형 · 마지막 보석 붉게</figcaption></figure><figure><img src="캡쳐본 모음/요청05_캡처/78_cards_list.png" loading="lazy"><figcaption>고른 카드: Lv 2 붉게</figcaption></figure></div>
+<h2>(앞 요청) 치트 · 코어 그림</h2>
+<img class="wide" src="캡쳐본 모음/요청05_캡처/core_icons.png"><p class="note">코어 = 세로 에너지 캡슐 (맨 오른쪽 육각형이 강화 부품). 치트는 설정 창 맨 아래 [치트] — 에디터 · 개발용 빌드에서만 (Config <code>Cheat_On</code>).</p>
+<div class="shots"><figure><img src="캡쳐본 모음/요청05_캡처/69_cheat.png" loading="lazy"><figcaption>치트 창</figcaption></figure></div>
+<h2>확인 칸</h2>
+<ul class="todo"><li data-id="r5-1"><label><input type="checkbox"><span><span class="tag">1</span>부위 창 위치 어긋남<span class="why">장비 정보 → [강화][빼기] → 회로 칸 → 설명, 겹침 없음</span></span></label></li><li data-id="r5-2"><label><input type="checkbox"><span><span class="tag">2</span>토스트 = 글자만<span class="why">판 없이 흰 글자 + 진한 테두리</span></span></label></li><li data-id="r5-3"><label><input type="checkbox"><span><span class="tag">3</span>아래 탭 테두리 안으로<span class="why"></span></span></label></li><li data-id="r5-4"><label><input type="checkbox"><span><span class="tag">4</span>적 약점 → [적 정보] 안으로<span class="why">스테이지 칸 352 → 300</span></span></label></li><li data-id="r5-5"><label><input type="checkbox"><span><span class="tag">5</span>터렛 정보 칸 나누기<span class="why">능력 · 설명 · 돌파 (설명은 그림 아래)</span></span></label></li><li data-id="r5-6"><label><input type="checkbox"><span><span class="tag">6</span>장비 능력치 재배치<span class="why">판 아래 한 줄 칸 3 x 2 · 대장 카피 크게</span></span></label></li><li data-id="r5-7"><label><input type="checkbox"><span><span class="tag">7</span>강화 재료 안내<span class="why">부품 칸에 "강화 재료" · 누르면 설명</span></span></label></li><li data-id="r5-8"><label><input type="checkbox"><span><span class="tag">8</span>장비 착용 → 착용되었습니다 + 확인<span class="why"></span></span></label></li><li data-id="r5-9"><label><input type="checkbox"><span><span class="tag">9</span>회로 착용 확인 창<span class="why">[확인] = 착용되었습니다 · [취소] = 착용 안내 창으로</span></span></label></li><li data-id="r5-10"><label><input type="checkbox"><span><span class="tag">10</span>회로 창 글자 위치<span class="why">"능력" 글자와 내용 안 겹침</span></span></label></li><li data-id="r5-11"><label><input type="checkbox"><span><span class="tag">11</span>상점: 광고 제거<span class="why">[초안] 원화 상품</span></span></label></li><li data-id="r5-12"><label><input type="checkbox"><span><span class="tag">12</span>상점: 강화 재료 상자 · 터렛 조각 상자<span class="why">다이아 100 · 하루 10번</span></span></label></li><li data-id="r5-13"><label><input type="checkbox"><span><span class="tag">13</span>상점: 골드<span class="why">큰 골드 주머니 추가</span></span></label></li><li data-id="r5-14"><label><input type="checkbox"><span><span class="tag">14</span>Lv 표시 직사각형 · 마지막 보석 붉게 · Lv 2~ 붉게<span class="why"></span></span></label></li><li data-id="r5-15"><label><input type="checkbox"><span><span class="tag">15</span>돌파 카드 붉은 빛 테두리<span class="why"></span></span></label></li><li data-id="r5-cheat"><label><input type="checkbox"><span><span class="tag">앞</span>치트 창 · 코어 캡슐 그림<span class="why"></span></span></label></li></ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-req5-1117', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

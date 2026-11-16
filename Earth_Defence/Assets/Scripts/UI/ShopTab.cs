@@ -88,14 +88,25 @@ namespace EarthDef
                 var p = Tables.Products[i];
                 float x = 20 + i % 3 * 330, yy = y + i / 3 * 300;
                 var card = UIKit.Panel(list, "card", "P_" + p.id); card.rectTransform.TL(x, yy, 316, 286);
-                var ic = UIKit.Img(card.transform, Art.Icon("diamond"), "Icon"); ic.raycastTarget = false; ic.rectTransform.TL(108, 18, 100, 100);
-                UIKit.Label(card.transform, Num.Comma(p.dia), 44, Art.Sky).rectTransform.TL(0, 116, 316, 56);
-                UIKit.Label(card.transform, p.name, 24, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 166, 316, 32);
-                var pp = p;
-                var b = UIKit.Btn(card.transform, Store.IapReady ? "btn_green" : "btn_gray", Num.Comma(p.krw) + "원", 32, () =>
+                var pp = p; bool noads = p.kind == "noads", done = noads && Store.NoAds;
+                var ic = UIKit.Img(card.transform, Art.Icon(noads ? "ad" : "diamond"), "Icon"); ic.raycastTarget = false; ic.rectTransform.TL(108, 18, 100, 100);
+                if (noads)
+                {   // 요청 사항_05 "상품 판매에 광고 제거 추가" [초안]: 광고 그림 위에 빨간 금지 표시
+                    var no = UIKit.Img(card.transform, Art.Fx("ring"), "No"); no.color = Art.Red; no.raycastTarget = false; no.rectTransform.Place(0, 1, new Vector2(158, -68), new Vector2(124, 124), new Vector2(0.5f, 0.5f));
+                    var sl = UIKit.Plain(card.transform, Art.Red, "Slash"); sl.rectTransform.Place(0, 1, new Vector2(158, -68), new Vector2(104, 10), new Vector2(0.5f, 0.5f)); sl.rectTransform.localEulerAngles = new Vector3(0, 0, -45);
+                    UIKit.Label(card.transform, L.T("noads_name"), 38, Art.Red).rectTransform.TL(0, 116, 316, 56);
+                    UIKit.Label(card.transform, L.T("noads_desc"), 22, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 166, 316, 32);
+                }
+                else
                 {
+                    UIKit.Label(card.transform, Num.Comma(p.dia), 44, Art.Sky).rectTransform.TL(0, 116, 316, 56);
+                    UIKit.Label(card.transform, p.name, 24, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 166, 316, 32);
+                }
+                var b = UIKit.Btn(card.transform, done ? "btn_gray" : Store.IapReady ? "btn_green" : "btn_gray", done ? L.T("noads_done") : Num.Comma(p.krw) + "원", 32, () =>
+                {
+                    if (done) return;
                     if (!Store.IapReady) { Toast.Show(L.T("iap_off")); return; }
-                    int n = Store.Purchase(pp); if (n > 0) Toast.Show($"{L.T("dia")} +{Num.Comma(n)}");
+                    int n = Store.Purchase(pp); if (n > 0) Toast.Show(noads ? $"{L.T("noads_name")} {L.T("noads_done")}" : $"{L.T("dia")} +{Num.Comma(n)}");
                     lobby.Refresh();
                 }, "Buy");
                 ((RectTransform)b.transform).TL(28, 200, 260, 74);
@@ -118,7 +129,7 @@ namespace EarthDef
         float ItemRow(ShopItemRow it, float y)
         {
             var r = UIKit.Panel(list, "card", "I_" + it.id); r.rectTransform.TL(20, y, 980, 140);
-            string icon = it.kind switch { "stamina" => "energy", "gold" => "coin", "ad_box" => "ad", "chip_box" => "chip", "gear_box" => "g_suit", _ => "chest" };
+            string icon = it.kind switch { "stamina" => "energy", "gold" => "coin", "ad_box" => "ad", "chip_box" => "chip_4", "gear_box" => "g_suit_4", "parts_box" => "parts", "shard_box" => "shard", _ => "chest" };
             var ic = UIKit.Img(r.transform, Art.Icon(icon), "Icon"); ic.raycastTarget = false; ic.rectTransform.TL(24, 20, 100, 100);
             UIKit.Label(r.transform, it.name, 34, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(144, 16, 500, 54);
             string sub = it.desc + (it.perDay > 0 ? "   " + L.F("per_day", it.perDay - Store.Left(it), it.perDay) : "");
@@ -154,7 +165,8 @@ namespace EarthDef
             {
                 var g = got[i];
                 float x = x0 + i % cols * cell, y = 30 + i / cols * (cell + 46);
-                var t = UIKit.Tile(c, "slot", Color.Lerp(Color.white, g.bg, 0.8f), Art.Icon(g.icon), 0.6f, "Got" + i); t.rectTransform.TL(x + 10, y, cell - 20, cell - 20);
+                var t = UIKit.Tile(c, "slot", Color.Lerp(Color.white, g.bg, 0.8f), g.turret != null ? Art.TurretIcon(Tables.TurretById[g.turret]) : Art.Icon(g.icon), g.turret != null ? 0.8f : 0.6f, "Got" + i); t.rectTransform.TL(x + 10, y, cell - 20, cell - 20);
+                if (g.turret != null) { var sd = UIKit.Img(t.transform, Art.Icon("shard"), "Shard"); sd.raycastTarget = false; sd.rectTransform.Place(1, 0, new Vector2(6, -6), new Vector2(70, 70), new Vector2(1, 0)); }
                 var pi = t.gameObject.AddComponent<PopIn>(); pi.delay = 0.12f * i; pi.sound = true;
                 if (g.grade >= 4)
                 {   // 3차 수정안 "영웅 등급 이상은 획득창 테두리에 이펙트": 등급 색 빛 테두리가 숨쉬듯 · 전설 이상은 반짝이가 테두리를 돎

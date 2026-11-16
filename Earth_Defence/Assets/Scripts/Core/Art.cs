@@ -101,6 +101,7 @@ namespace EarthDef
                 "tag" => new Vector4(38, 20, 20, 20),     // 11-16 속성 태그 (왼쪽 뾰족 + 구멍)
                 "glow_frame" => new Vector4(50, 50, 50, 50),
                 "minislot" => new Vector4(16, 16, 16, 16),
+                "badge" => new Vector4(14, 14, 14, 14),
                 "track" or "fill" => new Vector4(19, 19, 19, 19),
                 "white" => new Vector4(26, 26, 26, 26),
                 "window" => new Vector4(40, 40, 40, 40),

@@ -58,7 +58,7 @@ namespace EarthDef
         public string Desc(int star) { double v = Val(star); return desc.Replace("{0}", v.ToString(v == Math.Floor(v) ? "0" : "0.##")).Replace("{1}", cd.ToString("0")); }
     }
     public class SkinRow { public string id, turret, name, ult, ultName, ultDesc; public float hue, sat; public int ultCharge, price; public double ultRate, dmg; }
-    public class ProductRow { public string id, name, productId; public int dia, krw; public bool firstDouble; }
+    public class ProductRow { public string id, name, productId, kind; public int dia, krw; public bool firstDouble; }
     public class ShopItemRow { public string id, name, kind, desc; public int costDia, perDay; public double value; }
 
     /// <summary>
@@ -183,7 +183,7 @@ namespace EarthDef
                     ultName = r.S("Ult_Name"), ultDesc = r.S("Ult_Desc"), ultCharge = Mathf.Max(1, r.I("Ult_Charge")), ultRate = r.D("Ult_Rate"), dmg = r.D("Dmg"), price = r.I("Price_Dia"),
                 });
             foreach (var r in Read("Product"))
-                Products.Add(new ProductRow { id = r.S("Id"), name = r.S("Name"), productId = r.S("Product_Id"), dia = r.I("Dia"), krw = r.I("Price_KRW"), firstDouble = r.I("First_Double") == 1 });
+                Products.Add(new ProductRow { id = r.S("Id"), name = r.S("Name"), productId = r.S("Product_Id"), dia = r.I("Dia"), krw = r.I("Price_KRW"), firstDouble = r.I("First_Double") == 1, kind = string.IsNullOrEmpty(r.S("Kind")) ? "dia" : r.S("Kind") });
             foreach (var r in Read("Item"))
                 ShopItems.Add(new ShopItemRow { id = r.S("Id"), name = r.S("Name"), kind = r.S("Kind"), desc = r.S("Desc"), costDia = r.I("Cost_Dia"), perDay = r.I("Per_Day"), value = r.D("Value") });
             foreach (var r in Read("Box_Rate")) BoxRates.Add((r.I("Grade"), r.D("Rate")));

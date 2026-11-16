@@ -43,6 +43,16 @@ namespace EarthDef
                     }
                     break;
                 case "stamina": Meta.AddStamina((int)it.value); got.Add(GotItem.Res("energy", $"{L.T("r_stamina")} +{it.value:0}")); break;
+                // 요청 사항_05: 강화 재료(부품) 상자 · 터렛 조각 상자 (다이아 · 하루 10번)
+                case "parts_box": S.parts += it.value; got.Add(GotItem.Res("parts", $"{L.T("r_parts")} +{it.value:0}")); break;
+                case "shard_box":
+                {
+                    var open = Tables.Turrets.FindAll(t => S.Unlocked(t));
+                    var cnt = new Dictionary<string, int>();
+                    for (int i = 0; i < (int)it.value; i++) { var t = open[rnd.Next(open.Count)]; S.shards[S.TIdx(t.id)]++; cnt[t.id] = cnt.TryGetValue(t.id, out var k) ? k + 1 : 1; }
+                    foreach (var kv in cnt) got.Add(new GotItem { name = $"{Tables.TurretById[kv.Key].name} {L.T("r_shards")} +{kv.Value}", icon = "shard", turret = kv.Key });
+                    break;
+                }
                 case "gold":
                 {
                     double g = Math.Floor(it.value * (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * Math.Max(0, S.best - 1)));
@@ -67,9 +77,16 @@ namespace EarthDef
         /// <summary>폰에서는 결제 연동(라이선스 키 · 상품)이 갖춰지기 전까지 꺼 둠 (카치건 방식). 에디터는 가짜 결제로 바로 지급</summary>
         public static bool IapReady => Application.isEditor;
         public static bool FirstDouble(ProductRow p) => p.firstDouble && !S.iapOnce.Contains("first2x:" + p.id);
+        /// <summary>광고 제거 (요청 사항_05) — 세이브 판 번호를 안 올리려고 iapOnce 목록에 "noads" 로 기록</summary>
+        public static bool NoAds => S != null && S.iapOnce.Contains("noads");
         public static int Purchase(ProductRow p)
         {
             if (!IapReady) return 0;
+            if (p.kind == "noads")
+            {
+                if (NoAds) return 0;
+                S.iapOnce.Add("noads"); Audio.Play(Audio.Sfx.Coin); S.Save(); return 1;
+            }
             int n = p.dia * (FirstDouble(p) ? 2 : 1);
             if (FirstDouble(p)) S.iapOnce.Add("first2x:" + p.id);
             S.dia += n;

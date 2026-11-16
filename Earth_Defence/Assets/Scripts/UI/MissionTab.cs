@@ -203,8 +203,9 @@ namespace EarthDef
         {
             if (UIRoot.I == null) return;
             foreach (var old in UIRoot.I.popups.GetComponentsInChildren<Toast>()) Destroy(old.gameObject);
-            var box = UIKit.Panel(UIRoot.I.popups, "night", "Toast"); box.rectTransform.Place(0.5f, 0.74f, Vector2.zero, new Vector2(900, 110));
-            var tx = UIKit.Label(box.transform, s, 36, Art.Cream); tx.rectTransform.Fill(20, 10, 20, 0);
+            // 요청 사항_05 "토스트는 테두리 없이 글자만": 판 없이 흰 글자 + 진한 테두리
+            var box = UIKit.Rect(UIRoot.I.popups, "Toast"); box.Place(0.5f, 0.74f, Vector2.zero, new Vector2(960, 110));
+            var tx = UIKit.Label(box, s, 40, Color.white); tx.rectTransform.Fill(10, 10, 10, 0);
             tx.horizontalOverflow = HorizontalWrapMode.Wrap;
             box.gameObject.AddComponent<Toast>().life = life;
             // 4차 수정안 "토스트는 스테이지 칸과 순찰 보상 사이 빈 공간에서": 로비 전투 탭이고 창이 없으면 그 빈 곳 가운데

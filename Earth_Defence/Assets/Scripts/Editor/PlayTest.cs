@@ -96,7 +96,7 @@ namespace EarthDef.EditorTools
             Directory.CreateDirectory(OutDir);
             SetupCapture();
             yield return Wait(0.5f);
-            Check(Tables.Frames.Count == 7 && Tables.Skins.Count == 11 && Tables.Products.Count == 5 && Tables.ShopItems.Count == 8, $"3차 표: 외형 {Tables.Frames.Count} · 스킨 {Tables.Skins.Count} · 상품 {Tables.Products.Count} · 상점 {Tables.ShopItems.Count}");
+            Check(Tables.Frames.Count == 7 && Tables.Skins.Count == 11 && Tables.Products.FindAll(x => x.kind == "dia").Count == 5 && Tables.ShopItems.Count >= 8, $"3차 표: 외형 {Tables.Frames.Count} · 스킨 {Tables.Skins.Count} · 상품 {Tables.Products.Count} · 상점 {Tables.ShopItems.Count}");
             double rsum = 0; foreach (var (_, r) in Tables.BoxRates) rsum += r;
             Check(System.Math.Abs(rsum - 100) < 0.01, $"상자 확률 합 {rsum}%");
             Check(Art.HueMat != null && Art.HueMat.HasProperty("_Hue") && Art.HueMat.HasProperty("_RendererColor"), "스킨 색 돌리기 셰이더 (EarthDef/SpriteHue)");
@@ -266,6 +266,70 @@ namespace EarthDef.EditorTools
                       $"치트: 장비 +10 (영웅) · 회로 +1 · 조각 +100 · 부품 +1000");
                 Capture("69_cheat");
                 Popup.CloseAll();
+            }
+            {   // ---- 요청 사항_05 (11-17)
+                Lobby.enemiesOpen = false; Game.Lobby.SetTab(0); yield return Wait(0.3f);
+                Toast.Show("토스트 시험"); yield return null;
+                var tt = Object.FindAnyObjectByType<Toast>();
+                Check(tt != null && tt.GetComponent<UnityEngine.UI.Image>() == null && GameObject.Find("StageCard").GetComponent<RectTransform>().sizeDelta.y <= 300
+                      && GameObject.Find("StageCard").transform.Find("EnemyBox/Weak") != null, "토스트 = 글자만 · 스테이지 칸 300 · 적 약점은 [적 정보] 안");
+                Capture("70_lobby");
+                var navBg = GameObject.Find("NavBg").GetComponent<RectTransform>(); var nb = new Vector3[4]; navBg.GetWorldCorners(nb);
+                bool inside = true;
+                foreach (var id in Lobby.Tabs) { var tb = new Vector3[4]; GameObject.Find("Tab_" + id).GetComponent<RectTransform>().GetWorldCorners(tb); if (tb[0].x < nb[0].x || tb[2].x > nb[2].x || tb[0].y < nb[0].y) inside = false; }
+                Check(inside, "아래 탭이 바탕 판 테두리 안");
+                Lobby.TurretInfo(Tables.TurretById["drone"]); yield return Wait(0.3f);
+                Check(GameObject.Find("Sec_" + L.T("ti_stat")) != null && GameObject.Find("Sec_" + L.T("ti_desc")) != null && GameObject.Find("Sec_" + L.T("ti_break")) != null, "터렛 정보 = 능력 · 설명 · 돌파 칸");
+                Capture("71_turret_info");
+                Popup.CloseAll();
+                // 장비 탭: 능력치 칸은 판 아래 · 강화 재료 글자 · 부위 창 겹침 없음
+                Game.Lobby.SetTab(2); yield return Wait(0.3f);
+                Check(GameObject.Find("Stat0").transform.parent.name != "Top", "능력치 칸을 위 판 아래로");
+                Capture("72_gear_tab");
+                Game.Lobby.gearTab.PartWindow(Tables.PartIdx("weapon")); yield return Wait(0.3f);
+                var up = new Vector3[4]; GameObject.Find("Up").GetComponent<RectTransform>().GetWorldCorners(up);
+                var ln5 = new Vector3[4]; GameObject.Find("ChipLine").GetComponent<RectTransform>().GetWorldCorners(ln5);
+                Check(up[0].y > ln5[1].y, "부위 창: [강화] 단추가 회로 칸 위 (안 겹침)");
+                Capture("73_part_window");
+                Popup.CloseAll();
+                // 회로 착용 확인 → 취소 = 이전 단계 · 확인 = 착용되었습니다
+                var cc5 = Gear.NewChip(5, "ch_crit");
+                Game.Lobby.gearTab.ChipPlace(cc5); yield return Wait(0.3f);
+                var slot5 = GameObject.Find("P_helmet").transform.Find("S0") ?? GameObject.Find("P_weapon").transform.Find("S0");
+                slot5.GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);
+                Capture("74_chip_confirm");
+                GameObject.Find("Btn_" + L.T("cancel")).GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.2f);
+                Check(GameObject.Find("P_weapon") != null && cc5.at < 0, "회로 확인 [취소] → 착용 안내 창으로");
+                slot5.GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.2f);
+                GameObject.Find("Btn_" + L.T("ok")).GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.4f);
+                Check(cc5.at >= 0 && Popup.Open != null && Popup.Open.name.Contains(L.T("equip")), "회로 확인 [확인] → 착용 + \"착용되었습니다\" 창");
+                Capture("75_equipped");
+                Popup.CloseAll();
+                // 상점: 광고 제거 · 강화 재료 상자 · 터렛 조각 상자
+                var pa = Tables.ShopItems.Find(x => x.kind == "parts_box"); var sb = Tables.ShopItems.Find(x => x.kind == "shard_box");
+                double p0 = S.parts; int s0 = 0; foreach (var v in S.shards) s0 += v;
+                S.dia += 1000;
+                Store.Buy(pa); Store.Buy(sb);
+                int s1 = 0; foreach (var v in S.shards) s1 += v;
+                var na = Tables.Products.Find(x => x.kind == "noads");
+                Check(pa != null && sb != null && pa.perDay == 10 && S.parts == p0 + pa.value && s1 == s0 + (int)sb.value && na != null && Store.Purchase(na) == 1 && Store.NoAds,
+                      "상점: 강화 재료 상자 · 터렛 조각 상자 (하루 10번) · 광고 제거 [초안]");
+                Game.Lobby.SetTab(5); yield return Wait(0.3f);
+                Capture("76_shop");
+                Game.Lobby.shopTab.GetComponentInChildren<UnityEngine.UI.ScrollRect>().verticalNormalizedPosition = 0f; yield return Wait(0.3f);
+                Capture("76b_shop_bottom");
+                // 돌파 카드: 붉은 빛 테두리 · Lv 직사각형 · 마지막 보석 붉게
+                Game.StartStage(3, 1); yield return null;
+                var gt = B.run.Get("guardian"); gt.stars = Tables.Ci("Stars_Per_Tier", 4);
+                var brk = Tables.Cards.Find(x => x.turret == "guardian" && x.kind == "break");
+                B.offer = new List<CardRow> { brk, Tables.CardById["new_bolt"], Tables.CardById["g_dmg"] }; B.st = Battle.St.Pick; B.pendingLevel++;
+                Game.BattleUI.ShowPick(); yield return Wait(0.6f);
+                Check(GameObject.Find("BreakGlow") != null && GameObject.Find("Tier").GetComponent<UnityEngine.UI.Image>().sprite == Art.UI("badge"), "돌파 카드 붉은 빛 · Lv 직사각형");
+                Capture("77_break_card");
+                Popup.CloseAll(); B.st = Battle.St.Play; gt.tier = 2; gt.stars = 3;
+                Game.BattleUI.ShowCards(); yield return Wait(0.4f);
+                Capture("78_cards_list");
+                Popup.CloseAll(); Game.ToLobby(); yield return null; Popup.CloseAll();
             }
             Game.ToLobby(); yield return null; Popup.CloseAll();
             Game.Lobby.SetTab(5); yield return Wait(0.4f);

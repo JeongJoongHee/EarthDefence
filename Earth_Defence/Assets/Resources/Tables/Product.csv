@@ -1,6 +1,7 @@
-﻿Id,Name,Dia,Price_KRW,First_Double,Product_Id,,"[초안] 결제 — 에디터는 바로 지급, 폰은 출시 때까지 꺼짐 · Product_Id 는 Play Console 상품 ID"
-p_dia1,다이아 한 줌,80,1200,1,earth_dia_80,,
-p_dia2,다이아 주머니,420,5900,1,earth_dia_420,,
-p_dia3,다이아 상자,900,12000,1,earth_dia_900,,
-p_dia4,다이아 궤짝,1900,25000,1,earth_dia_1900,,
-p_dia5,다이아 산더미,5000,59000,1,earth_dia_5000,,
+﻿Id,Name,Dia,Price_KRW,First_Double,Product_Id,,"[초안] 결제 — 에디터는 바로 지급, 폰은 출시 때까지 꺼짐 · Product_Id 는 Play Console 상품 ID",Kind
+p_dia1,다이아 한 줌,80,1200,1,earth_dia_80,,,dia
+p_dia2,다이아 주머니,420,5900,1,earth_dia_420,,,dia
+p_dia3,다이아 상자,900,12000,1,earth_dia_900,,,dia
+p_dia4,다이아 궤짝,1900,25000,1,earth_dia_1900,,,dia
+p_dia5,다이아 산더미,5000,59000,1,earth_dia_5000,,,dia
+p_noads,광고 제거,0,5900,0,earth_noads,,,noads

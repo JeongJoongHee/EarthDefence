@@ -143,6 +143,7 @@ namespace EarthDef
     public static class Ads
     {
         public static bool Draft => true;
+        /// <summary>[초안] 지금은 바로 성공. 광고 제거를 샀으면 실제 광고 연동 뒤에도 광고 없이 바로 보상 (Store.NoAds)</summary>
         public static void Show(Action<bool> done) => done?.Invoke(true);
     }
 }

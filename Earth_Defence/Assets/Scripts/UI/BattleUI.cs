@@ -197,9 +197,11 @@ namespace EarthDef
             // 고르면 어떻게 되나: 별 · 단계
             var t = b.run.Get(c.turret);
             if (c.kind == "break" && t != null)
-            {
-                Badge(card.transform, cw / 2 - 60, 600, t.tier); Badge(card.transform, cw / 2 + 60, 600, t.tier + 1, true);
-                var arrow = UIKit.Label(card.transform, ">", 40, Art.Purple, TextAnchor.MiddleCenter, false); arrow.rectTransform.TL(cw / 2 - 30, 576, 60, 50);
+            {   // 요청 사항_05 "돌파 가능 시 테두리 붉은색 효과": 붉은 빛 테두리가 숨쉬듯
+                var gl = UIKit.Img(card.transform, Art.UI("glow_frame"), "BreakGlow"); gl.color = Art.Red; gl.raycastTarget = false; gl.rectTransform.Fill(-26, -26, -26, -26);
+                gl.gameObject.AddComponent<GlowPulse>();
+                Badge(card.transform, cw / 2 - 66, 600, t.tier); Badge(card.transform, cw / 2 + 66, 600, t.tier + 1, true);
+                var arrow = UIKit.Label(card.transform, ">", 40, Art.Red, TextAnchor.MiddleCenter, false); arrow.rectTransform.TL(cw / 2 - 22, 576, 44, 50);
             }
             else if (c.kind == "combo")
             {
@@ -215,9 +217,9 @@ namespace EarthDef
 
         static void Badge(Transform p, float cx, float y, int n, bool next = false)
         {
-            var c = UIKit.Panel(p, "pill", "Tier"); c.color = next ? Art.Hex("#e4d6f6") : Color.white;
-            c.rectTransform.TL(cx - 26, y - 26, 52, 52);
-            UIKit.Label(c.transform, n.ToString(), 30, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
+            var c = UIKit.Panel(p, "badge", "Tier"); c.color = n >= 2 ? Art.Hex("#f08a7c") : Art.Hex("#c9b4f0");   // 요청 사항_05: 직사각형 · 돌파 단계는 붉은색
+            c.rectTransform.TL(cx - 44, y - 24, 88, 48);
+            UIKit.Label(c.transform, "Lv." + n, 28).rectTransform.Fill(0, 2, 0, 0);
         }
 
         /// <summary>단계 + 별 칸 너비</summary>
@@ -226,13 +228,16 @@ namespace EarthDef
         /// <summary>단계 "Lv.N" + 보석 4칸 (hl = 새로 켜질 보석) — 11-16 밤 "등급과 다이아 모양이 아쉬움 · 더 크게 · Lv.1 ◆◇◇◇ 강조"</summary>
         public static void Stars(Transform p, float x, float y, int tier, int stars, int size, int hl = -1)
         {
-            var c = UIKit.Panel(p, "pill", "Tier"); c.color = Art.Hex("#c9b4f0"); c.rectTransform.TL(x, y - size * 0.85f, size * 2.6f, size * 1.7f);
-            UIKit.Label(c.transform, "Lv." + tier, Mathf.RoundToInt(size * 1.05f)).rectTransform.Fill(0, 3, 0, 0);
+            // 요청 사항_05: Lv 표시는 직사각형 (글자가 가운데에) · 돌파한 단계(Lv 2~)는 붉은색 · 마지막 보석 칸(다 차면 돌파)은 붉은 보석
+            var c = UIKit.Panel(p, "badge", "Tier"); c.color = tier >= 2 ? Art.Hex("#f08a7c") : Art.Hex("#c9b4f0"); c.rectTransform.TL(x, y - size * 0.8f, size * 2.6f, size * 1.6f);
+            c.pixelsPerUnitMultiplier = Mathf.Max(1f, 44f / (size * 1.6f));
+            UIKit.Label(c.transform, "Lv." + tier, Mathf.RoundToInt(size * 1.0f)).rectTransform.Fill(0, 2, 0, 0);
             int n = Tables.Ci("Stars_Per_Tier", 4);
             for (int i = 0; i < n; i++)
             {
                 float sx = x + size * 2.6f + 6 + i * (size * 1.5f);
-                var s = UIKit.Img(p, Art.Icon(i < stars ? "gem_on" : "gem_off"), "Star" + i); s.raycastTarget = false;
+                bool last = i == n - 1;
+                var s = UIKit.Img(p, Art.Icon(i < stars ? (last ? "gem_red_on" : "gem_on") : (last ? "gem_red_off" : "gem_off")), "Star" + i); s.raycastTarget = false;
                 s.rectTransform.TL(sx, y - size * 0.85f, size * 1.6f, size * 1.7f);
                 if (i == hl)
                 {
