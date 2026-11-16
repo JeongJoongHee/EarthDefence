@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>터렛 대기 효과 시안</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+<style>.gif2{display:grid;grid-template-columns:1fr 1fr;gap:14px} .gif2 img{width:100%;border:3px solid #3b281c;border-radius:14px;background:#2e3866;image-rendering:auto} .gif2 figure{margin:0} .gif2 figcaption{font-size:14px;color:var(--soft)}</style>
+</head><body><main>
+<h1>터렛 대기 효과 — 1단계 시안 (벼락탑 · 레이저 포)</h1>
+<p class="note">2026-11-16 · <code>터렛_대기_효과_검토.html</code> "진행해줘" → 추천안대로(쉬는 동안 약 40% · 쏘기 직전 점점 세게 · 쏠 때 번쩍). 게임에서 1/30초 간격으로 3초씩 찍은 <b>움직이는 GIF</b> · 자동 시험 오류 0 · <span class="b">왼쪽 = 지금(효과 없음)</span>, <span class="a">오른쪽 = 시안</span></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<h2>① 벼락탑 — 스파크가 치직치직</h2>
+<p class="note">구슬 빛이 불규칙하게 떨림 · 구슬에서 작은 번개 4줄이 0.05~0.12초마다 모양·방향을 바꿔 튐(1줄은 아래 코일 쪽) · 쏘기 직전 더 자주 · 가끔 불꽃</p>
+<div class="gif2"><figure><img src="대기효과_시안/bolt_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="대기효과_시안/bolt_p1_x2.gif"><figcaption>시안 (2배 확대)</figcaption></figure></div>
+
+<h2>② 레이저 포 — 빛 고리가 둘레를 돎</h2>
+<p class="note">수정이 둥실 · 수정 빛 숨쉬기 · 둘레 빛 고리를 따라 빛 점 2개가 돎(앞쪽은 수정 앞, 뒤쪽은 뒤) · 쏠 때가 가까울수록 빨리 · 밝게</p>
+<div class="gif2"><figure><img src="대기효과_시안/laser_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="대기효과_시안/laser_p1_x2.gif"><figcaption>시안 (2배 확대)</figcaption></figure></div>
+
+<h2>③ 실제 게임 크기 (기지 전체)</h2>
+<div class="gif2"><figure><img src="대기효과_시안/base_p0.gif"><figcaption>지금</figcaption></figure><figure><img src="대기효과_시안/base_p1.gif"><figcaption>시안 — 왼쪽 안 = 레이저 포 · 오른쪽 안 = 벼락탑</figcaption></figure></div>
+
+<div class="tip gray"><b>만든 방법 · 바꿀 수 있는 것</b><ul>
+  <li>터렛 그림을 받침 + 움직이는 조각(수정 · 빛 고리 앞/뒤 · 구슬 · 작은 번개 3장)으로 나눔 — 카드 · 로비 그림은 예전 한 장 그대로.</li>
+  <li>세기 = <code>Config</code> 의 <code>Idle_Fx</code> (1 기본 · 0.5 옅게 · 0 끄기). 속도 · 번개 개수 같은 세부도 말씀만 주시면 바로.</li>
+  <li>촬영은 다시 할 수 있게 도구로: <code>PlayTest.RunIdle</code> → <code>python tools/idle_gif.py</code>.</li>
+  <li>찍어 보고 고친 것: 구슬 빛을 구슬 <b>앞</b>에 뒀더니 구슬이 하얗게 타서 테두리가 회색으로 보였음 → 빛을 구슬 <b>뒤</b>로 · 옅게.</li>
+</ul></div>
+
+<h2>④ 봐 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
+<ul class="todo">
+  <li data-id="s-bolt"><label><input type="checkbox"><span><span class="tag">확인</span><b>벼락탑</b> — 치직치직 느낌 · 번개 개수 · 밝기</span></label></li>
+  <li data-id="s-laser"><label><input type="checkbox"><span><span class="tag">확인</span><b>레이저 포</b> — 고리 크기 · 도는 빠르기 · 밝기</span></label></li>
+  <li data-id="s-calm"><label><input type="checkbox"><span><span class="tag">확인</span><b>화면이 정신없지 않은지</b> — 쉬는 동안 세기(지금 약 40%)</span></label></li>
+  <li data-id="s-next"><label><input type="checkbox"><span><span class="tag">결정</span><b>2단계 진행</b> — 시안이 괜찮으면 나머지 4개(관통포 바퀴 · 드론 프로펠러 · 벌집 둘레 벌 · 미사일 재장전)를 같은 방식으로 (추천: 진행)</span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-idle1-1116', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

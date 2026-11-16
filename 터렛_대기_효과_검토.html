@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>터렛 대기 효과 검토</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>터렛 대기 효과 — 가능한지 검토</h1>
+<p class="note">2026-11-16 · 질문: "터렛에 효과를 애니처럼 돌려 작동하고 있는 느낌을 줄 수 있을까? 벼락탑은 스파크가 치치직, 레이저 포는 레이저가 원형으로 약하게 터렛 주변을 도는 형태"</p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<div class="tip green"><b>결론: 가능합니다. 지금 구조로 무리 없이 됩니다.</b>
+<ul>
+  <li><b>방법</b>: 터렛 그림에서 움직일 부분(벼락 구슬 · 레이저 수정 · 프로펠러 · 바퀴 · 벌 · 미사일)만 <b>따로 그려서</b>, 게임 코드가 매 프레임 돌리기 · 위아래 흔들기 · 깜빡이기 · 그림 바꾸기를 합니다. 오늘 넣은 "터렛 아래 빛 고리 숨쉬기"와 "대장 카피 총 돌리기"가 같은 방식이라 이미 바탕이 있습니다.</li>
+  <li><b>Unity 애니메이터(Animator)는 안 써도 됩니다</b> — 카치건처럼 코드로 움직이면 표 값 하나로 속도·세기를 바꿀 수 있고, 그림은 지금처럼 도구가 다시 뽑습니다.</li>
+  <li><b>무게(성능)</b>: 터렛 4칸 x 움직이는 조각 2~4개 + 가끔 불꽃 몇 개 → 화면에 수십 개 더해지는 정도라 폰에서도 부담 없습니다. 빛 효과는 오늘 만든 "빛 더하기" 재질 하나를 같이 써서 한 번에 그려집니다.</li>
+  <li><b>"작동하는 느낌"을 더 살리는 방법</b>: 쉬는 동안은 <b>약하게</b>, <b>쏠 때가 가까워질수록 점점 세게</b>(충전), 쏘는 순간 번쩍 → 다시 약하게. 터렛 단계가 오르면 조금 더 빠르고 밝게.</li>
+  <li><b>주의</b>: 화면이 정신없어지지 않게(예전 말씀 "정신없는 것 싫음") 쉬는 동안 효과는 옅게(30~50%) 두고, Config 값(<code>Idle_Fx</code> 세기 · 0 = 끄기)으로 한 번에 줄이거나 끌 수 있게 하겠습니다.</li>
+</ul></div>
+
+<h2>① 터렛별 안 (말씀하신 2개 + 나머지 4개 같은 방식)</h2>
+<table><tr><th>터렛</th><th>움직임 (쉬는 동안 약하게 → 쏘기 직전 세게)</th><th>그림 작업</th></tr><tr><td style="width:120px;text-align:center"><img src="Earth_Defence/Assets/Resources/Art/Turret/bolt.png" style="width:100px;background:#2e3866;border-radius:10px"><br><b>벼락탑</b></td><td>구슬 위아래로 <b>작은 번개가 치직치직</b> 튐(0.05~0.1초마다 모양·방향을 바꿔 깜빡) · 구슬 빛이 불규칙하게 떨림 · 가끔 작은 불꽃 2~3개</td><td style="width:200px;color:#7a6a5c">구슬 · 코일을 따로 그림 + 짧은 번개 그림 3장</td></tr><tr><td style="width:120px;text-align:center"><img src="Earth_Defence/Assets/Resources/Art/Turret/laser.png" style="width:100px;background:#2e3866;border-radius:10px"><br><b>레이저 포</b></td><td>수정 둘레를 <b>얇은 빛 고리가 천천히 돎</b>(눕힌 타원 + 고리를 따라 도는 밝은 점 — 앞쪽에선 수정 앞, 뒤쪽에선 뒤로) · 수정이 살짝 떠서 위아래로 흔들림 · 수정 빛 숨쉬기</td><td style="width:200px;color:#7a6a5c">수정을 따로 그림 + 고리 앞/뒤 반쪽 2장</td></tr><tr><td style="width:120px;text-align:center"><img src="Earth_Defence/Assets/Resources/Art/Turret/rail.png" style="width:100px;background:#2e3866;border-radius:10px"><br><b>관통포</b></td><td>가운데 <b>둥근 바퀴가 천천히 돎</b> · 포신 끝 빛이 쏠 때가 가까워질수록 밝아짐(충전)</td><td style="width:200px;color:#7a6a5c">바퀴를 따로 그림</td></tr><tr><td style="width:120px;text-align:center"><img src="Earth_Defence/Assets/Resources/Art/Turret/drone.png" style="width:100px;background:#2e3866;border-radius:10px"><br><b>끈끈이 드론</b></td><td><b>프로펠러가 돎</b>(타원 폭을 빠르게 바꿔 도는 것처럼) · 몸이 둥실둥실 · 눈이 목표 쪽을 봄 · 가끔 깜빡</td><td style="width:200px;color:#7a6a5c">프로펠러 2 · 몸 · 눈동자를 따로</td></tr><tr><td style="width:120px;text-align:center"><img src="Earth_Defence/Assets/Resources/Art/Turret/hive.png" style="width:100px;background:#2e3866;border-radius:10px"><br><b>벌집</b></td><td><b>작은 벌 2~3마리가 벌집 둘레를 빙빙</b> 돎(속도·높이 다르게) · 입구가 따뜻하게 숨쉬기</td><td style="width:200px;color:#7a6a5c">벌집 그림에서 벌 3마리를 빼고 따로</td></tr><tr><td style="width:120px;text-align:center"><img src="Earth_Defence/Assets/Resources/Art/Turret/missile.png" style="width:100px;background:#2e3866;border-radius:10px"><br><b>유도 미사일</b></td><td>쏘면 위 미사일 2개가 <b>사라졌다가 아래에서 올라와 다시 장전</b> · 미사일 꼬리에 작은 김/불티 · 등 깜빡</td><td style="width:200px;color:#7a6a5c">미사일 2개를 따로 그림</td></tr></table>
+
+<h2>② 진행 순서 추천</h2>
+<div class="tip gray"><ul>
+  <li><b>1단계 시안</b>: 말씀하신 <b>벼락탑 · 레이저 포 2개만</b> 먼저 만들어, 실제 게임 크기로 찍은 <b>움직이는 GIF</b>를 비교 문서로 보여 드림 (지금 ↔ 시안).</li>
+  <li><b>2단계</b>: 시안이 괜찮으면 나머지 4개(관통포 · 드론 · 벌집 · 미사일)를 같은 방식으로 → 자동 시험에 "터렛마다 움직이는 조각이 있음 · 쏘기 직전 밝아짐" 검사 줄 추가 → 캡처 · GIF 확인 뒤 보고.</li>
+  <li>예상 작업량: 1단계는 짧게(그림 조각 + 코드 한 덩어리), 2단계는 터렛마다 그림을 나누는 일이 대부분입니다.</li>
+</ul></div>
+
+<h2>③ 정해 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
+<ul class="todo">
+  <li data-id="i-go"><label><input type="checkbox"><span><span class="tag">결정</span><b>진행할까요?</b> 추천: 위 ② 순서대로 — 벼락탑 · 레이저 포 시안(GIF)부터</span></label></li>
+  <li data-id="i-list"><label><input type="checkbox"><span><span class="tag">결정</span><b>나머지 4개 안</b> (위 ① 표) — 바꾸거나 빼고 싶은 것이 있으면 적어 주세요</span></label></li>
+  <li data-id="i-charge"><label><input type="checkbox"><span><span class="tag">결정</span><b>쏘기 직전 점점 세게(충전)</b> — 추천: 넣기 (언제 쏠지 보여서 "작동 중" 느낌이 큼)</span></label></li>
+  <li data-id="i-strength"><label><input type="checkbox"><span><span class="tag">결정</span><b>쉬는 동안 세기</b> — 추천: 옅게(30~50%) 시작 → 시안 보고 조절</span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-idle-1116', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

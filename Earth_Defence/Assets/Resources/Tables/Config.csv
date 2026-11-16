@@ -1,0 +1,90 @@
+﻿Key,Value,Note
+Run_Time,240,"한 판 길이(초) — 11-15 결정 ""약 4분"""
+Mid_Boss_Time,120,중간 보스(엘리트) 나오는 시각(초)
+Boss_Time,210,마지막 보스 나오는 시각(초). 보스를 잡으면 승리
+Wave_Len,30,웨이브 하나 길이(초) — 웨이브마다 몰려오기 1번
+Level_Max,20,판 안 레벨 상한 (카드 약 20장)
+Exp_Base,8,Lv1 → 2 필요 경험치
+Exp_Growth,1.17,레벨마다 필요 경험치 배율
+Card_Choices,3,레벨업 카드 장수
+Card_Upgrade_Guarantee,0,1 = 강화 카드 1장 이상 보장 (11-15 결정: 원작대로 0)
+Refresh_Ad,1,판마다 광고 새로고침 횟수
+Refresh_Free,0,판마다 무료 새로고침 횟수 (원작대로 0)
+Stars_Per_Tier,4,별 몇 개면 돌파 카드가 열리나
+Tier_Max,3,터렛 단계 최대
+Turret_Slots,4,가디언 말고 터렛 칸 수
+Break_Weight_Mul,4,별이 다 차면 돌파 카드 가중치 배율
+Boss_Extra_Card,1,엘리트·보스를 잡으면 카드 1장 더 (1 = 켬)
+Multi_Penalty,0.15,탄 +1 카드의 발당 피해 감소
+Field_W,10.8,전장 폭
+Ground_Y,-7.52,땅 높이
+Shield_Y,-4.6,적이 멈추는 방어막 높이
+Spawn_Y,10.6,적이 나오는 높이
+Enemy_Hit_Interval,1,방어막에 붙은 적이 때리는 간격(초)
+Crash_Mul,3,운석이 방어막에 부딪치면 공격력 x
+Max_Alive,90,화면에 동시에 있는 적 최대
+Spawn_Rate_Start,1.2,처음 초당 적 수
+Spawn_Rate_End,3.2,마지막 초당 적 수
+Spawn_Rate_Per_Stage,0.03,스테이지마다 늘어나는 초당 적 수
+Swarm_Size,8,웨이브마다 한꺼번에 몰려오는 수
+Mon_HP_Base,55,스테이지 1 적 체력 (Hp_Mul 1 기준)
+Mon_HP_Growth,1.16,스테이지마다 체력 배율
+Mon_Atk_Base,12,스테이지 1 적 공격력
+Mon_Atk_Growth,1.09,스테이지마다 공격력 배율
+Elite_HP_Mul,30,엘리트 체력 = 일반 x
+Elite_Atk_Mul,3,엘리트 공격력 x
+Boss_HP_Mul,140,보스 체력 = 일반 x
+Boss_Atk_Mul,6,보스 공격력 x
+Boss_Summon_Gap,4,보스가 부하를 부르는 간격(초)
+Range_Scale,1.3,터렛 사거리 배율 (표 Range x 이 값 = 월드 칸)
+Atk_Base,100,기본 공격력
+Crit_Rate,0.05,기본 치명 확률
+Crit_Dmg,1.25,기본 치명 배율
+Weak_Mul,1.5,약점 속성 배율
+Resist_Mul,0.6,저항 속성 배율
+Pos_Near,1.1,기지 근처 적 피해 배율
+Pos_Far,0.9,먼 적 피해 배율
+Pos_Near_Y,-1.6,이 높이보다 아래 = 기지 근처
+Pos_Far_Y,5,이 높이보다 위 = 먼 적
+Guardian_Move,14,끌 때 좌우 이동 속도
+Guardian_X_Max,1.5,좌우로 움직일 수 있는 범위(±) — 옆 터렛과 안 겹치게
+Charge_Need,120,충전 포인트 (적중 1번 = 1)
+Charge_Time,5,충전 상태 시간(초)
+Charge_Mul,5,충전탄 피해 배율
+Charge_Interval,0.1,충전탄 간격(초)
+Slow_Max,0.5,둔화 최대
+Para_Time,1,마비 시간(초)
+Burn_Time,3,화상 시간(초)
+Burn_Rate,40,화상 초당 피해 %ATK
+Vuln_Time,4,취약 시간(초)
+Explode_Rate,60,"""폭발"" 카드 폭발 피해 %ATK"
+Explode_Radius,0.9,"""폭발"" 반경"
+Mini_Bolt_Rate,120,작은 낙뢰 피해 %ATK
+Mini_Laser_Rate,80,작은 레이저 피해 %ATK
+Chain_Rate,50,연쇄 번개 피해 %ATK
+Chain_Range,2.4,연쇄 번개가 튀는 거리
+Base_HP,3000,Lv1 기지 체력
+Base_HP_Per_Lv,120,레벨마다 체력
+Base_Atk_Per_Lv,4,레벨마다 공격력
+Base_Cost_Base,120,Lv1 → 2 골드
+Base_Cost_Growth,1.11,레벨마다 비용 배율
+Base_Max_Lv,300,기지 최대 레벨
+Win_Gold_Base,300,승리 골드 (스테이지 1)
+Win_Gold_Per_Stage,60,스테이지마다 더하는 골드
+Kill_Gold,1,적 1마리 골드 (스테이지 배율 곱함)
+Lose_Mul,0.35,지면 보상 x (버틴 시간 비율도 곱함)
+Win_Shards,12,승리 터렛 조각 (무작위 터렛에 나눠 줌)
+Win_Shards_Per_Stage,1,스테이지마다 더하는 조각
+First_Clear_Mul,2,처음 깬 스테이지 보상 배율
+Patrol_Gold_Hour,400,순찰 시간당 골드 (최고 스테이지 1)
+Patrol_Gold_Per_Stage,80,최고 스테이지마다 더하는 시간당 골드
+Patrol_Shards_Hour,4,순찰 시간당 조각
+Patrol_Max_Hours,12,순찰 최대 시간
+Patrol_Min_Sec,60,이보다 짧으면 받기 버튼 꺼짐
+Start_Gold,0,처음 골드
+Run_HP_Ramp,1.5,"한 판 안에서 적 체력이 끝 무렵 몇 배 더 (0 = 그대로, 1.5 = 끝에 2.5배)"
+Charge_Per_Hit,1,가디언 적중 1번당 충전 포인트
+Hud_H,210,"위쪽 UI 높이(1080 폭 기준 픽셀) — 적은 이 아래에서 나옴 (11-16 ""UI 가 유성을 가림"")"
+Spawn_Below_Hud,0.6,UI 아래 끝에서 이만큼 아래가 적이 나오는 줄 (Spawn_Y 보다 낮을 때만)
+Guardian_Smooth,0.22,"대장 카피 이동이 목표에 닿는 시간(초) — 클수록 묵직 (11-16 ""무게감"")"
+Idle_Fx,1,"터렛 대기 효과 세기 배율 (1 = 기본 · 0.5 = 옅게 · 0 = 끄기) — 11-16 ""작동하는 느낌"""

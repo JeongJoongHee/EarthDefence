@@ -1,0 +1,313 @@
+using UnityEngine;
+
+namespace EarthDef
+{
+    /// <summary>
+    /// 전장의 터렛 1개 (가디언 포함). 쿨다운이 차면 종류(Kind)대로 쏨:
+    /// gun 가디언 연사 · rail 관통 포탄 · laser 레이저 · field 가로 장판 · hive 벌 · missile 유도 미사일 · bolt 세로 낙뢰.
+    /// 단계가 오르면 그림이 조금 커짐(1 → 1.1 → 1.2).
+    /// </summary>
+    public class TurretUnit : MonoBehaviour
+    {
+        public TurretInst t;
+        SpriteRenderer sr;
+        float cd, chargeT, chargeShotT, kick;
+        public double charge;             // 가디언 충전 포인트
+        public bool Charging => chargeT > 0;
+        public float ChargeK => Charging ? chargeT / Tables.Cf("Charge_Time", 5f) : (float)(charge / Tables.C("Charge_Need", 120));
+        public float targetX;
+        int muzzle;
+        public int shotsFired, fired;
+        bool IsGuardian => t.row.kind == "gun";
+        float baseY, baseScale = 1f;
+
+        public void Init(TurretInst inst, Vector2 pos)
+        {
+            t = inst; inst.unit = this;
+            transform.position = pos; baseY = pos.y; targetX = pos.x;
+            sr = gameObject.AddComponent<SpriteRenderer>();
+            sr.sprite = IsGuardian ? Art.Guardian : Art.Turret(t.row.art);
+            sr.sortingOrder = IsGuardian ? 5 : 3;
+            cd = IsGuardian ? 0.3f : 0.6f + t.slot * 0.35f;
+            if (IsGuardian) MakeGun();
+            else SpawnFx();
+            // 11-16 밤 대기 효과 — 받침 그림 + 움직이는 조각 (터렛 6종 모두)
+            if (!IsGuardian && TurretIdle.Has(t.row.art) && Tables.Cf("Idle_Fx", 1f) > 0)
+            {
+                sr.sprite = Art.Turret(t.row.art + "_base");
+                idle = gameObject.AddComponent<TurretIdle>();
+                idle.Setup(this, t.row.art);
+            }
+            RefreshTier();
+        }
+
+        // ---------- 11-16 저녁: 생길 때 톡 커짐 · 빛 · 불꽃 (사용자 "터렛이 생성된 느낌이 필요") ----------
+        // 터렛 아래 속성 색 빛 고리는 11-16 밤에 뺌 (사용자 "대기 효과를 넣었으니 하단 강조 효과는 제거")
+        public TurretIdle idle;
+        /// <summary>다음 발사까지 찬 정도 0~1 (대기 효과가 쏠 때가 가까울수록 세짐)</summary>
+        public float Charge01 => 1f - Mathf.Clamp01(cd / Mathf.Max(0.05f, t.Cooldown));
+        float popT = -1f;
+
+        void SpawnFx()
+        {
+            popT = 0f;
+            var c = Elem.Color(t.row.elem);
+            Fx.Ring((Vector2)transform.position + Vector2.up * 0.5f, 1.1f, c);
+            Fx.Glow((Vector2)transform.position + Vector2.up * 0.6f, 0.9f, new Color(c.r, c.g, c.b, 0.8f), 0.4f);
+            Fx.Sparks((Vector2)transform.position + Vector2.up * 0.5f, Color.Lerp(c, Color.white, 0.4f), 12, 4.5f, 1.1f, 160f, 90f);
+        }
+
+        void Update()
+        {
+            if (popT < 0f) return;
+            popT += Time.deltaTime;
+            float k = Mathf.Clamp01(popT / 0.4f);
+            float s = k < 1 ? 1 + 2.2f * Mathf.Pow(k - 1, 3) + 1.2f * Mathf.Pow(k - 1, 2) : 1;   // 뒤로 살짝 넘치며 커짐
+            transform.localScale = Vector3.one * baseScale * Mathf.Max(0.05f, s);
+            if (k >= 1) { popT = -1f; transform.localScale = Vector3.one * baseScale; }
+        }
+
+        // ---------- 11-16 오후: 가디언 = 카치건 형태 몸 + 따로 도는 레이저 소총 ----------
+        // 총은 뒤 손(Art.GuardianHand)을 축으로 목표 쪽으로 돎 · 목표가 왼쪽이면 몸을 뒤집음 · 쏠 때는 총만 뒤로 밀림(몸은 그대로)
+        // 이동은 부드럽게 가속·감속(SmoothDamp) + 가는 쪽으로 살짝 기울고 뒤뚱 (사용자 "방방 거림 · 무게감 없이 가벼움")
+        Transform gunRoot, gunT;
+        float gunAng = 50f, aimAng = 50f, recoil, moveVel, walkPh, aimT, moveLean, backLean;
+        bool faceLeft;
+        public bool FaceLeft => faceLeft;
+        public float GunAngle => gunAng;
+
+        void MakeGun()
+        {
+            gunRoot = new GameObject("GunRoot").transform;
+            gunRoot.SetParent(transform, false);
+            gunT = new GameObject("Gun").transform;
+            gunT.SetParent(gunRoot, false);
+            var gs = gunT.gameObject.AddComponent<SpriteRenderer>();
+            gs.sprite = Art.GuardianGun; gs.sortingOrder = 6;
+            PoseGun();
+        }
+
+        Vector2 HandPos => transform.TransformPoint(new Vector3(Art.GuardianHand.x * (faceLeft ? -1 : 1), Art.GuardianHand.y, 0));
+
+        void PoseGun()
+        {
+            if (!gunRoot) return;
+            gunRoot.localPosition = new Vector3(Art.GuardianHand.x * (faceLeft ? -1 : 1), Art.GuardianHand.y, 0);
+            gunRoot.localScale = new Vector3(faceLeft ? -1 : 1, 1, 1);
+            float lean = transform.localEulerAngles.z;
+            gunRoot.localRotation = Quaternion.Euler(0, 0, (faceLeft ? gunAng - 180f : gunAng) - lean);
+            gunT.localPosition = new Vector3(-recoil, 0, 0);
+        }
+
+        void AimStep(float dt)
+        {
+            if ((aimT -= dt) <= 0)
+            {
+                aimT = 0.1f;
+                var tg = Battle.I.Nearest(HandPos, t.Range);
+                if (tg != null)
+                {
+                    var d = tg.Pos - HandPos;
+                    aimAng = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+                    if (aimAng < -90f) aimAng += 360f;
+                }
+            }
+            // 몸 방향: 겨눌 각이 90°를 넘으면 왼쪽 (흔들리지 않게 ±12° 여유)
+            if (!faceLeft && aimAng > 102f) { faceLeft = true; sr.flipX = true; gunAng = 180f - gunAng; }
+            else if (faceLeft && aimAng < 78f) { faceLeft = false; sr.flipX = false; gunAng = 180f - gunAng; }
+            // 높이 겨눌수록 몸을 뒤로 젖힘(최대 14°) · 총은 몸에 대해 62°까지만 듦 → 수직으로 겨눠도 총이 얼굴(주둥이)을 안 가림
+            float elevWant = faceLeft ? 180f - aimAng : aimAng;
+            backLean = Mathf.MoveTowards(backLean, Mathf.Clamp((elevWant - 45f) * 0.4f, 0f, 14f), 60f * dt);
+            float elev = Mathf.Clamp(elevWant, -15f, 62f + backLean);
+            gunAng = Mathf.MoveTowardsAngle(gunAng, faceLeft ? 180f - elev : elev, 720f * dt);
+            float lean = moveLean + (faceLeft ? -backLean : backLean);
+            transform.localRotation = Quaternion.Euler(0, 0, Mathf.LerpAngle(transform.localEulerAngles.z, lean, Mathf.Min(1, 10f * dt)));
+            recoil = Mathf.MoveTowards(recoil, 0, 0.5f * dt) * Mathf.Max(0, 1 - 12f * dt);
+            PoseGun();
+        }
+
+        public void RefreshTier()
+        {
+            float s = 1 + 0.1f * (t.tier - 1);
+            baseScale = s;
+            transform.localScale = Vector3.one * s;
+            if (t.tier > 1) Fx.Ring((Vector2)transform.position + Vector2.up * 0.8f, 1.2f, Elem.Color(t.row.elem));
+        }
+
+        public Vector2 Head => IsGuardian ? (Vector2)gunT.TransformPoint(Art.GunMuzzle)
+                                   : (Vector2)transform.position + Vector2.up * Art.TurretHead * transform.localScale.x;
+
+        public void Step(float dt)
+        {
+            if (!IsGuardian && kick > 0) { kick -= dt; transform.position = new Vector3(transform.position.x, baseY - 0.06f * kick / 0.1f, 0); }
+            if (IsGuardian) { Move(dt); AimStep(dt); }
+            if (Charging) { ChargeStep(dt); return; }
+            cd -= dt;
+            if (cd > 0) return;
+            var b = Battle.I;
+            var target = b.Nearest(IsGuardian ? HandPos : Head, t.Range);
+            if (target == null) { cd = 0.1f; return; }
+            cd = t.Cooldown;
+            if (idle) idle.OnFire();
+            Fire(target);
+            fired++;
+            kick = 0.1f;
+        }
+
+        void Move(float dt)
+        {
+            float max = Tables.Cf("Guardian_X_Max", 1.5f);
+            var p = transform.position;
+            p.x = Mathf.SmoothDamp(p.x, Mathf.Clamp(targetX, -max, max), ref moveVel, Tables.Cf("Guardian_Smooth", 0.22f), Tables.Cf("Guardian_Move", 14f), dt);
+            float sp = Mathf.Abs(moveVel);
+            if (sp > 0.25f) walkPh += sp * dt * 2.2f; else walkPh = Mathf.MoveTowards(walkPh, Mathf.Round(walkPh / Mathf.PI) * Mathf.PI, dt * 4f);
+            p.y = baseY + Mathf.Abs(Mathf.Sin(walkPh)) * Mathf.Min(0.06f, sp * 0.02f);          // 뒤뚱
+            transform.position = p;
+            moveLean = Mathf.Clamp(-moveVel * 1.6f, -7f, 7f);                                     // 가는 쪽으로 기움 (AimStep 에서 젖힘과 합쳐 돌림)
+        }
+
+        void Fire(Enemy target)
+        {
+            var b = Battle.I;
+            switch (t.row.kind)
+            {
+                case "gun": Gun(target, 1, t.row.rate); break;
+                case "rail":
+                    for (int i = 0; i < t.Shots; i++)
+                    {
+                        var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 6f);
+                        var pr = new Projectile(t, "shell", Head, d, t.row.speed, t.row.rate, t.Pierce, 1f) { hitR = 0.22f };
+                        if (i == 0) Fx.Muzzle(Head, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, Projectile.ShotColor("shell"), 0.9f);
+                        bool first = true;
+                        pr.onHit = (p, e) =>
+                        {
+                            Combat.Hit(t, e, p.rate);
+                            if (first && t.Has("split")) Split(p.pos, p.dir, (int)t.S("split"));
+                            first = false;
+                        };
+                        b.Add(pr);
+                    }
+                    break;
+                case "laser":
+                {
+                    float ang = Mathf.Atan2(target.Pos.y - Head.y, target.Pos.x - Head.x) * Mathf.Rad2Deg;
+                    float w = t.row.radius * t.Area, sweep = t.Has("sweep") ? 22f : 0f;
+                    b.Add(new Beam(t, Head, ang, t.Duration, t.row.tick, w, t.row.rate, sweep));
+                    int extra = (int)t.S("beam_split");
+                    for (int i = 0; i < extra; i++)
+                        b.Add(new Beam(t, Head, ang + ((i % 2 == 0) ? 1 : -1) * 14f * (i / 2 + 1), t.Duration, t.row.tick, w * 0.7f, t.row.rate * 0.6, sweep));
+                    break;
+                }
+                case "field":
+                {
+                    float half = t.row.radius * t.Area;
+                    float y = Mathf.Clamp(b.CrowdY(), World.ShieldY + half + 0.3f, 7.5f);
+                    int n = 1 + (int)t.S("count_free");
+                    for (int i = 0; i < n; i++)
+                        b.Add(new Field(t, Mathf.Clamp(y + i * 2.6f, World.ShieldY + half + 0.3f, 8.5f), half, t.Duration, t.Tick, t.row.rate));
+                    break;
+                }
+                case "hive":
+                    for (int i = 0; i < t.Shots; i++) b.Add(new Bee(t, Head + new Vector2(Random.Range(-0.4f, 0.4f), 0.1f * i), t.row.hits + (int)t.S("hits"), t.row.rate));
+                    break;
+                case "missile":
+                    for (int i = 0; i < t.Shots; i++)
+                    {
+                        var d = Rot(Vector2.up, (i - (t.Shots - 1) / 2f) * 25f);
+                        var m = new Projectile(t, "missile", Head, d, t.row.speed, t.row.rate, 0, 1f) { target = target, turn = 4.5f, life = 5f, hitR = 0.25f };
+                        Fx.Sparks(Head, Projectile.ShotColor("missile"), 4, 2.5f, 0.9f, 80f, -90f + Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg - 90f);
+                        m.onHit = (p, e) => MissileHit(p.pos, e, 1.0);
+                        b.Add(m);
+                    }
+                    break;
+                case "bolt":
+                {
+                    float w = t.row.radius * 2 * t.Area;
+                    float x0 = target.Pos.x;
+                    for (int i = 0; i < t.Shots; i++)
+                    {
+                        float x = i == 0 ? x0 : (b.RandomEnemy()?.Pos.x ?? x0 + (i % 2 == 0 ? 1 : -1) * 1.5f * i);
+                        b.Add(new Strike(t, x, w, t.Duration, t.row.tick, t.row.rate));
+                    }
+                    break;
+                }
+            }
+        }
+
+        // ---------- 가디언 ----------
+        void Gun(Enemy target, double mul, double rate, bool chargeShot = false)
+        {
+            var b = Battle.I;
+            muzzle = 1 - muzzle;
+            recoil = 0.07f; PoseGun();
+            int shots = 1 + (int)t.S("shots") + (int)t.S("shots_free");
+            if (chargeShot) shots = Mathf.CeilToInt(shots * (1 + (float)t.S("charge_shots") / 100f));
+            var from = Head;
+            var dir = (target.Pos - from).normalized;
+            Fx.Muzzle(from, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg, Projectile.ShotColor(chargeShot ? "bullet_charge" : "bullet"), chargeShot ? 1.3f : 0.9f);
+            for (int i = 0; i < shots; i++)
+            {
+                var d = Rot(dir, (i - (shots - 1) / 2f) * 5f);
+                var pr = new Projectile(t, chargeShot ? "bullet_charge" : "bullet", from, d, t.row.speed, rate * mul, t.Pierce + (chargeShot ? 3 : 0), 1f);
+                pr.onHit = (p, e) =>
+                {
+                    Combat.Hit(t, e, p.rate);
+                    if (t.Has("charge") && !Charging) charge += Tables.C("Charge_Per_Hit", 1) * (1 + t.S("charge_speed") / 100.0);
+                };
+                b.Add(pr);
+            }
+            shotsFired++;
+            if (t.Has("charge") && charge >= Tables.C("Charge_Need", 120)) { charge = 0; chargeT = Tables.Cf("Charge_Time", 5f); }
+        }
+
+        void ChargeStep(float dt)
+        {
+            chargeT -= dt; chargeShotT -= dt;
+            if (chargeShotT > 0) return;
+            chargeShotT = Tables.Cf("Charge_Interval", 0.1f);
+            var target = Battle.I.Nearest(Head, t.Range);
+            if (target != null) Gun(target, Tables.C("Charge_Mul", 5), t.row.rate, true);
+        }
+
+        // ---------- 관통포 · 미사일 갈래 ----------
+        void Split(Vector2 at, Vector2 dir, int n)
+        {
+            double rate = t.row.rate * 0.4 * (1 + t.S("split_dmg") / 100.0);
+            for (int i = 0; i < n; i++)
+            {
+                var d = Rot(dir, (i - (n - 1) / 2f) * 28f);
+                var pr = new Projectile(t, "shell", at + d * 0.3f, d, t.row.speed * 0.8f, rate, 0, 0.55f) { life = 1.2f };
+                pr.onHit = (p, e) => Combat.Hit(t, e, p.rate, false);
+                Battle.I.Add(pr);
+            }
+        }
+
+        void MissileHit(Vector2 at, Enemy e, double mul)
+        {
+            Combat.Hit(t, e, t.row.rate * mul);
+            float r = t.row.radius * t.Area * (float)(mul < 1 ? 0.6 : 1);
+            Combat.Explode(t, at, r, t.row.rate2 * mul, Elem.Color("fire"));
+            if (mul >= 1 && t.Has("split"))
+            {
+                int n = (int)t.S("split");
+                for (int i = 0; i < n; i++)
+                {
+                    // 11-16: 맞은 자리에서 튀어나오던 것 → 미사일 터렛에서 발사해 맞은 자리 근처 적을 쫓음
+                    var d = Rot(Vector2.up, (i - (n - 1) / 2f) * 22f);
+                    var m = new Projectile(t, "mini_missile", Head, d, t.row.speed * 0.9f, 0, 0, 1f) { turn = 6f, life = 4f, hitR = 0.18f, target = Battle.I.Nearest(at, 4f) };
+                    double k = 0.4 * (1 + t.S("split_dmg") / 100.0);
+                    m.onHit = (p, en) => MissileHit(p.pos, en, k);
+                    Battle.I.Add(m);
+                }
+            }
+            if (mul >= 1 && t.Has("fire_zone"))
+                Battle.I.Add(new Zone(t, at, 1.0f * t.Area, 5f, 0.5f, 30, Elem.Color("fire")));
+        }
+
+        static Vector2 Rot(Vector2 v, float deg)
+        {
+            float r = deg * Mathf.Deg2Rad, c = Mathf.Cos(r), s = Mathf.Sin(r);
+            return new Vector2(v.x * c - v.y * s, v.x * s + v.y * c);
+        }
+    }
+}

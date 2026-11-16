@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>터렛 대기 효과 2단계</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+<style>.gif2{display:grid;grid-template-columns:1fr 1fr;gap:14px} .gif2 img{width:100%;border:3px solid #3b281c;border-radius:14px;background:#2e3866;image-rendering:auto} .gif2 figure{margin:0} .gif2 figcaption{font-size:14px;color:var(--soft)}</style>
+</head><body><main>
+<h1>터렛 대기 효과 — 2단계 (터렛 6종 모두)</h1>
+<p class="note">2026-11-16 · <code>터렛_대기_효과_시안.html</code> 의견대로: 벼락탑 · 레이저 포 그대로 + <b>나머지 4종 진행</b> + <b>터렛 아래 강조 고리 제거</b> · 자동 시험 오류 0 · 게임에서 1/30초 간격으로 3초씩 찍은 GIF · <span class="b">왼쪽 = 효과 없음</span>, <span class="a">오른쪽 = 대기 효과</span></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<div class="tip green"><b>의견 반영 (11-16 밤 추가)</b><ul>
+  <li><b>관통포 바퀴 0.5배</b>로 느리게 · <b>드론 프로펠러도 관통포 바퀴와 같은 빠르기</b>로 (쏠 때가 가까울수록 조금 빨라지는 것은 그대로). 아래 ① ② GIF 를 다시 찍어 바꿨습니다 — 브라우저가 옛 GIF 를 보여 주면 새로고침(F5).</li>
+  <li>벌집 · 미사일 · 색 네온은 "문제없음"이라 그대로. 자동 시험 오류 0.</li>
+</ul></div>
+<div class="tip blue"><b>먼저 알려 드릴 것</b><ul>
+  <li><b>터렛 아래 빛 고리를 뺐습니다.</b> 터렛이 놓일 때 톡 커지며 나타나는 효과(링 · 빛 · 불꽃)는 "하단" 효과가 아니라 그대로 뒀습니다 — 이것도 빼려면 말씀 주세요.</li>
+  <li><b>고친 문제 하나 (중요)</b>: 오늘 넣은 "빛 더하기" 셰이더가 <b>스프라이트 색 · 투명도 · 뒤집기를 못 받고</b> 있었습니다. 그래서 네온 빛(레이저 번짐 · 총구 · 불꽃 · 대기 효과)이 정한 색 대신 <b>전부 흰색</b>이었고, 서서히 사라지는 것도 안 됐습니다. 벌집 입구 빛이 주황 대신 회백색으로 찍혀 픽셀을 재 보고 찾았습니다.
+    <br>→ 고친 뒤 <b>레이저는 하늘색 · 벼락은 노랑 · 미사일 불꽃은 주황</b>으로 보이고, 불꽃 · 빛이 자연스럽게 사라집니다. 앞서 "문제없음"이라고 하신 밝기는 실제론 투명도 1이었기 때문에, 레이저 · 낙뢰 밝기는 그때 보신 것에 맞춰 다시 올렸습니다. 아래 ⑤ 에서 전·뒤를 비교해 주세요.</li>
+  <li>자동 시험에 "셰이더가 색 · 뒤집기를 받는지" 검사 줄을 넣어 다시는 놓치지 않게 했습니다.</li>
+</ul></div>
+
+<h2>① 관통포 — 바퀴가 돎</h2><p class="note">바퀴살 4개가 보이는 바퀴가 천천히 돌다가 쏠 때가 가까울수록 빨리 (11-16 밤 0.5배로 느리게) · 포신 끝 · 바퀴 가운데 빛</p>
+<div class="gif2"><figure><img src="대기효과_시안/rail_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="대기효과_시안/rail_p1_x2.gif"><figcaption>대기 효과 (2배 확대)</figcaption></figure></div>
+<h2>② 끈끈이 드론 — 프로펠러 · 둥실 · 눈</h2><p class="note">몸이 둥실 · 프로펠러가 돎 (11-16 밤 관통포 바퀴와 같은 빠르기로 느리게) · 눈동자가 가까운 적 쪽을 봄 · 2.5~4.5초마다 깜빡</p>
+<div class="gif2"><figure><img src="대기효과_시안/drone_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="대기효과_시안/drone_p1_x2.gif"><figcaption>대기 효과 (2배 확대)</figcaption></figure></div>
+<h2>③ 벌집 — 둘레를 도는 벌</h2><p class="note">작은 벌 3마리가 높이 · 빠르기를 달리해 빙빙(앞쪽은 벌집 앞, 뒤쪽은 뒤 · 가는 쪽을 봄) · 입구가 주황빛으로 숨쉬기</p>
+<div class="gif2"><figure><img src="대기효과_시안/hive_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="대기효과_시안/hive_p1_x2.gif"><figcaption>대기 효과 (2배 확대)</figcaption></figure></div>
+<h2>④ 유도 미사일 — 재장전</h2><p class="note">쏘면 위 미사일 2개가 상자 속으로 내려갔다가 차례로 다시 올라옴 · 상자 등 2개가 번갈아 깜빡(쏠 때가 가까울수록 빨리)</p>
+<div class="gif2"><figure><img src="대기효과_시안/missile_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="대기효과_시안/missile_p1_x2.gif"><figcaption>대기 효과 (2배 확대)</figcaption></figure></div>
+<h2>벼락탑 (1단계 · 색 고친 뒤)</h2><p class="note">작은 번개가 이제 노란빛</p>
+<div class="gif2"><figure><img src="대기효과_시안/bolt_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="대기효과_시안/bolt_p1_x2.gif"><figcaption>대기 효과 (2배 확대)</figcaption></figure></div>
+<h2>레이저 포 (1단계 · 색 고친 뒤)</h2><p class="note">빛 고리 · 빛 점이 이제 하늘색</p>
+<div class="gif2"><figure><img src="대기효과_시안/laser_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="대기효과_시안/laser_p1_x2.gif"><figcaption>대기 효과 (2배 확대)</figcaption></figure></div>
+
+<h2>⑤ 전투 화면 — 셰이더 고치기 전·뒤</h2>
+<img class="wide" src="대기효과_시안/battle_cmp.png">
+<p class="note">왼쪽 = 고치기 전(3차, 빛이 전부 흰색) · 가운데 = 고친 뒤 같은 장면(레이저 하늘색 · 터렛 대기 효과 · 아래 고리 없음) · 오른쪽 = 보스 장면(노란 낙뢰)</p>
+
+<h2>⑥ 실제 게임 크기 (기지 전체)</h2>
+<div class="gif2"><figure><img src="대기효과_시안/base0_p1.gif"><figcaption>레이저 포 · 벼락탑 · 관통포 · 드론</figcaption></figure><figure><img src="대기효과_시안/base1_p1.gif"><figcaption>벌집 · 유도 미사일</figcaption></figure></div>
+
+<h2>⑦ 봐 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
+<ul class="todo">
+  <li data-id="t-rail"><label><input type="checkbox"><span><span class="tag">확인</span><b>관통포</b> — 바퀴 도는 빠르기</span></label></li>
+  <li data-id="t-drone"><label><input type="checkbox"><span><span class="tag">확인</span><b>끈끈이 드론</b> — 프로펠러 · 둥실 · 눈 움직임</span></label></li>
+  <li data-id="t-hive"><label><input type="checkbox"><span><span class="tag">확인</span><b>벌집</b> — 벌 크기 · 개수 · 빠르기</span></label></li>
+  <li data-id="t-missile"><label><input type="checkbox"><span><span class="tag">확인</span><b>유도 미사일</b> — 재장전 · 등 깜빡</span></label></li>
+  <li data-id="t-color"><label><input type="checkbox"><span><span class="tag">확인</span><b>색이 들어간 네온</b> (⑤) — 레이저 하늘색 · 낙뢰 노랑 · 불꽃 주황. 예전 흰 빛이 더 좋았으면 말씀 주세요</span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-idle2-1116', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

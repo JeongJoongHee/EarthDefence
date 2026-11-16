@@ -1,0 +1,17 @@
+# Unity 가 다시 만드는 것
+Earth_Defence/[Ll]ibrary/
+Earth_Defence/[Tt]emp/
+Earth_Defence/[Oo]bj/
+Earth_Defence/[Ll]ogs/
+Earth_Defence/[Bb]uild/
+Earth_Defence/[Bb]uilds/
+Earth_Defence/UserSettings/
+Earth_Defence/.vs/
+Earth_Defence/*.csproj
+Earth_Defence/*.sln
+Earth_Defence/*.slnx
+# 도구가 다시 만드는 것 · 큰 GIF
+tools/__pycache__/
+tools/_preview/
+대기효과_시안/*.gif
+~$*

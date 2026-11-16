@@ -1,0 +1,123 @@
+using System;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace EarthDef
+{
+    /// <summary>
+    /// 씬 시작점: 표·세이브를 읽고 전장 · 효과 · UI 를 코드로 만든다 (씬에는 카메라와 Boot 만).
+    /// 흐름: 로비 → [전투 시작] → 전투 → 결과 → 로비.
+    /// </summary>
+    public class Boot : MonoBehaviour
+    {
+        void Awake()
+        {
+            Application.targetFrameRate = 60;
+            Screen.sleepTimeout = SleepTimeout.NeverSleep;
+            Tables.Load();
+            SaveData.Load();
+            var cam = Camera.main;
+            cam.backgroundColor = Art.Night;
+            new GameObject("World").AddComponent<World>().Build(cam);
+            new GameObject("Fx").AddComponent<Fx>();
+            if (FindFirstObjectByType<EventSystem>() == null)
+            {
+                var es = new GameObject("EventSystem");
+                es.AddComponent<EventSystem>();
+                es.AddComponent<StandaloneInputModule>();
+            }
+            UIRoot.Build(cam);
+            Game.ToLobby();
+        }
+
+        void OnApplicationPause(bool p) { if (p) SaveData.Cur?.Save(); }
+        void OnApplicationQuit() { SaveData.Cur?.Save(); }
+    }
+
+    /// <summary>화면 바꾸기</summary>
+    public static class Game
+    {
+        public static Lobby Lobby;
+        public static BattleUI BattleUI;
+
+        public static void ToLobby()
+        {
+            Popup.CloseAll();
+            if (BattleUI) { UnityEngine.Object.Destroy(BattleUI.gameObject); BattleUI = null; }
+            Battle.I?.Close();
+            if (Lobby) UnityEngine.Object.Destroy(Lobby.gameObject);
+            Lobby = UIKit.Rect(UIRoot.I.pages, "Lobby").Fill().gameObject.AddComponent<Lobby>();
+            Lobby.Build();
+            World.I.ShowSlots(0, false);
+        }
+
+        public static void StartStage(int stage, int seed = 0)
+        {
+            Popup.CloseAll();
+            if (Lobby) { UnityEngine.Object.Destroy(Lobby.gameObject); Lobby = null; }
+            if (BattleUI) UnityEngine.Object.Destroy(BattleUI.gameObject);
+            Battle.I?.Close();
+            SaveData.Cur.stage = stage;
+            var b = Battle.Begin(stage, seed);
+            BattleUI = UIKit.Rect(UIRoot.I.pages, "BattleUI").Fill().gameObject.AddComponent<BattleUI>();
+            BattleUI.Build(b);
+        }
+    }
+
+    /// <summary>캔버스 · 안전 영역 · 층(화면 · 창)</summary>
+    public class UIRoot : MonoBehaviour
+    {
+        public static UIRoot I;
+        public Canvas canvas;
+        public RectTransform safe, pages, popups;
+
+        public static void Build(Camera cam)
+        {
+            var cgo = new GameObject("Canvas", typeof(RectTransform));
+            I = cgo.AddComponent<UIRoot>();
+            var canvas = I.canvas = cgo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            var scaler = cgo.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1080, 1920);
+            scaler.matchWidthOrHeight = cam.aspect > 1080f / 1920f ? 1f : 0f;   // 폰 = 폭 기준, 태블릿처럼 넓으면 높이 기준
+            cgo.AddComponent<GraphicRaycaster>();
+            I.safe = UIKit.Rect(cgo.transform, "Safe").Fill();
+            I.safe.gameObject.AddComponent<SafeArea>();
+            I.pages = UIKit.Rect(I.safe, "Pages").Fill();
+            I.popups = UIKit.Rect(I.safe, "Popups").Fill();
+        }
+
+        /// <summary>월드 위치 → 캔버스(Safe 안) 위치</summary>
+        public Vector2 WorldToUI(Vector2 w)
+        {
+            var sp = World.I.cam.WorldToScreenPoint(w);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(pages, sp, canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, out var lp);
+            return lp;
+        }
+    }
+
+    /// <summary>노치·둥근 모서리를 피하도록 UI 영역을 줄인다</summary>
+    public class SafeArea : MonoBehaviour
+    {
+        Rect last;
+        void Update()
+        {
+            var r = Screen.safeArea;
+            if (r == last || Screen.width == 0) return;
+            last = r;
+            var rt = (RectTransform)transform;
+            rt.anchorMin = new Vector2(r.xMin / Screen.width, r.yMin / Screen.height);
+            rt.anchorMax = new Vector2(r.xMax / Screen.width, r.yMax / Screen.height);
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+        }
+    }
+
+    /// <summary>[초안] 보상형 광고 — 광고 SDK 를 붙이기 전엔 바로 성공으로 처리 (출시 단계에서 실제 광고)</summary>
+    public static class Ads
+    {
+        public static bool Draft => true;
+        public static void Show(Action<bool> done) => done?.Invoke(true);
+    }
+}
