@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2차 의견 반영</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>2차 의견 반영 + 소리</h1>
+<p class="note">2026-11-16 저녁 · <code>2차_구현_결과.html</code> 의견 14개 반영 · 자동 시험 <b>120줄 통과 · 오류 0</b> · 커밋 <code>ffdc049</code> · 왼쪽/위 = <span class="b">전</span>, 오른쪽/아래 = <span class="a">뒤</span></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<div class="tip blue"><b>먼저 알려 드릴 것</b><ul>
+<li><b>소리는 따로 문서로 듣기</b>: <a href="../소리_검토.html"><b>소리_검토.html</b></a> — 장면(로비 · 전투 · 보스) · 배경음 3곡 · 효과음 29개를 게임이 실제로 만든 소리로 들어 보실 수 있습니다.</li>
+<li><code>Turret.xlsx</code> 의 <b>Unlock 이 모두 0</b>으로 바뀌어 있었습니다. 지난 보고서에 "0 으로 하면 바로 나옴"이라고 적었으니 시험하시려고 바꾸신 것으로 보고 <b>5 · 10 · 15 · 20 · 25 로 되돌렸습니다</b>. 처음부터 모두 열려 있길 원하시면 말씀해 주세요.</li>
+<li><code>Config</code> 의 Stamina_Max 를 30 으로 바꾸신 것은 이번 의견대로 새 칸으로 옮겼습니다: <b>Stamina_Base 30 · Stamina_Per_Stage 1 · Stamina_Cap 80</b> (보통 스테이지를 처음 깰 때마다 최대 +1).</li>
+<li>"쾅쾅 대포: 스테이지 5를 깨면 열린다는 멘트 제거"는 <b>전투 탭 아래 "다음에 열리는 터렛" 칸</b>을 뺐습니다. 터렛 탭의 잠긴 터렛 줄에는 열리는 조건을 그대로 두었습니다 (빼길 원하시면 말씀).</li>
+<li><b>GitHub</b>: 저장소 주소(<code>JeongJoongHee/EarthDefence</code>)는 연결해 두었는데, 올리기(push)가 이 창의 자동 승인에서 막혔습니다. 터미널에 <code>! git push -u origin master</code> 를 한 번 입력해 주시면 그다음부터는 제가 올리겠습니다.</li>
+</ul></div>
+
+<h2>① 로비 전투 탭</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/2차_캡처/18_lobby_battle.png"><figcaption>전</figcaption></figure><figure><img src="../캡쳐본 모음/2차_반영_캡처/18_lobby_battle.png"><figcaption>뒤: 제목 빼기 · 스테이지 이름 크게 · 약점 = 속성 태그 · 나오는 적 그림(아래 색 = 약점) · 중간 보스 · 보스 · 전투 시작은 아래 · 순찰 폭 줄임 · 기지 앞 대장 카피</figcaption></figure></div>
+<p class="note">대장 카피는 기지 앞을 천천히 걷다가 1~3초 쉬고(숨쉬기 · 가끔 하늘 보기) 다른 자리로 갑니다. 움직임은 Unity 에서 봐 주세요. 시험: 4초 동안 자리가 바뀜 확인.</p>
+
+<h2>② 터렛 탭 — 구분선 · 속성 태그 · 그림을 누르면 설명</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/2차_반영_캡처/19_lobby_turret.png"><figcaption>줄마다 구분선 · 속성은 네모 태그(왼쪽 뾰족 + 구멍)</figcaption></figure><figure><img src="../캡쳐본 모음/2차_반영_캡처/19b_turret_info.png"><figcaption>터렛 그림을 누르면: 공격 방식 설명 · 피해/쿨다운/사거리 · 돌파 A/B (설명은 Turret.xlsx Info 칸)</figcaption></figure></div>
+
+<h2>③ 새 터렛 연출</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/2차_캡처/12_turrets2.png"><figcaption>전</figcaption></figure><figure><img src="../캡쳐본 모음/2차_반영_캡처/12b_turrets2.png"><figcaption>뒤: 쾅쾅 대포 포탄 2배 · 집중 빔 굵기 1/2 + 맞는 곳에서 불꽃이 계속 튀고 빛이 일렁(지글지글) · 불바퀴 둘레 불꽃 8개가 이글이글 · 소용돌이 진한 보라 + 어두운 가운데 + 둘레에서 빨려드는 빛 · 끌어당김 1.5배</figcaption></figure></div>
+
+<h2>④ 확인해 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
+<ul class="todo">
+<li data-id="q-lobby"><label><input type="checkbox"><span><span class="tag">확인</span><b>로비 전투 탭</b> 새 배치 (위 ①) <span class="why">의견: "전투 시작 버튼 하단 · 제목 제거 · 순찰 폭 · 스테이지 정보 · 이름과 약점 강조"</span></span></label></li><li data-id="q-walk"><label><input type="checkbox"><span><span class="tag">확인</span><b>기지 앞 대장 카피</b> 어슬렁 걸음 (Unity 에서) <span class="why">의견: "기지에 대장 카피가 좌우로 어슬렁어슬렁"</span></span></label></li><li data-id="q-turret"><label><input type="checkbox"><span><span class="tag">확인</span><b>터렛 탭</b> 구분선 · 속성 태그 · 설명 창 (위 ②) <span class="why">의견: "구분선 · 정보 팝업 · 속성을 네모 태그로"</span></span></label></li><li data-id="q-fx"><label><input type="checkbox"><span><span class="tag">확인</span><b>쾅쾅 대포 · 집중 빔 · 불바퀴 · 소용돌이</b> (위 ③) <span class="why">의견: "발사체 2배 · 지글지글 · 이글이글 · 선명하고 더 강하게"</span></span></label></li><li data-id="q-stamina"><label><input type="checkbox"><span><span class="tag">확인</span><b>스태미나</b> 시작 30 · 스테이지마다 +1 · 최대 80 <span class="why">의견: "시작 30 · 하나씩 깰 때마다 +1 = 최대 80"</span></span></label></li><li data-id="q-sound"><label><input type="checkbox"><span><span class="tag">확인</span><b>소리</b> — <a href="../소리_검토.html">소리_검토.html</a> 에서 듣고 그 문서 의견 칸에 <span class="why">의견: "카치건과 비슷한데 잔잔함에 약간 몽환적인 느낌"</span></span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-fb2-1116', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

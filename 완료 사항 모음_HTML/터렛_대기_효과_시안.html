@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>2차 의견 반영 2</title>
+<title>터렛 대기 효과 시안</title>
 <style>
   :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
   body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
@@ -32,36 +32,41 @@
 </style>
 <style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
 <style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+<style>.gif2{display:grid;grid-template-columns:1fr 1fr;gap:14px} .gif2 img{width:100%;border:3px solid #3b281c;border-radius:14px;background:#2e3866;image-rendering:auto} .gif2 figure{margin:0} .gif2 figcaption{font-size:14px;color:var(--soft)}</style>
 </head><body><main>
-<h1>2차 의견 반영 (2번째) + 터렛 시험장</h1>
-<p class="note">2026-11-16 밤 · <code>2차_반영_결과.html</code> 의견 반영 · 자동 시험 <b>120줄 + 시험장 13줄 통과 · 오류 0</b> · 소리는 나중에 (<a href="소리_검토.html">소리_검토.html</a> 그대로)</p>
+<h1>터렛 대기 효과 — 1단계 시안 (벼락탑 · 레이저 포)</h1>
+<p class="note">2026-11-16 · <code>터렛_대기_효과_검토.html</code> "진행해줘" → 추천안대로(쉬는 동안 약 40% · 쏘기 직전 점점 세게 · 쏠 때 번쩍). 게임에서 1/30초 간격으로 3초씩 찍은 <b>움직이는 GIF</b> · 자동 시험 오류 0 · <span class="b">왼쪽 = 지금(효과 없음)</span>, <span class="a">오른쪽 = 시안</span></p>
 <div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
-<div class="tip blue"><b>먼저 알려 드릴 것</b><ul>
-<li><b>Turret.xlsx</b>: Unlock 만 5 · 10 · 15 · 20 · 25 로 되돌리고, 고치신 <b>관통포 Speed 18 · 찌릿 코일 Duration 1</b> 은 그대로 두었습니다. 찌릿 코일 설명 글의 "0.6초"는 숫자를 빼서 값이 바뀌어도 맞게 했습니다.</li>
-<li><b>터렛 시험장</b>은 따로 씬입니다: Unity 메뉴 <b>지구 방위대 › 터렛 시험장 열기 (재생)</b> (<code>Assets/Scenes/TurretLab.unity</code>). 세이브에는 쓰지 않고, 지금 세이브의 공격력 · 터렛 레벨 · 장비는 그대로 읽어 씁니다. 잠긴 터렛도 시험장에선 모두 놓을 수 있어 Unlock 을 0 으로 바꿀 필요가 없습니다.</li>
-<li>"고른 카드"는 전투 중 오른쪽 위 카드 단추 창으로 보고 고쳤습니다. 같은 단계 표시(Lv.N + 보석)를 레벨업 창 · 카드에도 같이 바꿨습니다.</li>
+
+<h2>① 벼락탑 — 스파크가 치직치직</h2>
+<p class="note">구슬 빛이 불규칙하게 떨림 · 구슬에서 작은 번개 4줄이 0.05~0.12초마다 모양·방향을 바꿔 튐(1줄은 아래 코일 쪽) · 쏘기 직전 더 자주 · 가끔 불꽃</p>
+<div class="gif2"><figure><img src="../대기효과_시안/bolt_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="../대기효과_시안/bolt_p1_x2.gif"><figcaption>시안 (2배 확대)</figcaption></figure></div>
+
+<h2>② 레이저 포 — 빛 고리가 둘레를 돎</h2>
+<p class="note">수정이 둥실 · 수정 빛 숨쉬기 · 둘레 빛 고리를 따라 빛 점 2개가 돎(앞쪽은 수정 앞, 뒤쪽은 뒤) · 쏠 때가 가까울수록 빨리 · 밝게</p>
+<div class="gif2"><figure><img src="../대기효과_시안/laser_p0_x2.gif"><figcaption>지금 (2배 확대)</figcaption></figure><figure><img src="../대기효과_시안/laser_p1_x2.gif"><figcaption>시안 (2배 확대)</figcaption></figure></div>
+
+<h2>③ 실제 게임 크기 (기지 전체)</h2>
+<div class="gif2"><figure><img src="../대기효과_시안/base_p0.gif"><figcaption>지금</figcaption></figure><figure><img src="../대기효과_시안/base_p1.gif"><figcaption>시안 — 왼쪽 안 = 레이저 포 · 오른쪽 안 = 벼락탑</figcaption></figure></div>
+
+<div class="tip gray"><b>만든 방법 · 바꿀 수 있는 것</b><ul>
+  <li>터렛 그림을 받침 + 움직이는 조각(수정 · 빛 고리 앞/뒤 · 구슬 · 작은 번개 3장)으로 나눔 — 카드 · 로비 그림은 예전 한 장 그대로.</li>
+  <li>세기 = <code>Config</code> 의 <code>Idle_Fx</code> (1 기본 · 0.5 옅게 · 0 끄기). 속도 · 번개 개수 같은 세부도 말씀만 주시면 바로.</li>
+  <li>촬영은 다시 할 수 있게 도구로: <code>PlayTest.RunIdle</code> → <code>python tools/idle_gif.py</code>.</li>
+  <li>찍어 보고 고친 것: 구슬 빛을 구슬 <b>앞</b>에 뒀더니 구슬이 하얗게 타서 테두리가 회색으로 보였음 → 빛을 구슬 <b>뒤</b>로 · 옅게.</li>
 </ul></div>
-<h2>① 로비 전투 탭 — 약점 → 보통 · 엘리트 → 나오는 적(접기) · 순찰 · 전투 시작은 돔 바로 위</h2>
-<div class="pair"><figure><img src="2차_반영_캡처/18_lobby_battle.png"><figcaption>전</figcaption></figure><figure><img src="2차_반영2_캡처/18_lobby_battle.png"><figcaption>뒤 (접힘): 약점 밑에 보통 · 엘리트 · "나오는 적 4종 + 보스 보기" · 순찰과 전투 시작은 돔 꼭대기에 붙음(화면 길이와 상관없이)</figcaption></figure></div>
-<div class="shots"><figure><img src="2차_반영2_캡처/18d_lobby_enemies_open.png" style="max-width:300px"><figcaption>펼침: 나오는 적(아래 색 = 약점) · 중간 보스 · 보스 — 다시 누르면 접힘 (로비를 나갔다 와도 그대로)</figcaption></figure></div>
-<h2>② 터렛 설명 창 · 속성 태그</h2>
-<div class="pair"><figure><img src="2차_반영_캡처/19b_turret_info.png"><figcaption>전</figcaption></figure><figure><img src="2차_반영2_캡처/19b_turret_info.png"><figcaption>뒤: 창을 작게(1180 → 860) · 속성 태그 글자를 구멍 오른쪽 몸통 가운데로</figcaption></figure></div>
-<h2>③ 단계 · 보석 표시 (고른 카드 · 레벨업)</h2>
-<div class="pair"><figure><img src="2차_반영2_캡처/12d_cards.png"><figcaption>고른 카드: "Lv.N" + 새 보석 4칸을 크게 · 터렛마다 구분선</figcaption></figure><figure><img src="2차_반영2_캡처/03_levelup.png"><figcaption>레벨업 창 · 카드에도 같은 표시</figcaption></figure></div>
-<h2>④ 터렛 시험장</h2>
-<div class="pair"><figure><img src="2차_반영2_캡처/23_lab_dummy.png"><figcaption>허수아비(제자리 3줄 x 5) · 카드 모두 · 속도 x2 — 터렛 위 이름표에 초당 피해(최근 5초)</figcaption></figure><figure><img src="2차_반영2_캡처/23b_lab_swarm.png"><figcaption>무리 모드 (스테이지 10 적이 계속 내려옴)</figcaption></figure></div>
-<table><tr><th>하는 것</th><th>방법</th></tr>
-<tr><td>터렛 놓기</td><td>위 목록에서 <b>끌어서 아래 칸</b>에 놓기 (가까운 칸) · 누르기만 하면 빈 칸에 · 이름표를 누르면 빼기 · [모두 빼기]</td></tr>
-<tr><td>속도</td><td>x0.25 · x0.5 · x1 · x2 · x4 (발사체를 천천히 보기)</td></tr>
-<tr><td>적</td><td>무리 · 허수아비(움직이지 않고 체력이 아주 많음) · 보스(체력이 아주 많은 보스 하나) · 없음</td></tr>
-<tr><td>카드</td><td>기본(카드 없음) · 돌파 A · 돌파 B(그 줄 돌파 + 연계 + 강화 최대) · 모두(3단계) — 놓인 터렛에 바로 적용</td></tr>
-<tr><td>그 밖</td><td>대장 카피 쏘기 켬/끔(처음엔 끔 — 터렛만 보이게) · [피해 다시 재기]</td></tr></table>
-<h2>⑤ 확인해 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2><ul class="todo">
-<li data-id="r-lobby"><label><input type="checkbox"><span><span class="tag">확인</span><b>로비 전투 탭</b> (위 ①) <span class="why">의견: "적 약점 그대로 · 그 밑에 보통 · 엘리트 · 그 밑에 나오는 적을 드롭다운 · 순찰 · 전투 시작을 돔 바로 위"</span></span></label></li><li data-id="r-info"><label><input type="checkbox"><span><span class="tag">확인</span><b>설명 창 · 속성 태그</b> (위 ②) <span class="why">의견: "정보창 컴팩트 · 태그 글자 가운데"</span></span></label></li><li data-id="r-stars"><label><input type="checkbox"><span><span class="tag">확인</span><b>단계 · 보석</b> (위 ③) <span class="why">의견: "고른 카드: 등급 · 다이아 퀄리티 · 크게 · Lv.1 ◆◇◇◇ 강조 · 터렛별 구분선"</span></span></label></li><li data-id="r-lab"><label><input type="checkbox"><span><span class="tag">확인</span><b>터렛 시험장</b> — Unity 메뉴 지구 방위대 › 터렛 시험장 열기 <span class="why">의견: "터렛을 끌어다 놓고 발사체와 속도를 확인하는 테스트 씬"</span></span></label></li>
-</ul></main>
+
+<h2>④ 봐 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
+<ul class="todo">
+  <li data-id="s-bolt"><label><input type="checkbox"><span><span class="tag">확인</span><b>벼락탑</b> — 치직치직 느낌 · 번개 개수 · 밝기</span></label></li>
+  <li data-id="s-laser"><label><input type="checkbox"><span><span class="tag">확인</span><b>레이저 포</b> — 고리 크기 · 도는 빠르기 · 밝기</span></label></li>
+  <li data-id="s-calm"><label><input type="checkbox"><span><span class="tag">확인</span><b>화면이 정신없지 않은지</b> — 쉬는 동안 세기(지금 약 40%)</span></label></li>
+  <li data-id="s-next"><label><input type="checkbox"><span><span class="tag">결정</span><b>2단계 진행</b> — 시안이 괜찮으면 나머지 4개(관통포 바퀴 · 드론 프로펠러 · 벌집 둘레 벌 · 미사일 재장전)를 같은 방식으로 (추천: 진행)</span></label></li>
+</ul>
+</main>
 <script>
 (function(){
-  var KEY='earthdef-fb3-1116', st={c:{},n:{}};
+  var KEY='earthdef-idle1-1116', st={c:{},n:{}};
   try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
   function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
   var items=document.querySelectorAll('ul.todo > li[data-id]');

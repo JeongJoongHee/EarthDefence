@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1차 수정안 결과</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>1차 수정안 (아트 퀄업) 결과</h1>
+<p class="note">2026-11-16 · <code>요청 사항/1차 수정안.docx</code> 4가지 반영 · 자동 시험 <b>오류 0</b> (새 검사 줄 9개 포함) · 화면은 시험이 직접 찍은 1080x2340 캡처 — <span class="b">왼쪽 = 고치기 전(1차)</span>, <span class="a">오른쪽 = 고친 뒤</span></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b>
+<ul>
+  <li><b>대장 카피 = 옆으로 서서 레이저 소총을 오른쪽 위로 겨눈 모습</b>입니다. 적이 왼쪽에 있으면 몸을 왼쪽으로 돌려(그림 좌우 뒤집기) 쏩니다. 쌍권총 → 소총 하나라 총구도 하나입니다.</li>
+  <li><b>대장 탄 색은 1차처럼 금빛</b>으로 두고, 소총 에너지 칸·총구도 같은 금빛 네온으로 맞췄습니다 (레이저 포의 하늘색 빛과 헷갈리지 않게).</li>
+  <li>"투박함 · 이음새·마감"은 <b>① 손그림 선 흔들림을 1/2~1/4 로 줄임 ② 모든 그림에 위→아래 명암 ③ 얼굴처럼 겹쳐 그린 곳을 한 줄 윤곽으로</b> 바꾸는 것으로 해석했습니다. 화풍(굵은 갈색 선 · 파스텔)은 그대로입니다.</li>
+  <li>네온은 <b>탄 · 레이저 · 낙뢰 · 불꽃 튐 · 총구 섬광</b>에만 넣었고 <b>"빛 더하기" 셰이더</b>로 밤하늘에서 빛나게 했습니다. 끈끈이 장판은 겹치면 하얗게 타서 빛 더하기를 빼고 부드러운 띠로 바꿨습니다.</li>
+  <li>그림은 전부 코드(<code>tools/earth_art.py</code> · <code>earth_export.py</code>)로 다시 뽑았습니다 — 고칠 점을 말씀 주시면 같은 이름으로 바로 바꿔 끼웁니다. 고치기 전 그림·코드는 따로 백업해 두었습니다.</li>
+</ul></div>
+
+<h2>① 대장 카피 — "정면이 아닌, 레이저 건을 들고 위로 쏘는 모습"</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/1차_수정_캡처/hero_before.png"><figcaption>전: 앞모습 · 쌍권총</figcaption></figure><figure><img src="../캡쳐본 모음/1차_수정_캡처/hero_after.png"><figcaption>뒤: 옆모습 · 소총을 위로 겨눔 · 옆얼굴(주둥이 · 볼) · 등 산소통 · 안테나 · 금빛 에너지 칸</figcaption></figure></div>
+
+<h2>② 탄환 · 미사일 · 효과 — "밋밋 · 투박 → 네온 · 스파크"</h2>
+<p class="note">위 = 전, 아래 = 뒤 (같은 배율). 탄은 테두리 대신 흰 심 + 색 번짐 + 꼬리, 미사일은 빛나는 불꽃 꼬리.</p>
+<img class="wide" src="../캡쳐본 모음/1차_수정_캡처/fx_before.png" style="margin-bottom:8px"><img class="wide" src="../캡쳐본 모음/1차_수정_캡처/fx_after.png">
+<div class="tip gray"><b>게임 안에서 더해진 움직임</b>
+<ul>
+  <li><b>총구 섬광</b> — 대장 카피 · 관통포가 쏠 때마다 네 갈래 빛</li>
+  <li><b>맞으면 불꽃 튐</b> — 탄이 맞은 자리에서 짧은 빛 줄 3~5개가 튀고 줄어듦 · 폭발은 빛 번짐 + 불꽃 8개</li>
+  <li><b>미사일</b> — 날아가는 동안 꼬리에서 불티가 계속 떨어짐</li>
+  <li><b>레이저</b> — 색 번짐 띠 + 흰 심 2겹 · 살짝 떨림 · 쏘는 곳에 빛 · 맞는 적마다 불꽃</li>
+  <li><b>낙뢰</b> — 모양 2개를 번갈아 보여 지직거림 · 바닥 빛 · 맞는 적마다 불꽃</li>
+</ul></div>
+
+<h2>③ 터렛 · 적 — 마감</h2>
+<img class="wide" src="../캡쳐본 모음/1차_수정_캡처/units_before.png" style="margin-bottom:8px"><img class="wide" src="../캡쳐본 모음/1차_수정_캡처/units_after.png">
+<p class="note">터렛: 명암 · 받침 속성 빛 띠 · 레이저 수정 · 벼락 구슬 · 드론 눈 · 미사일 등이 빛남</p>
+<img class="wide" src="../캡쳐본 모음/1차_수정_캡처/enemy_before.png" style="margin-bottom:8px"><img class="wide" src="../캡쳐본 모음/1차_수정_캡처/enemy_after.png">
+<p class="note">적: 선 흔들림 줄임 · 공 모양 명암 · 운석 불꼬리 빛 번짐 · 비행접시·정찰 드론 등</p>
+
+<h2>④ 전투 화면 전·뒤</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/1차_캡처/04_battle_full.png"><figcaption>전: 터렛 4칸 (40초)</figcaption></figure><figure><img src="../캡쳐본 모음/1차_수정_캡처/04_battle_full.png"><figcaption>뒤: 같은 장면 — 낙뢰 · 레이저 네온, 보라 장판은 부드러운 띠</figcaption></figure></div>
+<div class="pair"><figure><img src="../캡쳐본 모음/1차_캡처/07_boss.png"><figcaption>전: 보스 등장</figcaption></figure><figure><img src="../캡쳐본 모음/1차_수정_캡처/07_boss.png"><figcaption>뒤: 대장 탄(금빛 꼬리) · 레이저 · 낙뢰 · 달 빛 · 돔 유리 빛</figcaption></figure></div>
+<div class="pair"><figure><img src="../캡쳐본 모음/1차_캡처/03_levelup.png"><figcaption>전: 레벨업</figcaption></figure><figure><img src="../캡쳐본 모음/1차_수정_캡처/03_levelup.png"><figcaption>뒤: 카드 · 내 터렛 칸의 대장 카피도 새 그림</figcaption></figure></div>
+<div class="pair"><figure><img src="../캡쳐본 모음/1차_캡처/01_lobby.png"><figcaption>전: 로비</figcaption></figure><figure><img src="../캡쳐본 모음/1차_수정_캡처/01_lobby.png"><figcaption>뒤: 로비 (강화 목록 아이콘도 새 그림)</figcaption></figure></div>
+
+<h2>⑤ 봐 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
+<ul class="todo">
+  <li data-id="x-hero"><label><input type="checkbox"><span><span class="tag">확인</span><b>대장 카피 자세</b> — 옆모습 · 소총을 오른쪽 위로 · 적 쪽으로 몸을 돌림. (다른 안: 뒷모습으로 서서 위로 쏘기 · 총을 더 크게 · 얼굴을 더 보이게)</span></label></li>
+  <li data-id="x-shot"><label><input type="checkbox"><span><span class="tag">확인</span><b>탄환 네온</b> — 대장 탄 금빛 꼬리 · 관통포 에너지 화살촉 · 맞으면 불꽃 튐</span></label></li>
+  <li data-id="x-laser"><label><input type="checkbox"><span><span class="tag">확인</span><b>레이저 포 네온</b> — 하늘색 번짐 + 흰 심 · 떨림 · 쏘는 곳 빛</span></label></li>
+  <li data-id="x-missile"><label><input type="checkbox"><span><span class="tag">확인</span><b>미사일</b> — 빛나는 불꽃 꼬리 · 불티 · 폭발 불꽃 (유도 미사일은 시험 장면에 안 나와 위 ② 그림으로 봐 주세요)</span></label></li>
+  <li data-id="x-finish"><label><input type="checkbox"><span><span class="tag">확인</span><b>전체 마감</b> — 선 흔들림 줄임 · 명암 · 이음새 (터렛 · 적 · 배경 · 기지)</span></label></li>
+  <li data-id="x-bright"><label><input type="checkbox"><span><span class="tag">결정</span><b>빛 세기</b> — 터렛이 다 모이고 갈래 레이저 · 연속 낙뢰까지 붙으면 화면이 꽤 밝습니다(④ 첫 장면). 추천: 지금대로 두고 직접 해 보신 뒤 "줄여" 하시면 레이저·낙뢰 빛만 0.7배로</span></label></li>
+  <li data-id="x-nums"><label><input type="checkbox"><span><span class="tag">결정</span><b>피해 숫자</b> (이번 요청 밖) — 숫자가 겹겹이 쌓여 네온 효과를 가립니다. 추천: 같은 적의 작은 숫자는 합쳐서 한 번만 · 치명만 크게 (카치건에서 한 방식)</span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-fix1-1116', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3차 구현 결과</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>카피바라 지구를 지켜라! — 3차 구현 결과</h1>
+<p class="note">2026-11-17 · 사용자 "동료 액티브 스킬을 제외하고 3차 (동료는 출시 뒤)" · 자동 시험 <b>기존 120줄 + 시험장 13줄 + 3차 37줄 = 170줄 통과 · 오류 0</b> (3차 시험 <code>bash tools/unity_batch.sh EarthDef.EditorTools.PlayTest.RunP3 --play</code>)</p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석 · 정한 것)</b><ul>
+<li><b>[초안] 3가지</b> — 결제 · 광고 · 구글 로그인/클라우드는 외부 연동 전 가짜 흐름입니다. 결제는 <b>에디터에선 바로 지급, 폰에선 꺼짐</b>("결제는 출시 때 열려요"), 광고는 누르면 바로 보상, 클라우드는 기기 안에 따로 저장해 흐름만 시험합니다. 실제 연동(인앱 결제 · AdMob · Play 게임즈)은 출시 단계에서 카치건 방식 그대로 붙이겠습니다.</li>
+<li><b>다이아</b>: 처음 100 · 보통 스테이지를 처음 깰 때 5 (10의 배수 스테이지 +50) · 엘리트 처음 10 · 무한 모드 1분마다 4 · 엘리트 군단 승리 30. 가격 · 보상은 처음 값 (밸런스는 마지막).</li>
+<li><b>스킨 = 기획서처럼 필살기가 나오는 성장 상품</b>: 가지고만 있어도 그 터렛 피해 +10% (공식의 "후반 피해" 칸), 끼우면 색이 바뀌고 몇 번 쏠 때마다 필살기. 끼우기/빼기는 터렛 탭 붓 단추 · 상점.</li>
+<li><b>도전 모드는 스태미나를 쓰지 않고 하루 입장</b>(무한 3번 · 군단 2번), 난이도 = 깬 최고 스테이지. 기록은 기기 안에만 (랭킹 서버는 출시 뒤 보류 항목).</li>
+<li><b>탭이 6개</b>가 됐습니다: 전투 · 터렛 · 장비 · 미션 · 도전 · 상점 (기존 탭 순서는 그대로, 뒤에 붙임). 위 줄 다이아를 누르면 상점.</li>
+<li>폴더를 정리하신 대로 지난 보고서들은 <code>완료 사항 모음_HTML/</code>, 캡처는 <code>캡쳐본 모음/</code> 에 두고, 옮긴 문서들의 그림 링크를 새 위치로 고쳤습니다 (깨진 링크 0).</li>
+</ul></div>
+<h2>① 상점 · 도전</h2><div class="shots">
+<figure><img src="캡쳐본 모음/3차_캡처/30_shop.png" loading="lazy"><figcaption>상점: 다이아 5종 [결제 초안] · 첫 구매 2배 딱지 · 무료/광고 상자 · 장비/칩 상자 (오른쪽 위 [확률]) · 스태미나 · 골드</figcaption></figure>
+<figure><img src="캡쳐본 모음/3차_캡처/30b_shop_skins.png" loading="lazy"><figcaption>상점 아래: 터렛 스킨 11종 (원래 ↔ 스킨 · 필살기 설명 · 다이아 가격)</figcaption></figure>
+<figure><img src="캡쳐본 모음/3차_캡처/31_challenge.png" loading="lazy"><figcaption>도전 탭: 무한 모드 · 엘리트 군단 — 최고 기록 · 오늘 입장 · 난이도</figcaption></figure>
+<figure><img src="캡쳐본 모음/3차_캡처/32_frames.png" loading="lazy"><figcaption>터렛 탭 기지 줄 [기지 외형] → 외형 6종 · 별 올리기(골드)</figcaption></figure>
+</div>
+<h2>② 스킨 · 필살기</h2><div class="shots">
+<figure><img src="캡쳐본 모음/3차_캡처/33_skins_battle.png" loading="lazy"><figcaption>스킨을 끼운 터렛 4종 (색이 바뀜) · 필살기 이름이 떠오름</figcaption></figure>
+<figure><img src="캡쳐본 모음/3차_캡처/33b_ults.png" loading="lazy"><figcaption>나머지 필살기도 한 번씩 (오류 없이 나감)</figcaption></figure>
+</div>
+<table><tr><th>스킨</th><th>필살기</th></tr>
+<tr><td>은하 관통포</td><td>거대한 관통 광선</td></tr><tr><td>오로라 레이저</td><td>레이저 3줄이 화면을 쓸기</td></tr><tr><td>젤리 드론</td><td>장판 3개</td></tr><tr><td>꿀벌 왕국</td><td>벌 15마리</td></tr>
+<tr><td>불꽃놀이 미사일</td><td>하늘에서 미사일 12발</td></tr><tr><td>보랏빛 벼락</td><td>낙뢰 7줄</td></tr><tr><td>바다 대포</td><td>아주 큰 포탄 (넓게 밀어냄)</td></tr><tr><td>별빛 빔</td><td>빔 3줄</td></tr>
+<tr><td>초록 소용돌이</td><td>3초 큰 블랙홀</td></tr><tr><td>파란 불바퀴</td><td>불바퀴 6개</td></tr><tr><td>분홍 코일</td><td>번개 3줄이 12번씩 튐</td></tr></table>
+<h2>③ 기지 외형 6종</h2>
+<table><tr><th>외형</th><th>효과 (별 1 → 5)</th><th>값</th></tr>
+<tr><td>무지개 돔</td><td>처음 무너지면 체력 20 → 60% 로 버티고 3초 무적 (한 판 1번)</td><td>600 다이아</td></tr>
+<tr><td>별바다 장막</td><td>40초마다 별똥별 비 — 모든 적에게 공격력 400 → 1200%</td><td>500</td></tr>
+<tr><td>얼음 돔</td><td>30초마다 기지 근처 적 1.5 → 3.5초 얼림</td><td>500</td></tr>
+<tr><td>가시 돔</td><td>방어막을 때린 적에게 공격력 150 → 450% 반격</td><td>400</td></tr>
+<tr><td>꽃 돔</td><td>5초마다 기지 체력 0.5 → 1.5% 회복</td><td>400</td></tr>
+<tr><td>황금 돔</td><td>판 골드 +10 → 30%</td><td>300</td></tr></table>
+<p class="note">끼우면 돔 색과 둘레의 은은한 빛이 바뀝니다 (로비 · 전투). 시험: 별똥별 비 · 무지개 돔 버티기 · 가시 돔 반격 확인.</p>
+<h2>④ 도전 모드 · 결과 · 설정</h2><div class="shots">
+<figure><img src="캡쳐본 모음/3차_캡처/34_endless.png" loading="lazy"><figcaption>무한 모드: 위에 버틴 시간 · 1분마다 적 체력 x1.55 · 2분 30초마다 보스</figcaption></figure>
+<figure><img src="캡쳐본 모음/3차_캡처/35_endless_result.png" loading="lazy"><figcaption>결과: 골드 · 조각 · 다이아 + [광고 보고 보상 x2 (초안)] (한 판 1번) · [도전 2/3]</figcaption></figure>
+<figure><img src="캡쳐본 모음/3차_캡처/36_survival_result.png" loading="lazy"><figcaption>엘리트 군단: 12초마다 중간 보스 · 3분 버티면 다이아 30 · 장비/칩 3개</figcaption></figure>
+<figure><img src="캡쳐본 모음/3차_캡처/38_settings.png" loading="lazy"><figcaption>설정: 구글 계정 [연결하기] · 클라우드에 저장 / 불러오기 [초안]</figcaption></figure>
+<figure><img src="캡쳐본 모음/3차_캡처/37_cloud.png" loading="lazy"><figcaption>불러오기: 이 기기 ↔ 클라우드 비교해서 고르기</figcaption></figure>
+</div>
+<h2>⑤ 봐 주실 것 · 정해 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2><ul class="todo">
+<li data-id="t-shop"><label><input type="checkbox"><span><span class="tag">확인</span><b>상점</b> 배치 · 상품 이름 · 다이아 가격(원화) — 위 ①</span></label></li>
+<li data-id="t-skin"><label><input type="checkbox"><span><span class="tag">확인</span><b>스킨 색 · 필살기</b> — 터렛 시험장에서 스킨을 끼우고 보면 편합니다 (상점에서 사면 시험장에도 들어감)</span></label></li>
+<li data-id="t-frame"><label><input type="checkbox"><span><span class="tag">확인</span><b>기지 외형 6종</b> 효과 · 돔 색 — 위 ③</span></label></li>
+<li data-id="t-mode"><label><input type="checkbox"><span><span class="tag">확인</span><b>무한 모드 · 엘리트 군단</b> — 하루 입장 3 · 2번, 스태미나 없음</span></label></li>
+<li data-id="t-draft"><label><input type="checkbox"><span><span class="tag">확인</span><b>[초안] 3가지</b>(결제 · 광고 · 구글 계정) 흐름 — 실제 연동은 출시 단계</span></label></li>
+<li data-id="t-next"><label><input type="checkbox"><span><span class="tag">결정</span><b>다음 순서</b> — 추천: ① 밸런스 시뮬레이터(지금까지 숫자는 전부 처음 값) → ② 영어 글자 → ③ 출시 준비(패키지 이름 · 앱 아이콘 · 실제 광고/결제/로그인 · AAB · 스토어 자료). 동료 스킬은 말씀대로 출시 뒤 업데이트</span></label></li>
+</ul></main>
+<script>
+(function(){
+  var KEY='earthdef-3rd-1117', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

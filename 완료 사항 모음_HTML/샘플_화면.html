@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>카피바라 지구를 지켜라 샘플</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style></head><body><main>
+
+<h1>카피바라 지구를 지켜라! — 샘플 화면 (2판)</h1>
+<p class="note">2026-11-15 · <a href="../제작_계획.html">제작_계획.html</a> 결정 14개대로 그린 그림입니다. 실제 게임이 아니라 그림만 맞춰 본 것이고, 마음에 들면 이 모양으로 1차 구현을 시작합니다. 그림 도구: <code>tools/earth_art.py sample</code></p>
+
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<div class="tip blue"><b>결정을 이렇게 받아들였습니다 — 다르면 아래 의견 칸에 적어 주세요</b>
+<ul>
+  <li><b>카드 규칙 "원작대로"</b>: 강화 카드 보장 없음 · 새로고침은 <b>광고 보고 판마다 1번</b>(무료 새로고침 없음). 광고를 붙이기 전엔 [초안]으로 에디터에서 버튼을 누르면 바로 새로고침. Config 값(<code>Card_Upgrade_Guarantee 0</code> · <code>Refresh_Ad 1</code> · <code>Refresh_Free 0</code>)이라 나중에 숫자만 바꾸면 됩니다.</li>
+  <li><b>운석 종류를 다양하게</b>: 운석 계열을 7종으로 늘렸습니다 — 돌멩이 → 불꼬리 → 얼음 혜성 → 쇠 → 쪼개지는 운석 → 큰 소행성(엘리트) → 떠돌이 행성(보스, 화면 폭 절반 크기).</li>
+  <li><b>이름은 표로 고칠 수 있게</b>: 터렛 · 카드 · 적 이름은 전부 표(Turret · Card · Enemy 의 Name 칸)에 두고 게임이 읽습니다. 표 글자만 바꾸면 게임 이름도 바뀝니다.</li>
+  <li><b>게임 이름 "카피바라 지구를 지켜라!"</b>: 화면 제목 · 앱 이름에 씁니다. Unity 폴더·코드 이름은 그대로 <code>Earth_Defence</code>.</li>
+  <li><b>출시 뒤 콘텐츠(주간 모드 · 길드 · 시즌 원정)는 "보류"</b>: 계획에서 빼 두고, 같은 전투 엔진에 규칙만 바꾼 모드를 얹을 수 있게 구조만 열어 둡니다.</li>
+  <li><b>git 은 어느 정도 만든 뒤</b>(1차가 돌아가면 여쭤봄) · <b>영어는 맨 마지막</b>(표의 영어 칸은 비워 둠).</li>
+</ul></div>
+
+<div class="tip green"><b>2판 (11-15) — 의견 반영: 대장 카피를 참고 그림 느낌으로</b>
+<ul>
+  <li>주신 링크(귀여운 우주인 PNG)의 느낌만 가져와 새로 그렸습니다: <b>앞모습 2등신 · 큰 유리 헬멧(카피바라 얼굴이 비쳐 보임, 귀도 헬멧 안) · 양옆 귀마개 · 하얀 우주복 · 가슴 조종판(파란 버튼 2 + 빨간 버튼) · 팔·다리·허리 주황 줄 · 회색 장갑·장화 · 등 산소통</b>. 그 그림 파일 자체는 쓰지 않았습니다.</li>
+  <li>쌍권총은 양손에 하나씩 위로 들고, 전투에선 두 줄로 연사합니다. 다른 항목은 "이대로 진행"이라 그대로 두었습니다.</li>
+</ul>
+<img class="wide" src="../tools/_preview/hero_compare.png" alt="대장 카피 전·뒤" style="max-width:900px;margin-top:8px"></div>
+
+<h2>① 전투 화면 · 레벨업 창</h2>
+<div class="shots">
+  <figure><img src="../tools/_preview/sample_battle.png" alt="전투 화면"><figcaption>전투 — 밤하늘 · 아래 돔 기지 · 가운데 대장 카피 · 돔 좌우 땅에 터렛 칸 2개씩(관통포 · 레이저 포 · 끈끈이 드론 + 빈 칸) · 끈끈이 장판(가로 띠) · 레이저 관통 · 연사 · 맞으면 숫자</figcaption></figure>
+  <figure><img src="../tools/_preview/sample_levelup.png" alt="레벨업 창"><figcaption>레벨업 — 위 "내 터렛" 5칸(단계 숫자 + 별 4칸) · 카드 3장(강화 · 새 터렛 · 돌파, 고르면 늘어날 별에 초록 동그라미) · 아래 광고 새로고침 1/1</figcaption></figure>
+</div>
+
+<h2>② 가디언 · 터렛 · 적 모음</h2>
+<img class="wide" src="../tools/_preview/sample_parts.png" alt="그림 모음">
+<p class="note">터렛은 1단계 모양입니다. 돌파로 2·3단계가 되면 같은 모양에 크기 · 장식(포신 2개 · 날개 등)을 더할 계획입니다. 적은 기지를 보고 내려오도록 앞모습으로 그렸습니다.</p>
+
+<h2>③ 봐 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸에 고칠 점 · 괜찮으면 체크만</small></h2>
+<ul class="todo">
+  <li data-id="s-all"><label><input type="checkbox"><span><span class="tag">확인</span><b>전체 느낌</b> — 짙은 남색 밤하늘 + 낙서풍 캐릭터 + 빛나는 효과. 너무 어둡거나 밝지 않은지</span></label></li>
+  <li data-id="s-hero"><label><input type="checkbox"><span><span class="tag">확인</span><b>대장 카피</b> — 흰 우주 헬멧(귀는 헬멧 위로) · 고글 · 안테나 · 파란 대원복 + 별 배지 · 쌍권총(위로 겨눔)</span></label></li>
+  <li data-id="s-turret"><label><input type="checkbox"><span><span class="tag">확인</span><b>터렛 6종 모양</b> — 관통포 · 레이저 포 · 끈끈이 드론 · 벌집 · 유도 미사일 · 벼락탑. 받침대 띠 색 = 속성 색</span></label></li>
+  <li data-id="s-meteor"><label><input type="checkbox"><span><span class="tag">확인</span><b>운석 7종</b> — 돌멩이 → 거대 행성까지. 화난 얼굴 · 불꼬리(얼음 혜성은 하얀 꼬리)</span></label></li>
+  <li data-id="s-enemy"><label><input type="checkbox"><span><span class="tag">확인</span><b>나머지 적 7종</b> — 외계 나방 · 딱정벌레 · 외계 거미 · 젤리 바이러스 · 분열 젤리 · 비행접시 · 정찰 드론</span></label></li>
+  <li data-id="s-base"><label><input type="checkbox"><span><span class="tag">확인</span><b>기지 · 배치</b> — 돔 안 집 2채 + 안테나, 가디언은 가운데(끌면 좌우로), 터렛 칸은 돔 좌우 땅에 2칸씩, 기지 체력은 돔 위 하트 숫자</span></label></li>
+  <li data-id="s-hud"><label><input type="checkbox"><span><span class="tag">확인</span><b>위 HUD</b> — 일시정지 · 배속 ×1.5 · 스테이지 · 남은 시간 · 카드 목록 버튼 · 경험치 바(Lv), 가디언 아래 노란 충전 게이지</span></label></li>
+  <li data-id="s-levelup"><label><input type="checkbox"><span><span class="tag">확인</span><b>레벨업 창</b> — 내 터렛 5칸 · 카드 3장(위 띠 = 종류: 강화 주황 · 새 터렛 초록 · 돌파 보라, 카드 머리 색 = 속성 색) · 광고 새로고침</span></label></li>
+  <li data-id="s-cardname"><label><input type="checkbox"><span><span class="tag">확인</span><b>카드 이름 짓는 방식</b> — "관통탄 강화" · "갈래 레이저"처럼 하는 일이 바로 보이는 이름 + 쉬운 설명 2줄. 1차 카드 약 85장을 이 방식으로 지어 표에 넣고, 1차 보고 때 목록으로 보여 드림</span></label></li>
+  <li data-id="s-hero2"><label><input type="checkbox"><span><span class="tag">확인</span><b>2판 대장 카피 (앞모습 우주인)</b> — 위 전·뒤 그림. 고칠 점이 있으면 적어 주세요 (1차 구현은 이 그림으로 진행하고, 바뀌면 같은 이름·크기로 바꿔 끼움)</span></label></li>
+  <li data-id="s-go"><label><input type="checkbox"><span><span class="tag">진행</span><b>이 모양으로 1차 구현 시작</b> — 체크하시면 고칠 점을 반영하면서 Unity 1차(전투 · 카드 · 적 18 · 스테이지 30 · 터렛/기지 레벨 · 순찰 · 저장)를 시작합니다</span></label></li>
+</ul>
+
+</main>
+<script>
+(function(){
+  var KEY='earthdef-sample-1115', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

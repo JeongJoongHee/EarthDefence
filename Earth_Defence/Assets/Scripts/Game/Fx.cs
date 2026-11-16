@@ -130,12 +130,15 @@ namespace EarthDef
             var it = I.Take("num");
             it.go.name = "num";
             it.crit = false; it.val = 0; it.key = null;
-            it.tx.text = s; it.tx.fontSize = Art.FontSize(46);
+            it.tx.text = s; it.tx.fontSize = Art.FontSize(34);
             it.tx.color = c; it.t = 0; it.life = 1.2f; it.s0 = it.s1 = 1; it.c = c; it.drag = 3f;
             it.v = new Vector3(0, 1.4f);
-            it.go.transform.position = p;
+            // 같은 때 여러 이름이 겹치지 않게: 최근 이름보다 조금 위로
+            float now = Time.time; if (now - I.lastWordT < 0.6f) I.wordStack++; else I.wordStack = 0; I.lastWordT = now;
+            it.go.transform.position = p + Vector2.up * (0.55f * I.wordStack);
             I.live.Add(it); I.numCount++;
         }
+        float lastWordT; int wordStack;
 
         public static void Puff(Vector2 p, float k = 1f) { if (I) I.Play("puff", p, 0.5f * k, 1.2f * k, 0.35f, new Color(1, 1, 1, 0.8f), new Vector3(0, 0.6f)); }
 

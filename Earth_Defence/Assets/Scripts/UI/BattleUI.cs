@@ -276,15 +276,16 @@ namespace EarthDef
             var sh = UIKit.Label(p.win, "+" + b.RewardShards, 52, Art.Sky); sh.rectTransform.Place(0.5f, 1, new Vector2(50, -540), new Vector2(360, 90), new Vector2(0.5f, 1));
             if (b.drops.Count > 0)
             {
-                p.Text(L.T("drops"), 650, 32, Art.Brown);
-                var dl = p.Text(string.Join(", ", b.drops), 696, 28, Art.Ink, 150);
+                float dy = b.rewardDia > 0 ? 750 : 650;
+                p.Text(L.T("drops"), dy, 32, Art.Brown);
+                var dl = p.Text(string.Join(", ", b.drops), dy + 46, 28, Art.Ink, 150);
                 dl.horizontalOverflow = HorizontalWrapMode.Wrap; dl.verticalOverflow = VerticalWrapMode.Overflow;
             }
             if (b.eliteMode) { var cr = UIKit.Img(p.win, Art.Icon("crown"), "Elite"); cr.rectTransform.Place(0.5f, 1, new Vector2(110, -120), new Vector2(80, 80), new Vector2(0.5f, 1)); }
             if (b.rewardDia > 0)
             {
-                var dIc = UIKit.Img(p.win, Art.Icon("diamond"), "DiaIcon"); dIc.rectTransform.Place(0.5f, 1, new Vector2(230, -540), new Vector2(70, 70), new Vector2(0.5f, 1));
-                var dT = UIKit.Label(p.win, "+" + Num.F(b.rewardDia), 44, Art.Sky); dT.rectTransform.Place(0.5f, 1, new Vector2(340, -540), new Vector2(160, 80), new Vector2(0.5f, 1));
+                var dIc = UIKit.Img(p.win, Art.Icon("diamond"), "DiaIcon"); dIc.rectTransform.Place(0.5f, 1, new Vector2(-170, -646), new Vector2(84, 84), new Vector2(0.5f, 1));
+                var dT = UIKit.Label(p.win, "+" + Num.F(b.rewardDia) + " " + L.T("dia"), 48, Art.Sky); dT.rectTransform.Place(0.5f, 1, new Vector2(50, -646), new Vector2(360, 90), new Vector2(0.5f, 1));
             }
             // 3차 [초안] 광고 보고 보상 2배 (한 판 1번)
             var ab = p.Btn(b.adDoubled ? "btn_gray" : "btn_purple", null, 0, 200, 600, () =>

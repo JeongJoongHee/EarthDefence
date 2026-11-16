@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>2차 의견 반영</title>
+<title>1차 수정안 3차 반영</title>
 <style>
   :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
   body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
@@ -33,36 +33,42 @@
 <style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
 <style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
 </head><body><main>
-<h1>2차 의견 반영 + 소리</h1>
-<p class="note">2026-11-16 저녁 · <code>2차_구현_결과.html</code> 의견 14개 반영 · 자동 시험 <b>120줄 통과 · 오류 0</b> · 커밋 <code>ffdc049</code> · 왼쪽/위 = <span class="b">전</span>, 오른쪽/아래 = <span class="a">뒤</span></p>
+<h1>1차 수정안 — 2차 의견 반영 (3차)</h1>
+<p class="note">2026-11-16 저녁 · <code>1차_수정안_결과_2.html</code> 의견 반영 (문제없음 4개는 그대로) · 자동 시험 <b>오류 0</b> · 왼쪽/위 = <span class="b">전(2차)</span>, 오른쪽/아래 = <span class="a">뒤</span></p>
 <div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
 
-<div class="tip blue"><b>먼저 알려 드릴 것</b><ul>
-<li><b>소리는 따로 문서로 듣기</b>: <a href="소리_검토.html"><b>소리_검토.html</b></a> — 장면(로비 · 전투 · 보스) · 배경음 3곡 · 효과음 29개를 게임이 실제로 만든 소리로 들어 보실 수 있습니다.</li>
-<li><code>Turret.xlsx</code> 의 <b>Unlock 이 모두 0</b>으로 바뀌어 있었습니다. 지난 보고서에 "0 으로 하면 바로 나옴"이라고 적었으니 시험하시려고 바꾸신 것으로 보고 <b>5 · 10 · 15 · 20 · 25 로 되돌렸습니다</b>. 처음부터 모두 열려 있길 원하시면 말씀해 주세요.</li>
-<li><code>Config</code> 의 Stamina_Max 를 30 으로 바꾸신 것은 이번 의견대로 새 칸으로 옮겼습니다: <b>Stamina_Base 30 · Stamina_Per_Stage 1 · Stamina_Cap 80</b> (보통 스테이지를 처음 깰 때마다 최대 +1).</li>
-<li>"쾅쾅 대포: 스테이지 5를 깨면 열린다는 멘트 제거"는 <b>전투 탭 아래 "다음에 열리는 터렛" 칸</b>을 뺐습니다. 터렛 탭의 잠긴 터렛 줄에는 열리는 조건을 그대로 두었습니다 (빼길 원하시면 말씀).</li>
-<li><b>GitHub</b>: 저장소 주소(<code>JeongJoongHee/EarthDefence</code>)는 연결해 두었는데, 올리기(push)가 이 창의 자동 승인에서 막혔습니다. 터미널에 <code>! git push -u origin master</code> 를 한 번 입력해 주시면 그다음부터는 제가 올리겠습니다.</li>
+<div class="tip blue"><b>먼저 알려 드릴 것</b>
+<ul>
+  <li>대장 카피 크기는 말씀하신 0.7~0.8 의 가운데 <b>0.75배</b>로 했습니다 (그림을 작게 다시 뽑아 흐려지지 않음). 더 줄이거나 키울 땐 숫자 하나(<code>tools/earth_export.py</code> 의 <code>GK</code>)입니다.</li>
+  <li>터렛 아래 빛 고리는 처음엔 "빛 더하기"로 넣었는데 밝은 풀밭 위에서 <b>하얗게만 보여서</b>(캡처로 확인) 보통 색으로 바꿔 <b>속성 색이 보이게</b> 했습니다. 고리는 천천히 숨 쉬듯 밝아졌다 어두워집니다.</li>
+  <li>새 터렛이 놓일 때: <b>톡 커지며 나타남(0.4초) + 속성 색 링 · 빛 · 위로 튀는 불꽃 12개</b>.</li>
 </ul></div>
 
-<h2>① 로비 전투 탭</h2>
-<div class="pair"><figure><img src="2차_캡처/18_lobby_battle.png"><figcaption>전</figcaption></figure><figure><img src="2차_반영_캡처/18_lobby_battle.png"><figcaption>뒤: 제목 빼기 · 스테이지 이름 크게 · 약점 = 속성 태그 · 나오는 적 그림(아래 색 = 약점) · 중간 보스 · 보스 · 전투 시작은 아래 · 순찰 폭 줄임 · 기지 앞 대장 카피</figcaption></figure></div>
-<p class="note">대장 카피는 기지 앞을 천천히 걷다가 1~3초 쉬고(숨쉬기 · 가끔 하늘 보기) 다른 자리로 갑니다. 움직임은 Unity 에서 봐 주세요. 시험: 4초 동안 자리가 바뀜 확인.</p>
+<h2>① 대장 카피 크기 — "너무 큼, 0.7~0.8 정도로"</h2>
+<img class="wide" src="../캡쳐본 모음/1차_수정3_캡처/size_before.png" style="margin-bottom:8px"><img class="wide" src="../캡쳐본 모음/1차_수정3_캡처/pads.png">
+<p class="note">위 = 2차, 아래 = 지금 (0.75배 · 터렛 아래 속성 색 빛 고리)</p>
 
-<h2>② 터렛 탭 — 구분선 · 속성 태그 · 그림을 누르면 설명</h2>
-<div class="pair"><figure><img src="2차_반영_캡처/19_lobby_turret.png"><figcaption>줄마다 구분선 · 속성은 네모 태그(왼쪽 뾰족 + 구멍)</figcaption></figure><figure><img src="2차_반영_캡처/19b_turret_info.png"><figcaption>터렛 그림을 누르면: 공격 방식 설명 · 피해/쿨다운/사거리 · 돌파 A/B (설명은 Turret.xlsx Info 칸)</figcaption></figure></div>
+<h2>② 관통탄 — "카피 기본 탄과 거의 비슷함 → 조금 크고 눈에 띄게"</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/1차_수정3_캡처/shell_before.png"><figcaption>전: 대장 탄 · 충전탄 · 관통탄 (관통탄이 작고 대장 탄과 비슷한 금빛)</figcaption></figure><figure><img src="../캡쳐본 모음/1차_수정3_캡처/shell_after.png"><figcaption>뒤: 대장 탄(왼쪽) · 관통탄(오른쪽) — 약 1.4배 크게 · 주황 에너지 창 + 뒤로 갈매기 고리 2개 + 긴 속도 줄</figcaption></figure></div>
 
-<h2>③ 새 터렛 연출</h2>
-<div class="pair"><figure><img src="2차_캡처/12_turrets2.png"><figcaption>전</figcaption></figure><figure><img src="2차_반영_캡처/12b_turrets2.png"><figcaption>뒤: 쾅쾅 대포 포탄 2배 · 집중 빔 굵기 1/2 + 맞는 곳에서 불꽃이 계속 튀고 빛이 일렁(지글지글) · 불바퀴 둘레 불꽃 8개가 이글이글 · 소용돌이 진한 보라 + 어두운 가운데 + 둘레에서 빨려드는 빛 · 끌어당김 1.5배</figcaption></figure></div>
+<h2>③ 벼락 끝 — "잘린 느낌보다 하나의 벼락처럼"</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/1차_수정3_캡처/bolt_after.png" style="max-width:260px"><figcaption>새 벼락 2장 (번갈아 보여 지직거림) — 양 끝을 가늘게 모아 뾰족하게 · 그림 끝에 여백을 둬 잘리지 않음</figcaption></figure><figure><img src="../캡쳐본 모음/1차_수정3_캡처/bolt_scene.png"><figcaption>전투 화면 — 벼락이 방어막 위에서 가늘게 끝남</figcaption></figure></div>
 
-<h2>④ 확인해 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
+<h2>④ 전투 화면</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/1차_수정2_캡처/04_battle_full.png"><figcaption>전(2차)</figcaption></figure><figure><img src="../캡쳐본 모음/1차_수정3_캡처/04_battle_full.png"><figcaption>뒤: 대장 카피 0.75배 · 터렛 아래 빛 고리</figcaption></figure></div>
+
+<h2>⑤ 봐 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2>
 <ul class="todo">
-<li data-id="q-lobby"><label><input type="checkbox"><span><span class="tag">확인</span><b>로비 전투 탭</b> 새 배치 (위 ①) <span class="why">의견: "전투 시작 버튼 하단 · 제목 제거 · 순찰 폭 · 스테이지 정보 · 이름과 약점 강조"</span></span></label></li><li data-id="q-walk"><label><input type="checkbox"><span><span class="tag">확인</span><b>기지 앞 대장 카피</b> 어슬렁 걸음 (Unity 에서) <span class="why">의견: "기지에 대장 카피가 좌우로 어슬렁어슬렁"</span></span></label></li><li data-id="q-turret"><label><input type="checkbox"><span><span class="tag">확인</span><b>터렛 탭</b> 구분선 · 속성 태그 · 설명 창 (위 ②) <span class="why">의견: "구분선 · 정보 팝업 · 속성을 네모 태그로"</span></span></label></li><li data-id="q-fx"><label><input type="checkbox"><span><span class="tag">확인</span><b>쾅쾅 대포 · 집중 빔 · 불바퀴 · 소용돌이</b> (위 ③) <span class="why">의견: "발사체 2배 · 지글지글 · 이글이글 · 선명하고 더 강하게"</span></span></label></li><li data-id="q-stamina"><label><input type="checkbox"><span><span class="tag">확인</span><b>스태미나</b> 시작 30 · 스테이지마다 +1 · 최대 80 <span class="why">의견: "시작 30 · 하나씩 깰 때마다 +1 = 최대 80"</span></span></label></li><li data-id="q-sound"><label><input type="checkbox"><span><span class="tag">확인</span><b>소리</b> — <a href="소리_검토.html">소리_검토.html</a> 에서 듣고 그 문서 의견 칸에 <span class="why">의견: "카치건과 비슷한데 잔잔함에 약간 몽환적인 느낌"</span></span></label></li>
+  <li data-id="z-size"><label><input type="checkbox"><span><span class="tag">확인</span><b>대장 카피 0.75배</b> <span class="why">의견: "모양엔 문제 없음 / 다만 너무 큼 / 0.7~0.8 정도로"</span></span></label></li>
+  <li data-id="z-shell"><label><input type="checkbox"><span><span class="tag">확인</span><b>관통탄</b> — 약 1.4배 · 주황 에너지 창 + 갈매기 고리 (위 ②). 관통포는 쏘는 간격이 길어 캡처엔 잘 안 잡혀 그림으로 봐 주세요 <span class="why">의견: "관통탄이 카피 기본 탄환과 거의 비슷함 / 조금 크고 눈에 띄게"</span></span></label></li>
+  <li data-id="z-bolt"><label><input type="checkbox"><span><span class="tag">확인</span><b>벼락 끝 마감</b> — 양 끝이 가늘게 모인 하나의 벼락 (위 ③) <span class="why">의견: "벼락의 끝 부분이 잘린 거 같은 느낌 / 하나의 벼락처럼 끝 마감"</span></span></label></li>
+  <li data-id="z-bee"><label><input type="checkbox"><span><span class="tag">확인</span><b>벌은 벌집에서</b> — "꿀벌 탄환" · "메아리 벌" 모두 벌집에서 날아가 적을 쫓음 (벌집이 없을 땐 예전처럼 그 자리) <span class="why">의견: "벌집에서 나가게"</span></span></label></li>
+  <li data-id="z-pad"><label><input type="checkbox"><span><span class="tag">확인</span><b>터렛이 있는 느낌</b> — 터렛 아래 속성 색 빛 고리(숨 쉬듯) + 놓일 때 톡 커짐 · 링 · 빛 · 불꽃. 놓이는 순간은 Unity 에서 카드로 터렛을 골라 봐 주세요 <span class="why">의견: "타워가 존재하는 느낌이 별로 없음 / 생성된 타워의 하단에 강조 표시"</span></span></label></li>
 </ul>
 </main>
 <script>
 (function(){
-  var KEY='earthdef-fb2-1116', st={c:{},n:{}};
+  var KEY='earthdef-fix3-1116', st={c:{},n:{}};
   try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
   function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
   var items=document.querySelectorAll('ul.todo > li[data-id]');

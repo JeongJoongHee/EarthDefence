@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2차 의견 반영 2</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>2차 의견 반영 (2번째) + 터렛 시험장</h1>
+<p class="note">2026-11-16 밤 · <code>2차_반영_결과.html</code> 의견 반영 · 자동 시험 <b>120줄 + 시험장 13줄 통과 · 오류 0</b> · 소리는 나중에 (<a href="../소리_검토.html">소리_검토.html</a> 그대로)</p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것</b><ul>
+<li><b>Turret.xlsx</b>: Unlock 만 5 · 10 · 15 · 20 · 25 로 되돌리고, 고치신 <b>관통포 Speed 18 · 찌릿 코일 Duration 1</b> 은 그대로 두었습니다. 찌릿 코일 설명 글의 "0.6초"는 숫자를 빼서 값이 바뀌어도 맞게 했습니다.</li>
+<li><b>터렛 시험장</b>은 따로 씬입니다: Unity 메뉴 <b>지구 방위대 › 터렛 시험장 열기 (재생)</b> (<code>Assets/Scenes/TurretLab.unity</code>). 세이브에는 쓰지 않고, 지금 세이브의 공격력 · 터렛 레벨 · 장비는 그대로 읽어 씁니다. 잠긴 터렛도 시험장에선 모두 놓을 수 있어 Unlock 을 0 으로 바꿀 필요가 없습니다.</li>
+<li>"고른 카드"는 전투 중 오른쪽 위 카드 단추 창으로 보고 고쳤습니다. 같은 단계 표시(Lv.N + 보석)를 레벨업 창 · 카드에도 같이 바꿨습니다.</li>
+</ul></div>
+<h2>① 로비 전투 탭 — 약점 → 보통 · 엘리트 → 나오는 적(접기) · 순찰 · 전투 시작은 돔 바로 위</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/2차_반영_캡처/18_lobby_battle.png"><figcaption>전</figcaption></figure><figure><img src="../캡쳐본 모음/2차_반영2_캡처/18_lobby_battle.png"><figcaption>뒤 (접힘): 약점 밑에 보통 · 엘리트 · "나오는 적 4종 + 보스 보기" · 순찰과 전투 시작은 돔 꼭대기에 붙음(화면 길이와 상관없이)</figcaption></figure></div>
+<div class="shots"><figure><img src="../캡쳐본 모음/2차_반영2_캡처/18d_lobby_enemies_open.png" style="max-width:300px"><figcaption>펼침: 나오는 적(아래 색 = 약점) · 중간 보스 · 보스 — 다시 누르면 접힘 (로비를 나갔다 와도 그대로)</figcaption></figure></div>
+<h2>② 터렛 설명 창 · 속성 태그</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/2차_반영_캡처/19b_turret_info.png"><figcaption>전</figcaption></figure><figure><img src="../캡쳐본 모음/2차_반영2_캡처/19b_turret_info.png"><figcaption>뒤: 창을 작게(1180 → 860) · 속성 태그 글자를 구멍 오른쪽 몸통 가운데로</figcaption></figure></div>
+<h2>③ 단계 · 보석 표시 (고른 카드 · 레벨업)</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/2차_반영2_캡처/12d_cards.png"><figcaption>고른 카드: "Lv.N" + 새 보석 4칸을 크게 · 터렛마다 구분선</figcaption></figure><figure><img src="../캡쳐본 모음/2차_반영2_캡처/03_levelup.png"><figcaption>레벨업 창 · 카드에도 같은 표시</figcaption></figure></div>
+<h2>④ 터렛 시험장</h2>
+<div class="pair"><figure><img src="../캡쳐본 모음/2차_반영2_캡처/23_lab_dummy.png"><figcaption>허수아비(제자리 3줄 x 5) · 카드 모두 · 속도 x2 — 터렛 위 이름표에 초당 피해(최근 5초)</figcaption></figure><figure><img src="../캡쳐본 모음/2차_반영2_캡처/23b_lab_swarm.png"><figcaption>무리 모드 (스테이지 10 적이 계속 내려옴)</figcaption></figure></div>
+<table><tr><th>하는 것</th><th>방법</th></tr>
+<tr><td>터렛 놓기</td><td>위 목록에서 <b>끌어서 아래 칸</b>에 놓기 (가까운 칸) · 누르기만 하면 빈 칸에 · 이름표를 누르면 빼기 · [모두 빼기]</td></tr>
+<tr><td>속도</td><td>x0.25 · x0.5 · x1 · x2 · x4 (발사체를 천천히 보기)</td></tr>
+<tr><td>적</td><td>무리 · 허수아비(움직이지 않고 체력이 아주 많음) · 보스(체력이 아주 많은 보스 하나) · 없음</td></tr>
+<tr><td>카드</td><td>기본(카드 없음) · 돌파 A · 돌파 B(그 줄 돌파 + 연계 + 강화 최대) · 모두(3단계) — 놓인 터렛에 바로 적용</td></tr>
+<tr><td>그 밖</td><td>대장 카피 쏘기 켬/끔(처음엔 끔 — 터렛만 보이게) · [피해 다시 재기]</td></tr></table>
+<h2>⑤ 확인해 주실 것 <small style="font-size:14px;color:#7a6a5c;font-weight:normal">✎ 의견 칸</small></h2><ul class="todo">
+<li data-id="r-lobby"><label><input type="checkbox"><span><span class="tag">확인</span><b>로비 전투 탭</b> (위 ①) <span class="why">의견: "적 약점 그대로 · 그 밑에 보통 · 엘리트 · 그 밑에 나오는 적을 드롭다운 · 순찰 · 전투 시작을 돔 바로 위"</span></span></label></li><li data-id="r-info"><label><input type="checkbox"><span><span class="tag">확인</span><b>설명 창 · 속성 태그</b> (위 ②) <span class="why">의견: "정보창 컴팩트 · 태그 글자 가운데"</span></span></label></li><li data-id="r-stars"><label><input type="checkbox"><span><span class="tag">확인</span><b>단계 · 보석</b> (위 ③) <span class="why">의견: "고른 카드: 등급 · 다이아 퀄리티 · 크게 · Lv.1 ◆◇◇◇ 강조 · 터렛별 구분선"</span></span></label></li><li data-id="r-lab"><label><input type="checkbox"><span><span class="tag">확인</span><b>터렛 시험장</b> — Unity 메뉴 지구 방위대 › 터렛 시험장 열기 <span class="why">의견: "터렛을 끌어다 놓고 발사체와 속도를 확인하는 테스트 씬"</span></span></label></li>
+</ul></main>
+<script>
+(function(){
+  var KEY='earthdef-fb3-1116', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>
