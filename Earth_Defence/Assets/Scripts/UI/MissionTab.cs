@@ -118,14 +118,47 @@ namespace EarthDef
         static SaveData S => SaveData.Cur;
         public static void Open()
         {
-            var p = Popup.Make(L.T("settings"), 900, 1180, () => S.Save());
+            var p = Popup.Make(L.T("settings"), 900, 1560, () => S.Save());
             float y = 140;
             Volume(p, ref y, L.T("set_bgm"), "music", () => S.bgm, v => S.bgm = v);
             Volume(p, ref y, L.T("set_sfx"), "sound", () => S.sfx, v => S.sfx = v);
             Toggle(p, ref y, L.T("set_vib"), () => S.vib, v => S.vib = v);
             Toggle(p, ref y, L.T("set_nums"), () => S.nums, v => S.nums = v);
             Toggle(p, ref y, L.T("set_fps"), () => S.fps60, v => { S.fps60 = v; Apply(); });
-            p.Btn("btn_orange", L.T("set_tutorial"), 0, 70, 520, () => { S.tut.Clear(); S.Save(); Toast.Show(L.T("ok")); p.Close(); }, 110);
+            // 3차 [초안] 구글 계정 · 클라우드 저장 (실제 Play 게임즈 로그인 · 저장된 게임은 출시 단계)
+            var ln = UIKit.Plain(p.win, new Color(0.23f, 0.16f, 0.11f, 0.2f), "Line"); ln.rectTransform.TL(60, y + 6, 780, 3);
+            y += 24;
+            UIKit.Label(p.win, L.T("account"), 36, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(150, y, 360, 88);
+            Button acc = null;
+            acc = UIKit.Btn(p.win, "btn_green", "", 30, () => { if (Store.Linked) Store.Unlink(); else Store.Link(); Show(); }, "Account");
+            ((RectTransform)acc.transform).TL(560, y, 260, 88);
+            void Show() { UIKit.SetKind(acc, Store.Linked ? "btn_purple" : "btn_green"); UIKit.LabelOf(acc).text = Store.Linked ? L.T("account_linked") : L.T("account_link"); }
+            Show();
+            y += 110;
+            var sv = UIKit.Btn(p.win, "btn_orange", L.T("cloud_save"), 30, () => { Store.CloudSave(); Toast.Show(L.T("cloud_saved")); }, "CloudSave");
+            ((RectTransform)sv.transform).TL(60, y, 380, 96);
+            var ld = UIKit.Btn(p.win, "btn_cream", L.T("cloud_load"), 30, () => { p.Close(); CloudCompare(); }, "CloudLoad");
+            ((RectTransform)ld.transform).TL(460, y, 380, 96);
+            y += 110;
+            p.Text(L.T("cloud_draft"), y, 24, Art.Soft);
+            p.Btn("btn_orange", L.T("set_tutorial"), 0, 60, 520, () => { S.tut.Clear(); S.Save(); Toast.Show(L.T("ok")); p.Close(); }, 110);
+        }
+
+        /// <summary>[초안] 클라우드 판과 이 기기 판 비교 → 고르기 (카치건 · 불도깨비의 충돌 비교 창과 같은 모양)</summary>
+        public static void CloudCompare()
+        {
+            var c = Store.CloudPeek();
+            if (c == null) { Toast.Show(L.T("cloud_none")); return; }
+            var p = Popup.Make(L.T("cloud_cmp"), 920, 760);
+            string Info(SaveData d) => $"{L.F("best", d.best)}\n{L.T("r_gold")} {Num.F(d.gold)}\n{L.T("dia")} {Num.Comma(d.dia)}\n{L.T("base")} Lv {d.baseLv}";
+            var a = UIKit.Panel(p.win, "card", "Local"); a.rectTransform.TL(40, 130, 400, 400);
+            UIKit.Label(a.transform, L.T("cloud_local"), 36, Art.Ink, TextAnchor.UpperCenter, false).rectTransform.Fill(10, 20, 10, 24);
+            UIKit.Label(a.transform, Info(S), 28, Art.Brown, TextAnchor.MiddleCenter, false).rectTransform.Fill(10, 30, 10, 70);
+            var b = UIKit.Panel(p.win, "card", "Cloud"); b.rectTransform.TL(480, 130, 400, 400);
+            UIKit.Label(b.transform, L.T("cloud_remote"), 36, Art.Ink, TextAnchor.UpperCenter, false).rectTransform.Fill(10, 20, 10, 24);
+            UIKit.Label(b.transform, Info(c), 28, Art.Brown, TextAnchor.MiddleCenter, false).rectTransform.Fill(10, 30, 10, 70);
+            p.Btn("btn_cream", L.T("cloud_local"), -220, 50, 380, p.Close, 110);
+            p.Btn("btn_green", L.T("cloud_remote"), 220, 50, 380, () => { p.Close(); Store.CloudLoad(); }, 110);
         }
 
         public static void Apply() { Application.targetFrameRate = S == null || S.fps60 ? 60 : 30; }

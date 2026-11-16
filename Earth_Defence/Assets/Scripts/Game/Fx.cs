@@ -123,6 +123,20 @@ namespace EarthDef
             var g = c; g.a = 0.3f; Glow(p, 0.15f * k, g, 0.08f);
         }
         public static void Ring(Vector2 p, float radius, Color c) { if (I) I.Play("ring", p, 0.2f, radius / 0.4f, 0.3f, c); }
+        /// <summary>떠오르는 짧은 글자 (필살기 이름 등)</summary>
+        public static void Word(Vector2 p, string s, Color c)
+        {
+            if (!I) return;
+            var it = I.Take("num");
+            it.go.name = "num";
+            it.crit = false; it.val = 0; it.key = null;
+            it.tx.text = s; it.tx.fontSize = Art.FontSize(46);
+            it.tx.color = c; it.t = 0; it.life = 1.2f; it.s0 = it.s1 = 1; it.c = c; it.drag = 3f;
+            it.v = new Vector3(0, 1.4f);
+            it.go.transform.position = p;
+            I.live.Add(it); I.numCount++;
+        }
+
         public static void Puff(Vector2 p, float k = 1f) { if (I) I.Play("puff", p, 0.5f * k, 1.2f * k, 0.35f, new Color(1, 1, 1, 0.8f), new Vector3(0, 0.6f)); }
 
         public static void Number(Vector2 p, double v, bool crit, object key = null)

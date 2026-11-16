@@ -13,13 +13,13 @@ namespace EarthDef
     public class Lobby : MonoBehaviour
     {
         static SaveData S => SaveData.Cur;
-        public static readonly string[] Tabs = { "battle", "turret", "gear", "mission" };
+        public static readonly string[] Tabs = { "battle", "turret", "gear", "mission", "challenge", "shop" };   // 3차: 도전 · 상점 (뒤에 붙여 탭 번호 유지)
         public static int lastTab;
         /// <summary>자동 시험: 로비에 들어올 때 창(출석 · 알림 · 도움말)을 띄우지 않음</summary>
         public static bool NoIntro;
         public int tab;
         RectTransform root, content;
-        Text goldT, stamT, stamNext;
+        Text goldT, stamT, stamNext, diaT;
         readonly List<(Image bg, Text label, string id)> tabBtns = new();
         Image missionDot, gearDot;
         // 전투 탭
@@ -31,6 +31,8 @@ namespace EarthDef
         readonly List<(string id, Text lv, Text shards, Image bar, Button btn, Text cost)> rows = new();
         public GearTab gearTab;
         public MissionTab missionTab;
+        public ChallengeTab challengeTab;
+        public ShopTab shopTab;
 
         public void Build()
         {
@@ -38,14 +40,19 @@ namespace EarthDef
             // 위 줄
             var top = UIKit.Rect(root, "TopBar"); top.anchorMin = new Vector2(0, 1); top.anchorMax = new Vector2(1, 1); top.pivot = new Vector2(0.5f, 1);
             top.sizeDelta = new Vector2(0, 130); top.anchoredPosition = Vector2.zero;
-            var gp = UIKit.Panel(top, "pill", "Gold"); gp.rectTransform.TL(26, 26, 300, 84);
+            var gp = UIKit.Panel(top, "pill", "Gold"); gp.rectTransform.TL(20, 26, 270, 84);
             var gi = UIKit.Img(gp.transform, Art.Icon("coin"), "Coin"); gi.rectTransform.Place(0, 0.5f, new Vector2(8, 0), new Vector2(76, 76), new Vector2(0, 0.5f));
             goldT = UIKit.Label(gp.transform, "", 40, Art.Ink, TextAnchor.MiddleLeft, false); goldT.rectTransform.Fill(92, 6, 16, 0);
-            var sp = UIKit.Panel(top, "pill", "Stamina"); sp.rectTransform.TL(346, 26, 330, 84);
+            var sp = UIKit.Panel(top, "pill", "Stamina"); sp.rectTransform.TL(300, 26, 290, 84);
             var si = UIKit.Img(sp.transform, Art.Icon("energy"), "Energy"); si.rectTransform.Place(0, 0.5f, new Vector2(8, 0), new Vector2(76, 76), new Vector2(0, 0.5f));
             stamT = UIKit.Label(sp.transform, "", 38, Art.Ink, TextAnchor.MiddleLeft, false); stamT.rectTransform.Fill(92, 6, 16, 0);
-            stamNext = UIKit.Label(top, "", 24, Art.Cream, TextAnchor.MiddleCenter, true); stamNext.rectTransform.TL(346, 106, 330, 30);
+            stamNext = UIKit.Label(top, "", 24, Art.Cream, TextAnchor.MiddleCenter, true); stamNext.rectTransform.TL(300, 106, 290, 30);
             UIKit.Clickable(sp, ShowStamina);
+            // 3차: 다이아 (누르면 상점)
+            var dp = UIKit.Panel(top, "pill", "Dia"); dp.rectTransform.TL(600, 26, 300, 84);
+            var di = UIKit.Img(dp.transform, Art.Icon("diamond"), "Dia"); di.rectTransform.Place(0, 0.5f, new Vector2(10, 0), new Vector2(70, 70), new Vector2(0, 0.5f));
+            diaT = UIKit.Label(dp.transform, "", 38, Art.Ink, TextAnchor.MiddleLeft, false); diaT.rectTransform.Fill(90, 6, 16, 0);
+            UIKit.Clickable(dp, () => SetTab(5));
             var set = UIKit.Tile(top, "btn_orange", Color.white, Art.Icon("gear"), 0.6f, "Settings"); set.rectTransform.TL(954, 20, 100, 100);
             UIKit.Clickable(set, Settings.Open);
 
@@ -53,14 +60,15 @@ namespace EarthDef
             var nav = UIKit.Rect(root, "Nav"); nav.anchorMin = new Vector2(0, 0); nav.anchorMax = new Vector2(1, 0); nav.pivot = new Vector2(0.5f, 0);
             nav.sizeDelta = new Vector2(0, 176); nav.anchoredPosition = Vector2.zero;
             var navBg = UIKit.Panel(nav, "card", "NavBg"); navBg.rectTransform.Fill(10, 8, 10, 0);
-            string[] icons = { "sword", "tab_turret", "g_helmet", "mission" };
+            string[] icons = { "sword", "tab_turret", "g_helmet", "mission", "crown", "shop" };
+            float tw = (1080 - 36) / Tabs.Length;
             for (int i = 0; i < Tabs.Length; i++)
             {
                 int idx = i;
-                var b = UIKit.Img(nav, Art.UI("btn_cream"), "Tab_" + Tabs[i]); b.rectTransform.TL(24 + i * 258, 18, 246, 148);
+                var b = UIKit.Img(nav, Art.UI("btn_cream"), "Tab_" + Tabs[i]); b.rectTransform.TL(20 + i * tw, 18, tw - 8, 148);
                 UIKit.Clickable(b, () => SetTab(idx));
-                var ic = UIKit.Img(b.transform, Art.Icon(icons[i]), "Icon"); ic.raycastTarget = false; ic.rectTransform.Place(0.5f, 1, new Vector2(0, -10), new Vector2(84, 84), new Vector2(0.5f, 1));
-                var lb = UIKit.Label(b.transform, L.T("tab_" + Tabs[i]), 34); lb.rectTransform.Place(0.5f, 0, new Vector2(0, 22), new Vector2(240, 44), new Vector2(0.5f, 0));
+                var ic = UIKit.Img(b.transform, Art.Icon(icons[i]), "Icon"); ic.raycastTarget = false; ic.rectTransform.Place(0.5f, 1, new Vector2(0, -12), new Vector2(76, 76), new Vector2(0.5f, 1));
+                var lb = UIKit.Label(b.transform, L.T("tab_" + Tabs[i]), 30); lb.rectTransform.Place(0.5f, 0, new Vector2(0, 22), new Vector2(tw, 44), new Vector2(0.5f, 0));
                 tabBtns.Add((b, lb, Tabs[i]));
                 if (Tabs[i] == "mission") missionDot = UIKit.Dot(b.transform, -18, -14);
                 if (Tabs[i] == "gear") gearDot = UIKit.Dot(b.transform, -18, -14);
@@ -76,7 +84,7 @@ namespace EarthDef
         {
             tab = lastTab = i;
             for (int c = content.childCount - 1; c >= 0; c--) Destroy(content.GetChild(c).gameObject);
-            rows.Clear(); gearTab = null; missionTab = null;
+            rows.Clear(); gearTab = null; missionTab = null; challengeTab = null; shopTab = null;
             stageT = null; baseLvT = null;
             for (int k = 0; k < tabBtns.Count; k++)
             {
@@ -90,6 +98,8 @@ namespace EarthDef
                 case "turret": BuildTurret(page); break;
                 case "gear": gearTab = page.gameObject.AddComponent<GearTab>(); gearTab.Build(this); break;
                 case "mission": missionTab = page.gameObject.AddComponent<MissionTab>(); missionTab.Build(this); break;
+                case "challenge": challengeTab = page.gameObject.AddComponent<ChallengeTab>(); challengeTab.Build(this); break;
+                case "shop": shopTab = page.gameObject.AddComponent<ShopTab>(); shopTab.Build(this); break;
             }
             World.I.ShowSlots(0, false);
             Refresh();
@@ -231,6 +241,7 @@ namespace EarthDef
                 baseDescT = UIKit.Label(r, "", 26, Art.Soft, TextAnchor.MiddleLeft, false); baseDescT.rectTransform.TL(126, 58, 560, 44);
                 baseB = UIKit.Btn(r, "btn_green", null, 30, () => { if (Meta.UpgradeBase()) Refresh(); }, "Up"); ((RectTransform)baseB.transform).TL(730, 12, 250, 96);
                 baseCostT = CostLabel(baseB.transform);
+                var fb = UIKit.Btn(r, "btn_purple", L.T("frame"), 24, () => ShopTab.FramePopup(this), "Frame"); ((RectTransform)fb.transform).TL(560, 22, 156, 76);
                 Divider(c, y + h + 3);
                 y += h + 8;
             }
@@ -250,6 +261,12 @@ namespace EarthDef
                     y += h + 8; continue;
                 }
                 var lv = UIKit.Label(r, "", 30, Art.Brown, TextAnchor.MiddleLeft, false); lv.rectTransform.TL(470, 4, 220, 50);
+                var sk = Tables.SkinOf(t.id);
+                if (sk != null)
+                {   // 3차 스킨 단추 (가졌으면 보라 · 끼웠으면 붓에 빛)
+                    var sb = UIKit.Tile(r, S.HasSkin(t.id) ? "btn_purple" : "btn_cream", Color.white, Art.Icon("brush"), 0.62f, "Skin"); sb.rectTransform.TL(600, 18, 84, 84);
+                    var skr = sk; UIKit.Clickable(sb, () => ShopTab.SkinPopup(skr, this));
+                }
                 var bar = UIKit.Bar(r, Art.Sky, "Shards"); bar.transform.parent.GetComponent<RectTransform>().TL(126, 62, 460, 34);
                 var sh = UIKit.Label(bar.transform.parent, "", 22, Color.white); sh.rectTransform.Fill(0, 2, 0, 0);
                 var btn = UIKit.Btn(r, "btn_green", null, 30, () => { if (Meta.UpgradeTurret(t.id)) Refresh(); }, "Up"); ((RectTransform)btn.transform).TL(730, 12, 250, 96);
@@ -307,6 +324,7 @@ namespace EarthDef
         void RefreshTop()
         {
             goldT.text = Num.F(S.gold);
+            diaT.text = Num.Comma(S.dia);
             int st = Meta.Stamina;
             stamT.text = $"{st}/{Meta.StaminaMax}";
             long nx = Meta.StaminaNext;
@@ -380,6 +398,8 @@ namespace EarthDef
             }
             if (gearTab) gearTab.Refresh();
             if (missionTab) missionTab.Refresh();
+            if (challengeTab) challengeTab.Refresh();
+            if (shopTab) shopTab.Refresh();
         }
 
         // ---------- 스태미나 창 ----------

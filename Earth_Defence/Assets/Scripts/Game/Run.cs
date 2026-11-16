@@ -19,6 +19,9 @@ namespace EarthDef
         public int shotsCards;            // "탄 +1(-15%)" 카드 수 (발당 감소)
         public TurretUnit unit;           // 화면 물체
         public double dmgDone;            // 준 피해 합 (터렛 시험장 초당 피해)
+        /// <summary>3차 스킨: 가지고 있으면 후반 브래킷 피해 +% (기획서 6-3 Final DMG 자리)</summary>
+        public double late;
+        public SkinRow skin;              // 끼운 스킨 (색 · 필살기) — null = 없음
         /// <summary>2차: 장비 · 칩이 이 터렛에 더하는 값 (카드와 같은 키 — 판 내내 그대로)</summary>
         public Dictionary<string, double> chip;
 
@@ -100,6 +103,12 @@ namespace EarthDef
                 t.chip = new Dictionary<string, double>();
                 if (all != null) foreach (var kv in all) t.chip[kv.Key] = kv.Value;
                 if (mine != null) foreach (var kv in mine) t.chip[kv.Key] = (t.chip.TryGetValue(kv.Key, out var o) ? o : 0) + kv.Value;
+            }
+            var sk = Tables.SkinOf(r.id);
+            if (sk != null && SaveData.Cur != null && SaveData.Cur.HasSkin(r.id))
+            {
+                t.late = sk.dmg / 100.0;
+                if (SaveData.Cur.SkinOn(r.id)) t.skin = sk;
             }
             t.Recalc();
             turrets.Add(t);

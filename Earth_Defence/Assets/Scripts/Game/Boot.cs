@@ -65,16 +65,25 @@ namespace EarthDef
             return true;
         }
 
-        public static void StartStage(int stage, int seed = 0, bool elite = false)
+        /// <summary>도전 모드 (3차): 하루 입장 횟수를 쓰고 시작 — 난이도 = 깬 최고 스테이지</summary>
+        public static bool StartMode(string mode, int seed = 0)
+        {
+            if (Store.Tickets(mode) <= 0) { Toast.Show(L.T("ch_no_ticket")); return false; }
+            SaveData.Cur.DailyAdd("mode:" + mode);
+            StartStage(Mathf.Max(1, SaveData.Cur.best), seed, false, mode);
+            return true;
+        }
+
+        public static void StartStage(int stage, int seed = 0, bool elite = false, string mode = "stage")
         {
             Popup.CloseAll();
             if (Lobby) { UnityEngine.Object.Destroy(Lobby.gameObject); Lobby = null; }
             if (BattleUI) UnityEngine.Object.Destroy(BattleUI.gameObject);
             Battle.I?.Close();
-            SaveData.Cur.stage = stage;
+            if (mode == "stage") SaveData.Cur.stage = stage;
             Tutorial.CloseCur();
             LobbyWalker.Show(false);
-            var b = Battle.Begin(stage, seed, elite);
+            var b = Battle.Begin(stage, seed, elite, mode);
             Audio.Music("battle");
             BattleUI = UIKit.Rect(UIRoot.I.pages, "BattleUI").Fill().gameObject.AddComponent<BattleUI>();
             BattleUI.Build(b);

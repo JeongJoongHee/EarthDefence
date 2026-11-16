@@ -40,6 +40,26 @@ namespace EarthDef
             }
         }
         public static void Additive(SpriteRenderer sr) { var m = AddMat; if (m) sr.sharedMaterial = m; }
+        static Material hueMat;
+        /// <summary>3차 스킨: 색 돌리기 재질 (값은 MaterialPropertyBlock _Hue · _Sat)</summary>
+        public static Material HueMat
+        {
+            get
+            {
+                if (hueMat) return hueMat;
+                var sh = Shader.Find("EarthDef/SpriteHue");
+                if (sh) hueMat = new Material(sh) { name = "SpriteHue" };
+                return hueMat;
+            }
+        }
+        /// <summary>색을 deg 도 돌림 (빛 더하기 조각 · 효과 색)</summary>
+        public static Color HueShift(Color c, float deg, float sat = 1f)
+        {
+            Color.RGBToHSV(c, out var h, out var s, out var v);
+            var r = Color.HSVToRGB(Mathf.Repeat(h + deg / 360f, 1f), Mathf.Clamp01(s * sat), v); r.a = c.a; return r;
+        }
+        /// <summary>스킨 그림 (UI · 카드 — tools/skin_preview.py 가 같은 식으로 미리 돌려 둠)</summary>
+        public static Sprite TurretSkinUI(string art) => Get("Turret/" + art + "_skin", 100f);
         // 터렛 312x346: 바닥 = 아래에서 12.5px · 쏘는 곳 = 바닥 위 1.36칸
         public static readonly Vector2 TurretFoot = new(0.5f, 12.5f / 346f);
         public const float TurretHead = 1.36f;

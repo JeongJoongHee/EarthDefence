@@ -94,7 +94,7 @@ namespace EarthDef
             if (atShield)
             {
                 hitT -= dt;
-                if (hitT <= 0 && !Paralyzed) { hitT = Tables.Cf("Enemy_Hit_Interval", 1f); Battle.I?.HurtBase(atk, Pos); Wobble(); }
+                if (hitT <= 0 && !Paralyzed) { hitT = Tables.Cf("Enemy_Hit_Interval", 1f); Battle.I?.HurtBase(atk, Pos, this); Wobble(); }
                 return;
             }
             if (Paralyzed || hold) return;
@@ -112,7 +112,7 @@ namespace EarthDef
             transform.position = p;
             if (p.y - radius <= World.ShieldY)
             {
-                if (row.crash) { Battle.I?.HurtBase(atk * Tables.C("Crash_Mul", 3), Pos); Fx.Burst(Pos, 0.6f * row.size); dead = true; return; }
+                if (row.crash) { Battle.I?.HurtBase(atk * Tables.C("Crash_Mul", 3), Pos, this); Fx.Burst(Pos, 0.6f * row.size); dead = true; return; }
                 atShield = true; hitT = 0.3f;
             }
         }

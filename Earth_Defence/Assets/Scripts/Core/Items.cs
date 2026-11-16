@@ -194,6 +194,7 @@ namespace EarthDef
             {
                 case "gold": S.gold += v; return $"{L.T("r_gold")} +{Num.F(v)}";
                 case "parts": S.parts += v; return $"{L.T("r_parts")} +{Num.F(v)}";
+                case "dia": S.dia += v; return $"{L.T("dia")} +{Num.F(v)}";
                 case "stamina": Meta.AddStamina((int)v); return $"{L.T("r_stamina")} +{v:0}";
                 case "shards":
                 {

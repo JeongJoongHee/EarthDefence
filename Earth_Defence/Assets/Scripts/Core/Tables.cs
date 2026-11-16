@@ -50,6 +50,16 @@ namespace EarthDef
     }
     public class MissionRow { public string id, kind, name, reward; public int target; public double value; }
     public class AttendRow { public int day; public string reward; public double value; }
+    // ---------- 3차: 기지 외형 · 스킨 · 상점 ----------
+    public class FrameRow
+    {
+        public string id, name, effect, desc; public double baseV, perStar, cd; public int price; public Color tint, glow;
+        public double Val(int star) => baseV + perStar * (Mathf.Max(1, star) - 1);
+        public string Desc(int star) { double v = Val(star); return desc.Replace("{0}", v.ToString(v == Math.Floor(v) ? "0" : "0.##")).Replace("{1}", cd.ToString("0")); }
+    }
+    public class SkinRow { public string id, turret, name, ult, ultName, ultDesc; public float hue, sat; public int ultCharge, price; public double ultRate, dmg; }
+    public class ProductRow { public string id, name, productId; public int dia, krw; public bool firstDouble; }
+    public class ShopItemRow { public string id, name, kind, desc; public int costDia, perDay; public double value; }
 
     /// <summary>
     /// 기획 표 (원본 = Earth_Defence/Table/*.xlsx → [지구 방위대 → 표 변환] 또는 재생할 때 자동으로 Resources/Tables/*.csv).
@@ -73,6 +83,13 @@ namespace EarthDef
         public static readonly Dictionary<string, ChipRow> ChipById = new();
         public static readonly List<MissionRow> Missions = new();
         public static readonly List<AttendRow> Attend = new();
+        public static readonly List<FrameRow> Frames = new();
+        public static readonly List<SkinRow> Skins = new();
+        public static readonly List<ProductRow> Products = new();
+        public static readonly List<ShopItemRow> ShopItems = new();
+        public static readonly List<(int grade, double rate)> BoxRates = new();
+        public static FrameRow Frame(string id) => Frames.Find(f => f.id == id) ?? (Frames.Count > 0 ? Frames[0] : null);
+        public static SkinRow SkinOf(string turret) => Skins.Find(s => s.turret == turret);
 
         public static void Load(bool force = false)
         {
@@ -81,6 +98,7 @@ namespace EarthDef
             config.Clear(); Turrets.Clear(); TurretById.Clear(); TurretLv.Clear(); Cards.Clear(); CardById.Clear();
             Enemies.Clear(); Stages.Clear(); Strings.Clear();
             GearParts.Clear(); Grades.Clear(); Chips.Clear(); ChipById.Clear(); Missions.Clear(); Attend.Clear();
+            Frames.Clear(); Skins.Clear(); Products.Clear(); ShopItems.Clear(); BoxRates.Clear();
 
             foreach (var r in Read("Config")) config[r.S("Key")] = r.D("Value");
             foreach (var r in Read("Turret"))
@@ -150,6 +168,23 @@ namespace EarthDef
             foreach (var r in Read("Mission"))
                 Missions.Add(new MissionRow { id = r.S("Id"), kind = r.S("Kind"), target = Mathf.Max(1, r.I("Target")), name = r.S("Name"), reward = r.S("Reward"), value = r.D("Value") });
             foreach (var r in Read("Attend")) Attend.Add(new AttendRow { day = r.I("Day"), reward = r.S("Reward"), value = r.D("Value") });
+            foreach (var r in Read("Frame"))
+                Frames.Add(new FrameRow
+                {
+                    id = r.S("Id"), name = r.S("Name"), effect = r.S("Effect"), desc = r.S("Desc"), baseV = r.D("Base"), perStar = r.D("Per_Star"),
+                    cd = r.D("Cooldown"), price = r.I("Price_Dia"), tint = Art.Hex(r.S("Tint")), glow = Art.Hex(r.S("Glow")),
+                });
+            foreach (var r in Read("Skin"))
+                Skins.Add(new SkinRow
+                {
+                    id = r.S("Id"), turret = r.S("Turret"), name = r.S("Name"), hue = r.F("Hue"), sat = r.D("Sat") > 0 ? r.F("Sat") : 1f, ult = r.S("Ult"),
+                    ultName = r.S("Ult_Name"), ultDesc = r.S("Ult_Desc"), ultCharge = Mathf.Max(1, r.I("Ult_Charge")), ultRate = r.D("Ult_Rate"), dmg = r.D("Dmg"), price = r.I("Price_Dia"),
+                });
+            foreach (var r in Read("Product"))
+                Products.Add(new ProductRow { id = r.S("Id"), name = r.S("Name"), productId = r.S("Product_Id"), dia = r.I("Dia"), krw = r.I("Price_KRW"), firstDouble = r.I("First_Double") == 1 });
+            foreach (var r in Read("Item"))
+                ShopItems.Add(new ShopItemRow { id = r.S("Id"), name = r.S("Name"), kind = r.S("Kind"), desc = r.S("Desc"), costDia = r.I("Cost_Dia"), perDay = r.I("Per_Day"), value = r.D("Value") });
+            foreach (var r in Read("Box_Rate")) BoxRates.Add((r.I("Grade"), r.D("Rate")));
         }
 
         public static double C(string key, double def = 0)

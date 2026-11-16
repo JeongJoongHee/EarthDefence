@@ -36,6 +36,8 @@ namespace EarthDef.EditorTools
         public static void RunSound() => Start("sound");
         /// <summary>11-16 밤 터렛 시험장 씬 시험 (Assets/Scenes/TurretLab.unity)</summary>
         public static void RunLab() => Start("lab");
+        /// <summary>3차 시험 (11-16 밤): 상점 · 다이아 · 결제 [초안] · 기지 외형 · 스킨 · 필살기 · 무한 모드 · 엘리트 군단 · 광고 2배 · 클라우드 [초안]</summary>
+        public static void RunP3() => Start("p3");
 
         static void Start(string mode)
         {
@@ -77,7 +79,7 @@ namespace EarthDef.EditorTools
         {
             float timeout = Time.realtimeSinceStartup + 420f;
             string mode = SessionState.GetString(PlayTest.ModeKey, "");
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -85,6 +87,150 @@ namespace EarthDef.EditorTools
         }
 
         bool running = true;
+
+        // ---------- 3차 (RunP3) ----------
+        IEnumerator P3Steps()
+        {
+            yield return null;
+            Lobby.NoIntro = true; Popup.CloseAll();
+            Directory.CreateDirectory(OutDir);
+            SetupCapture();
+            yield return Wait(0.5f);
+            Check(Tables.Frames.Count == 7 && Tables.Skins.Count == 11 && Tables.Products.Count == 5 && Tables.ShopItems.Count == 8, $"3차 표: 외형 {Tables.Frames.Count} · 스킨 {Tables.Skins.Count} · 상품 {Tables.Products.Count} · 상점 {Tables.ShopItems.Count}");
+            double rsum = 0; foreach (var (_, r) in Tables.BoxRates) rsum += r;
+            Check(System.Math.Abs(rsum - 100) < 0.01, $"상자 확률 합 {rsum}%");
+            Check(Art.HueMat != null && Art.HueMat.HasProperty("_Hue") && Art.HueMat.HasProperty("_RendererColor"), "스킨 색 돌리기 셰이더 (EarthDef/SpriteHue)");
+            foreach (var k in Tables.Skins) if (Art.TurretSkinUI(Tables.TurretById[k.turret].art) == null) Check(false, "스킨 그림 없음 " + k.id);
+            Check(S.dia == Tables.C("Start_Dia"), $"처음 다이아 {S.dia}");
+            S.best = 30; S.gold = 1e8;
+
+            // --- 상점
+            var free = Tables.ShopItems.Find(i => i.kind == "free_box");
+            int inv0 = S.gear.Count + S.chips.Count;
+            Check(Store.Buy(free) != null && S.gear.Count + S.chips.Count == inv0 + 1 && Store.Left(free) == 0 && Store.Buy(free) == null, "무료 상자 하루 1번");
+            S.dia = 100000;
+            var gb10 = Tables.ShopItems.Find(i => i.id == "i_gear10"); int g0 = S.gear.Count; double d0 = S.dia;
+            Check(Store.Buy(gb10) != null && S.gear.Count == g0 + 11 && S.dia == d0 - gb10.costDia, $"장비 상자 10+1 → 장비 +{S.gear.Count - g0} · 다이아 -{d0 - S.dia}");
+            {   // 상자 등급이 표 확률대로 (2만 번)
+                var rnd = new System.Random(5); var cnt = new int[8];
+                for (int i = 0; i < 20000; i++) cnt[Store.BoxGrade(rnd)]++;
+                bool ok = true; string log = "";
+                foreach (var (g, r) in Tables.BoxRates) { double got = cnt[g] / 200.0; log += $"{g}:{got:0.0} "; if (System.Math.Abs(got - r) > 1.0) ok = false; }
+                Check(ok, "상자 등급 확률 = 표 (" + log + ")");
+            }
+            var stItem = Tables.ShopItems.Find(i => i.kind == "stamina"); int st0 = Meta.Stamina;
+            Check(Store.Buy(stItem) != null && Meta.Stamina == st0 + 30, "스태미나 30 사기");
+            // --- 결제 [초안]
+            var p1 = Tables.Products[0]; d0 = S.dia;
+            int n1 = Store.Purchase(p1), n2 = Store.Purchase(p1);
+            Check(n1 == p1.dia * 2 && n2 == p1.dia && S.dia == d0 + n1 + n2, $"[초안] 결제: 첫 구매 2배 {n1} → 다음 {n2}");
+
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            Game.Lobby.SetTab(5); yield return Wait(0.4f);
+            Capture("30_shop");
+            Game.Lobby.shopTab.GetComponentInChildren<UnityEngine.UI.ScrollRect>().verticalNormalizedPosition = 0.45f; yield return Wait(0.3f);
+            Capture("30b_shop_skins");
+            Game.Lobby.SetTab(4); yield return Wait(0.3f);
+            Capture("31_challenge");
+
+            // --- 기지 외형
+            var star = Tables.Frame("starsea");
+            Check(Store.BuyFrame(star) && S.FrameStar("starsea") == 1, "별바다 장막 사기");
+            Check(Store.UpFrame("starsea") && S.FrameStar("starsea") == 2, $"별 올리기 → 별 {S.FrameStar("starsea")} (효과 {star.Val(2)})");
+            Store.EquipFrame("starsea");
+            Game.Lobby.SetTab(1); yield return null;
+            ShopTab.FramePopup(Game.Lobby); yield return Wait(0.3f);
+            Capture("32_frames");
+            Popup.CloseAll();
+            Game.StartStage(10, 3); yield return null;
+            Check(B.frame?.id == "starsea" && System.Math.Abs(B.frameVal - star.Val(2)) < 0.01, "전투에 외형 들어감");
+            FF(45f);
+            Check(B.frameFired >= 1, $"별똥별 비 {B.frameFired}번 (40초마다)");
+            Store.BuyFrame(Tables.Frame("prism")); Store.EquipFrame("prism");
+            Game.StartStage(10, 4); yield return null;
+            B.HurtBase(B.baseHp * 5, Vector2.zero); B.Tick(Battle.StepSec);
+            double hr = B.baseHp;
+            B.HurtBase(B.baseMax * 5, Vector2.zero); B.Tick(Battle.StepSec);
+            Check(B.st == Battle.St.Play && hr > 0 && B.baseHp == hr, $"무지개 돔: 무너질 때 체력 {hr / B.baseMax:P0} 로 버티고 3초 무적");
+            Store.BuyFrame(Tables.Frame("thorn")); Store.EquipFrame("thorn");
+            Game.StartStage(10, 5); yield return null;
+            var at = B.Spawn("beetle", new Vector2(0, World.ShieldY + 0.3f)); B.Tick(Battle.StepSec);
+            B.HurtBase(10, at.Pos, at);
+            Check(B.frameFired == 1, "가시 돔: 때린 적에게 반격");
+
+            // --- 스킨 · 필살기
+            foreach (var k in Tables.Skins) Store.BuySkin(k);
+            Check(S.skins.Count == 11 && S.skinOn.Count == 11, $"스킨 11개 사고 끼움 (다이아 {Num.Comma(S.dia)} 남음)");
+            Game.StartStage(12, 6); yield return null;
+            foreach (var id in new[] { "new_rail", "new_laser", "new_missile", "new_vortex" }) Force(id);
+            var rail = B.run.Get("rail");
+            var mpb = new MaterialPropertyBlock(); rail.unit.GetComponent<SpriteRenderer>().GetPropertyBlock(mpb);
+            Check(rail.skin != null && rail.late > 0 && rail.unit.GetComponent<SpriteRenderer>().sharedMaterial == Art.HueMat && System.Math.Abs(mpb.GetFloat("_Hue") - rail.skin.hue / 360f) < 0.001f,
+                  $"관통포 스킨: 색 돌리기 {mpb.GetFloat("_Hue") * 360:0}° · 피해 +{rail.late:P0}");
+            for (int i = 0; i < 12 && !B.units.TrueForAll(u => u == B.Guardian || u.ults > 0); i++) FF(5f);
+            foreach (var u in B.units) if (u != B.Guardian) Check(u.ults > 0, $"{u.t.row.name} 필살기 {u.ults}번 ({u.t.skin.ultName})");
+            yield return Wait(0.3f);
+            Capture("33_skins_battle");
+            {   // 나머지 7종 필살기도 한 번씩 (오류 없이 공격이 나감)
+                var cast = typeof(TurretUnit).GetMethod("CastUlt", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                foreach (var id in new[] { "drone", "hive", "bolt", "cannon", "focus", "wheel", "tesla" })
+                {
+                    var t = B.LabPlace(1, id, "base");
+                    var e = B.enemies.Find(x => !x.dead);
+                    int before = B.units.Count; cast.Invoke(t.unit, new object[] { e });
+                    for (int i = 0; i < 30; i++) B.Tick(Battle.StepSec);
+                    Check(t.unit != null, $"{t.row.name} 필살기 ({t.skin?.ultName})");
+                }
+                yield return Wait(0.3f);
+                Capture("33b_ults");
+            }
+
+            // --- 무한 모드
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            int tk0 = Store.Tickets("endless");
+            Check(Game.StartMode("endless") && B.mode == "endless" && Store.Tickets("endless") == tk0 - 1, $"무한 모드 시작 (입장 {tk0} → {Store.Tickets("endless")})");
+            var e0 = B.Spawn("moth", new Vector2(0, 5)); double hp0 = e0.maxHp;
+            B.immune = 1 << 30;   // 시험: 기지 레벨 1 로 스테이지 30 난이도라 1초 안에 무너짐 → 막아 둠
+            for (int i = 0; i < 70; i++) { FF(1f); B.baseHp = B.baseMax; }
+            var e1 = B.Spawn("moth", new Vector2(0, 5));
+            Check(e1.maxHp / hp0 > 1.4 && B.st == Battle.St.Play, $"70초 뒤 적 체력 x{e1.maxHp / hp0:0.00} · 끝나지 않음");
+            yield return Wait(0.3f);
+            Capture("34_endless");
+            double dia0 = S.dia;
+            B.immune = 0; B.HurtBase(B.baseMax * 10, Vector2.zero); B.Tick(Battle.StepSec);
+            Check(B.st == Battle.St.End && S.endlessBest >= 70 && B.rewardDia >= 4 && S.dia == dia0 + B.rewardDia, $"무한 모드 끝: 버틴 {S.endlessBest:0}초 · 다이아 +{B.rewardDia}");
+            double gold1 = S.gold;
+            Check(B.AdDouble() && S.gold > gold1 && !B.AdDouble(), "[초안] 광고 보고 보상 2배 (1번만)");
+            yield return Wait(0.4f);
+            Capture("35_endless_result");
+
+            // --- 엘리트 군단
+            Check(Game.StartMode("survival") && B.mode == "survival", "엘리트 군단 시작");
+            B.immune = 1 << 30;
+            int elites = 0;
+            for (int i = 0; i < 200 && B.st == Battle.St.Play; i++) { FF(1f); B.baseHp = B.baseMax; elites = System.Math.Max(elites, B.enemies.FindAll(x => !x.dead && x.row.IsElite).Count); }
+            Check(B.st == Battle.St.End && B.won && S.survWins == 1 && B.drops.Count == Tables.Ci("Survival_Drops") && B.rewardDia == Tables.C("Survival_Dia"),
+                  $"3분 버팀 → 승리 · 장비/칩 {B.drops.Count} · 다이아 {B.rewardDia} (중간 보스 동시 최대 {elites})");
+            yield return Wait(0.4f);
+            Capture("36_survival_result");
+            Game.StartMode("survival");
+            Game.ToLobby(); yield return null; Popup.CloseAll();
+            Check(!Game.StartMode("survival") && Store.Tickets("survival") == 0, "엘리트 군단 하루 2번까지");
+
+            // --- 구글 계정 · 클라우드 [초안]
+            Store.Link(); Store.CloudSave(); double gs = S.gold;
+            S.gold = 1; S.Save();
+            Check(Store.Linked && Store.CloudPeek() != null && System.Math.Abs(Store.CloudPeek().gold - gs) < 1, "[초안] 계정 연결 · 클라우드에 저장");
+            Settings.CloudCompare(); yield return Wait(0.3f);
+            Capture("37_cloud");
+            Popup.CloseAll();
+            Check(Store.CloudLoad() && System.Math.Abs(SaveData.Cur.gold - gs) < 1, "[초안] 클라우드에서 불러오기 → 골드 되돌아옴");
+            Settings.Open(); yield return Wait(0.3f);
+            Capture("38_settings");
+            Popup.CloseAll();
+            PlayerPrefs.DeleteKey("EarthDef.Cloud.Draft");
+            running = false;
+        }
 
         // ---------- 터렛 시험장 (RunLab) ----------
         IEnumerator LabSteps()

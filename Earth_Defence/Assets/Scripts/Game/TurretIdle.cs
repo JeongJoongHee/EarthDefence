@@ -147,6 +147,8 @@ namespace EarthDef
         }
 
         public void OnFire() { flash = 1f; recoil = 1f; }
+        /// <summary>3차 스킨: 속성 색 대신 돌린 색으로 빛남</summary>
+        public void Tint(Color c) { col = c; if (ringB) ringB.color = ringF.color = c; }
 
         void Update()
         {

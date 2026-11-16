@@ -38,6 +38,17 @@ namespace EarthDef
         public List<string> tut = new();  // 본 도움말
         public List<string> seen = new(); // 알림을 본 것 (열린 터렛 · 엘리트)
         public float bgm = 0.8f, sfx = 0.8f;
+        // ---------- 3차 ----------
+        public double dia = -1;            // 다이아 (-1 = 처음 → Start_Dia)
+        public string frame = "basic";     // 끼운 기지 외형
+        public List<string> frames = new();     // 가진 외형 "id:별"
+        public List<string> skins = new(), skinOn = new();   // 가진 스킨 · 끼운 스킨
+        public float endlessBest;          // 무한 모드 최고 버틴 시간(초)
+        public int survWins;
+        public int dailyDay = -1;
+        public List<string> dailyKeys = new(); public List<int> dailyVals = new();   // 하루 횟수 (도전 입장 · 상점)
+        public List<string> iapOnce = new();    // 첫 구매 2배 받은 상품
+        public string account = "";        // [초안] 구글 계정
         public bool vib = true, nums = true, fps60 = true;
 
         public static long Now => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -75,6 +86,9 @@ namespace EarthDef
             if (patrolFrom <= 0) patrolFrom = Clock;
             if (stamina < 0) { stamina = Tables.Ci("Stamina_Base", 30); staminaAt = Clock; }
             gear ??= new(); chips ??= new(); mProg ??= new(); mGot ??= new(); tut ??= new(); seen ??= new();
+            frames ??= new(); skins ??= new(); skinOn ??= new(); dailyKeys ??= new(); dailyVals ??= new(); iapOnce ??= new();
+            if (dia < 0) dia = Tables.C("Start_Dia", 100);
+            if (string.IsNullOrEmpty(frame)) frame = "basic";
             foreach (var g in gear) if (g.uid >= nextUid) nextUid = g.uid + 1;
             foreach (var c in chips) if (c.uid >= nextUid) nextUid = c.uid + 1;
         }
@@ -83,6 +97,17 @@ namespace EarthDef
         public static int Today => (int)(DateTimeOffset.FromUnixTimeSeconds(Clock).ToLocalTime().Date - new DateTime(2020, 1, 1)).TotalDays;
         public bool Unlocked(TurretRow t) => t.unlock <= 0 || best >= t.unlock;
         public bool Tut(string key) => tut.Contains(key);
+
+        // ---------- 하루 횟수 (기기 시간 밤 12시에 새로) ----------
+        void DayCheck() { if (dailyDay != Today) { dailyDay = Today; dailyKeys.Clear(); dailyVals.Clear(); } }
+        public int Daily(string key) { DayCheck(); int i = dailyKeys.IndexOf(key); return i < 0 ? 0 : dailyVals[i]; }
+        public void DailyAdd(string key, int n = 1) { DayCheck(); int i = dailyKeys.IndexOf(key); if (i < 0) { dailyKeys.Add(key); dailyVals.Add(n); } else dailyVals[i] += n; }
+
+        // ---------- 기지 외형 · 스킨 ----------
+        public int FrameStar(string id) { if (id == "basic") return 1; foreach (var f in frames) { var p = f.Split(':'); if (p[0] == id) return p.Length > 1 ? int.Parse(p[1]) : 1; } return 0; }
+        public void SetFrameStar(string id, int star) { frames.RemoveAll(f => f.Split(':')[0] == id); frames.Add(id + ":" + star); }
+        public bool HasSkin(string turret) => skins.Contains(turret);
+        public bool SkinOn(string turret) => skinOn.Contains(turret) && skins.Contains(turret);
 
         public void Save()
         {

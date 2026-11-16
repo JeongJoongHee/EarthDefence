@@ -364,20 +364,22 @@ def _gem(w, h, s, top, mid, bot, line, op=1.0):
     return g + '</g>'
 def ic_gem_on(w, h, f, s): return _gem(w, h, s, '#fff1a8', GOLD, '#e0a722', '#b07a10') + F(f'M{w*.36} {h*.2} L{w*.44} {h*.14} L{w*.4} {h*.32} Z', '#ffffff', .9)
 def ic_gem_off(w, h, f, s): return _gem(w, h, s, '#8a7462', '#6b5646', '#5b4433', '#3b281c', .9)
+def ic_brush(w, h, f, s): return (P(f'M{w*.62} {h*.08} L{w*.9} {h*.36} L{w*.5} {h*.66} L{w*.34} {h*.5} Z', '#c99260', s)
+                                   + P(f'M{w*.34} {h*.5} L{w*.5} {h*.66} Q{w*.4} {h*.94} {w*.08} {h*.92} Q{w*.16} {h*.62} {w*.34} {h*.5} Z', '#a68bd6', s))
 def ic_tab_turret(w, h, f, s): return P(f'M{w*.18} {h*.9} L{w*.26} {h*.6} L{w*.74} {h*.6} L{w*.82} {h*.9} Z', '#c9c1b3', s) + C(w * .5, h * .5, w * .22, '#d9c19a', s) + A.rr(w * .44, h * .08, w * .12, h * .36, 4, '#a9b1bb', s)
 
 
 EXTRA = dict(cards=ic_cards, coin=ic_coin, shard=ic_shard, star_on=ic_dia(GOLD), star_off=ic_dia(TRACK), ad=ic_ad, plus=ic_plus,
              home=ic_home, retry=ic_retry, base=ic_base, patrol=ic_patrol,
              g_weapon=ic_g_weapon, g_helmet=ic_g_helmet, g_suit=ic_g_suit, g_shield=ic_g_shield, g_core=ic_g_core, g_boots=ic_g_boots,
-             gem_on=ic_gem_on, gem_off=ic_gem_off, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret)
+             gem_on=ic_gem_on, gem_off=ic_gem_off, brush=ic_brush, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret)
 ICONS.update(EXTRA)
 ICON_LIST = {'pause': CREAM, 'play': CREAM, 'cards': CREAM, 'heart': RED, 'coin': GOLD, 'shard': SKY, 'star_on': GOLD, 'star_off': TRACK,
              'ad': CREAM, 'plus': CREAM, 'x': CREAM, 'lock': CREAM, 'home': CREAM, 'retry': CREAM, 'check': CREAM, 'skull': CREAM,
              'base': CREAM, 'patrol': CREAM, 'trophy': GOLD, 'bolt': GOLD, 'star': GOLD,
              'g_weapon': CREAM, 'g_helmet': CREAM, 'g_suit': CREAM, 'g_shield': CREAM, 'g_core': CREAM, 'g_boots': CREAM,
              'chip': CREAM, 'energy': CREAM, 'mission': CREAM, 'calendar': CREAM, 'parts': CREAM, 'crown': GOLD, 'hand': CREAM,
-             'gem_on': GOLD, 'gem_off': TRACK, 'tab_turret': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
+             'gem_on': GOLD, 'gem_off': TRACK, 'tab_turret': CREAM, 'diamond': '#8fd6ff', 'shop': CREAM, 'brush': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
 
 
 def export_icon():

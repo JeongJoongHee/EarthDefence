@@ -31,7 +31,8 @@ namespace EarthDef
             var sp = UIKit.Btn(root, "pill", null, 38, ToggleSpeed, "Speed"); ((RectTransform)sp.transform).TL(140, 46, 134, 78);
             speedT = UIKit.Label(sp.transform, "x1", 38, Art.Ink, TextAnchor.MiddleCenter, false); speedT.rectTransform.Fill(0, 6, 0, 0);
             var mid = UIKit.Panel(root, "pill", "Stage"); mid.rectTransform.TL(296, 30, 488, 108);
-            stageT = UIKit.Label(mid.transform, L.F("stage_n", b.stageNo), 42, b.eliteMode ? Art.Purple : Art.Ink, TextAnchor.UpperCenter, false); stageT.rectTransform.Fill(0, 40, 0, 10);
+            string stTitle = b.mode == "stage" ? L.F("stage_n", b.stageNo) : L.T("mode_" + b.mode);
+            stageT = UIKit.Label(mid.transform, stTitle, 42, b.eliteMode || b.mode != "stage" ? Art.Purple : Art.Ink, TextAnchor.UpperCenter, false); stageT.rectTransform.Fill(0, 40, 0, 10);
             if (b.eliteMode) { var cr = UIKit.Img(mid.transform, Art.Icon("crown"), "Elite"); cr.raycastTarget = false; cr.rectTransform.Place(0, 0.5f, new Vector2(14, 4), new Vector2(70, 70), new Vector2(0, 0.5f)); }
             timeT = UIKit.Label(mid.transform, "", 30, Art.Soft, TextAnchor.LowerCenter, false); timeT.rectTransform.Fill(0, 10, 0, 50);
             var cards = UIKit.Tile(root, "btn_orange", Color.white, Art.Icon("cards"), 0.6f, "Cards"); cards.rectTransform.TL(954, 34, 100, 100);
@@ -87,7 +88,7 @@ namespace EarthDef
 
         void Refresh()
         {
-            timeT.text = Num.Clock(b.TimeLeft);
+            timeT.text = b.mode == "endless" ? L.F("endless_time", Num.Clock(b.ClockSec)) : b.mode == "survival" ? L.F("survive_left", Num.Clock(b.ClockSec)) : Num.Clock(b.TimeLeft);
             lvT.text = b.level >= b.LevelMax ? L.F("lv", b.level) + " MAX" : L.F("lv", b.level);
             UIKit.SetBar(expFill, b.level >= b.LevelMax ? 1 : (float)(b.exp / b.need));
             hpT.text = Num.Comma(b.baseHp);
@@ -264,9 +265,10 @@ namespace EarthDef
         {
             Popup.CloseAll();
             var s = SaveData.Cur;
-            var p = Popup.Make(b.won ? L.T("win") : L.T("lose"), 900, b.drops.Count > 0 ? 1180 : 980, null, false);
+            string title = b.mode == "endless" ? L.T("mode_endless") : b.mode == "survival" && b.won ? L.T("survival_win") : b.won ? L.T("win") : L.T("lose");
+            var p = Popup.Make(title, 900, b.drops.Count > 0 ? 1300 : 1100, null, false);
             var ic = UIKit.Img(p.win, Art.Icon(b.won ? "trophy" : "skull"), "Icon"); ic.rectTransform.Place(0.5f, 1, new Vector2(0, -130), new Vector2(150, 150), new Vector2(0.5f, 1));
-            p.Text(L.F("stage_n", b.stageNo) + "   " + L.F("kills", b.kills) + "   " + L.F("lv", b.level), 300, 34, Art.Brown);
+            p.Text((b.mode == "endless" ? L.F("endless_time", Num.Clock(b.time)) : b.mode == "survival" ? L.T("mode_survival") : L.F("stage_n", b.stageNo)) + "   " + L.F("kills", b.kills) + "   " + L.F("lv", b.level), 300, 34, Art.Brown);
             if (b.FirstClear) p.Text(L.F("first_clear", Tables.Ci("First_Clear_Mul", 2)), 350, 30, Art.Green2);
             var coin = UIKit.Img(p.win, Art.Icon("coin"), "Coin"); coin.rectTransform.Place(0.5f, 1, new Vector2(-170, -420), new Vector2(100, 100), new Vector2(0.5f, 1));
             var g = UIKit.Label(p.win, "+" + Num.F(b.RewardGold), 60, Art.Gold); g.rectTransform.Place(0.5f, 1, new Vector2(50, -420), new Vector2(360, 100), new Vector2(0.5f, 1));
@@ -279,8 +281,27 @@ namespace EarthDef
                 dl.horizontalOverflow = HorizontalWrapMode.Wrap; dl.verticalOverflow = VerticalWrapMode.Overflow;
             }
             if (b.eliteMode) { var cr = UIKit.Img(p.win, Art.Icon("crown"), "Elite"); cr.rectTransform.Place(0.5f, 1, new Vector2(110, -120), new Vector2(80, 80), new Vector2(0.5f, 1)); }
+            if (b.rewardDia > 0)
+            {
+                var dIc = UIKit.Img(p.win, Art.Icon("diamond"), "DiaIcon"); dIc.rectTransform.Place(0.5f, 1, new Vector2(230, -540), new Vector2(70, 70), new Vector2(0.5f, 1));
+                var dT = UIKit.Label(p.win, "+" + Num.F(b.rewardDia), 44, Art.Sky); dT.rectTransform.Place(0.5f, 1, new Vector2(340, -540), new Vector2(160, 80), new Vector2(0.5f, 1));
+            }
+            // 3차 [초안] 광고 보고 보상 2배 (한 판 1번)
+            var ab = p.Btn(b.adDoubled ? "btn_gray" : "btn_purple", null, 0, 200, 600, () =>
+            {
+                if (b.adDoubled) return;
+                Ads.Show(ok => { if (ok && b.AdDouble()) { Toast.Show(L.T("got_double")); ShowResult(); } });
+            }, 100);
+            var adI = UIKit.Img(ab.transform, Art.Icon("ad"), "Ad"); adI.rectTransform.Place(0, 0.5f, new Vector2(26, 6), new Vector2(66, 66), new Vector2(0, 0.5f));
+            UIKit.Label(ab.transform, b.adDoubled ? L.T("got_double") : L.F("ad_double", Tables.Ci("Ad_Reward_Mul", 2)) + (Ads.Draft ? " [초안]" : ""), 32).rectTransform.Fill(100, 14, 10, 4);
             p.Btn("btn_orange", L.T("to_lobby"), -200, 70, 340, Game.ToLobby);
             int stage = b.stageNo; bool elite = b.eliteMode;
+            if (b.mode != "stage")
+            {   // 도전 모드: 다시 도전 (입장 남았을 때)
+                string md = b.mode;
+                p.Btn(Store.Tickets(md) > 0 ? "btn_green" : "btn_gray", L.T("ch_start") + $" {Store.Tickets(md)}/{Store.TicketMax(md)}", 200, 70, 340, () => Game.StartMode(md));
+                return;
+            }
             bool next = b.won && stage < Tables.Stages.Count && (!elite || Meta.EliteOpen(stage + 1));
             var nb = p.Btn("btn_green", next ? L.T("next") : L.T("retry"), 200, 70, 340, () => Game.TryStart(next ? stage + 1 : stage, elite));
             var ne = UIKit.Img(nb.transform, Art.Icon("energy"), "Energy"); ne.raycastTarget = false; ne.rectTransform.Place(1, 1, new Vector2(10, 22), new Vector2(56, 56), new Vector2(1, 1));

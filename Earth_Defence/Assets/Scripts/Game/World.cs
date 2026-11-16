@@ -32,6 +32,16 @@ namespace EarthDef
         public static readonly float[] SlotX = { -2.72f, 2.72f, -4.3f, 4.3f };
         public float Top => cam.transform.position.y + cam.orthographicSize;
         readonly SpriteRenderer[] slotMarks = new SpriteRenderer[4];
+        SpriteRenderer dome, domeGlow;
+        float glowT; Color glowCol;
+
+        /// <summary>기지 외형 (3차): 돔 색 + 둘레 은은한 빛 (보통 그리기 — 빛 더하기는 밝은 땅에서 하얗게 탐)</summary>
+        public void SetFrame(FrameRow f)
+        {
+            if (!dome) return;
+            dome.color = f != null ? f.tint : Color.white;
+            glowCol = f != null && f.id != "basic" ? f.glow : new Color(1, 1, 1, 0);
+        }
 
         public void Build(Camera c)
         {
@@ -39,7 +49,10 @@ namespace EarthDef
             Fit();
             Spr("Sky", Art.Get("Bg/sky", 100f), new Vector2(0, Bottom + 12f), -100);
             Spr("Ground", Art.Get("Bg/ground", 100f), new Vector2(0, Bottom + 2.8f), -50);
-            Spr("Dome", Art.Get("Bg/dome", 100f), new Vector2(0, Bottom + 2.8f), -40);
+            domeGlow = Spr("DomeGlow", Art.Fx("glow"), new Vector2(0, Bottom + 3.1f), -41);
+            domeGlow.transform.localScale = new Vector3(15f, 7.5f, 1); domeGlow.color = new Color(1, 1, 1, 0);
+            dome = Spr("Dome", Art.Get("Bg/dome", 100f), new Vector2(0, Bottom + 2.8f), -40);
+            if (SaveData.Cur != null) SetFrame(Tables.Frame(SaveData.Cur.frame));
             for (int i = 0; i < 4; i++)
             {
                 slotMarks[i] = Spr("Slot" + i, Art.Get("Bg/slot", 100f), new Vector2(SlotX[i], GroundY - 0.02f), -30);
@@ -59,6 +72,7 @@ namespace EarthDef
         float lastAspect;
         void Update()
         {
+            if (domeGlow) { glowT += Time.deltaTime; var c = glowCol; c.a = glowCol.a > 0 ? 0.22f + 0.08f * Mathf.Sin(glowT * 1.6f) : 0; domeGlow.color = c; }
             if (cam && Mathf.Abs(cam.aspect - lastAspect) > 0.001f) { lastAspect = cam.aspect; Fit(); }
         }
 

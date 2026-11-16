@@ -39,6 +39,95 @@ namespace EarthDef
                 idle.Setup(this, t.row.art);
             }
             RefreshTier();
+            if (t.skin != null) ApplySkin(t.skin);
+        }
+
+        // ---------- 3차: 스킨 (색 돌리기) · 필살기 ----------
+        public int ult;                    // 필살기 게이지 (쏠 때마다 +1)
+        public int ults;                   // 필살기 쓴 횟수 (시험용)
+        public float UltK => t.skin == null ? 0 : (float)ult / t.skin.ultCharge;
+
+        void ApplySkin(SkinRow k)
+        {
+            var mat = Art.HueMat; var mpb = new MaterialPropertyBlock();
+            foreach (var r in GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (r.sharedMaterial == Art.AddMat) { r.color = Art.HueShift(r.color, k.hue, k.sat); continue; }
+                if (!mat) continue;
+                r.sharedMaterial = mat;
+                r.GetPropertyBlock(mpb); mpb.SetFloat("_Hue", k.hue / 360f); mpb.SetFloat("_Sat", k.sat); r.SetPropertyBlock(mpb);
+            }
+            if (idle) idle.Tint(Art.HueShift(Elem.Color(t.row.elem), k.hue, k.sat));
+            Fx.Ring((Vector2)transform.position + Vector2.up * 0.8f, 1.3f, Art.HueShift(Elem.Color(t.row.elem), k.hue, k.sat));
+        }
+
+        void UltStep(Enemy target)
+        {
+            if (t.skin == null || Tables.Ci("Ult_On", 1) != 1) return;
+            if (++ult < t.skin.ultCharge) return;
+            ult = 0; ults++;
+            CastUlt(target);
+        }
+
+        /// <summary>필살기: 터렛마다 큰 공격 (Skin.xlsx Ult_Rate %ATK)</summary>
+        void CastUlt(Enemy target)
+        {
+            var b = Battle.I; var k = t.skin; double rate = k.ultRate;
+            var col = Art.HueShift(Elem.Color(t.row.elem), k.hue, k.sat);
+            Fx.Word(Head + Vector2.up * 0.6f, k.ultName, Color.Lerp(col, Color.white, 0.3f));
+            Fx.Ring(Head, 2.2f, col); Fx.Glow(Head, 1.2f, new Color(col.r, col.g, col.b, 0.8f), 0.4f);
+            Audio.Play(Audio.Sfx.Break);
+            var tp = target != null && !target.dead ? target.Pos : new Vector2(0, 3f);
+            float ang = Mathf.Atan2(tp.y - Head.y, tp.x - Head.x) * Mathf.Rad2Deg;
+            switch (k.ult)
+            {
+                case "rail": b.Add(new Beam(t, Head, ang, 0.8f, 0.1f, 0.9f, rate / 8)); break;
+                case "laser": for (int i = -1; i <= 1; i++) b.Add(new Beam(t, Head, ang + i * 25f, 1.5f, 0.2f, 0.4f, rate, 40f)); break;
+                case "drone":
+                {
+                    float y = b.CrowdY();
+                    for (int i = -1; i <= 1; i++) b.Add(new Field(t, Mathf.Clamp(y + i * 2.4f, World.ShieldY + 1f, 8f), 0.9f * t.Area, 4f, 0.4f, rate));
+                    break;
+                }
+                case "hive": for (int i = 0; i < 15; i++) b.Add(new Bee(t, Head + new Vector2(Random.Range(-0.6f, 0.6f), Random.Range(0f, 0.4f)), 5, rate)); break;
+                case "missile":
+                    for (int i = 0; i < 12; i++)
+                    {
+                        var from = new Vector2(Random.Range(-4.5f, 4.5f), World.SpawnY - 0.2f);
+                        var m = new Projectile(t, "missile", from, Vector2.down, t.row.speed, rate, 0, 1f) { target = b.RandomEnemy(), turn = 5f, life = 5f, hitR = 0.25f };
+                        m.onHit = (p, e) => { Combat.Hit(t, e, rate); Combat.Explode(t, p.pos, 1.1f, rate * 0.6, Elem.Color("fire")); };
+                        b.Add(m);
+                    }
+                    break;
+                case "bolt": for (int i = 0; i < 7; i++) b.Add(new Strike(t, -4.2f + i * 1.4f, 0.7f, 1.2f, 0.3f, rate)); break;
+                case "cannon":
+                {
+                    var d = (tp - Head).normalized;
+                    var pr = new Projectile(t, "cannonball", Head, d, t.row.speed, rate, 0, 4f) { hitR = 0.8f, life = 3f };
+                    pr.onHit = (p, e) =>
+                    {
+                        Combat.Explode(t, p.pos, 3f, rate, col);
+                        foreach (var en in b.enemies) if (!en.dead && Vector2.Distance(en.Pos, p.pos) < 3.2f) en.Knock(Tables.Cf("Knock_Base", 0.6f) * 2.5f);
+                    };
+                    b.Add(pr);
+                    break;
+                }
+                case "focus":
+                {
+                    var skip = new System.Collections.Generic.HashSet<Enemy>();
+                    for (int i = 0; i < 3; i++) { var e = b.Nearest(Head, t.Range * 1.5f, skip); if (e == null) break; skip.Add(e); b.Add(new FocusBeam(t, e, 5f, t.row.radius * 1.5f)); }
+                    break;
+                }
+                case "vortex": b.Add(new Vortex(t, new Vector2(0, 1.5f), Vector2.up, 0, 3f, 2.4f, rate, 7f, true)); break;
+                case "wheel":
+                    for (int i = 0; i < 6; i++)
+                    {
+                        float a = 30f + i * 24f;
+                        b.Add(new FireWheel(t, Head, new Vector2(Mathf.Cos(a * Mathf.Deg2Rad), Mathf.Sin(a * Mathf.Deg2Rad)) * t.row.speed, t.row.radius * t.Area, t.row.hits, t.Duration, t.row.rate));
+                    }
+                    break;
+                case "tesla": for (int i = 0; i < 3; i++) b.Add(new TeslaBolt(t, i == 0 ? target : b.RandomEnemy(), Head, 0.3f + i * 0.15f, 12, t.row.rate, t.row.radius * t.Area)); break;
+            }
         }
 
         // ---------- 11-16 저녁: 생길 때 톡 커짐 · 빛 · 불꽃 (사용자 "터렛이 생성된 느낌이 필요") ----------
@@ -152,6 +241,7 @@ namespace EarthDef
             if (idle) idle.OnFire();
             Fire(target);
             fired++;
+            UltStep(target);
             kick = 0.1f;
             // 2차 칩 "N% 확률로 한 번 더 쏨" (대장 카피 빼고)
             double ex = b.lo != null ? System.Math.Min(Tables.C("Extra_Shot_Max", 0.5), b.lo.B("extra_shot") / 100.0) : 0;

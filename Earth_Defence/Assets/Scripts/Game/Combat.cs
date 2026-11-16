@@ -38,7 +38,7 @@ namespace EarthDef
             double ordinary = t.Ordinary + CondBonus(t, e);
             if (e.Paralyzed) ordinary += t.S("dmg_vs_para") / 100.0;
             if (t.Has("dmg_by_slow")) ordinary += t.S("dmg_by_slow") / 100.0 * Mathf.Clamp01(e.slow / Mathf.Max(0.01f, Tables.Cf("Slow_Max", 0.5f)));
-            double late = 0;   // 2차: S1 칩 · 스킨 Final DMG 자리
+            double late = t.late;   // 3차: 스킨 Final DMG (가지고 있으면)
             crit = R < t.CritRate;
             double critMul = crit ? Tables.C("Crit_Dmg", 1.25) + (Battle.I?.lo?.critDmg ?? 0) / 100.0 : 1;
             double weak = e.row.weak == t.row.elem ? Tables.C("Weak_Mul", 1.5) : e.row.resist == t.row.elem ? Tables.C("Resist_Mul", 0.6) : 1;
