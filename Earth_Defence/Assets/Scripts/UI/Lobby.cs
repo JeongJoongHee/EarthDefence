@@ -13,18 +13,19 @@ namespace EarthDef
     public class Lobby : MonoBehaviour
     {
         static SaveData S => SaveData.Cur;
-        public static readonly string[] Tabs = { "battle", "turret", "gear", "mission", "challenge", "shop" };   // 3차: 도전 · 상점 (뒤에 붙여 탭 번호 유지)
+        public static readonly string[] Tabs = { "battle", "turret", "gear", "mission", "challenge", "shop", "looks" };   // 3차: 도전 · 상점 · 4차 수정안: 외형 (뒤에 붙여 탭 번호 유지)
+        static readonly int[] TabOrder = { 0, 1, 2, 6, 3, 4, 5 };   // 아래 줄에 보이는 순서 (외형은 장비 다음)
         public static int lastTab;
         /// <summary>자동 시험: 로비에 들어올 때 창(출석 · 알림 · 도움말)을 띄우지 않음</summary>
         public static bool NoIntro;
         public int tab;
         RectTransform root, content;
         Text goldT, stamT, stamNext, diaT;
-        readonly List<(Image bg, Text label, string id)> tabBtns = new();
+        (Image bg, Text label, string id)[] tabBtns;
         Image missionDot, gearDot;
         // 전투 탭
         Text stageT, stageName, bestT, weakT, patrolT, patrolAmt, costT;
-        Button startB, prevB, nextB, patrolB, normalB, eliteB;
+        Button startB, prevB, nextB, patrolB, patrolAdB, normalB, eliteB;
         // 터렛 탭
         Text baseLvT, baseDescT, baseCostT;
         Button baseB;
@@ -49,10 +50,7 @@ namespace EarthDef
             stamNext = UIKit.Label(top, "", 24, Art.Cream, TextAnchor.MiddleCenter, true); stamNext.rectTransform.TL(300, 106, 290, 30);
             UIKit.Clickable(sp, ShowStamina);
             // 3차: 다이아 (누르면 상점)
-            var dp = UIKit.Panel(top, "pill", "Dia"); dp.rectTransform.TL(600, 26, 240, 84);
-            // 3차 수정안: 외형 메뉴 (터렛 외형 · 기지 외형)
-            var lk = UIKit.Tile(top, "btn_purple", Color.white, Art.Icon("brush"), 0.6f, "Looks"); lk.rectTransform.TL(850, 20, 96, 100);
-            UIKit.Clickable(lk, () => Looks.Open());
+            var dp = UIKit.Panel(top, "pill", "Dia"); dp.rectTransform.TL(600, 26, 300, 84);
             var di = UIKit.Img(dp.transform, Art.Icon("diamond"), "Dia"); di.rectTransform.Place(0, 0.5f, new Vector2(10, 0), new Vector2(70, 70), new Vector2(0, 0.5f));
             diaT = UIKit.Label(dp.transform, "", 38, Art.Ink, TextAnchor.MiddleLeft, false); diaT.rectTransform.Fill(90, 6, 16, 0);
             UIKit.Clickable(dp, () => SetTab(5));
@@ -63,18 +61,19 @@ namespace EarthDef
             var nav = UIKit.Rect(root, "Nav"); nav.anchorMin = new Vector2(0, 0); nav.anchorMax = new Vector2(1, 0); nav.pivot = new Vector2(0.5f, 0);
             nav.sizeDelta = new Vector2(0, 176); nav.anchoredPosition = Vector2.zero;
             var navBg = UIKit.Panel(nav, "card", "NavBg"); navBg.rectTransform.Fill(10, 8, 10, 0);
-            string[] icons = { "sword", "tab_turret", "g_helmet", "mission", "crown", "shop" };
-            float tw = (1080 - 36) / Tabs.Length;
-            for (int i = 0; i < Tabs.Length; i++)
+            string[] icons = { "sword", "tab_turret", "g_helmet", "mission", "crown", "shop", "brush" };
+            float tw = (1080 - 36) / (float)Tabs.Length;
+            tabBtns = new (Image, Text, string)[Tabs.Length];
+            for (int pos = 0; pos < TabOrder.Length; pos++)
             {
-                int idx = i;
-                var b = UIKit.Img(nav, Art.UI("btn_cream"), "Tab_" + Tabs[i]); b.rectTransform.TL(20 + i * tw, 18, tw - 8, 148);
+                int idx = TabOrder[pos];
+                var b = UIKit.Img(nav, Art.UI("btn_cream"), "Tab_" + Tabs[idx]); b.rectTransform.TL(20 + pos * tw, 18, tw - 8, 148);
                 UIKit.Clickable(b, () => SetTab(idx));
-                var ic = UIKit.Img(b.transform, Art.Icon(icons[i]), "Icon"); ic.raycastTarget = false; ic.rectTransform.Place(0.5f, 1, new Vector2(0, -12), new Vector2(76, 76), new Vector2(0.5f, 1));
-                var lb = UIKit.Label(b.transform, L.T("tab_" + Tabs[i]), 30); lb.rectTransform.Place(0.5f, 0, new Vector2(0, 22), new Vector2(tw, 44), new Vector2(0.5f, 0));
-                tabBtns.Add((b, lb, Tabs[i]));
-                if (Tabs[i] == "mission") missionDot = UIKit.Dot(b.transform, -18, -14);
-                if (Tabs[i] == "gear") gearDot = UIKit.Dot(b.transform, -18, -14);
+                var ic = UIKit.Img(b.transform, Art.Icon(icons[idx]), "Icon"); ic.raycastTarget = false; ic.rectTransform.Place(0.5f, 1, new Vector2(0, -12), new Vector2(76, 76), new Vector2(0.5f, 1));
+                var lb = UIKit.Label(b.transform, L.T("tab_" + Tabs[idx]), 28); lb.rectTransform.Place(0.5f, 0, new Vector2(0, 22), new Vector2(tw, 44), new Vector2(0.5f, 0));
+                tabBtns[idx] = (b, lb, Tabs[idx]);
+                if (Tabs[idx] == "mission") missionDot = UIKit.Dot(b.transform, -18, -14);
+                if (Tabs[idx] == "gear") gearDot = UIKit.Dot(b.transform, -18, -14);
             }
             content = UIKit.Rect(root, "Content");
             content.anchorMin = Vector2.zero; content.anchorMax = Vector2.one; content.offsetMin = new Vector2(0, 184); content.offsetMax = new Vector2(0, -140);
@@ -89,7 +88,7 @@ namespace EarthDef
             for (int c = content.childCount - 1; c >= 0; c--) Destroy(content.GetChild(c).gameObject);
             rows.Clear(); gearTab = null; missionTab = null; challengeTab = null; shopTab = null;
             stageT = null; baseLvT = null;
-            for (int k = 0; k < tabBtns.Count; k++)
+            for (int k = 0; k < tabBtns.Length; k++)
             {
                 tabBtns[k].bg.sprite = Art.UI(k == i ? "btn_orange" : "btn_cream");
                 tabBtns[k].bg.rectTransform.localScale = Vector3.one * (k == i ? 1.04f : 1f);
@@ -103,6 +102,7 @@ namespace EarthDef
                 case "mission": missionTab = page.gameObject.AddComponent<MissionTab>(); missionTab.Build(this); break;
                 case "challenge": challengeTab = page.gameObject.AddComponent<ChallengeTab>(); challengeTab.Build(this); break;
                 case "shop": shopTab = page.gameObject.AddComponent<ShopTab>(); shopTab.Build(this); break;
+                case "looks": Looks.Build(page); break;
             }
             World.I.ShowSlots(0, false);
             Refresh();
@@ -116,45 +116,51 @@ namespace EarthDef
         Image eliteTile, bossTile, ddArrow, stageCard;
         Text eliteName, bossName, ddLabel;
         public static bool enemiesOpen;
-        const float CardShut = 416, CardOpen = 716;   // 2차 수정안 "스테이지 정보창 네모 크기를 조금 줄인다" (476 · 784 → 416 · 716)
+        const float CardShut = 352, CardOpen = 700;   // 2차 수정안 476 → 416 · 4차 수정안 "스테이지 칸 조금 더 작게" → 352
         void BuildBattle(RectTransform page)
         {
             var card = stageCard = UIKit.Panel(page, "card", "StageCard"); card.rectTransform.TL(60, 12, 960, enemiesOpen ? CardOpen : CardShut);
-            stageT = UIKit.Label(card.transform, "", 30, Art.Brown, TextAnchor.MiddleCenter, false); stageT.rectTransform.TL(0, 16, 960, 40);
-            stageName = UIKit.Label(card.transform, "", 56); stageName.rectTransform.TL(120, 52, 720, 72);
-            prevB = UIKit.Btn(card.transform, "btn_orange", null, 44, () => Move(-1), "Prev"); ((RectTransform)prevB.transform).TL(20, 30, 90, 90); Arrow(prevB, true);
-            nextB = UIKit.Btn(card.transform, "btn_orange", null, 44, () => Move(1), "Next"); ((RectTransform)nextB.transform).TL(850, 30, 90, 90); Arrow(nextB, false);
-            var ln = UIKit.Plain(card.transform, new Color(0.23f, 0.16f, 0.11f, 0.25f), "Line"); ln.rectTransform.TL(36, 136, 888, 4);
+            stageT = UIKit.Label(card.transform, "", 26, Art.Brown, TextAnchor.MiddleCenter, false); stageT.rectTransform.TL(0, 12, 960, 34);
+            stageName = UIKit.Label(card.transform, "", 50); stageName.rectTransform.TL(120, 42, 720, 62);
+            prevB = UIKit.Btn(card.transform, "btn_orange", null, 44, () => Move(-1), "Prev"); ((RectTransform)prevB.transform).TL(24, 24, 80, 80); Arrow(prevB, true);
+            nextB = UIKit.Btn(card.transform, "btn_orange", null, 44, () => Move(1), "Next"); ((RectTransform)nextB.transform).TL(856, 24, 80, 80); Arrow(nextB, false);
+            var ln = UIKit.Plain(card.transform, new Color(0.23f, 0.16f, 0.11f, 0.25f), "Line"); ln.rectTransform.TL(36, 114, 888, 4);
             // 약점 (속성 태그로 크게)
-            var wl = UIKit.Label(card.transform, L.T("weak_title"), 32, Art.Ink, TextAnchor.MiddleLeft, false); wl.rectTransform.TL(40, 150, 190, 56);
-            weakRow = UIKit.Rect(card.transform, "Weak"); weakRow.TL(210, 150, 730, 56);
+            var wl = UIKit.Label(card.transform, L.T("weak_title"), 30, Art.Ink, TextAnchor.MiddleLeft, false); wl.rectTransform.TL(44, 126, 170, 52);
+            weakRow = UIKit.Rect(card.transform, "Weak"); weakRow.TL(210, 126, 730, 52);
             // 보통 / 엘리트 + 기록
-            normalB = UIKit.Btn(card.transform, "btn_green", L.T("normal"), 34, () => SetElite(false), "Normal"); ((RectTransform)normalB.transform).TL(200, 222, 270, 80);
-            eliteB = UIKit.Btn(card.transform, "btn_purple", L.T("elite_mode"), 34, () => SetElite(true), "Elite"); ((RectTransform)eliteB.transform).TL(490, 222, 270, 80);
-            var crown = UIKit.Img(eliteB.transform, Art.Icon("crown"), "Crown"); crown.raycastTarget = false; crown.rectTransform.Place(0, 1, new Vector2(-12, 22), new Vector2(60, 60), new Vector2(0, 1));
-            bestT = UIKit.Label(card.transform, "", 24, Art.Soft, TextAnchor.MiddleCenter, false); bestT.rectTransform.TL(0, 304, 960, 30);
-            // 나오는 적 (접기 · 펼치기)
-            var dd = UIKit.Btn(card.transform, "btn_cream", null, 30, ToggleEnemies, "EnemiesToggle"); ((RectTransform)dd.transform).TL(36, 338, 888, 66);
-            ddLabel = UIKit.Label(dd.transform, "", 32, Art.Ink, TextAnchor.MiddleCenter, false); ddLabel.rectTransform.Fill(10, 12, 70, 4);
+            normalB = UIKit.Btn(card.transform, "btn_green", L.T("normal"), 32, () => SetElite(false), "Normal"); ((RectTransform)normalB.transform).TL(210, 188, 250, 72);
+            eliteB = UIKit.Btn(card.transform, "btn_purple", L.T("elite_mode"), 32, () => SetElite(true), "Elite"); ((RectTransform)eliteB.transform).TL(500, 188, 250, 72);
+            var crown = UIKit.Img(eliteB.transform, Art.Icon("crown"), "Crown"); crown.raycastTarget = false; crown.rectTransform.Place(0, 1, new Vector2(-12, 20), new Vector2(54, 54), new Vector2(0, 1));
+            bestT = UIKit.Label(card.transform, "", 22, Art.Soft, TextAnchor.MiddleCenter, false); bestT.rectTransform.TL(0, 262, 960, 26);
+            // [적 정보] (4차 수정안: "나오는 적 2종 + 보스 보기" → "적 정보" · 하늘색 단추로 잘 보이게)
+            var dd = UIKit.Btn(card.transform, "btn_sky", null, 30, ToggleEnemies, "EnemiesToggle"); ((RectTransform)dd.transform).TL(250, 290, 460, 58);
+            ddLabel = UIKit.Label(dd.transform, "", 30); ddLabel.rectTransform.Fill(10, 10, 50, 2);
             ddArrow = UIKit.Img(dd.transform, Art.Icon("play"), "Arrow"); ddArrow.raycastTarget = false;
-            ddArrow.rectTransform.Place(1, 0.5f, new Vector2(-28, 6), new Vector2(42, 42), new Vector2(1, 0.5f));
-            enemyBox = UIKit.Rect(card.transform, "EnemyBox"); enemyBox.TL(-20, 410, 1000, 300);
-            weakT = UIKit.Label(enemyBox, "", 22, Art.Soft, TextAnchor.MiddleRight, false); weakT.rectTransform.TL(500, 0, 476, 34);
-            enemyRow = UIKit.Rect(enemyBox, "Enemies"); enemyRow.TL(40, 36, 940, 110);
+            ddArrow.rectTransform.Place(1, 0.5f, new Vector2(-18, 5), new Vector2(36, 36), new Vector2(1, 0.5f));
+            enemyBox = UIKit.Rect(card.transform, "EnemyBox"); enemyBox.TL(-20, 356, 1000, 340);
+            // 4차 수정안 "칸 아래 색 = 그 적의 약점 — 잘 보이게 강조": 노란 띠 + 진한 글자
+            var hint = UIKit.Panel(enemyBox, "pill", "WeakHint"); hint.color = Art.Hex("#ffe08a"); hint.rectTransform.TL(220, 0, 600, 50);
+            weakT = UIKit.Label(hint.transform, "", 26, Art.Ink, TextAnchor.MiddleCenter, false); weakT.rectTransform.Fill(10, 4, 10, 0);
+            enemyRow = UIKit.Rect(enemyBox, "Enemies"); enemyRow.TL(40, 60, 940, 150);
             (eliteTile, eliteName) = BossTile(enemyBox, 44, L.T("elite_title"));
             (bossTile, bossName) = BossTile(enemyBox, 524, L.T("boss_title"));
             enemyBox.gameObject.SetActive(enemiesOpen);
 
-            // 순찰(위) + [전투 시작](아래) — 돔 바로 위 (PlaceOverDome 이 화면 높이에 맞춰 놓음)
-            var pc = UIKit.Panel(page, "card", "Patrol"); patrolRT = pc.rectTransform; patrolRT.Place(0.5f, 0, new Vector2(0, 540), new Vector2(660, 116), new Vector2(0.5f, 0));
+            // [전투 시작](위) + 순찰(아래, 4차 수정안 "순찰 보상을 전투 시작 버튼 아래로") — 돔 바로 위 (PlaceOverDome)
+            var pc = UIKit.Panel(page, "card", "Patrol"); patrolRT = pc.rectTransform; patrolRT.Place(0.5f, 0, new Vector2(0, 380), new Vector2(860, 116), new Vector2(0.5f, 0));
             var pi = UIKit.Img(pc.transform, Art.Icon("patrol"), "Icon"); pi.rectTransform.TL(14, 16, 80, 80);
             var pt = UIKit.Label(pc.transform, L.T("patrol"), 30, Art.Ink, TextAnchor.MiddleLeft, false); pt.rectTransform.TL(104, 10, 300, 46);
             patrolT = UIKit.Label(pc.transform, "", 21, Art.Soft, TextAnchor.MiddleLeft, false); patrolT.rectTransform.TL(104, 56, 330, 40);
-            patrolAmt = UIKit.Label(pc.transform, "", 24, Art.Brown, TextAnchor.MiddleRight, false); patrolAmt.rectTransform.TL(330, 10, 160, 90);
-            patrolB = UIKit.Btn(pc.transform, "btn_orange", L.T("claim"), 32, Claim, "Claim"); ((RectTransform)patrolB.transform).TL(500, 14, 146, 84);
+            patrolAmt = UIKit.Label(pc.transform, "", 24, Art.Brown, TextAnchor.MiddleRight, false); patrolAmt.rectTransform.TL(330, 10, 180, 90);
+            patrolB = UIKit.Btn(pc.transform, "btn_orange", L.T("claim"), 32, () => Claim(1), "Claim"); ((RectTransform)patrolB.transform).TL(526, 14, 146, 84);
+            // 4차 수정안 "순찰 보상에 광고 — 보면 2배" (광고는 [초안]: 지금은 바로 성공)
+            patrolAdB = UIKit.Btn(pc.transform, "btn_purple", null, 30, () => Ads.Show(ok => { if (ok) Claim(Tables.Ci("Patrol_Ad_Mul", 2)); }), "ClaimAd"); ((RectTransform)patrolAdB.transform).TL(682, 14, 160, 84);
+            var adi = UIKit.Img(patrolAdB.transform, Art.Icon("ad"), "Ad"); adi.raycastTarget = false; adi.rectTransform.Place(0, 0.5f, new Vector2(10, 5), new Vector2(54, 54), new Vector2(0, 0.5f));
+            UIKit.Label(patrolAdB.transform, L.T("patrol_x2"), 30).rectTransform.Fill(60, 12, 6, 2);
 
             startB = UIKit.Btn(page, "btn_green", null, 60, StartBattle, "Start");
-            startRT = (RectTransform)startB.transform; startRT.Place(0.5f, 0, new Vector2(0, 380), new Vector2(600, 150), new Vector2(0.5f, 0));
+            startRT = (RectTransform)startB.transform; startRT.Place(0.5f, 0, new Vector2(0, 520), new Vector2(600, 150), new Vector2(0.5f, 0));
             var sl = UIKit.Label(startB.transform, L.T("start"), 58); sl.rectTransform.Fill(10, 14, 150, 4);
             var ce = UIKit.Img(startB.transform, Art.Icon("energy"), "Energy"); ce.raycastTarget = false; ce.rectTransform.Place(1, 0.5f, new Vector2(-84, 6), new Vector2(64, 64), new Vector2(1, 0.5f));
             costT = UIKit.Label(startB.transform, "", 40); costT.rectTransform.Place(1, 0.5f, new Vector2(-18, 6), new Vector2(70, 60), new Vector2(1, 0.5f));
@@ -169,7 +175,18 @@ namespace EarthDef
             Refresh();
         }
 
-        /// <summary>[전투 시작] 아래 끝 = 돔 그림 꼭대기(월드 Dome_Top_Y) 바로 위 · 순찰은 그 위 — 화면 길이와 상관없이 돔에 붙음</summary>
+        /// <summary>토스트 자리 (4차 수정안): 전투 탭이면 스테이지 칸 아래 끝과 [전투 시작] 위 끝 사이 가운데 (월드 좌표)</summary>
+        public bool ToastSpot(out Vector3 pos)
+        {
+            pos = default;
+            if (tab != 0 || !stageCard || !startRT) return false;
+            var a = new Vector3[4]; var b = new Vector3[4];
+            stageCard.rectTransform.GetWorldCorners(a); startRT.GetWorldCorners(b);
+            pos = new Vector3((a[0].x + a[3].x) / 2, (a[0].y + b[1].y) / 2, a[0].z);
+            return a[0].y > b[1].y;
+        }
+
+        /// <summary>순찰 아래 끝 = 돔 그림 꼭대기(월드 Dome_Top_Y) 바로 위 · [전투 시작]은 그 위 — 화면 길이와 상관없이 돔에 붙음</summary>
         void PlaceOverDome()
         {
             if (!startRT || UIRoot.I == null || World.I == null) return;
@@ -178,16 +195,16 @@ namespace EarthDef
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(page, sp, UIRoot.I.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : UIRoot.I.canvas.worldCamera, out var lp)) return;
             float y = lp.y - page.rect.yMin + 8;               // 페이지 아래 끝에서 잰 높이
             y = Mathf.Max(y, 20);
-            startRT.anchoredPosition = new Vector2(0, y);
-            patrolRT.anchoredPosition = new Vector2(0, y + 150 + 16);
+            patrolRT.anchoredPosition = new Vector2(0, y);
+            startRT.anchoredPosition = new Vector2(0, y + 116 + 18);
         }
 
         (Image, Text) BossTile(Transform p, float x, string title)
         {
-            var t = UIKit.Img(p, Art.UI("slot"), "BossTile"); t.rectTransform.TL(x, 160, 120, 120); t.raycastTarget = false;
+            var t = UIKit.Img(p, Art.UI("slot"), "BossTile"); t.rectTransform.TL(x, 214, 116, 116); t.raycastTarget = false;
             var ic = UIKit.Img(t.transform, null, "Icon"); ic.rectTransform.Fill(10, 14, 10, 8); ic.raycastTarget = false; ic.preserveAspect = true;
-            var tl = UIKit.Label(p, title, 26, Art.Soft, TextAnchor.MiddleLeft, false); tl.rectTransform.TL(x + 136, 168, 320, 40);
-            var nm = UIKit.Label(p, "", 34, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(x + 136, 210, 330, 56);
+            var tl = UIKit.Label(p, title, 26, Art.Soft, TextAnchor.MiddleLeft, false); tl.rectTransform.TL(x + 132, 220, 320, 40);
+            var nm = UIKit.Label(p, "", 34, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(x + 132, 262, 330, 56);
             return (ic, nm);
         }
 
@@ -196,8 +213,10 @@ namespace EarthDef
         {
             var t = UIKit.Img(p, Art.UI("slot"), "E_" + e.id); t.rectTransform.TL(x, 0, size, size); t.raycastTarget = false;
             var ic = UIKit.Img(t.transform, Art.Enemy(e), "Icon"); ic.preserveAspect = true; ic.raycastTarget = false; ic.rectTransform.Fill(8, 16, 8, 6);
-            var w = UIKit.Img(t.transform, Art.UI("white"), "Weak"); w.type = Image.Type.Simple; w.raycastTarget = false; w.color = Elem.Color(e.weak);
-            w.rectTransform.Place(0.5f, 0, new Vector2(0, 6), new Vector2(size * 0.55f, 12), new Vector2(0.5f, 0));
+            // 4차 수정안 "약점 색을 잘 보이게": 칸 아래 굵은 색 띠 + 그 밑에 약점 이름
+            var w = UIKit.Panel(p, "pill", "Weak"); w.color = Elem.Color(e.weak);
+            w.rectTransform.TL(x + size * 0.08f, size - 14, size * 0.84f, 40);
+            UIKit.Label(w.transform, Elem.Name(e.weak), 22, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 3, 0, 0);
         }
 
         static void Arrow(Button b, bool left)
@@ -224,10 +243,10 @@ namespace EarthDef
 
         public void StartBattle() => Game.TryStart(S.stage, S.elite);
 
-        void Claim()
+        void Claim(int mul)
         {
-            var (g, sh) = Meta.ClaimPatrol();
-            if (g > 0) { Fx.Ring(Vector2.zero, 1, Art.Gold); Toast.Show($"{L.T("r_gold")} +{Num.F(g)}, {L.T("r_shards")} +{sh}"); }
+            var (g, sh) = Meta.ClaimPatrol(mul);
+            if (g > 0) { Fx.Ring(Vector2.zero, 1, Art.Gold); Toast.Show(L.F("patrol_got", $"{L.T("r_gold")} +{Num.F(g)}, {L.T("r_shards")} +{sh}") + (mul > 1 ? $" (x{mul})" : "")); }
             Refresh();
         }
 
@@ -275,12 +294,16 @@ namespace EarthDef
         /// <summary>강화 창 (2차 수정안 "터렛 강화할 때 어느 능력치가 올라가는지 알려주는 팝업"): 지금 → 다음 · 비용 · [강화] (창은 그대로 → 여러 번)</summary>
         public void UpPopup(TurretRow t)
         {
-            var p = Popup.Make(t != null ? t.name : L.T("base"), 880, 860, Refresh);
+            var p = Popup.Make(t != null ? t.name : L.T("base"), 860, 680, Refresh);
             void Build()
             {
                 for (int i = p.win.childCount - 1; i >= 0; i--) { var ch = p.win.GetChild(i); if (ch.name.StartsWith("U_")) Destroy(ch.gameObject); }
                 var root = UIKit.Rect(p.win, "U_Root"); root.Fill();
-                var tile = UIKit.Tile(root, "slot", Color.white, t != null ? Art.TurretIcon(t) : Art.Icon("base"), t != null ? 0.86f : 0.7f, "Pic"); tile.rectTransform.TL(40, 124, 170, 170);
+                var tile = UIKit.Tile(root, "slot", Color.white, t != null ? Art.TurretIcon(t) : Art.Icon("base"), t != null ? 0.86f : 0.7f, "Pic"); tile.rectTransform.TL(36, 116, 170, 170);
+                // 4차 수정안 "레벨별 능력 정보를 보여주는 아이콘": (i) → 레벨별 표
+                var inf = UIKit.Btn(root, "btn_sky", null, 26, () => LvTable(t), "U_Info"); ((RectTransform)inf.transform).TL(30, 294, 182, 76);
+                var ii = UIKit.Img(inf.transform, Art.Icon("info"), "Icon"); ii.raycastTarget = false; ii.rectTransform.Place(0, 0.5f, new Vector2(8, 5), new Vector2(50, 50), new Vector2(0, 0.5f));
+                UIKit.Label(inf.transform, L.T("lv_table"), 26).rectTransform.Fill(56, 12, 4, 2);
                 var rows = new List<(string name, string now, string next)>();
                 bool max; string costTxt; bool can;
                 if (t != null)
@@ -294,7 +317,7 @@ namespace EarthDef
                     var c = Meta.Cost(t.id);
                     costTxt = max ? L.T("max") : $"{L.F("shards", S.shards[S.TIdx(t.id)], c.shards)}   {L.T("r_gold")} {Num.F(c.gold)}";
                     can = Meta.CanUpgradeTurret(t.id);
-                    if (nx > 0 && !max) UIKit.Label(root, L.F("up_next_cd", nx), 24, Art.Purple, TextAnchor.MiddleLeft, false).rectTransform.TL(40, 540, 800, 40);
+                    if (nx > 0 && !max) UIKit.Label(root, L.F("up_next_cd", nx), 26, Art.Purple, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 420, 860, 40);
                 }
                 else
                 {
@@ -308,22 +331,51 @@ namespace EarthDef
                 }
                 for (int i = 0; i < rows.Count; i++)
                 {
-                    float y = 130 + i * 62;
-                    UIKit.Label(root, rows[i].name, 30, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(240, y, 200, 56);
-                    UIKit.Label(root, rows[i].now, 34, Art.Ink, TextAnchor.MiddleRight, false).rectTransform.TL(430, y, 160, 56);
-                    UIKit.Label(root, ">", 34, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(600, y, 50, 56);
-                    UIKit.Label(root, rows[i].next, 36, Art.Green2, TextAnchor.MiddleLeft, false).rectTransform.TL(660, y, 200, 56);
+                    float y = 124 + i * 72;
+                    var bg = UIKit.Panel(root, "card_white", "U_Row"); bg.rectTransform.TL(226, y, 600, 64);
+                    UIKit.Label(bg.transform, rows[i].name, 30, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(18, 4, 200, 56);
+                    UIKit.Label(bg.transform, rows[i].now, 34, Art.Ink, TextAnchor.MiddleRight, false).rectTransform.TL(200, 4, 170, 56);
+                    UIKit.Label(bg.transform, ">", 34, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(372, 4, 50, 56);
+                    UIKit.Label(bg.transform, rows[i].next, 36, Art.Green2, TextAnchor.MiddleLeft, false).rectTransform.TL(424, 4, 170, 56);
                 }
-                UIKit.Label(root, costTxt, 28, Art.Brown, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 470, 880, 50);
+                UIKit.Label(root, costTxt, 30, Art.Brown, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 372, 860, 50);
                 var ub = UIKit.Btn(root, can ? "btn_green" : "btn_gray", max ? L.T("max") : L.T("enhance"), 44, () =>
                 {
                     bool ok = t != null ? Meta.UpgradeTurret(t.id) : Meta.UpgradeBase();
                     if (ok) { Fx.Ring(Vector2.zero, 1, Art.Gold); Build(); Refresh(); }
                 }, "U_Up");
-                ((RectTransform)ub.transform).Place(0.5f, 0, new Vector2(0, 50), new Vector2(420, 120), new Vector2(0.5f, 0));
+                ((RectTransform)ub.transform).Place(0.5f, 0, new Vector2(0, 40), new Vector2(420, 116), new Vector2(0.5f, 0));
                 ub.transform.SetParent(root, true);
             }
             Build();
+        }
+
+        /// <summary>레벨별 능력 표 (4차 수정안): 터렛 = 레벨 · 피해 · 공격 속도 / 기지 = 레벨 · 체력 · 공격력. 지금 레벨 줄은 주황 · 그 줄로 스크롤</summary>
+        public static void LvTable(TurretRow t)
+        {
+            var p = Popup.Make((t != null ? t.name : L.T("base")) + " " + L.T("lv_table"), 860, 1400);
+            string[] head = t != null ? new[] { "Lv", L.T("up_dmg"), L.T("up_cd") } : new[] { "Lv", L.T("up_hp"), L.T("up_atk") };
+            var hd = UIKit.Panel(p.win, "btn_cream", "Head"); hd.rectTransform.TL(40, 112, 780, 64);
+            for (int k = 0; k < 3; k++) UIKit.Label(hd.transform, head[k], 28, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.TL(k * 260, 2, 260, 54);
+            var area = UIKit.Rect(p.win, "Area"); area.Fill(40, 30, 40, 190);
+            var c = UIKit.Scroll(area, "Scroll"); c.parent.GetComponent<RectTransform>().Fill();
+            int cur = t != null ? SaveData.Cur.TurretLv(t.id) : SaveData.Cur.baseLv;
+            int max = t != null ? Tables.MaxTurretLv : Mathf.Min(Tables.Ci("Base_Max_Lv", 300), cur + 40);
+            float y = 0, curY = 0;
+            for (int lv = 1; lv <= max; lv++)
+            {
+                string a, b;
+                if (t != null) { var r = Tables.Lv(lv); a = $"+{r.dmgBonus * 100:0}%"; b = $"x{1 / r.cdMul:0.00}"; }
+                else { a = Num.Comma(Tables.C("Base_HP") + Tables.C("Base_HP_Per_Lv") * (lv - 1)); b = Num.F(Tables.C("Atk_Base") + Tables.C("Base_Atk_Per_Lv") * (lv - 1)); }
+                bool now = lv == cur; if (now) curY = y;
+                var row = UIKit.Plain(c, now ? Art.Hex("#ffd59a") : lv % 2 == 0 ? new Color(1, 1, 1, 0.55f) : new Color(1, 1, 1, 0), "L" + lv); row.rectTransform.TL(0, y, 780, 52);
+                UIKit.Label(row.transform, now ? $"Lv {lv} ({L.T("lv_now")})" : $"Lv {lv}", 26, now ? Art.Ink : Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 0, 260, 52);
+                UIKit.Label(row.transform, a, 28, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.TL(260, 0, 260, 52);
+                UIKit.Label(row.transform, b, 28, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.TL(520, 0, 260, 52);
+                y += 52;
+            }
+            UIKit.SetScrollH(c, y);
+            c.anchoredPosition = new Vector2(0, Mathf.Max(0, curY - 300));
         }
 
         static void Divider(Transform c, float y)
@@ -335,7 +387,7 @@ namespace EarthDef
         public static void TurretInfo(TurretRow t)
         {
             // 11-16 밤 "정보창을 조금 더 컴팩트하게"
-            var p = Popup.Make(t.name, 900, 860);
+            var p = Popup.Make(t.name, 880, 800);
             var tile = UIKit.Tile(p.win, "slot", Color.white, Art.TurretIcon(t), 0.86f, "Pic"); tile.rectTransform.TL(40, 124, 196, 196);
             var nm = UIKit.Label(p.win, t.name, 46, Art.Ink, TextAnchor.MiddleLeft, false); nm.rectTransform.TL(260, 128, 600, 60);
             UIKit.ElemTag(p.win, t.elem, 260, 196, 122, 50, 26);
@@ -343,14 +395,14 @@ namespace EarthDef
             var lv = UIKit.Label(p.win, open ? L.F("lv", SaveData.Cur.TurretLv(t.id)) : L.F("unlock_at", t.unlock), 28, open ? Art.Brown : Art.Red, TextAnchor.MiddleLeft, false);
             lv.rectTransform.TL(398, 196, 460, 50);
             var st = UIKit.Label(p.win, t.kind == "field" ? L.F("tinfo_stat_field", Num.F(t.rate), t.cd) : L.F("tinfo_stat", Num.F(t.rate + t.rate2), t.cd, t.range),
-                                 24, Art.Soft, TextAnchor.UpperLeft, false);
+                                 26, Art.Brown, TextAnchor.UpperLeft, false);
             st.horizontalOverflow = HorizontalWrapMode.Wrap; st.rectTransform.TL(260, 256, 600, 70);
             var info = UIKit.Label(p.win, string.IsNullOrEmpty(t.info) ? t.desc : t.info, 30, Art.Ink, TextAnchor.UpperLeft, false);
             info.horizontalOverflow = HorizontalWrapMode.Wrap; info.rectTransform.TL(40, 340, 820, 120);
             var lines = new List<string>();
             foreach (var c in Tables.Cards)
                 if (c.turret == t.id && c.kind == "break") lines.Add($"{L.T("kind_break")} {c.line}: {c.name} - {c.desc}");
-            var bl = UIKit.Label(p.win, string.Join("\n", lines), 26, Art.Purple, TextAnchor.UpperLeft, false);
+            var bl = UIKit.Label(p.win, string.Join("\n", lines), 27, Art.Hex("#6a4fa8"), TextAnchor.UpperLeft, false);
             bl.horizontalOverflow = HorizontalWrapMode.Wrap; bl.rectTransform.TL(40, 470, 820, 120);
             p.Btn("btn_green", L.T("ok"), 0, 40, 320, p.Close, 100);
         }
@@ -390,6 +442,7 @@ namespace EarthDef
             patrolAmt.text = $"{Num.F(S.PatrolGold)}골드\n조각 {S.PatrolShards}";
             bool can = Meta.CanClaimPatrol;
             patrolB.interactable = can; UIKit.SetKind(patrolB, can ? "btn_orange" : "btn_gray");
+            patrolAdB.interactable = can; UIKit.SetKind(patrolAdB, can ? "btn_purple" : "btn_gray");
         }
 
         public void Refresh()
@@ -409,7 +462,7 @@ namespace EarthDef
                 for (int i = 0; i < weak.Count; i++) UIKit.ElemTag(weakRow, weak[i], i * 150, 2, 138, 56, 30);
                 for (int c = enemyRow.childCount - 1; c >= 0; c--) Destroy(enemyRow.GetChild(c).gameObject);
                 int ne = Mathf.Min(8, st.enemies.Length);
-                float sz = ne > 7 ? 104 : 110;
+                float sz = ne > 7 ? 102 : 110;
                 for (int i = 0; i < ne; i++) if (Tables.Enemies.TryGetValue(st.enemies[i], out var e2)) EnemyTile(enemyRow, e2, i * (sz + 12), sz);
                 weakT.text = L.T("weak_hint");
                 ddLabel.text = L.F(enemiesOpen ? "enemies_hide" : "enemies_show", st.enemies.Length);
@@ -476,7 +529,12 @@ namespace EarthDef
         void Intro()
         {
             if (NoIntro || Popup.Open != null || Game.Lobby != this || this == null) return;
-            if (Meta.AttendReady && Tables.Attend.Count > 0) { MissionTab.ShowAttend(Intro); return; }
+            if (Meta.AttendReady && Tables.Attend.Count > 0)
+            {
+                if (Tables.Ci("Attend_Auto", 1) != 1) { MissionTab.ShowAttend(Intro); return; }
+                var got = Meta.AttendClaim();   // 4차 수정안 "출석 보상 획득은 토스트 메시지로"
+                if (got != null) { Toast.Show(L.F("attend_toast", (S.attendN - 1) % Meta.AttendDays + 1, got), 2.6f); Refresh(); }
+            }
             var nt = Meta.NewUnlock();
             if (nt != null) { Meta.Seen("t:" + nt.id); ShowUnlock(nt, Intro); return; }
             Hints();

@@ -173,9 +173,9 @@ namespace EarthDef.EditorTools
                 Capture("47_boss_big");
             }
             {   // ---- 3차 수정안 (11-17)
-                Check(L.T("chip") == "회로" && Tables.ChipById["ch_atk"].name == "공격 회로" && L.T("skin") == "외형", "글자: 칩 → 회로 · 스킨 → 외형");
+                Check(L.T("chip") == "회로" && Tables.ChipById["ch_atk"].name == "공격" && L.T("skin") == "외형", "글자: 칩 → 회로 · 스킨 → 외형");
                 var gw = Gear.NewGear(4, "weapon"); var cw = Gear.NewChip(3, "ch_atk");
-                Check(gw.Name == "보랏빛 플라즈마 소총" && gw.Icon == "g_weapon_4" && cw.Name == "푸른 공격 회로" && cw.Icon == "chip_3" && Art.Icon(gw.Icon) != null && Art.Icon(cw.Icon) != null,
+                Check(gw.Name == "영웅 칼날 소총" && gw.Icon == "g_weapon_4" && cw.Name == "공격" && cw.Icon == "chip_3" && Art.Icon(gw.Icon) != null && Art.Icon(cw.Icon) != null,
                       $"등급별 이름 · 아이콘: {gw.Name} · {cw.Name}");
                 Store.BuySkin(Tables.SkinOf("rail"));
                 Check(Art.TurretIcon(Tables.TurretById["rail"]) == Art.TurretSkinUI("rail"), "외형 착용 → 터렛 아이콘도 외형 그림");
@@ -199,6 +199,61 @@ namespace EarthDef.EditorTools
                 Capture("53_got_glow");
                 Popup.CloseAll();
             }
+            {   // ---- 4차 수정안 (11-17)
+                var anyLabel = Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None);
+                bool soft = false, oldOutline = false;
+                foreach (var tx in anyLabel) { if (tx.GetComponent<SoftOutline>()) soft = true; if (tx.GetComponent<UnityEngine.UI.Outline>()) oldOutline = true; }
+                Check(soft && !oldOutline, "글자 테두리 8방향 (찢김 고침)");
+                Check(Art.Icon("g_weapon_7") != null && Art.Icon("g_weapon_7").rect.width >= 224 && Art.Icon("chip_7").rect.width >= 224 && Art.Icon("info") != null, "등급 아이콘 224px · 정보 아이콘");
+                Check(Meta.RewardText("chip", 3) == "희귀 회로" && Meta.RewardText("gear", 1) == "일반 장비", $"등급 이름 통일: {Meta.RewardText("chip", 3)}");
+                Check(Lobby.Tabs.Length == 7 && GameObject.Find("Tab_looks") != null, "아래 탭에 외형");
+                Game.Lobby.SetTab(6); yield return Wait(0.3f);
+                Check(GameObject.Find("Sub0") != null && GameObject.Find("S_sk_rail") != null, "외형 탭 = 터렛 외형 목록");
+                Capture("60_looks_tab");
+                // 전투 탭: 스테이지 칸 작게 · 순찰은 [전투 시작] 아래 · 광고 2배 · 토스트는 사이 빈 곳
+                Lobby.enemiesOpen = false; Game.Lobby.SetTab(0); yield return Wait(0.3f);
+                var card = GameObject.Find("StageCard").GetComponent<RectTransform>();
+                var pat = GameObject.Find("Patrol").GetComponent<RectTransform>(); var st = GameObject.Find("Start").GetComponent<RectTransform>();
+                Check(card.sizeDelta.y <= 360 && pat.position.y < st.position.y, $"스테이지 칸 {card.sizeDelta.y} · 순찰이 [전투 시작] 아래");
+                S.patrolFrom = SaveData.Clock - 7200;
+                double pg = System.Math.Floor(S.PatrolGold), gb = S.gold;
+                GameObject.Find("ClaimAd").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);
+                var ts = Object.FindAnyObjectByType<Toast>();
+                var cc = new Vector3[4]; card.GetWorldCorners(cc); var sc = new Vector3[4]; st.GetWorldCorners(sc);
+                Check(System.Math.Abs(S.gold - gb - pg * 2) < 1 && ts != null && ts.transform.position.y < cc[0].y && ts.transform.position.y > sc[1].y,
+                      $"순찰 광고 2배 (+{Num.F(S.gold - gb)}) · 토스트가 스테이지 칸과 [전투 시작] 사이");
+                Capture("61_lobby_patrol_toast");
+                Lobby.enemiesOpen = true; Game.Lobby.SetTab(0); yield return Wait(0.3f);
+                Check(GameObject.Find("WeakHint") != null && GameObject.Find("EnemiesToggle").GetComponentInChildren<UnityEngine.UI.Text>().text == L.T("enemies_show"), "적 정보 · 약점 안내 강조");
+                Capture("62_lobby_enemies");
+                Lobby.enemiesOpen = false; Game.Lobby.SetTab(0);
+                // 장비 강화 창 · 회로 창 · 레벨별 능력
+                S.gold += 1e7; S.parts += 500;
+                Game.Lobby.SetTab(2); yield return Wait(0.3f);
+                var gu = Gear.NewGear(5, "shield"); int lv0 = gu.lv;
+                Game.Lobby.gearTab.GearUpPopup(gu); yield return Wait(0.3f);
+                Capture("63_gear_up");
+                GameObject.Find("U_Up").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.2f);
+                Check(gu.lv == lv0 + 1 && GameObject.Find("U_Up") != null, $"장비 강화 창: Lv {lv0} → {gu.lv} (창 그대로)");
+                Popup.CloseAll();
+                var cx = Gear.NewChip(6, "tc_rail_dmg");
+                Game.Lobby.gearTab.ChipWindow(cx); yield return Wait(0.3f);
+                int fits = 0; foreach (var gp in Tables.GearParts) if (GameObject.Find("Fit_" + gp.part) != null) fits++;
+                Check(GameObject.Find("Ability") != null && fits >= 1, $"회로 창: 능력 칸 · 착용 가능 부위 {fits}");
+                Capture("64_chip_window");
+                Popup.CloseAll();
+                Game.Lobby.SetTab(1); yield return Wait(0.2f);
+                Game.Lobby.UpPopup(Tables.TurretById["rail"]); yield return Wait(0.3f);
+                Check(GameObject.Find("U_Info") != null, "터렛 강화 창에 레벨별 능력 단추");
+                Capture("65_turret_up");
+                Lobby.LvTable(Tables.TurretById["rail"]); yield return Wait(0.3f);
+                Check(GameObject.Find("L1") != null && GameObject.Find("L" + Tables.MaxTurretLv) != null, $"레벨별 능력 표 Lv 1~{Tables.MaxTurretLv}");
+                Capture("66_lv_table");
+                Popup.CloseAll();
+                Game.Lobby.SetTab(2); yield return Wait(0.2f); Game.Lobby.gearTab.MergeAll(); yield return Wait(0.3f);
+                Capture("67_merge");
+                Popup.CloseAll();
+            }
             Game.ToLobby(); yield return null; Popup.CloseAll();
             Game.Lobby.SetTab(5); yield return Wait(0.4f);
             Capture("30_shop");
@@ -206,6 +261,7 @@ namespace EarthDef.EditorTools
             Capture("30b_shop_bottom");
             Check(GameObject.Find("S_sk_rail") == null, "상점엔 외형이 없음 (외형 메뉴로 옮김)");
             Looks.Open(0); yield return Wait(0.4f);
+            Check(Game.Lobby.tab == 6, "외형 열기 = 외형 탭");
             Capture("30c_looks_turret");
             Popup.CloseAll();
             Game.Lobby.SetTab(4); yield return Wait(0.3f);
@@ -457,8 +513,11 @@ namespace EarthDef.EditorTools
             foreach (var gp in Tables.GearParts) if (Art.Icon(gp.icon) == null) Check(false, "장비 아이콘 없음 " + gp.icon);
             foreach (var n in new[] { "cannonball", "mine", "vortex", "wheel" }) if (Art.Fx(n) == null) Check(false, "2차 효과 그림 없음 " + n);
             foreach (var n in new[] { "cannon_base", "cannon_barrel", "focus_base", "vortex_base", "wheel_base", "tesla_base", "tesla_orb" }) if (Art.Turret(n) == null) Check(false, "2차 터렛 조각 없음 " + n);
-            // 처음 켜면 출석 창이 뜸 (숨은 조건 없이 첫날부터)
-            Check(Popup.Open != null && Meta.AttendReady && S.stamina == Meta.StaminaMax, $"처음 로비 = 출석 창 · 스태미나 {S.stamina}/{Meta.StaminaMax}");
+            // 처음 켜면 출석 (숨은 조건 없이 첫날부터) — 4차 수정안: 창 없이 자동으로 받고 토스트 (Config Attend_Auto)
+            yield return Wait(0.2f);
+            var at = Object.FindAnyObjectByType<Toast>();
+            Check(Popup.Open == null && !Meta.AttendReady && S.attendN == 1 && at != null && S.stamina == Meta.StaminaMax,
+                  $"처음 로비 = 출석 자동 받기 + 토스트 · 스태미나 {S.stamina}/{Meta.StaminaMax}");
             Capture("01a_lobby_attend");
             Popup.CloseAll(); yield return null;
             Lobby.NoIntro = true;   // 이 뒤로는 로비에 들어올 때 창을 안 띄움 (출석 · 미션은 2차 단계에서 직접 시험)
@@ -672,10 +731,11 @@ namespace EarthDef.EditorTools
             Game.ToLobby(); yield return null; Popup.CloseAll();
 
             // --- 출석 · 미션 (날짜를 넘김)
+            if (!Meta.AttendReady) SaveData.NowOffset += 86400;   // 첫 로비에서 이미 받았음 (4차 수정안 자동 출석)
             int an = S.attendN; string got = Meta.AttendReady ? Meta.AttendClaim() : null;
             Check(got != null && !Meta.AttendReady && S.attendN == an + 1, $"출석 1일 받음 ({got})");
             SaveData.NowOffset += 86400;
-            Check(Meta.AttendReady && Meta.AttendIdx == 1, "다음 날 → 출석 2일");
+            Check(Meta.AttendReady && Meta.AttendIdx == S.attendN % Meta.AttendDays, $"다음 날 → 출석 {Meta.AttendIdx + 1}일");   // 첫 로비에서 1일을 자동으로 받아 한 칸 밀림
             Meta.MissionAdd("play", 3);
             int mi = Tables.Missions.FindIndex(m => m.kind == "play");
             double g0 = S.gold;

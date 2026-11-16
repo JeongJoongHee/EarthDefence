@@ -53,12 +53,13 @@ namespace EarthDef
     {
         static SaveData S => SaveData.Cur;
         public const int Slots = 6;
-        public static string StatName(string k) => k switch
+        public static string StatName(string k) => StatName0(k).TrimEnd(' ', '-');   // 4차 수정안: "받는 피해 -" 의 "-" 는 값 쪽으로 (받는 피해 -6)
+        static string StatName0(string k) => k switch
         {
             "atk" => L.T("st_atk"), "hp" => L.T("st_hp"), "reduce" => L.T("st_reduce"), "crit" => L.T("st_crit"),
             "crit_dmg" => L.T("st_crit_dmg"), "cd" => L.T("st_cd"), _ => k,
         };
-        public static string StatVal(string k, double v) => k is "crit" or "crit_dmg" or "cd" ? $"+{v:0.#}%" : k == "reduce" ? Num.F(Math.Round(v, 1)) : "+" + Num.F(v);
+        public static string StatVal(string k, double v) => k is "crit" or "crit_dmg" or "cd" ? $"+{v:0.#}%" : k == "reduce" ? "-" + Num.F(Math.Round(v, 1)) : "+" + Num.F(v);
 
         // ---------- 장비 ----------
         public static GearItem On(string part) => S.gear.Find(g => g.on && g.part == part);

@@ -64,8 +64,9 @@ namespace EarthDef
             t.raycastTarget = false;
             if (outline)
             {
-                float o = Mathf.Max(2f, size * 0.07f);
-                var ol = rt.gameObject.AddComponent<Outline>(); ol.effectColor = Art.Ink; ol.effectDistance = new Vector2(o, -o);
+                // 4차 수정안 "글자가 찢겨지는 느낌": Unity Outline 은 대각선 4방향만 그려 굵은 글자에서 위·아래·옆 테두리가 끊겨 보였음 → 8방향 테두리
+                float o = Mathf.Max(2f, size * 0.065f);
+                var ol = rt.gameObject.AddComponent<SoftOutline>(); ol.effectColor = Art.Ink; ol.effectDistance = new Vector2(o, o);
                 var sh = rt.gameObject.AddComponent<Shadow>(); sh.effectColor = Art.Ink; sh.effectDistance = new Vector2(0, -o - 1.5f);
             }
             return t;
@@ -162,6 +163,30 @@ namespace EarthDef
             k = Mathf.Clamp01(k);
             fill.rectTransform.anchorMax = new Vector2(k, 1);
             fill.enabled = k > 0.01f;
+        }
+    }
+
+    /// <summary>8방향 글자 테두리 (4차 수정안): 원래 글자 둘레 8곳(45도마다)에 테두리 색 복사본을 깔고 위에 원래 글자</summary>
+    public class SoftOutline : Shadow
+    {
+        static readonly System.Collections.Generic.List<UIVertex> src = new(), dst = new();
+        public override void ModifyMesh(VertexHelper vh)
+        {
+            if (!IsActive()) return;
+            src.Clear(); dst.Clear(); vh.GetUIVertexStream(src);
+            float d = effectDistance.x;
+            for (int k = 0; k < 8; k++)
+            {
+                float a = k * Mathf.PI / 4f; var off = new Vector3(Mathf.Cos(a) * d, Mathf.Sin(a) * d, 0);
+                for (int i = 0; i < src.Count; i++)
+                {
+                    var v = src[i]; v.position += off;
+                    Color32 c = effectColor; c.a = (byte)(c.a * v.color.a / 255); v.color = c;
+                    dst.Add(v);
+                }
+            }
+            dst.AddRange(src);
+            vh.Clear(); vh.AddUIVertexTriangleStream(dst);
         }
     }
 

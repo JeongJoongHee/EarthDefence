@@ -375,6 +375,8 @@ def ic_gem_on(w, h, f, s): return _gem(w, h, s, '#fff1a8', GOLD, '#e0a722', '#b0
 def ic_gem_off(w, h, f, s): return _gem(w, h, s, '#8a7462', '#6b5646', '#5b4433', '#3b281c', .9)
 def ic_brush(w, h, f, s): return (P(f'M{w*.62} {h*.08} L{w*.9} {h*.36} L{w*.5} {h*.66} L{w*.34} {h*.5} Z', '#c99260', s)
                                    + P(f'M{w*.34} {h*.5} L{w*.5} {h*.66} Q{w*.4} {h*.94} {w*.08} {h*.92} Q{w*.16} {h*.62} {w*.34} {h*.5} Z', '#a68bd6', s))
+def ic_info(w, h, f, s):   # 4차 수정안: 레벨별 능력 보기 (i)
+    return C(w * .5, h * .5, w * .42, A.G('#8fd6ff', 'r', .85, .4), s) + C(w * .5, h * .27, w * .075, '#ffffff', s * .6) + A.rr(w * .42, h * .42, w * .16, h * .36, 5, '#ffffff', s * .6)
 def ic_tab_turret(w, h, f, s): return P(f'M{w*.18} {h*.9} L{w*.26} {h*.6} L{w*.74} {h*.6} L{w*.82} {h*.9} Z', '#c9c1b3', s) + C(w * .5, h * .5, w * .22, '#d9c19a', s) + A.rr(w * .44, h * .08, w * .12, h * .36, 4, '#a9b1bb', s)
 
 
@@ -547,14 +549,14 @@ def pop3d(im):
 EXTRA = dict(cards=ic_cards, coin=ic_coin, shard=ic_shard, star_on=ic_dia(GOLD), star_off=ic_dia(TRACK), ad=ic_ad, plus=ic_plus,
              home=ic_home, retry=ic_retry, base=ic_base, patrol=ic_patrol,
              g_weapon=gx_weapon, g_helmet=gx_helmet, g_suit=gx_suit, g_shield=gx_shield, g_core=gx_core, g_boots=gx_boots,
-             gem_on=ic_gem_on, gem_off=ic_gem_off, brush=ic_brush, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret)
+             gem_on=ic_gem_on, gem_off=ic_gem_off, brush=ic_brush, chip=ic_chip, energy=ic_energy, mission=ic_mission, calendar=ic_calendar, parts=ic_parts, crown=ic_crown, hand=ic_hand, tab_turret=ic_tab_turret, info=ic_info)
 ICONS.update(EXTRA)
 ICON_LIST = {'pause': CREAM, 'play': CREAM, 'cards': CREAM, 'heart': RED, 'coin': GOLD, 'shard': SKY, 'star_on': GOLD, 'star_off': TRACK,
              'ad': CREAM, 'plus': CREAM, 'x': CREAM, 'lock': CREAM, 'home': CREAM, 'retry': CREAM, 'check': CREAM, 'skull': CREAM,
              'base': CREAM, 'patrol': CREAM, 'trophy': GOLD, 'bolt': GOLD, 'star': GOLD,
              'g_weapon': CREAM, 'g_helmet': CREAM, 'g_suit': CREAM, 'g_shield': CREAM, 'g_core': CREAM, 'g_boots': CREAM,
              'chip': CREAM, 'energy': CREAM, 'mission': CREAM, 'calendar': CREAM, 'parts': CREAM, 'crown': GOLD, 'hand': CREAM,
-             'gem_on': GOLD, 'gem_off': TRACK, 'tab_turret': CREAM, 'diamond': '#8fd6ff', 'shop': CREAM, 'brush': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
+             'gem_on': GOLD, 'gem_off': TRACK, 'tab_turret': CREAM, 'info': CREAM, 'diamond': '#8fd6ff', 'shop': CREAM, 'brush': CREAM, 'gear': CREAM, 'sword': GOLD, 'sound': CREAM, 'music': CREAM, 'chest': ORANGE}
 
 
 FLAT_ICONS = {'star_off', 'gem_off', 'plus', 'x', 'check'}   # 입체감을 안 넣는 것 (빈 칸 · 기호)
@@ -562,11 +564,15 @@ FLAT_ICONS = {'star_off', 'gem_off', 'plus', 'x', 'check'}   # 입체감을 안 
 
 def export_icon():
     # 등급별 장비 6 x 7 · 회로 7 (3차 수정안)
-    for part, fn in GEAR_Q.items():
+    # 4차 수정안: 등급마다 모양이 늘어나는 그림 (tools/gear_tiers.py) · 224px (2배)
+    import gear_tiers as GT
+    for part, fn in GT.PARTS.items():
         for g in range(1, 8):
-            out('Icon', f'g_{part}_{g}', pop3d(Rr(f'<g transform="translate(8,8)">{grade_icon(fn, g)(96, 96, CREAM, 5)}</g>', 112, 112, A.WOB['icon'])))
+            out('Icon', f'g_{part}_{g}', pop3d(Rr(f'<g transform="scale(2) translate(8,8)">{fn(g)}</g>', 224, 224, A.WOB['icon'])))
     for g in range(1, 8):
-        out('Icon', f'chip_{g}', pop3d(Rr(f'<g transform="translate(8,8)">{grade_icon(gq_chip, g)(96, 96, CREAM, 5)}</g>', 112, 112, A.WOB['icon'])))
+        out('Icon', f'chip_{g}', pop3d(Rr(f'<g transform="scale(2) translate(8,8)">{GT.chip(g)}</g>', 224, 224, A.WOB['icon'])))
+    if os.environ.get('TIERS_ONLY'):
+        return
     for n, f in ICON_LIST.items():
         im = Rr(f'<g transform="translate(8,8)">{ICONS[n](96, 96, f, 5)}</g>', 112, 112, A.WOB['icon'])
         out('Icon', n, im if n in FLAT_ICONS else pop3d(im))

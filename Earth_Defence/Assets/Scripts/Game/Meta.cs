@@ -41,10 +41,11 @@ namespace EarthDef
         }
         public static bool CanClaimPatrol => S.PatrolSec >= Tables.C("Patrol_Min_Sec", 60);
         /// <summary>순찰 보상 받기 → (골드, 조각). 조각은 열린 터렛에만</summary>
-        public static (double gold, int shards) ClaimPatrol()
+        public static (double gold, int shards) ClaimPatrol(int mul = 1)
         {
             if (!CanClaimPatrol) return (0, 0);
-            double g = Math.Floor(S.PatrolGold); int sh = S.PatrolShards;
+            mul = Mathf.Max(1, mul);   // 4차 수정안: 광고 보면 x2 (Config Patrol_Ad_Mul)
+            double g = Math.Floor(S.PatrolGold) * mul; int sh = S.PatrolShards * mul;
             S.gold += g;
             var rnd = new System.Random((int)(SaveData.Clock % 100000));
             var open = Tables.Turrets.FindAll(t => S.Unlocked(t));
@@ -169,7 +170,7 @@ namespace EarthDef
         };
         public static string RewardText(string kind, double v) => kind switch
         {
-            "chip" or "gear" => L.F("grade_n", v) + " " + L.T("r_" + kind),
+            "chip" or "gear" => Tables.Grade((int)v).name + " " + L.T("r_" + kind),   // 4차 수정안 "등급 통일" (1등급 → 일반)
             _ => Num.F(v),
         };
     }

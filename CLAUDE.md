@@ -1,6 +1,12 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
-## ▶ 재개 메모 (2026-11-17 — 3차 수정안 10개 반영)
+## ▶ 재개 메모 (2026-11-17 — 4차 수정안 21개 반영)
+- 요청 = `요청 사항/4차 수정안.docx`. 보고 = `4차_수정안_결과.html` (키 earthdef-req4-1117, 캡처 `캡쳐본 모음/4차_수정안_캡처/`, 전 = before_*.png). 시험 120 + 13 + 67 오류 0. 결정 대기 r4-art.
+- 표 = tools/fix4_tables.py (회로 이름 짧게 · 장비 이름 = 등급 이름 + 그림 이름 · Chip_Prefix 비움 · Config Attend_Auto 1 · Patrol_Ad_Mul 2). 아이콘 = tools/gear_tiers.py (등급마다 모양 늘어남, 224px, `TIERS_ONLY=1` 이면 등급 아이콘만).
+- 코드: UIKit.SoftOutline(8방향 글자 테두리 — Unity Outline 은 4방향이라 찢겨 보였음) · Art.Soft 진하게 · 팝업 제목 띠 90 · Toast.Show(s, life) 는 로비 전투 탭이면 Lobby.ToastSpot(스테이지 칸 ↔ [전투 시작] 사이) · 탭 7개(Tabs 끝에 "looks", 보이는 순서 TabOrder) · Looks.Build(탭 화면) · 순찰은 [전투 시작] 아래 + [광고 2배] · 출석 자동 받기(Intro) · Lobby.LvTable · GearTab.GearUpPopup · ChipWindow 새 모양 · Gear.StatName 끝 "-" 뗌(StatVal reduce 가 "-6").
+- 해석(보고 첫머리): 출석 = 자동 받고 토스트 · 순찰도 같은 자리 토스트 · 등급 통일 = 장비 이름 앞 말을 등급 이름으로.
+
+## (지난) 재개 메모 (2026-11-17 — 3차 수정안 10개 반영)
 - 요청 = `요청 사항/3차 수정안.docx`. 보고 = `3차_수정안_결과.html` (키 earthdef-req3-1117, 캡처 `캡쳐본 모음/3차_수정안_캡처/`, 전·뒤 = before_*.png). 시험 120 + 13 + 54 오류 0. 결정 대기 r3-art (아트 퀄업 더 할 화면).
 - 표 = tools/fix3_tables.py (칩 → 회로 · 스킨 → 외형 · Gear.xlsx Gear_Name 부위x등급 이름 · Gear_Grade Chip_Prefix). 코드: GearItem.Name/Icon(g_<부위>_<등급>) · ChipItem.Name/Icon(chip_<등급>) · Art.TurretIcon(외형 끼우면 외형 그림) · GearTab.ChipPlace(착용 안내 창) · 작은 회로 칸 UI/minislot · Looks.Open(외형 메뉴, 로비 위 줄 붓 단추, 상점·터렛 탭에선 뺌) · GlowPulse(영웅 이상 획득 빛, UI/glow_frame).
 - 그림: earth_export.py GRADE_PAL · grade_icon · gq_* (icon) · card() 명암 + 윤기 (ui). 고치기 전 UI 그림은 세션 스크래치 ui_before (지워질 수 있음).

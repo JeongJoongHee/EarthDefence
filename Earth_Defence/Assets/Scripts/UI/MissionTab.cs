@@ -193,20 +193,23 @@ namespace EarthDef
     public class Toast : MonoBehaviour
     {
         float t;
-        public static void Show(string s)
+        float life = 1.8f;
+        public static void Show(string s, float life = 1.8f)
         {
             if (UIRoot.I == null) return;
             foreach (var old in UIRoot.I.popups.GetComponentsInChildren<Toast>()) Destroy(old.gameObject);
             var box = UIKit.Panel(UIRoot.I.popups, "night", "Toast"); box.rectTransform.Place(0.5f, 0.74f, Vector2.zero, new Vector2(900, 110));
             var tx = UIKit.Label(box.transform, s, 36, Art.Cream); tx.rectTransform.Fill(20, 10, 20, 0);
             tx.horizontalOverflow = HorizontalWrapMode.Wrap;
-            box.gameObject.AddComponent<Toast>();
+            box.gameObject.AddComponent<Toast>().life = life;
+            // 4차 수정안 "토스트는 스테이지 칸과 순찰 보상 사이 빈 공간에서": 로비 전투 탭이고 창이 없으면 그 빈 곳 가운데
+            if (Popup.Open == null && Game.Lobby != null && Game.Lobby.ToastSpot(out var wp)) box.transform.position = wp;
         }
         void Update()
         {
             t += Time.unscaledDeltaTime;
             transform.localScale = Vector3.one * (t < 0.12f ? 0.8f + t / 0.12f * 0.2f : 1f);
-            if (t > 1.8f) Destroy(gameObject);
+            if (t > life) Destroy(gameObject);
         }
     }
 

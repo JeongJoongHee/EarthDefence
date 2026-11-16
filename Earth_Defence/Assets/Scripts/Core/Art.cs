@@ -126,7 +126,7 @@ namespace EarthDef
         public static readonly Color Cream = Hex("#fff4dc");
         public static readonly Color Cream2 = Hex("#f3e3c3");
         public static readonly Color Brown = Hex("#8a5e3c");
-        public static readonly Color Soft = Hex("#7a6a5c");
+        public static readonly Color Soft = Hex("#5e4f42");   // 4차 수정안 "팝업 글자가 잘 안 보임" → 7a6a5c 보다 진하게
         public static readonly Color Orange = Hex("#f2ad55");
         public static readonly Color Green = Hex("#8ccb6e");
         public static readonly Color Green2 = Hex("#6fae55");

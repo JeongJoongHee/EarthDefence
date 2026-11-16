@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>4차 수정안 반영</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>4차 수정안 반영 (21개)</h1>
+<p class="note">2026-11-17 · <code>요청 사항/4차 수정안.docx</code> · 자동 시험 <b>기존 120줄 + 시험장 13줄 + 3차 67줄 통과 · 오류 0</b></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>"출석 보상 획득 토스트로"</b> → 로비에 들어오면 출석 창 없이 <b>자동으로 받고</b> 토스트로 알립니다. 예전 창으로 되돌리려면 Config <code>Attend_Auto</code> = 0.</li>
+<li><b>"순찰 보상도 출석과 동일하게"</b> → 순찰 [받기] · [광고 2배] 모두 같은 자리(스테이지 칸과 [전투 시작] 사이)에 토스트로 알립니다. 2배 값은 Config <code>Patrol_Ad_Mul</code>.</li>
+<li><b>"등급 통일"</b> → 지난번에 지은 색 이름(푸른 · 보랏빛 …)을 등급 이름으로 바꿨습니다. 장비 = <b>등급 + 그림에 맞춘 이름</b>(예: 영웅 칼날 소총 · 궁극 왕관 헬멧), 회로 = 짧은 이름만(등급은 옆의 등급 표시로). 보상 글 "3등급 회로" → "희귀 회로".</li>
+<li><b>"글자가 찢겨지는 느낌"</b>의 원인: Unity 기본 테두리가 대각선 4방향만 그려 굵은 글자에서 위·아래·옆 테두리가 끊겨 보였습니다 → 8방향 테두리로 바꿈 (아래 ① 그림).</li>
+<li><b>외형 탭</b>은 아래 줄 장비 다음 칸입니다(탭 7개). 위 줄 붓 단추는 뺐습니다.</li>
+<li>표 고치기는 <code>tools/fix4_tables.py</code>, 등급 아이콘은 <code>tools/gear_tiers.py</code> 에 모았습니다.</li>
+</ul></div>
+
+<h2>① 글자 찢김 → 8방향 테두리</h2>
+<img class="wide" src="캡쳐본 모음/4차_수정안_캡처/text_before_after.png"><p class="note">왼쪽 전 · 오른쪽 뒤 (제목 · 단추 글자 테두리가 고르게)</p>
+
+<h2>③ ⑤ 출석 자동 받기 + 토스트 · ④ 스테이지 칸 · ⑥ 순찰 아래로 · ⑰ 광고 2배</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/4차_수정안_캡처/before_lobby.png" loading="lazy"><figcaption><span class="b">전</span> 출석 창 · 큰 스테이지 칸 · 순찰이 [전투 시작] 위</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/01a_lobby_attend.png" loading="lazy"><figcaption><span class="a">뒤</span> 출석 1일차 토스트가 빈 곳에 · 칸 작게 · 순찰이 아래 + [광고 2배]</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/4차_수정안_캡처/61_lobby_patrol_toast.png" loading="lazy"><figcaption>[광고 2배] → "순찰 보상 골드 +… (x2)" 토스트</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/62_lobby_enemies.png" loading="lazy"><figcaption>⑦ [적 정보] 펼침 · ⑩ 노란 띠 안내 + 적 칸 아래 약점 이름표</figcaption></figure></div>
+
+<h2>⑨ 외형 = 아래 탭</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/4차_수정안_캡처/before_looks.png" loading="lazy"><figcaption><span class="b">전</span> 위 줄 붓 단추 → 창</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/60_looks_tab.png" loading="lazy"><figcaption><span class="a">뒤</span> 아래 줄 "외형" 탭 (터렛 외형 · 기지 외형)</figcaption></figure></div>
+
+<h2>⑪ ⑫ 등급마다 다른 그림 (일반 → 궁극)</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/4차_수정안_캡처/before_icons.png" loading="lazy"><figcaption><span class="b">전</span> 색만 다름</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/icons_tiers.png" loading="lazy"><figcaption><span class="a">뒤</span> 모양이 한 단계씩 늘어남: 고급 띠 · 희귀 보석·조준경 · 영웅 지느러미·가시·어깨 · 전설 금 장식+빛 · 신화 붉은 기운·뿔·망토 · 궁극 날개·왕관·반짝이</figcaption></figure></div>
+
+<h2>⑬ ⑭ ⑮ ⑯ 회로 창 · ⑳ 장비 강화 · ㉑ 레벨별 능력</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/4차_수정안_캡처/64_chip_window.png" loading="lazy"><figcaption>회로 창: 짧은 이름 · 능력 큰 글자 · 착용 가능 부위 아이콘 + 이름</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/63_gear_up.png" loading="lazy"><figcaption>장비 강화: 지금 > 다음 · 늘어나는 값(초록) · 골드 · 부품</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/65_turret_up.png" loading="lazy"><figcaption>터렛 강화: 왼쪽 [레벨별 능력]</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/66_lv_table.png" loading="lazy"><figcaption>레벨별 능력 표 (지금 레벨 주황)</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/4차_수정안_캡처/52_chip_place.png" loading="lazy"><figcaption>회로 착용 안내 (컴팩트)</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/67_merge.png" loading="lazy"><figcaption>일괄 합성 (컴팩트)</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/51_gear_minislots.png" loading="lazy"><figcaption>① 장비 칸 아래 회로 칸이 칸 폭 안에</figcaption></figure><figure><img src="캡쳐본 모음/4차_수정안_캡처/53_got_glow.png" loading="lazy"><figcaption>받은 창 — 새 등급 그림</figcaption></figure></div>
+
+<h2>확인 칸</h2>
+<ul class="todo">
+<li data-id="r4-1"><label><input type="checkbox"><span><span class="tag">1</span>글자 찢김 · UI 마감<span class="why">글자 테두리 8방향 · 회로 작은 칸이 장비 칸 폭 안에 · "회로 N" 겹침 삭제</span></span></label></li><li data-id="r4-2"><label><input type="checkbox"><span><span class="tag">2</span>전체 아트 퀄업<span class="why">등급 아이콘 2배 해상도 · 창 제목 띠 얇게 · 글자 진하게</span></span></label></li><li data-id="r4-3"><label><input type="checkbox"><span><span class="tag">3</span>출석 보상 → 토스트<span class="why">로비에 오면 자동으로 받고 토스트 (창 없음)</span></span></label></li><li data-id="r4-4"><label><input type="checkbox"><span><span class="tag">4</span>스테이지 칸 더 작게<span class="why">416 → 352</span></span></label></li><li data-id="r4-5"><label><input type="checkbox"><span><span class="tag">5</span>토스트 자리<span class="why">스테이지 칸과 [전투 시작] 사이 빈 곳 가운데</span></span></label></li><li data-id="r4-6"><label><input type="checkbox"><span><span class="tag">6</span>순찰 보상 → [전투 시작] 아래<span class="why"></span></span></label></li><li data-id="r4-7"><label><input type="checkbox"><span><span class="tag">7</span>[적 정보] · 잘 보이는 색<span class="why">하늘색 단추</span></span></label></li><li data-id="r4-8"><label><input type="checkbox"><span><span class="tag">8</span>순찰 보상도 출석과 같게<span class="why">받으면 같은 자리에 토스트</span></span></label></li><li data-id="r4-9"><label><input type="checkbox"><span><span class="tag">9</span>외형 → 아래 탭<span class="why">장비 다음 · 위 줄 붓 단추는 뺌</span></span></label></li><li data-id="r4-10"><label><input type="checkbox"><span><span class="tag">10</span>약점 안내 강조<span class="why">노란 띠 안내 + 적 칸 아래 약점 이름표</span></span></label></li><li data-id="r4-11"><label><input type="checkbox"><span><span class="tag">11</span>장비 아이콘 등급별 다른 그림<span class="why">일반은 단순 → 궁극은 날개·왕관·반짝이</span></span></label></li><li data-id="r4-12"><label><input type="checkbox"><span><span class="tag">12</span>회로 아이콘도 같은 방식<span class="why"></span></span></label></li><li data-id="r4-13"><label><input type="checkbox"><span><span class="tag">13</span>팝업 컴팩트<span class="why">강화 · 회로 · 착용 안내 · 일괄 합성 · 터렛 정보 창 크기 줄임</span></span></label></li><li data-id="r4-14"><label><input type="checkbox"><span><span class="tag">14</span>회로 "착용 가능 부위" 잘 보이게<span class="why">부위 아이콘 + 이름 칸</span></span></label></li><li data-id="r4-15"><label><input type="checkbox"><span><span class="tag">15</span>회로 능력 글자 크게<span class="why">흰 칸 안에 38 크기</span></span></label></li><li data-id="r4-16"><label><input type="checkbox"><span><span class="tag">16</span>회로 이름 줄이기<span class="why">"공격 회로" → "공격", "관통포 특수 회로" → "관통포 특수"</span></span></label></li><li data-id="r4-17"><label><input type="checkbox"><span><span class="tag">17</span>순찰 광고 2배<span class="why">[광고 2배] 단추 (광고는 [초안] — 지금은 바로 성공)</span></span></label></li><li data-id="r4-18"><label><input type="checkbox"><span><span class="tag">18</span>등급 통일 (1등급 = 일반 …)<span class="why">보상 글 "3등급 회로" → "희귀 회로" · 장비 이름 앞 말 = 등급 이름</span></span></label></li><li data-id="r4-19"><label><input type="checkbox"><span><span class="tag">19</span>팝업 글자 잘 보이게<span class="why">흐린 글자색 진하게 · 능력치를 흰 칸에 크게</span></span></label></li><li data-id="r4-20"><label><input type="checkbox"><span><span class="tag">20</span>장비 강화 팝업<span class="why">능력치 지금 > 다음 · 늘어나는 값 · 필요 골드·부품</span></span></label></li><li data-id="r4-21"><label><input type="checkbox"><span><span class="tag">21</span>터렛 강화 창 레벨별 능력 단추<span class="why">[레벨별 능력] → Lv 1~최대 표 (지금 레벨 주황)</span></span></label></li>
+<li data-id="r4-art"><label><input type="checkbox"><span><span class="tag">결정</span>아트 퀄업을 더 할 화면 (추천: 전투 화면 위 줄 · 결과 창 · 상점)<span class="why">"추천대로" 또는 화면 이름을 의견 칸에</span></span></label></li>
+</ul>
+<div class="tip gray">다음 추천(그대로): 남은 의견(<code>3차_수정안_결과.html</code> 등) → 밸런스 시뮬레이터 → 영어 → 출시 준비.</div>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-req4-1117', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

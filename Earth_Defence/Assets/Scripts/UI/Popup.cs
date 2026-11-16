@@ -22,12 +22,13 @@ namespace EarthDef
             p.win.Place(0.5f, y, Vector2.zero, new Vector2(w, h), new Vector2(0.5f, 0.5f));
             var band = UIKit.Img(p.win, Art.UI("band"), "Title"); band.color = Art.Orange; band.raycastTarget = false;
             band.rectTransform.anchorMin = new Vector2(0, 1); band.rectTransform.anchorMax = new Vector2(1, 1); band.rectTransform.pivot = new Vector2(0.5f, 1);
-            band.rectTransform.offsetMin = new Vector2(5, -100); band.rectTransform.offsetMax = new Vector2(-5, -5);
-            var line = UIKit.Plain(p.win, Art.Ink, "TitleLine"); line.rectTransform.Place(0.5f, 1, new Vector2(0, -100), new Vector2(w - 10, 6), new Vector2(0.5f, 0.5f));
-            UIKit.Label(band.transform, title, 50).rectTransform.Fill(0, 4, 0, 0);
+            // 4차 수정안 "팝업을 컴팩트하게": 제목 띠 100 → 90
+            band.rectTransform.offsetMin = new Vector2(5, -90); band.rectTransform.offsetMax = new Vector2(-5, -5);
+            var line = UIKit.Plain(p.win, Art.Ink, "TitleLine"); line.rectTransform.Place(0.5f, 1, new Vector2(0, -90), new Vector2(w - 10, 6), new Vector2(0.5f, 0.5f));
+            UIKit.Label(band.transform, title, 46).rectTransform.Fill(0, 4, 0, 0);
             if (closeBtn)
             {
-                var x = UIKit.Tile(p.win, "btn_red", Color.white, Art.Icon("x"), 0.56f, "Close"); x.rectTransform.Place(1, 1, new Vector2(18, 18), new Vector2(88, 88), new Vector2(1, 1));
+                var x = UIKit.Tile(p.win, "btn_red", Color.white, Art.Icon("x"), 0.56f, "Close"); x.rectTransform.Place(1, 1, new Vector2(16, 16), new Vector2(80, 80), new Vector2(1, 1));
                 UIKit.Clickable(x, p.Close);
             }
             Open = p;

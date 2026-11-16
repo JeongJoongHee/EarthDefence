@@ -280,29 +280,36 @@ namespace EarthDef
         }
     }
 
-    /// <summary>외형 메뉴 (3차 수정안 "스킨 창은 별도로 빼서 상점이랑 분리 — 기지와 터렛 묶음 · 단어는 외형으로"): 로비 위 줄 [외형] 단추</summary>
+    /// <summary>외형 (3차 수정안 "스킨 창은 따로 — 기지와 터렛 묶음 · 외형") → 4차 수정안 "외형은 아래 탭(전투 · 터렛 · 장비 …)으로": 탭 화면</summary>
     public static class Looks
     {
         public static int sub;    // 0 = 터렛 외형 · 1 = 기지 외형
-        public static float scroll = 1f;
+        static float scroll = 1f;
+        /// <summary>외형 탭 열기 (tab: 0 터렛 · 1 기지 · -1 그대로)</summary>
         public static void Open(int tab = -1)
         {
-            if (tab >= 0) sub = tab;
-            var p = Popup.Make(L.T("looks"), 1040, 1700, () => Game.Lobby?.Refresh());
-            void Re() { scroll = p.GetComponentInChildren<ScrollRect>()?.verticalNormalizedPosition ?? 1f; p.Close(false); Game.Lobby?.Refresh(); if (Game.Lobby && Game.Lobby.tab == 1) Game.Lobby.SetTab(1); Open(); }
+            if (tab >= 0) { sub = tab; scroll = 1f; }
+            Popup.CloseAll();
+            Game.Lobby?.SetTab(6);
+        }
+        public static void Build(RectTransform page)
+        {
+            var bg = UIKit.Panel(page, "card_white", "Looks"); bg.rectTransform.Fill(20, 6, 20, 6);
+            ScrollRect sr = null;
+            void Re() { scroll = sr ? sr.verticalNormalizedPosition : 1f; Game.Lobby?.Refresh(); Game.Lobby?.SetTab(6); }
             for (int i = 0; i < 2; i++)
             {
                 int k = i;
-                var b = UIKit.Btn(p.win, i == sub ? "btn_orange" : "btn_cream", L.T(i == 0 ? "looks_turret" : "looks_base"), 34, () => { if (sub != k) { sub = k; scroll = 1f; p.Close(false); Open(); } }, "Sub" + i);
-                ((RectTransform)b.transform).TL(40 + i * 490, 116, 470, 96);
+                var b = UIKit.Btn(bg.transform, i == sub ? "btn_orange" : "btn_cream", L.T(i == 0 ? "looks_turret" : "looks_base"), 34, () => { if (sub != k) { sub = k; scroll = 1f; Game.Lobby?.SetTab(6); } }, "Sub" + i);
+                ((RectTransform)b.transform).TL(24 + i * 500, 20, 480, 96);
             }
-            var area = UIKit.Rect(p.win, "Area"); area.Fill(10, 20, 10, 226);
+            var area = UIKit.Rect(bg.transform, "Area"); area.Fill(10, 14, 10, 130);
             var c = UIKit.Scroll(area, "Scroll"); c.parent.GetComponent<RectTransform>().Fill();
             float y = 6;
             if (sub == 0) foreach (var k in Tables.Skins) y = ShopTab.SkinRow(c, k, y, Re);
             else foreach (var f in Tables.Frames) y = ShopTab.FrameRow(c, f, y, Re);
             UIKit.SetScrollH(c, y + 10);
-            var sr = c.parent.GetComponent<ScrollRect>(); Canvas.ForceUpdateCanvases(); sr.verticalNormalizedPosition = scroll;
+            sr = c.parent.GetComponent<ScrollRect>(); Canvas.ForceUpdateCanvases(); sr.verticalNormalizedPosition = scroll;
         }
     }
 }
