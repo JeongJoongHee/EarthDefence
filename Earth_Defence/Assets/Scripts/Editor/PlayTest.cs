@@ -40,6 +40,8 @@ namespace EarthDef.EditorTools
         public static void RunP3() => Start("p3");
         /// <summary>11-17 성능 측정 (Editor/PlayTestPerf.cs) → Logs/Perf/perf_<이름>.json</summary>
         public static void RunPerf() => Start("perf");
+        /// <summary>11-17 밸런스 측정 (Editor/PlayTestBal.cs) → Logs/Bal/bal_<이름>.json</summary>
+        public static void RunBal() => Start("bal");
 
         static void Start(string mode)
         {
@@ -79,9 +81,9 @@ namespace EarthDef.EditorTools
 
         IEnumerator Start()
         {
-            float timeout = Time.realtimeSinceStartup + 420f;
             string mode = SessionState.GetString(PlayTest.ModeKey, "");
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : Steps());
+            float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -365,7 +367,7 @@ namespace EarthDef.EditorTools
                       "순찰 안내 창: 순찰 시간 · 골드 · 조각 · [받기] · [광고 보고 2배]");
                 Capture("81_patrol_popup");
                 GameObject.Find("PatrolClaim").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.2f);
-                Check(Popup.Open == null && System.Math.Abs(S.gold - gb6 - pg6) < 1, $"[받기] → 그대로 +{Num.F(S.gold - gb6)}");
+                Check(Popup.Open == null && System.Math.Abs(S.gold - gb6 - pg6) <= System.Math.Max(1, pg6 * 0.005), $"[받기] → 그대로 +{Num.F(S.gold - gb6)} (창 열 때 {Num.F(pg6)})");   // 밸런스 1차: 순찰 골드가 커져 누르는 사이 쌓이는 몫이 1 을 넘음
                 // 3) 토스트: 사라질 때 흐려짐
                 Toast.Show("흐려지기 시험", 1.0f); yield return Wait(0.82f);
                 var tf = Object.FindAnyObjectByType<Toast>(); float ta = tf ? tf.Alpha : -1;
@@ -846,6 +848,7 @@ namespace EarthDef.EditorTools
             {   // 빛 쪼개기(관통포가 맞히면 20% 작은 레이저)를 확률에 안 기대고: 산 적에게 40번 맞힘 → 안 나올 확률 0.8^40
                 Beam.LastMiniOrigin = null;
                 var tgt = B.enemies.Find(e => !e.dead && e.Pos.y < World.SpawnY - 1f);
+                if (tgt == null) { tgt = B.Spawn("pebble", new Vector2(0, 2f)); B.Tick(Battle.StepSec); }   // 밸런스 1차: 적이 세져 40초 뒤 남은 적이 없을 수 있음 → 하나 만들어 맞힘
                 if (tgt != null) { tgt.hp = tgt.maxHp = 1e12; for (int i = 0; i < 40 && !Beam.LastMiniOrigin.HasValue; i++) Combat.Hit(B.run.Get("rail"), tgt, 1); }
             }
             Check(Beam.LastMiniOrigin.HasValue && Vector2.Distance(Beam.LastMiniOrigin.Value, lu.Head) < 0.3f,

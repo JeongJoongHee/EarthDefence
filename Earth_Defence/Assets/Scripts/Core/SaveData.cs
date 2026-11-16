@@ -153,14 +153,15 @@ namespace EarthDef
         public int TurretLv(string id) { int i = TIdx(id); return i < 0 ? 1 : tLv[i]; }
 
         /// <summary>기지 최대 체력 · 공격력</summary>
-        public double BaseHp => Tables.C("Base_HP") + Tables.C("Base_HP_Per_Lv") * (baseLv - 1);
-        public double Atk => Tables.C("Atk_Base") + Tables.C("Base_Atk_Per_Lv") * (baseLv - 1);
+        // 밸런스 1차 (11-17): 레벨마다 곱으로도 커지게 (Base_HP_Growth · Base_Atk_Growth, 1 = 예전처럼 더하기만)
+        public double BaseHp => Math.Round(Tables.C("Base_HP") * Math.Pow(Tables.C("Base_HP_Growth", 1), baseLv - 1) + Tables.C("Base_HP_Per_Lv") * (baseLv - 1));
+        public double Atk => Math.Round(Tables.C("Atk_Base") * Math.Pow(Tables.C("Base_Atk_Growth", 1), baseLv - 1) + Tables.C("Base_Atk_Per_Lv") * (baseLv - 1));
         public double BaseCost => Math.Ceiling(Tables.C("Base_Cost_Base") * Math.Pow(Tables.C("Base_Cost_Growth"), baseLv - 1));
         public bool BaseMax => baseLv >= Tables.Ci("Base_Max_Lv", 300);
 
         /// <summary>순찰: 시간당 골드 · 조각 (깬 최고 스테이지 기준), 최대 시간까지</summary>
         public double PatrolSec => Math.Max(0, Math.Min(Clock - patrolFrom, Tables.C("Patrol_Max_Hours") * 3600));
-        public double PatrolGold => PatrolSec / 3600.0 * (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * Math.Max(0, best - 1));
+        public double PatrolGold => PatrolSec / 3600.0 * (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * Math.Max(0, best - 1)) * Math.Pow(Tables.C("Patrol_Gold_Growth", 1), Math.Max(0, best - 1));
         public int PatrolShards => (int)Math.Floor(PatrolSec / 3600.0 * Tables.C("Patrol_Shards_Hour"));
     }
 }

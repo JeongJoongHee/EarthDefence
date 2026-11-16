@@ -1,6 +1,14 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
-## ▶ 재개 메모 (2026-11-17 아침 — 성능 점검 마무리 + 6차 수정안 15개)
+## ▶ 재개 메모 (2026-11-17 낮 — 밸런스 1차)
+- 사용자 "참고 영상 수준으로 1차 · 제안 · 쉽게 깨기보단 맞으면서 공략으로 깨게". 보고 = `밸런스_1차.html` (키 earthdef-bal1-1117, 영상 모음 `캡쳐본 모음/밸런스_1차/`). 결정 대기: b-pace(100 스테이지 기간 — 추천 1차 그대로 ~40일 + 엘리트 · 무한으로 늘리기) · b-day(하루 12판 가정) · 제안 b-theme(스테이지마다 주 약점 → 공략 축, 2차 추천) · b-boss.
+- 영상(②4~6 · ③10~12, 15초마다 잘라 봄): 원작은 기지 체력이 한 번도 안 깎임 · 한 판 ~5분 · 5분 무렵 레벨 20.
+- 측정 = `PlayTest.RunBal` (Editor/PlayTestBal.cs, 한 판 0.5초): 새 세이브로 하루 N판 다음 스테이지 도전(지면 골드 벌기 → 다시) · 판 사이 장비 · 합성 · 회로 · 가장 싼 강화 · 순찰 · 무료 상자 · 출석, 무과금. 공략 비교(probe) · 고르기 규칙 겨루기(tour). `bash tools/bal_run.sh <이름> <일수> "<Key:값;…>" [probe] [판] [씨앗]` → `tools/bal_summary.py` · `tools/bal_loss.py` · 보고서 `tools/balance_report.py`. 결과 json = Earth_Defence/Logs/Bal (git 밖).
+- 1차 값 = `tools/balance1_apply.py` (Config 20개, 새 손잡이: Win_Gold_Growth · Patrol_Gold_Growth · Base_Atk_Growth · Base_HP_Growth · Early_Stage_N · Early_HP_Mul · Ten_Stage_HP_Mul — 1 이면 예전). 표 백업 = 세션 스크래치 table_before_bal1 (지워질 수 있음, git 에도 있음).
+- 결과(씨앗 3개): 100 스테이지 37~43일(지금 = 90일에 39) · 1~3 처음에 깸 · 31 이후 이긴 판 체력 45~79% · 11~30 은 아직 조금 쉬움(90%). **카드를 규칙대로 골라도 아무거나와 비슷**(75 vs 89 / 168) → 공략 축은 b-theme 로.
+- 주의: 실행마다 흔들림이 커서 씨앗 3개로 볼 것 · BATCH_TIMEOUT 늘림(unity_batch.sh) · bal 모드는 PlayTest 시간 제한 7000초.
+
+## (지난) 재개 메모 (2026-11-17 아침 — 성능 점검 마무리 + 6차 수정안 15개)
 - 어제 밤 끊긴 곳 = 성능 점검 · 결함 고침(시험 · 커밋 전) → 시험 1줄(Fx 물체 이름 "fx_" 붙음) 고쳐 커밋 8b4e9ce. 측정 `PlayTest.RunPerf` → `Earth_Defence/Logs/Perf/perf_<label.txt>.json` (before · after3). 시험 4개를 연달아 돌린 직후 재면 PC 부하로 탭 · 프레임 값이 1.5~2배 나옴 → 한 번 더 재서 확인.
 - 요청 = `요청 사항/6차 수정안.docx`. 보고 = `6차_수정안_결과.html` (키 earthdef-req6-1117, 캡처 `캡쳐본 모음/6차_수정안_캡처/`, 전 = before_*.png). 시험 120 + 13 + 95 오류 0. 표 = tools/fix6_tables.py.
 - 바뀐 것: Num.Res(100만부터 K · UIKit.Fit 로 칸 안) · 위 줄 숫자 오른쪽 · 순찰 = 600x150 단추 → Lobby.PatrolPopup(받기 / 광고 2배) · 설정 프레임 · 도움말 다시 보기 제거(프레임 늘 60) · 토스트 흐려짐(Toast_Fade) · 상점 3패널(ShopTab.sub 다이아 · 장비 · 재화) · 월 1회 패키지 p_month(Kind monthly, iapOnce "month:id:yyyyMM") · 상자 전설까지(Box_Grade_Max) · 천장 55(Box_Pity, SaveData pityGear · chipPity) · 무한 모드 Endless_Exp_Mul 2.5 · Endless_Exp_From 5 · Endless_Pick_Gap 8 · 터렛 외형 바뀐 그림만 · 기지 외형 돔 7종(earth_art.dome_variant → Bg/dome_<id> · Icon/frame_<id>, `earth_export.py frames`) · 장비 탭 Hover3D(둥실 + 몸 돌림 + 그늘 · 발밑 그림자).

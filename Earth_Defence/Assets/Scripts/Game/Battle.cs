@@ -290,12 +290,24 @@ namespace EarthDef
 
         float RandX() => (float)(rnd.NextDouble() * 2 - 1) * (World.HalfW - 0.6f);
 
+        /// <summary>스테이지 보정: Early_Stage_N 아래는 Early_HP_Mul → 1 로 곱으로 서서히 · 10의 배수는 Ten_Stage_HP_Mul (무한 · 엘리트 군단은 그대로)</summary>
+        public (double hp, double atk) StageMul(int n)
+        {
+            if (!IsStage) return (1, 1);
+            int en = Tables.Ci("Early_Stage_N", 0); double k = 1;
+            if (en > 1 && n < en) k = Math.Pow(Math.Max(0.001, Tables.C("Early_HP_Mul", 1)), 1 - (n - 1) / (en - 1.0));   // 곱으로 서서히 (3 ≈ 0.07 · 5 ≈ 0.14 · 8 ≈ 0.46 배)
+            double ten = n % 10 == 0 ? Tables.C("Ten_Stage_HP_Mul", 1) : 1;
+            return (k * ten, Math.Sqrt(k));
+        }
+
         /// <summary>적 하나 만들기 (체력·공격력 = 스테이지 기본 x 적 배율 x 한 판 안에서 조금씩 오름)</summary>
         public Enemy Spawn(string id, Vector2 pos, bool minion = false)
         {
             if (!Tables.Enemies.TryGetValue(id, out var r)) { Debug.LogError("적 없음: " + id); return null; }
             double hp = Tables.C("Mon_HP_Base") * Math.Pow(Tables.C("Mon_HP_Growth"), stageNo - 1) * r.hpMul * stage.hpMul;
             double atk = Tables.C("Mon_Atk_Base") * Math.Pow(Tables.C("Mon_Atk_Growth"), stageNo - 1) * r.atkMul;
+            // 밸런스 1차 (11-17): 처음 몇 스테이지는 약하게 (튜토리얼) · 10의 배수 스테이지는 조금 세게 (챕터 벽)
+            var sm = StageMul(stageNo); hp *= sm.hp; atk *= sm.atk;
             if (mode == "endless") hp *= Math.Pow(Tables.C("Endless_Growth", 1.55), time / 60.0);
             else hp *= 1 + Tables.C("Run_HP_Ramp", 1.5) * Mathf.Clamp01(time / RunTime);
             if (mode == "survival") hp *= Tables.C("Survival_HP", 1.4);
@@ -494,7 +506,8 @@ namespace EarthDef
             }
             else
             {
-                RewardGold = Math.Floor((Tables.C("Win_Gold_Base") + Tables.C("Win_Gold_Per_Stage") * (stageNo - 1) + goldGot) * mul);
+                // 밸런스 1차: 스테이지마다 곱으로도 커지게 (Win_Gold_Growth, 1 = 예전)
+                RewardGold = Math.Floor((Tables.C("Win_Gold_Base") + Tables.C("Win_Gold_Per_Stage") * (stageNo - 1) + goldGot) * Math.Pow(Tables.C("Win_Gold_Growth", 1), stageNo - 1) * mul);
                 RewardShards = Math.Floor((Tables.C("Win_Shards") + Tables.C("Win_Shards_Per_Stage") * (stageNo - 1)) * mul);
                 if (FirstClear) rewardDia = eliteMode ? Tables.C("Dia_Elite_First", 10) : Tables.C("Dia_First_Clear", 5) + (stageNo % 10 == 0 ? Tables.C("Dia_First_Clear_10", 50) : 0);
             }

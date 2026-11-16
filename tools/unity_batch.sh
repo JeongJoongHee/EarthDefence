@@ -11,8 +11,8 @@ if powershell -NoProfile -c "if (Get-Process Unity -ErrorAction SilentlyContinue
   echo "Unity 에 Earth_Defence 가 열려 있습니다. 닫아 주세요."; exit 3
 fi
 QUIT="-quit"; [ "$2" = "--play" ] && QUIT=""
-timeout 580 "$UE" -batchmode $QUIT -projectPath "$P" -executeMethod "$METHOD" -logFile "$LOG"
+timeout ${BATCH_TIMEOUT:-580} "$UE" -batchmode $QUIT -projectPath "$P" -executeMethod "$METHOD" -logFile "$LOG"
 CODE=$?
 echo "exit=$CODE  log=$LOG"
-grep -n "error CS\|Exception\|\[TEST\]\|\[SceneBuilder\]" "$LOG" | grep -v "Licensing" | head -120
+grep -n "error CS\|Exception\|\[TEST\]\|\[SceneBuilder\]" "$LOG" | grep -v "Licensing" | head -${BATCH_LINES:-120}
 exit $CODE
