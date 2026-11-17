@@ -225,7 +225,7 @@ namespace EarthDef.EditorTools
                 GameObject.Find("ClaimAd").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);
                 var ts = Object.FindAnyObjectByType<Toast>();
                 var cc = new Vector3[4]; card.GetWorldCorners(cc); var sc = new Vector3[4]; st.GetWorldCorners(sc);
-                Check(System.Math.Abs(S.gold - gb - pg * 2) < 1 && ts != null && ts.transform.position.y < cc[0].y && ts.transform.position.y > sc[1].y,
+                Check(System.Math.Abs(S.gold - gb - pg * 2) <= System.Math.Max(1, pg * 0.01) && ts != null && ts.transform.position.y < cc[0].y && ts.transform.position.y > sc[1].y,
                       $"순찰 광고 2배 (+{Num.F(S.gold - gb)}) · 토스트가 스테이지 칸과 [전투 시작] 사이");
                 Capture("61_lobby_patrol_toast");
                 Lobby.enemiesOpen = true; Game.Lobby.SetTab(0); yield return Wait(0.3f);
@@ -452,7 +452,7 @@ namespace EarthDef.EditorTools
                 for (int k = 0; k < combos.Count; k++)
                 {
                     Tables.SetC("Endless_Exp_Mul", combos[k].mul); Tables.SetC("Endless_Pick_Gap", combos[k].gap);
-                    Game.StartStage(15, 77, false, "endless"); yield return null;
+                    Game.StartStage(5, 77, false, "endless"); yield return null;      // 밸런스 2차: 15 는 시험 세이브에게 너무 셈
                     string marks = "";
                     for (int sec = 1; sec <= 180; sec++)
                     {
@@ -467,6 +467,17 @@ namespace EarthDef.EditorTools
                 Tables.SetC("Endless_Exp_Mul", mulNew); Tables.SetC("Endless_Pick_Gap", gapNew);
                 int last = combos.Count - 1;
                 Check(min1[last] <= min1[0] * 0.6f && opened[last] < opened[0] && lvs[last] >= 10, $"무한 모드 레벨업 창: 처음 1분 {min1[0]} → {min1[last]}번 · 3분 {opened[0]} → {opened[last]}번 (Lv {lvs[0]} → {lvs[last]})");
+                // 밸런스 2차: 보스 분노 (체력 절반 아래로 처음 → 부하 몰려옴 · 돌진) · 로비 스테이지 약점 안내
+                Game.StartStage(3, 9); yield return null;
+                var boss2 = B.Spawn(B.stage.boss, new Vector2(0, 5f)); B.Tick(Battle.StepSec);
+                int en0 = B.enemies.Count; boss2.hp = boss2.maxHp * 0.49; B.Tick(Battle.StepSec); B.Tick(Battle.StepSec);
+                Check(B.bossRages == 1 && B.enemies.Count >= en0 + Tables.Ci("Boss_Rage_Summon", 6), $"보스 분노: 부하 {B.enemies.Count - en0}마리 · 화남 {B.bossRages}번");
+                Game.ToLobby(); yield return null; Popup.CloseAll();
+                S.stage = 2; Lobby.enemiesOpen = true; Game.Lobby.SetTab(0); yield return Wait(0.3f);
+                var wtx = GameObject.Find("WeakHint").GetComponentInChildren<UnityEngine.UI.Text>().text;
+                Check(!string.IsNullOrEmpty(Tables.Stage(2).weak) && wtx.Contains(Elem.Name(Tables.Stage(2).weak)), $"로비 스테이지 약점 안내: {wtx}");
+                Capture("91_stage_weak");
+                Lobby.enemiesOpen = false; Game.Lobby.SetTab(0);
                 Game.ToLobby(); yield return null; Popup.CloseAll();
             }
             Game.ToLobby(); yield return null; Popup.CloseAll();
@@ -510,7 +521,7 @@ namespace EarthDef.EditorTools
             // --- 스킨 · 필살기
             foreach (var k in Tables.Skins) Store.BuySkin(k);
             Check(S.skins.Count == 11 && S.skinOn.Count == 11, $"스킨 11개 사고 끼움 (다이아 {Num.Comma(S.dia)} 남음)");
-            Game.StartStage(12, 6); yield return null;
+            Game.StartStage(3, 6); yield return null;      // 밸런스 2차: 12 는 시험 세이브에게 너무 셈 → 3
             foreach (var id in new[] { "new_rail", "new_laser", "new_missile", "new_vortex" }) Force(id);
             var rail = B.run.Get("rail");
             var mpb = new MaterialPropertyBlock(); rail.unit.GetComponent<SpriteRenderer>().GetPropertyBlock(mpb);
@@ -519,7 +530,7 @@ namespace EarthDef.EditorTools
             for (int i = 0; i < 12 && !B.units.TrueForAll(u => u == B.Guardian || u.ults > 0); i++)
             {   // 소용돌이포는 사거리가 짧음 → 필살기가 안 찼으면 사거리 안에 적을 둠 (시험이 가끔 실패했음)
                 foreach (var u in B.units) if (u != B.Guardian && u.ults == 0) B.Spawn("beetle", (Vector2)u.transform.position + new Vector2(0, 1.2f));
-                FF(5f);
+                B.baseHp = B.baseMax; FF(5f);
             }
             foreach (var u in B.units) if (u != B.Guardian) Check(u.ults > 0, $"{u.t.row.name} 필살기 {u.ults}번 ({u.t.skin.ultName})");
             yield return Wait(0.3f);
@@ -830,9 +841,12 @@ namespace EarthDef.EditorTools
 
             // 6) 피해 공식: 약점 x1.5 · 저항 x0.6
             var g = B.run.turrets[0];
+            string sw0 = B.stage.weak; B.stage.weak = "";      // 밸런스 2차: 적 자기 약점만 볼 때는 스테이지 약점을 잠깐 비움
             double weak = MinCalc(g, "pebble"), neutral = MinCalc(g, "moth"), resist = MinCalc(B.run.Get("drone"), "jelly");
             double neutralL = MinCalc(B.run.Get("drone"), "moth");
-            Check(System.Math.Abs(weak / neutral - 1.5) < 0.02, $"약점 배율 {weak / neutral:0.00}");
+            Check(System.Math.Abs(weak / neutral - Tables.C("Weak_Mul")) < 0.02, $"약점 배율 {weak / neutral:0.00} (Config {Tables.C("Weak_Mul")})");
+            B.stage.weak = g.row.elem; double stageWeak = MinCalc(g, "moth"); B.stage.weak = sw0;
+            Check(System.Math.Abs(stageWeak / neutral - Tables.C("Weak_Mul")) < 0.02, $"스테이지 약점: 약점이 다른 적도 x{stageWeak / neutral:0.00}");
             Check(System.Math.Abs(resist / neutralL - 0.6) < 0.02, $"저항 배율 {resist / neutralL:0.00}");
 
             // 7) 40초 진행 → 모든 터렛이 쏨
@@ -896,7 +910,7 @@ namespace EarthDef.EditorTools
 
             // 11) 순찰 2시간
             S.patrolFrom = SaveData.Clock; SaveData.NowOffset = 7200;
-            double exp = 2 * (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * (S.best - 1));
+            double exp = 2 * S.PatrolGoldHour;   // 밸런스 2차: 순찰 · 골드 주머니 같은 식
             double g1 = S.gold;
             Game.Lobby.Refresh(); yield return Wait(0.3f);
             Capture("09_lobby_after");

@@ -48,6 +48,8 @@ namespace EarthDef
         public bool offerIsBoss;
         public event Action Changed;
         public event Action<string> Banner;     // 화면 가운데 알림 (보스 등장 등)
+        public void Announce(string s) => Banner?.Invoke(s);
+        public int bossRages;   // 시험용: 보스가 화난 횟수
 
         float acc, spawnAcc, nextWave;
         bool eliteSpawned, bossSpawned;
@@ -297,7 +299,10 @@ namespace EarthDef
             int en = Tables.Ci("Early_Stage_N", 0); double k = 1;
             if (en > 1 && n < en) k = Math.Pow(Math.Max(0.001, Tables.C("Early_HP_Mul", 1)), 1 - (n - 1) / (en - 1.0));   // 곱으로 서서히 (3 ≈ 0.07 · 5 ≈ 0.14 · 8 ≈ 0.46 배)
             double ten = n % 10 == 0 ? Tables.C("Ten_Stage_HP_Mul", 1) : 1;
-            return (k * ten, Math.Sqrt(k));
+            // 밸런스 2차 "10 스테이지마다 툭툭 · 20 부터": Chapter_Step_From(20) 부터 10 스테이지마다 한 계단 (그 안에선 Mon_HP_Growth 로 완만하게)
+            int from = Tables.Ci("Chapter_Step_From", 0); int steps = from > 0 && n >= from ? (n - from) / 10 + 1 : 0;
+            double sh = Math.Pow(Tables.C("Chapter_Step_HP", 1), steps), sa = Math.Pow(Tables.C("Chapter_Step_Atk", 1), steps);
+            return (k * ten * sh, Math.Sqrt(k) * sa);
         }
 
         /// <summary>적 하나 만들기 (체력·공격력 = 스테이지 기본 x 적 배율 x 한 판 안에서 조금씩 오름)</summary>

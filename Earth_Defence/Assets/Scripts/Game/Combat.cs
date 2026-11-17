@@ -44,7 +44,9 @@ namespace EarthDef
             double late = t.late;   // 3차: 스킨 Final DMG (가지고 있으면)
             crit = R < t.CritRate;
             double critMul = crit ? Tables.C("Crit_Dmg", 1.25) + (Battle.I?.lo?.critDmg ?? 0) / 100.0 : 1;
-            double weak = e.row.weak == t.row.elem ? Tables.C("Weak_Mul", 1.5) : e.row.resist == t.row.elem ? Tables.C("Resist_Mul", 0.6) : 1;
+            // 밸런스 2차: 스테이지 약점(Stage 표 Weak) — 이 스테이지 적은 모두(보스 포함) 그 속성에 약함. 적 자기 약점과 같은 값(Weak_Mul), 겹치진 않음
+            var bs = Battle.I; bool stageWeak = bs != null && bs.stage != null && bs.IsStage && !string.IsNullOrEmpty(bs.stage.weak) && bs.stage.weak == t.row.elem;
+            double weak = e.row.weak == t.row.elem || stageWeak ? Tables.C("Weak_Mul", 1.5) : e.row.resist == t.row.elem ? Tables.C("Resist_Mul", 0.6) : 1;
             float y = e.Pos.y;
             double pos = y < Tables.Cf("Pos_Near_Y") ? Tables.C("Pos_Near", 1.1) : y > Tables.Cf("Pos_Far_Y") ? Tables.C("Pos_Far", 0.9) : 1;
             double d = Atk * ratePct / 100.0 * (1 + ordinary) * (1 + late) * critMul * weak * pos * t.Penalty * (1 + e.vuln) * (1 - e.row.armor);

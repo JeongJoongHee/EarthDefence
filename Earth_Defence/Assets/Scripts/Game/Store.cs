@@ -64,7 +64,7 @@ namespace EarthDef
                 }
                 case "gold":
                 {
-                    double g = Math.Floor(it.value * (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * Math.Max(0, S.best - 1)));
+                    double g = Math.Floor(it.value * S.PatrolGoldHour);     // 밸런스 2차: 순찰과 같은 식 (예전엔 스테이지 곱 성장이 빠져 후반에 아주 작았음)
                     S.gold += g; got.Add(GotItem.Res("coin", $"{L.T("r_gold")} +{Num.F(g)}")); break;
                 }
             }

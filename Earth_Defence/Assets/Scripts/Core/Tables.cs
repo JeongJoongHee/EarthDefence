@@ -30,7 +30,7 @@ namespace EarthDef
         public bool IsBoss => rank == "boss";
         public bool IsElite => rank == "elite";
     }
-    public class StageRow { public int stage; public string name, swarm, elite, boss; public string[] enemies; public float hpMul; }
+    public class StageRow { public int stage; public string name, swarm, elite, boss, weak; public string[] enemies; public float hpMul; }   // weak = 밸런스 2차 스테이지 약점 (이 스테이지 적은 모두 이 속성에 약함)
     // ---------- 2차: 장비 · 칩 · 미션 · 출석 ----------
     public class GearPartRow { public string part, name, icon, stat1, stat2; public double base1, perLv1, base2, perLv2; }
     public class GradeRow { public int grade, lvMax; public string name, chipPrefix; public Color color; public double mul; }
@@ -143,7 +143,7 @@ namespace EarthDef
             foreach (var r in Read("Stage"))
                 Stages.Add(new StageRow
                 {
-                    stage = r.I("Stage"), name = r.S("Name"), swarm = r.S("Swarm"), elite = r.S("Elite"), boss = r.S("Boss"),
+                    stage = r.I("Stage"), name = r.S("Name"), swarm = r.S("Swarm"), elite = r.S("Elite"), boss = r.S("Boss"), weak = r.S("Weak"),
                     hpMul = r.D("Hp_Mul") > 0 ? r.F("Hp_Mul") : 1f,
                     enemies = r.S("Enemies").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries),
                 });

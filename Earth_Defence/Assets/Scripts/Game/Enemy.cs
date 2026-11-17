@@ -90,6 +90,16 @@ namespace EarthDef
             }
             if (flash > 0) { flash -= dt; white.color = new Color(1, 1, 1, Mathf.Clamp01(flash / 0.1f) * 0.85f); }
 
+            // 밸런스 2차 보스 패턴: 체력이 Boss_Rage_At(50%) 아래로 처음 내려가면 화냄 — 부하를 한꺼번에 부르고 잠깐 돌진 (대장 카피를 옮겨 막는 순간)
+            if (row.IsBoss && !raged && hp < maxHp * Tables.C("Boss_Rage_At", 0) && Battle.I)
+            {
+                raged = true; rageT = Tables.Cf("Boss_Rage_Time", 4f); Battle.I.bossRages++;
+                int n = Tables.Ci("Boss_Rage_Summon", 6); string sid = string.IsNullOrEmpty(row.summon) ? "pebble" : row.summon;
+                for (int i = 0; i < n; i++) Battle.I.Spawn(sid, Pos + new Vector2((i - (n - 1) / 2f) * 0.7f, 0.2f), true);
+                Battle.I.Announce(L.T("boss_rage")); Fx.Ring(Pos, 1.5f * size, Art.Red); Audio.Play(Audio.Sfx.BossWarn);
+            }
+            if (rageT > 0) rageT -= dt;
+
             // 보스: 부하 부르기
             if (!string.IsNullOrEmpty(row.summon) && (row.IsBoss || row.IsElite))
             {
@@ -109,7 +119,7 @@ namespace EarthDef
             }
             if (Paralyzed || hold) return;
 
-            float spd = row.speed * (1 - slow);
+            float spd = row.speed * (1 - slow) * (rageT > 0 ? Tables.Cf("Boss_Rage_Speed", 2.5f) : 1f);
             var p = pos;
             switch (row.move)
             {
@@ -128,6 +138,7 @@ namespace EarthDef
         }
 
         float wob; bool hasBar; double barHp = -1;
+        bool raged; float rageT;
         void Wobble() { wob = 0.15f; }
         void LateUpdate()
         {

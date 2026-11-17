@@ -493,6 +493,7 @@ namespace EarthDef
                 stageT.color = S.elite ? Art.Purple : Art.Brown;
                 stageName.text = st.name;
                 var weak = new List<string>();
+                if (!string.IsNullOrEmpty(st.weak)) weak.Add(st.weak);      // 밸런스 2차: 스테이지 약점을 맨 앞에
                 foreach (var id in st.enemies) if (Tables.Enemies.TryGetValue(id, out var e) && !weak.Contains(e.weak)) weak.Add(e.weak);
                 for (int c = weakRow.childCount - 1; c >= 0; c--) Destroy(weakRow.GetChild(c).gameObject);
                 for (int i = 0; i < weak.Count; i++) UIKit.ElemTag(weakRow, weak[i], i * 150, 2, 138, 56, 30);
@@ -500,7 +501,7 @@ namespace EarthDef
                 int ne = Mathf.Min(8, st.enemies.Length);
                 float sz = ne > 7 ? 102 : 110;
                 for (int i = 0; i < ne; i++) if (Tables.Enemies.TryGetValue(st.enemies[i], out var e2)) EnemyTile(enemyRow, e2, i * (sz + 12), sz);
-                weakT.text = L.T("weak_hint");
+                weakT.text = string.IsNullOrEmpty(st.weak) ? L.T("weak_hint") : L.F("stage_weak_hint", Elem.Name(st.weak), Tables.C("Weak_Mul", 1.5).ToString("0.#"));
                 ddLabel.text = L.F(enemiesOpen ? "enemies_hide" : "enemies_show", st.enemies.Length);
                 ddArrow.rectTransform.localEulerAngles = new Vector3(0, 0, enemiesOpen ? 90 : -90);
                 if (Tables.Enemies.TryGetValue(st.elite, out var el)) { eliteTile.sprite = Art.Enemy(el); eliteName.text = el.name; }

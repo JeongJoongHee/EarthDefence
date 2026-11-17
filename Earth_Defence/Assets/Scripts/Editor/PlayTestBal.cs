@@ -29,7 +29,11 @@ namespace EarthDef.EditorTools
             public List<int> probe = new() { 3, 5, 10, 15, 20, 30, 40, 50 };
             public readonly List<(string key, double val)> set = new();
             public bool farm = true;
-            public int tour = 0, tourN = 8, policy = 3, seed = 1000;
+            public int tour = 0, tourN = 8, policy = 3, seed = 1000, maxFarm = 400, retryDaily = 1;
+            public bool ads = true, spend = true, stopAtTop = true;
+            public double retryGain = 0.1, diaDay = 0;
+            public readonly List<(string id, int every)> buy = new();
+            public readonly List<float> stageMul = new();
         }
 
         static BalArgs ReadArgs()
@@ -52,6 +56,14 @@ namespace EarthDef.EditorTools
                     case "farm": a.farm = v == "1"; break;
                     case "tour": a.tour = int.Parse(v); break;
                     case "seed": a.seed = int.Parse(v); break;
+                    case "ads": a.ads = v == "1"; break;
+                    case "stageMul": foreach (var x in v.Split(',')) if (x.Trim() != "") a.stageMul.Add(float.Parse(x, CultureInfo.InvariantCulture)); break;
+                    case "stageMulFile": foreach (var x in File.ReadAllText(v).Split(',')) if (x.Trim() != "") a.stageMul.Add(float.Parse(x, CultureInfo.InvariantCulture)); break;
+                    case "spend": a.spend = v == "1"; break;
+                    case "retryGain": a.retryGain = double.Parse(v, CultureInfo.InvariantCulture); break;
+                    case "maxFarm": a.maxFarm = int.Parse(v); break;
+                    case "diaDay": a.diaDay = double.Parse(v, CultureInfo.InvariantCulture); break;
+                    case "buy": foreach (var kv3 in v.Split(';')) { var q = kv3.Split(':'); if (q.Length == 2) a.buy.Add((q[0].Trim(), int.Parse(q[1]))); } break;
                     case "tourN": a.tourN = int.Parse(v); break;
                     case "policy": a.policy = int.Parse(v); break;
                     case "set": foreach (var kv2 in v.Split(';')) { var q = kv2.Split(':'); if (q.Length == 2) a.set.Add((q[0].Trim(), double.Parse(q[1], CultureInfo.InvariantCulture))); } break;
@@ -61,7 +73,42 @@ namespace EarthDef.EditorTools
             return a;
         }
 
-        class FightRec { public bool win; public double hp, hpMax; public float time; public int level, turrets, tierSum; public long kills; public double gold; }
+        class FightRec { public bool win; public double hp, hpMax, goldGot; public float time; public int level, turrets, tierSum; public long kills; public double gold; }
+        static double diaBought, diaSpent;
+
+        /// <summary>힘(다시 도전할 때를 정하는 대략의 값): (기지 공격력 + 장비) x (1 + 열린 터렛 평균 레벨 피해)</summary>
+        static double Power()
+        {
+            var lo = Loadout.Build(S); double tl = 0; int n = 0;
+            foreach (var t in Tables.Turrets) if (S.Unlocked(t)) { tl += Tables.Lv(S.TurretLv(t.id)).dmgBonus; n++; }
+            return (S.Atk + lo.AtkTotal) * (1 + (n > 0 ? tl / n : 0)) * (1 + S.BaseHp / 20000.0 * 0);
+        }
+
+        /// <summary>다이아 쓰기: 조각 상자(하루 10) → 큰 골드 주머니 → 장비 · 회로 10+1 번갈아 (무과금도 같은 규칙)</summary>
+        static bool gearTurn;
+        static void Spend(BalArgs a)
+        {
+            if (!a.spend) return;
+            SaveData.BeginBatch();
+            try
+            {
+                for (int guard = 0; guard < 200; guard++)
+                {
+                    ShopItemRow pick = null;
+                    var shard = Tables.ShopItems.Find(i => i.kind == "shard_box");
+                    var gold2 = Tables.ShopItems.Find(i => i.id == "i_gold2");
+                    var box = Tables.ShopItems.Find(i => i.id == (gearTurn ? "i_gear10" : "i_chip10"));
+                    bool turretsLeft = Tables.Turrets.Exists(t => S.Unlocked(t) && !Meta.TurretMax(t.id));
+                    if (shard != null && turretsLeft && Store.CanBuy(shard)) pick = shard;
+                    else if (gold2 != null && Store.CanBuy(gold2) && S.dia >= gold2.costDia + (box != null ? box.costDia * 0.5 : 0)) pick = gold2;
+                    else if (box != null && Store.CanBuy(box)) { pick = box; gearTurn = !gearTurn; }
+                    else if (gold2 != null && Store.CanBuy(gold2)) pick = gold2;
+                    if (pick == null) break;
+                    double d0 = S.dia; Store.Buy(pick); diaSpent += d0 - S.dia;
+                }
+            }
+            finally { SaveData.EndBatch(); }
+        }
 
         /// <summary>고르기 규칙 (0 = 아무거나 · 1~5 = 점수 규칙). 겨루기(tour)에서 가장 잘 이긴 규칙을 GoodPolicy 로 씀</summary>
         //  1 = 터렛 2기까지 + 한 터렛 몰아주기 · 2 = 터렛 4칸 먼저 채우기 · 3 = 2 + 약점 속성 크게 · 4 = 돌파 · 콤보 먼저, 터렛은 그다음 · 5 = 터렛 3기 + 약점 · 6 = 5 + 돌파 · 콤보를 새 터렛보다 먼저
@@ -78,6 +125,7 @@ namespace EarthDef.EditorTools
         };
         static string StageWeak(Battle b)
         {
+            if (!string.IsNullOrEmpty(b.stage.weak)) return b.stage.weak;     // 밸런스 2차: 스테이지 약점
             var weakCnt = new Dictionary<string, int>();
             foreach (var id in b.stage.enemies) if (Tables.Enemies.TryGetValue(id, out var er) && !string.IsNullOrEmpty(er.weak)) weakCnt[er.weak] = (weakCnt.TryGetValue(er.weak, out var n) ? n : 0) + 1;
             if (Tables.Enemies.TryGetValue(b.stage.boss, out var bo) && !string.IsNullOrEmpty(bo.weak)) weakCnt[bo.weak] = (weakCnt.TryGetValue(bo.weak, out var n2) ? n2 : 0) + 2;
@@ -115,7 +163,7 @@ namespace EarthDef.EditorTools
             return bi;
         }
 
-        IEnumerator Fight(int stage, int seed, int policy, FightRec r)
+        IEnumerator Fight(int stage, int seed, int policy, FightRec r, bool ad = false)
         {
             Game.StartStage(stage, seed); yield return null;
             Popup.CloseAll(); Tutorial.CloseCur();
@@ -131,7 +179,8 @@ namespace EarthDef.EditorTools
                 }
                 yield return null;
             }
-            r.win = b.won; r.hp = System.Math.Max(0, b.baseHp); r.hpMax = b.baseMax; r.time = b.time; r.level = b.level; r.kills = b.kills; r.gold = b.RewardGold;
+            r.win = b.won; r.hp = System.Math.Max(0, b.baseHp); r.hpMax = b.baseMax; r.time = b.time; r.level = b.level; r.kills = b.kills; r.gold = b.RewardGold; r.goldGot = b.goldGot;
+            if (ad) b.AdDouble();
             r.turrets = b.run.turrets.Count - 1; r.tierSum = 0; foreach (var t in b.run.turrets) r.tierSum += t.tier;
             Popup.CloseAll();
         }
@@ -181,31 +230,51 @@ namespace EarthDef.EditorTools
             Log($"밸런스 측정 {a.label}: {a.days}일 · 하루 {a.battles}판 · 순찰 {a.patrolH}시간 · 공략 비교 {string.Join(",", a.probe)} x{a.probeN}");
             // 새 세이브
             foreach (var (k, v) in a.set) { Tables.SetC(k, v); Log($"Config {k} = {v}"); }
+            for (int i = 0; i < a.stageMul.Count && i < Tables.Stages.Count; i++) Tables.Stages[i].hpMul = a.stageMul[i];   // 스테이지별 적 체력 배율 덮어쓰기 (Stage 표 Hp_Mul)
+            if (a.stageMul.Count > 0) Log($"스테이지 배율 {a.stageMul.Count}개 덮어씀 (1: {a.stageMul[0]} · 끝: {a.stageMul[a.stageMul.Count - 1]})");
             SaveData.ResetAll(); SaveData.Load(); SaveData.NowOffset = 0;
-            bool lostLast = false; GoodPolicy = a.policy;
+            GoodPolicy = a.policy; diaBought = 0; diaSpent = 0; gearTurn = true;
             var tours = new List<string>();
             var rows = new List<string>(); var probes = new List<string>(); var days = new List<string>();
             var probed = new HashSet<int>();
             var sw = System.Diagnostics.Stopwatch.StartNew();
             int seed = a.seed, fights = 0; float realStart = Time.realtimeSinceStartup;
+            var farmCache = new Dictionary<int, (double gold, long kills, float time)>();
+            double powerAtLoss = 0; int farmsSinceLoss = 0, pushes = 0, quick = 0; bool pushedToday;
+            var buys = new List<(ProductRow p, int every)>();
+            foreach (var (pid, ev) in a.buy) { var pr0 = Tables.Products.Find(x => x.id == pid); if (pr0 != null) buys.Add((pr0, ev)); else Log("상품 없음 " + pid); }
             for (int day = 1; day <= a.days; day++)
             {
-                // 하루 시작: 순찰 · 무료 상자 · 출석
+                // 하루 시작: 순찰(광고 2배) · 출석 · 무료 · 광고 상자 · 과금 상품
                 if (day > 1)
                 {
                     SaveData.NowOffset += 86400;
                     S.patrolFrom = SaveData.Clock - (long)(a.patrolH * 3600);
-                    Meta.ClaimPatrol();
+                    Meta.ClaimPatrol(a.ads ? 2 : 1);
                 }
                 if (Meta.AttendReady) Meta.AttendClaim();
-                var free = Tables.ShopItems.Find(i => i.kind == "free_box"); if (free != null && Store.Left(free) > 0) Store.Buy(free);
-                Manage();
+                foreach (var it in Tables.ShopItems)
+                    if ((it.kind == "free_box" || (a.ads && it.kind == "ad_box")) && Store.Left(it) > 0) Store.Buy(it);
+                foreach (var (pr1, ev) in buys) if ((day - 1) % ev == 0) { int got = Store.Purchase(pr1); diaBought += got; }
+                if (a.diaDay > 0) { S.dia += a.diaDay; diaBought += a.diaDay; }   // 과금 단계를 "하루 다이아 N개"로 잴 때
+                Spend(a); Manage();
+                pushedToday = false;
                 for (int k = 0; k < a.battles; k++)
                 {
-                    int st = Mathf.Min(Tables.Stages.Count, a.maxStage, S.best + 1);
-                    // 진 다음 판은 깬 스테이지에서 골드 벌기 (실제 플레이어처럼) → 그다음 다시 도전
-                    bool farm = a.farm && lostLast && S.best >= 1;
-                    if (farm) st = S.best;
+                    int top = Mathf.Min(Tables.Stages.Count, a.maxStage);
+                    int st = Mathf.Min(top, S.best + 1);
+                    // 진 뒤에는 힘이 retryGain 만큼 오를 때까지 깬 스테이지에서 골드 벌기 (하루 첫 판 · 너무 오래면 그냥 도전)
+                    bool farm = a.farm && powerAtLoss > 0 && S.best >= 1 && Power() < powerAtLoss * (1 + a.retryGain) && (pushedToday || a.retryDaily == 0) && farmsSinceLoss < a.maxFarm;
+                    if (S.best >= top) farm = true;
+                    if (farm && farmCache.TryGetValue(S.best, out var fc))
+                    {   // 빠른 골드 벌기: 그 스테이지를 마지막으로 이긴 판의 처치 · 시간으로 보상만 (전투 없이)
+                        Game.StartStage(S.best, seed++); yield return null; Popup.CloseAll();
+                        var fb = B; fb.time = fc.time; fb.goldGot = fc.gold; fb.kills = fc.kills; fb.End(true);
+                        if (a.ads) fb.AdDouble();
+                        Popup.CloseAll(); quick++; farmsSinceLoss++; fights++;
+                        Spend(a); Manage();
+                        continue;
+                    }
                     if (!farm && a.tour == st && tours.Count == 0)
                     {   // 고르기 규칙 겨루기: 같은 세이브 · 같은 씨앗으로 규칙마다 tourN 번
                         string snap = JsonUtility.ToJson(S); long off = SaveData.NowOffset;
@@ -224,7 +293,7 @@ namespace EarthDef.EditorTools
                         }
                     }
                     if (!farm && a.probe.Contains(st) && !probed.Contains(st))
-                    {   // ② 공략 차이: 지금 세이브로 잘 고르기 · 아무거나 probeN 번씩
+                    {   // ② 공략 차이: 지금 세이브로 잘 고르기(약점 노림) · 아무거나 probeN 번씩
                         probed.Add(st);
                         string snap = JsonUtility.ToJson(S); long off = SaveData.NowOffset;
                         int gw = 0, rw = 0; double ghp = 0, rhp = 0; var gl = new List<string>(); var rl = new List<string>();
@@ -241,16 +310,21 @@ namespace EarthDef.EditorTools
                         Log($"공략 비교 스테이지 {st}: 잘 고름 {gw}/{a.probeN} (남은 체력 {(gw > 0 ? ghp / gw : 0):0%}) · 아무거나 {rw}/{a.probeN} (남은 {(rw > 0 ? rhp / rw : 0):0%})");
                     }
                     var f = new FightRec();
-                    double atk = S.Atk; int blv = S.baseLv; double tl = TurretLvAvg(); string gd = GearDesc();
-                    yield return Fight(st, seed++, GoodPolicy, f); fights++;
-                    lostLast = !farm && !f.win;
-                    rows.Add($"{{\"day\":{day},\"stage\":{st},\"farm\":{(farm ? 1 : 0)},\"win\":{(f.win ? 1 : 0)},\"hp\":{f.hp / f.hpMax:0.###},\"time\":{f.time:0},\"lv\":{f.level},\"tur\":{f.turrets},\"tier\":{f.tierSum},\"baseLv\":{blv},\"atk\":{atk:0},\"tLv\":{tl:0.0},\"gear\":\"{gd}\",\"gold\":{S.gold:0},\"dia\":{S.dia:0}}}");
-                    Manage();
-                    if (S.best >= Mathf.Min(Tables.Stages.Count, a.maxStage)) break;
+                    double atk = S.Atk; int blv = S.baseLv; double tl = TurretLvAvg(); string gd = GearDesc(); double pw = Power();
+                    yield return Fight(st, seed++, GoodPolicy, f, a.ads); fights++;
+                    if (!farm) { pushes++; pushedToday = true; }
+                    if (f.win) { farmCache[st] = (f.goldGot, f.kills, f.time); powerAtLoss = 0; farmsSinceLoss = 0; }
+                    else if (!farm) { powerAtLoss = pw; farmsSinceLoss = 0; }
+                    rows.Add($"{{\"day\":{day},\"stage\":{st},\"farm\":{(farm ? 1 : 0)},\"win\":{(f.win ? 1 : 0)},\"hp\":{f.hp / f.hpMax:0.###},\"time\":{f.time:0},\"lv\":{f.level},\"tur\":{f.turrets},\"tier\":{f.tierSum},\"baseLv\":{blv},\"atk\":{atk:0},\"pw\":{pw:0},\"tLv\":{tl:0.0},\"gear\":\"{gd}\",\"gold\":{S.gold:0},\"dia\":{S.dia:0}}}");
+                    Spend(a); Manage();
+                    if (S.best >= top && a.stopAtTop) break;
                 }
-                days.Add($"{{\"day\":{day},\"best\":{S.best},\"baseLv\":{S.baseLv},\"tLv\":{TurretLvAvg():0.0},\"gear\":\"{GearDesc()}\",\"gold\":{S.gold:0},\"dia\":{S.dia:0},\"parts\":{S.parts:0}}}");
-                Log($"{day}일째: 최고 {S.best} · 기지 Lv {S.baseLv} · 터렛 평균 Lv {TurretLvAvg():0.0} · 장비 {GearDesc()} · 판 {fights} · {Time.realtimeSinceStartup - realStart:0}초");
-                if (S.best >= Mathf.Min(Tables.Stages.Count, a.maxStage)) break;
+                // 하루 끝: 일일 미션 받기
+                for (int mi = 0; mi < Tables.Missions.Count; mi++) if (Meta.MissionReady(mi)) Meta.MissionClaim(mi);
+                Spend(a); Manage();
+                days.Add($"{{\"day\":{day},\"best\":{S.best},\"baseLv\":{S.baseLv},\"pw\":{Power():0},\"tLv\":{TurretLvAvg():0.0},\"gear\":\"{GearDesc()}\",\"gold\":{S.gold:0},\"dia\":{S.dia:0},\"diaBought\":{diaBought:0},\"diaSpent\":{diaSpent:0},\"parts\":{S.parts:0},\"pushes\":{pushes},\"quick\":{quick}}}");
+                if (day % 10 == 0 || day <= 3) Log($"{day}일째: 최고 {S.best} · 기지 Lv {S.baseLv} · 힘 {Power():0} · 터렛 평균 Lv {TurretLvAvg():0.0} · 장비 {GearDesc()} · 도전 {pushes} · 빠른 벌기 {quick} · {Time.realtimeSinceStartup - realStart:0}초");
+                if (S.best >= Mathf.Min(Tables.Stages.Count, a.maxStage) && a.stopAtTop) break;
             }
             var setJ = new List<string>(); foreach (var (k, v) in a.set) setJ.Add($"\"{k}\":{v.ToString(CultureInfo.InvariantCulture)}");
             var json = "{\"label\":\"" + a.label + "\",\"set\":{" + string.Join(",", setJ) + "},\"args\":{\"days\":" + a.days + ",\"battles\":" + a.battles + ",\"patrolH\":" + a.patrolH.ToString(CultureInfo.InvariantCulture) + "},\n\"fights\":[\n" + string.Join(",\n", rows) + "],\n\"probes\":[\n" + string.Join(",\n", probes) + "],\n\"tours\":[" + string.Join(",", tours) + "],\n\"days\":[\n" + string.Join(",\n", days) + "]}";

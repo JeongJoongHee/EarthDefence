@@ -161,7 +161,9 @@ namespace EarthDef
 
         /// <summary>순찰: 시간당 골드 · 조각 (깬 최고 스테이지 기준), 최대 시간까지</summary>
         public double PatrolSec => Math.Max(0, Math.Min(Clock - patrolFrom, Tables.C("Patrol_Max_Hours") * 3600));
-        public double PatrolGold => PatrolSec / 3600.0 * (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * Math.Max(0, best - 1)) * Math.Pow(Tables.C("Patrol_Gold_Growth", 1), Math.Max(0, best - 1));
+        /// <summary>순찰 시간당 골드 (깬 최고 스테이지 기준) — 순찰 · 상점 골드 주머니가 같이 씀</summary>
+        public double PatrolGoldHour => (Tables.C("Patrol_Gold_Hour") + Tables.C("Patrol_Gold_Per_Stage") * Math.Max(0, best - 1)) * Math.Pow(Tables.C("Patrol_Gold_Growth", 1), Math.Max(0, best - 1));
+        public double PatrolGold => PatrolSec / 3600.0 * PatrolGoldHour;
         public int PatrolShards => (int)Math.Floor(PatrolSec / 3600.0 * Tables.C("Patrol_Shards_Hour"));
     }
 }
