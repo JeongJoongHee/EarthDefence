@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전투 배치 시안</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red:#b5432f;--red-bg:#fbe6e0;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1180px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:21px;margin:40px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:12px 0}
+  .row4 figure,.cc figure{margin:0} .row4 img,.cc img{width:100%;border:4px solid #3b281c;border-radius:22px;display:block}
+  .row4 figcaption{font-size:14px;margin-top:6px;text-align:center;font-weight:bold}
+  .cc{display:grid;grid-template-columns:minmax(260px,400px) 1fr;gap:22px;align-items:start;margin:10px 0}
+  .cc table{border-collapse:collapse;width:100%;background:#fff;font-size:14.5px} .cc th,.cc td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top} .cc th{background:#f1e8d8;width:92px;white-space:nowrap}
+  .pill{display:inline-block;border-radius:6px;padding:0 8px;font-size:13px;font-weight:bold} .p-g{background:var(--green-bg);color:var(--green)} .p-o{background:var(--orange-bg);color:var(--orange)} .p-r{background:var(--red-bg);color:var(--red)}
+  table.cmp{border-collapse:collapse;width:100%;background:#fff;font-size:14.5px;margin:8px 0} table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top} table.cmp th{background:#f1e8d8}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:64px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  ul.todo > li.checked{border-color:#9cc48f;background:#f6fbf2}
+  #stat{font-size:14px;color:var(--soft)}
+  @media(max-width:800px){.row4{grid-template-columns:1fr 1fr}.cc{grid-template-columns:1fr}}
+</style></head><body><main>
+
+<h1>전투 배치 시안 <small style="font-size:15px;color:var(--soft);font-weight:normal">2026-11-18 · 원작과 다른 느낌</small></h1>
+<p class="note">원작처럼 "아래 돔 + 위에서 오는 적 + 바닥에 한 줄로 선 터렛"이 아닌 배치 세 가지를 휴대폰 화면 크기(1080x2340)로 만들었습니다. 적 · 터렛 · 대장 카피 · 효과는 <b>지금 게임 그림 그대로</b>이고, 새 기지(꼬마 지구 · 방주 · 등대)와 위 줄 UI는 같은 낙서풍으로 새로 그렸습니다. 아직 게임에 넣은 것은 아니고, 정하시면 그 시안을 실제 게임으로 옮깁니다.</p>
+
+<div class="row4">
+<figure><a href="캡쳐본 모음/전투UI_제안/now_full.jpg"><img src="캡쳐본 모음/전투UI_제안/now_full.jpg"></a><figcaption>지금 (원작과 같은 배치)</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_시안/orbit.png"><img src="캡쳐본 모음/전투배치_시안/orbit.png"></a><figcaption>① 꼬마 지구 360°</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_시안/ark.png"><img src="캡쳐본 모음/전투배치_시안/ark.png"></a><figcaption>② 카피 방주</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_시안/tower.png"><img src="캡쳐본 모음/전투배치_시안/tower.png"></a><figcaption>③ 카피 등대 (옆에서)</figcaption></figure>
+</div>
+<p class="note">그림을 누르면 원래 크기로 열립니다.</p>
+
+<div class="tip green"><b>추천: ① 꼬마 지구 360°</b>. 게임 이름이 "지구를 지켜라"라서 화면을 보자마자 무엇을 지키는지 알 수 있고, 원작과 가장 멀리 떨어진 배치입니다. 사방에서 적이 오니 "어느 쪽을 어느 터렛에 맡길까"라는 새 공략 축도 생깁니다.
+<br><b>밸런스를 지키는 게 먼저라면 ② 카피 방주</b>를 추천합니다. 적이 위에서 오는 것은 지금과 같고 기지 모양과 터렛 자리만 바뀌어서, 밸런스는 거의 그대로입니다.
+<br>배치를 바꾸면 적이 기지까지 오는 거리가 달라지므로, <b>밸런스 3차 전에</b> 정하는 것이 맞습니다. 3차에서 새 배치로 측정을 다시 돌리면 됩니다(측정 · 맞추기 도구는 이미 자동).</div>
+
+<!-- ① -->
+<h2>① 꼬마 지구 360° — 사방에서 오는 적, 궤도 위 터렛</h2>
+<div class="cc"><figure><a href="캡쳐본 모음/전투배치_시안/orbit.png"><img src="캡쳐본 모음/전투배치_시안/orbit.png"></a></figure>
+<table>
+<tr><th>한 줄</th><td>화면 가운데 꼬마 지구(카피 마을 두 채)를 둘레의 모든 방향에서 몰려오는 적으로부터 지킵니다.</td></tr>
+<tr><th>기지</th><td>돔 대신 둥근 행성. 엷은 <b>대기층이 방패</b>이고, 기지 체력은 행성을 감싼 <b>초록 고리</b>입니다(파란 덧줄 = 방패). 숫자는 행성 아래 꼬리표에 둡니다.</td></tr>
+<tr><th>터렛 배치</th><td>행성 둘레 <b>궤도 위 받침 4칸</b>(지금과 같은 수, 비스듬히 네 방향). 칸마다 맡는 방향이 달라서 "약점 터렛을 적이 많이 오는 쪽에" 같은 자리 고르기가 생깁니다.</td></tr>
+<tr><th>대장 카피</th><td>행성 위에 서 있고, 화면을 좌우로 끌면 <b>행성 둘레를 돌며</b> 위치를 옮깁니다.</td></tr>
+<tr><th>적</th><td>화면 네 가장자리에서 가운데로 옵니다. 운석은 꼬리가 바깥을 향하게 돌립니다. 화면 밖 보스는 가장자리 화살표로 표시합니다.</td></tr>
+<tr><th>UI</th><td>위: 둥근 단추 + 하늘색 리본(스테이지) + 시계 판(약점 아이콘 · 보스까지 진행 막대). 아래: 레벨 배지 + 경험치 + 배속. 원작과 달리 경험치가 아래에 있습니다.</td></tr>
+<tr><th>원작과 차이</th><td><span class="pill p-g">가장 큼</span> 방향 · 기지 모양 · 터렛 배치 · UI 위치가 모두 다릅니다.</td></tr>
+<tr><th>코드 일</th><td><span class="pill p-r">큼 · 2~3일</span> 적이 나오는 자리를 사방으로, 움직임은 가운데를 향하게 바꿉니다. 터렛 칸은 궤도 위치로, 대장 카피 끌기는 각도 이동으로 바꿉니다. 피해 공식 · 카드 · 터렛 공격은 지금 것을 그대로 씁니다(거리로 표적을 고르므로).</td></tr>
+<tr><th>밸런스</th><td><span class="pill p-o">다시 맞춤</span> 적이 오는 거리가 화면 높이(약 1,500) → 화면 반폭(약 500~900)으로 짧아집니다. 적 속도 배율 하나를 두고, 3차 측정으로 다시 맞춥니다.</td></tr>
+</table></div>
+
+<!-- ② -->
+<h2>② 카피 방주 — 앞으로 날아가는 배, 2층 갑판 터렛</h2>
+<div class="cc"><figure><a href="캡쳐본 모음/전투배치_시안/ark.png"><img src="캡쳐본 모음/전투배치_시안/ark.png"></a></figure>
+<table>
+<tr><th>한 줄</th><td>카피들을 태운 나무 방주가 우주를 뚫고 날아갑니다. 배경의 빛줄이 아래로 흘러 "앞으로 나아가는" 느낌을 줍니다.</td></tr>
+<tr><th>기지</th><td>돔 대신 엔진 두 개를 단 <b>나무 방주</b>. 기지 체력은 선체 가운데 <b>이름판</b>(하트 + 막대 + 숫자)에 있습니다.</td></tr>
+<tr><th>터렛 배치</th><td><b>2층</b>: 아래 갑판 양 끝에 2칸, 선실 지붕 대장 카피 양옆에 2칸. 높은 칸은 멀리, 낮은 칸은 넓게 쏘는 느낌을 그림으로 줍니다(값은 그대로).</td></tr>
+<tr><th>대장 카피</th><td>선실 지붕 위를 좌우로 끌어 이동합니다. 지금 조작과 같습니다.</td></tr>
+<tr><th>적</th><td>위에서 옵니다(지금과 같음). 지나가는 바위 그림자가 흐르는 배경 효과를 더합니다.</td></tr>
+<tr><th>UI</th><td>위: 시간 대신 <b>항로 막대</b>(웨이브 점 3개 → 배 위치 → 목적지 행성의 보스). 스테이지마다 "어디로 가는 중"이라는 이야기를 붙일 수 있습니다. 경험치 바 · 배속은 바로 아래 줄에 둡니다.</td></tr>
+<tr><th>원작과 차이</th><td><span class="pill p-o">중간</span> 방향은 같지만, 기지 모양 · 2층 배치 · 움직이는 배경 · 항로 UI로 느낌이 크게 달라집니다.</td></tr>
+<tr><th>코드 일</th><td><span class="pill p-g">작음 · 1일</span> 기지 그림 교체, 터렛 칸 좌표 4개(높이 2단), 배경 흐름, 위 줄 UI 교체. 전투 규칙은 그대로입니다.</td></tr>
+<tr><th>밸런스</th><td><span class="pill p-g">거의 그대로</span> 기지 선(적이 닿는 높이)이 조금 올라가는 것만 맞추면 됩니다.</td></tr>
+</table></div>
+
+<!-- ③ -->
+<h2>③ 카피 등대 — 옆에서 오는 적, 층마다 터렛</h2>
+<div class="cc"><figure><a href="캡쳐본 모음/전투배치_시안/tower.png"><img src="캡쳐본 모음/전투배치_시안/tower.png"></a></figure>
+<table>
+<tr><th>한 줄</th><td>바닷가 벼랑의 등대를 오른쪽 하늘에서 몰려오는 적으로부터 지킵니다. 전투가 <b>오른쪽 → 왼쪽</b>으로 흐릅니다.</td></tr>
+<tr><th>기지</th><td>줄무늬 등대. 체력은 화면 왼쪽 끝 <b>세로 막대</b>입니다(파란 윗부분 = 방패). 꼭대기 등불이 은은하게 빛납니다.</td></tr>
+<tr><th>터렛 배치</th><td><b>층마다 발코니</b> 3칸 + 벼랑 위 1칸. 층이 곧 높이 줄이라서 "높이 나는 적은 위층, 땅 가까이 오는 적은 아래층"이 맡습니다.</td></tr>
+<tr><th>대장 카피</th><td>꼭대기 난간에 서 있고, 화면을 <b>위아래로 끌면</b> 층 사이를 오르내립니다.</td></tr>
+<tr><th>적</th><td>오른쪽 가장자리에서 여러 높이로 날아옵니다(운석은 꼬리가 오른쪽). 큰 보스는 오른쪽 끝에 반쯤 걸쳐 나옵니다.</td></tr>
+<tr><th>UI</th><td>위: 크림 판 하나에 일시정지 · 스테이지 · 시계 · 경험치 · 카드를 모았습니다. 배속은 오른쪽 아래 바다 위에 둡니다.</td></tr>
+<tr><th>원작과 차이</th><td><span class="pill p-g">큼</span> 전투 방향 · 조작 방향 · 기지 모양 · 층 배치가 모두 다릅니다.</td></tr>
+<tr><th>코드 일</th><td><span class="pill p-r">큼 · 2~3일</span> 적의 나오는 자리 · 이동 방향을 가로로, 대장 카피 끌기를 세로로 바꿉니다. 터렛 공격 효과(빔 · 벌 · 불바퀴 길)도 방향을 확인해야 합니다.</td></tr>
+<tr><th>밸런스</th><td><span class="pill p-r">다시 맞춤</span> 적이 오는 거리가 화면 폭(약 600)으로 지금의 절반 아래입니다. 적 속도를 줄이거나 등대를 왼쪽 끝에 더 붙여 거리를 늘려야 합니다. 3차 측정으로 다시 맞춥니다.</td></tr>
+</table></div>
+
+<h2>한눈에 비교</h2>
+<table class="cmp">
+<tr><th></th><th>① 꼬마 지구</th><th>② 카피 방주</th><th>③ 카피 등대</th></tr>
+<tr><td>원작과 다른 정도</td><td>가장 큼</td><td>중간</td><td>큼</td></tr>
+<tr><td>적 방향</td><td>사방 → 가운데</td><td>위 → 아래 (지금과 같음)</td><td>오른쪽 → 왼쪽</td></tr>
+<tr><td>대장 카피 조작</td><td>끌면 행성 둘레를 돎</td><td>좌우 끌기 (지금과 같음)</td><td>위아래 끌기</td></tr>
+<tr><td>새 공략 축</td><td>터렛 자리 = 맡는 방향</td><td>높은 칸 / 낮은 칸 (그림만)</td><td>층 = 맡는 높이</td></tr>
+<tr><td>이름 "지구를 지켜라"와 맞음</td><td>가장 잘 맞음</td><td>여행 이야기를 더해야 함</td><td>등대 = 지구 끝 이야기를 더해야 함</td></tr>
+<tr><td>코드 일</td><td>2~3일</td><td>1일</td><td>2~3일</td></tr>
+<tr><td>밸런스</td><td>다시 맞춤 (3차와 같이)</td><td>거의 그대로</td><td>다시 맞춤 (3차와 같이)</td></tr>
+<tr><td>로비 · 장비 탭 영향</td><td>로비 돔 그림 → 꼬마 지구 · 기지 외형 7종 다시 그림</td><td>로비 돔 → 방주 · 외형 7종 = 배 색 · 장식</td><td>로비 돔 → 등대 · 외형 7종 = 등대 무늬</td></tr>
+</table>
+<div class="tip gray"><b>세 시안 모두 공통</b>: 적 · 터렛 · 카드 · 장비 · 피해 공식은 그대로입니다. 지난번 제안(전투UI_제안.html)의 보스 체력 막대 · 피해 숫자 정리 · 약점 표시는 어느 배치에도 그대로 들어갑니다. 시안 안의 피해 숫자도 그 정리된 모양으로 그렸습니다. 기지 외형 7종(돔 7가지)은 고른 배치에 맞춰 다시 그려야 합니다.</div>
+
+<h2>정해 주실 것 <span id="stat"></span></h2>
+<ul class="todo">
+<li data-id="l-pick"><label><input type="checkbox"><span><span class="tag">결정</span>어느 배치로 갈지 (①/②/③/지금 그대로)<span class="why">의견 칸에 번호를 적어 주세요. 섞어도 됩니다(예: ① 배치 + ② 의 항로 UI). 추천은 ①, 밸런스를 지키는 게 먼저라면 ②입니다.</span></span></label></li>
+<li data-id="l-ui"><label><input type="checkbox"><span><span class="tag">확인</span>위 줄 UI 모양 (리본 / 항로 막대 / 크림 판)<span class="why">배치와 따로 고를 수 있습니다. 마음에 드는 위 줄 모양을 적어 주세요.</span></span></label></li>
+<li data-id="l-fix"><label><input type="checkbox"><span><span class="tag">확인</span>고른 시안에서 바꾸고 싶은 것<span class="why">예: 지구를 더 크게 · 받침 수 · 등대 층 수 · 배 색 등. 적어 주시면 시안을 한 번 더 다듬은 뒤 게임에 옮깁니다.</span></span></label></li>
+<li data-id="l-order"><label><input type="checkbox"><span><span class="tag">확인</span>순서: 배치 → 전투 UI 제안 → 밸런스 3차<span class="why">배치가 바뀌면 적 거리와 UI 자리가 함께 바뀌어서, 이 순서가 다시 하는 일이 가장 적습니다.</span></span></label></li>
+</ul>
+<p class="note">시안 다시 만들기: PowerShell 에서 <code>$env:PYTHONUTF8='1'; python tools/layout_mock.py</code> → <code>캡쳐본 모음/전투배치_시안/</code></p>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-layout-1118', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){ var c=0,n=0; items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; }); document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n; }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row'; li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견'; row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='의견을 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open'); li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+})();
+</script>
+</body></html>
