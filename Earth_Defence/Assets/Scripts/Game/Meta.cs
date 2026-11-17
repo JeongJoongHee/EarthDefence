@@ -131,7 +131,7 @@ namespace EarthDef
             if (!MissionReady(i)) return null;
             S.mGot[i] = 1;
             var m = Tables.Missions[i];
-            var s = Gear.Give(m.reward, m.value);
+            var s = Gear.Give(m.reward, RewardValue(m.reward, m.value));
             Audio.Play(Audio.Sfx.Coin);
             S.Save();
             return s;
@@ -148,7 +148,7 @@ namespace EarthDef
             if (!AttendReady) return null;
             var row = Tables.Attend[S.attendN % AttendDays % Tables.Attend.Count];
             S.attendN++; S.attendLast = SaveData.Today;
-            var s = Gear.Give(row.reward, row.value);
+            var s = Gear.Give(row.reward, RewardValue(row.reward, row.value));
             Audio.Play(Audio.Sfx.Coin);
             S.Save();
             return s;
@@ -169,10 +169,29 @@ namespace EarthDef
         {
             "gold" => "coin", "shards" => "shard", "stamina" => "energy", "parts" => "parts", "chip" => "chip", "gear" => "g_suit", _ => "star",
         };
-        public static string RewardText(string kind, double v) => kind switch
+        public static string RewardText(string kind, double v0)
         {
-            "chip" or "gear" => Tables.Grade((int)v).name + " " + L.T("r_" + kind),   // 4차 수정안 "등급 통일" (1등급 → 일반)
-            _ => Num.F(v),
-        };
+            double v = RewardValue(kind, v0);
+            return kind switch
+            {
+                "chip" or "gear" => Tables.Grade((int)v).name + " " + L.T("r_" + kind),   // 4차 수정안 "등급 통일" (1등급 → 일반)
+                _ => Num.F(v),
+            };
+        }
+        /// <summary>
+        /// 밸런스 3차: 미션 · 출석 보상이 진행에 맞춰 커짐 (Reward_Scale 1 = 켬). 표 값 = 스테이지 1 기준.
+        /// 골드 = 순찰 시간당 골드 비율만큼 · 조각 · 부품 = 최고 스테이지 Reward_Res_Step 마다 +1배 · 장비 · 회로 = 지금 떨어지는 기본 등급보다 낮지 않게.
+        /// </summary>
+        public static double RewardValue(string kind, double v)
+        {
+            if (S == null || Tables.Ci("Reward_Scale", 0) != 1) return v;
+            switch (kind)
+            {
+                case "gold": return Math.Floor(v * S.PatrolGoldHour / Math.Max(1, Tables.C("Patrol_Gold_Hour")));
+                case "shards": case "parts": return Math.Floor(v * (1 + Math.Max(0, S.best - 1) / Math.Max(1.0, Tables.C("Reward_Res_Step", 25))));
+                case "chip": case "gear": return Math.Min(Tables.GradeMax, Math.Max(v, 1 + Math.Max(0, S.best - 1) / Mathf.Max(1, Tables.Ci("Drop_Grade_Step", 12))));
+            }
+            return v;
+        }
     }
 }

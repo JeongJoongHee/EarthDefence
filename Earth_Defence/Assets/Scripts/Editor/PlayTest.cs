@@ -209,13 +209,60 @@ namespace EarthDef.EditorTools
                 foreach (var tx in anyLabel) { if (tx.GetComponent<SoftOutline>()) soft = true; if (tx.GetComponent<UnityEngine.UI.Outline>()) oldOutline = true; }
                 Check(soft && !oldOutline, "글자 테두리 8방향 (찢김 고침)");
                 Check(Art.Icon("g_weapon_7") != null && Art.Icon("g_weapon_7").rect.width >= 224 && Art.Icon("chip_7").rect.width >= 224 && Art.Icon("info") != null, "등급 아이콘 224px · 정보 아이콘");
-                Check(Meta.RewardText("chip", 3) == "희귀 회로" && Meta.RewardText("gear", 1) == "일반 장비", $"등급 이름 통일: {Meta.RewardText("chip", 3)}");
+                { int bk = S.best; S.best = 1;     // 밸런스 3차: 보상 등급이 진행에 맞춰 오르므로 이름 검사는 스테이지 1 기준
+                  Check(Meta.RewardText("chip", 3) == "희귀 회로" && Meta.RewardText("gear", 1) == "일반 장비", $"등급 이름 통일: {Meta.RewardText("chip", 3)}"); S.best = bk; }
                 Check(Lobby.Tabs.Length == 7 && GameObject.Find("Tab_looks") != null, "아래 탭에 외형");
                 Game.Lobby.SetTab(6); yield return Wait(0.3f);
                 Check(GameObject.Find("Sub0") != null && GameObject.Find("S_sk_rail") != null, "외형 탭 = 터렛 외형 목록");
                 Capture("60_looks_tab");
                 // 전투 탭: 스테이지 칸 작게 · 순찰은 [전투 시작] 아래 · 광고 2배 · 토스트는 사이 빈 곳
-                Lobby.enemiesOpen = false; Game.Lobby.SetTab(0); yield return Wait(0.3f);
+                Lobby.enemiesOpen = false; Game.Lobby.SetTab(0);
+                // ---- 밸런스 3차 (11-17): 골드 부스터 · 골드 금고 · 회로 % · 방어력 비율 · 엘리트 난이도 · 무한 모드 골드 · 미션 보상
+                {
+                    var boost = Tables.Products.Find(x => x.kind == "boost");
+                    long c0 = SaveData.Clock;
+                    Check(boost != null && Store.Purchase(boost) == 1 && Store.GoldBoostOn && Store.GoldBoostDaysLeft == Tables.Ci("Gold_Boost_Days", 30), $"골드 부스터: {Store.GoldBoostDaysLeft}일");
+                    Store.Purchase(boost);
+                    Check(Store.GoldBoostDaysLeft == 2 * Tables.Ci("Gold_Boost_Days", 30), $"골드 부스터 다시 사면 이어 붙음 ({Store.GoldBoostDaysLeft}일)");
+                    Game.StartStage(2, 41); yield return null;
+                    B.goldGot = 0; B.time = 200; double gb0 = S.gold; B.End(true); double withBoost = S.gold - gb0; Popup.CloseAll();
+                    S.iapOnce.RemoveAll(k => k.StartsWith("goldboost:"));
+                    Game.StartStage(2, 41); yield return null;
+                    B.goldGot = 0; B.time = 200; gb0 = S.gold; B.End(true); double noBoost = S.gold - gb0; Popup.CloseAll();
+                    Check(!Store.GoldBoostOn && System.Math.Abs(withBoost - noBoost * Tables.C("Gold_Boost_Mul", 2)) <= 2, $"골드 부스터: 판 골드 {Num.F(noBoost)} → {Num.F(withBoost)}");
+                    var vault = Tables.ShopItems.Find(x => x.id == "i_gold3");
+                    S.dia += 5000; double gv = S.gold;
+                    Check(vault != null && Store.Buy(vault) != null && System.Math.Abs(S.gold - gv - System.Math.Floor(vault.value * S.PatrolGoldHour)) < 1, $"골드 금고 = 순찰 {vault?.value:0}시간치 (+{Num.F(S.gold - gv)})");
+                    // 회로 %: 기지 공격력 +% · 기지 체력 +% · 보호막 = 체력의 %
+                    foreach (var c in S.chips) c.at = -1;
+                    var ca = Gear.NewChip(7, "ch_atk"); var ch = Gear.NewChip(7, "ch_hp"); var cs = Gear.NewChip(7, "ch_shield");
+                    foreach (var c in new[] { ca, ch, cs }) { var (pp, ss) = Gear.FreeSlotFor(c); Gear.PutChip(c, pp, ss); }
+                    var lo3b = Loadout.Build(S);
+                    Check(System.Math.Abs(lo3b.baseAtkPct - ca.Val) < 0.01 && System.Math.Abs(lo3b.baseHpPct - ch.Val) < 0.01 && lo3b.ShieldOf(S) > lo3b.HpOf(S) * 0.2,
+                          $"회로 %: 기지 공격력 +{lo3b.baseAtkPct}% · 체력 +{lo3b.baseHpPct}% · 보호막 {Num.F(lo3b.ShieldOf(S))}");
+                    lo3b.reduce = Tables.C("Reduce_K", 240);
+                    Check(System.Math.Abs(lo3b.ReduceMul - 0.5) < 0.001, $"방어력 = K 이면 받는 피해 절반 ({lo3b.ReduceMul:0.00})");
+                    // 엘리트 난이도 = Elite_Mode_Offset 스테이지 뒤의 적
+                    S.best = 30; S.eliteBest = 0;
+                    Game.StartStage(5, 42, true); yield return null; var ee = B.Spawn("moth", new Vector2(0, 5)); double eh = ee.maxHp;
+                    Game.StartStage(5 + Tables.Ci("Elite_Mode_Offset", 10), 42); yield return null; var ne = B.Spawn("moth", new Vector2(0, 5));
+                    Check(System.Math.Abs(eh / ne.maxHp - 1) < 0.01, $"엘리트 5 의 적 = 보통 {5 + Tables.Ci("Elite_Mode_Offset", 10)} 의 적 ({Num.F(eh)})");
+                    // 무한 모드 골드: 같은 시간 버텨도 높은 스테이지일수록 많이
+                    double EndG(int best) { S.best = best; Game.StartStage(best, 43, false, "endless"); B.time = 240; B.goldGot = 0; double g = S.gold; B.baseHp = 0; B.End(false); Popup.CloseAll(); return S.gold - g; }
+                    double e10 = EndG(10), e60 = EndG(60);
+                    Check(e60 > e10 * 10, $"무한 모드 4분 골드: 스테이지 10 {Num.F(e10)} · 60 {Num.F(e60)}");
+                    S.best = 30;
+                    // 미션 · 출석 보상이 진행에 맞춰 커짐
+                    double rg = Meta.RewardValue("gold", 1500), rs = Meta.RewardValue("shards", 10);
+                    Check(rg > 1500 * 3 && rs > 10, $"미션 보상(스테이지 30): 골드 1,500 → {Num.F(rg)} · 조각 10 → {rs:0}");
+                    Game.ToLobby(); yield return null; Popup.CloseAll();
+                    ShopTab.sub = 0; Game.Lobby.SetTab(5); yield return Wait(0.3f);
+                    Store.Purchase(boost); Game.Lobby.SetTab(5); yield return Wait(0.3f);
+                    Check(GameObject.Find("P_p_boost") != null, "상점 다이아 패널에 골드 부스터");
+                    Capture("92_shop_boost");
+                    S.iapOnce.RemoveAll(k => k.StartsWith("goldboost:"));
+                    Game.Lobby.SetTab(0);
+                } yield return Wait(0.3f);
                 var card = GameObject.Find("StageCard").GetComponent<RectTransform>();
                 var pat = GameObject.Find("Patrol").GetComponent<RectTransform>(); var st = GameObject.Find("Start").GetComponent<RectTransform>();
                 Check(card.sizeDelta.y <= 360 && pat.position.y < st.position.y, $"스테이지 칸 {card.sizeDelta.y} · 순찰이 [전투 시작] 아래");
@@ -1182,7 +1229,7 @@ namespace EarthDef.EditorTools
         /// <summary>칩 board · card · cond 키 (Loadout · Combat · Battle 이 읽음)</summary>
         static readonly HashSet<string> BoardStats = new()
         {
-            "atk", "atk_pct", "crit", "crit_dmg", "hp", "reduce", "shield", "immune", "heal_elite", "heal_break", "crit_hp", "extra_shot", "refresh", "choices", "break_rate",
+            "atk", "atk_pct", "base_atk", "base_hp", "shield_pct", "crit", "crit_dmg", "hp", "reduce", "shield", "immune", "heal_elite", "heal_break", "crit_hp", "extra_shot", "refresh", "choices", "break_rate",
             "dmg", "el_fire", "el_bolt", "el_grav", "el_light", "el_phys", "hp70", "elite_dmg", "early", "low_hp", "debuff", "near", "boss_on", "per_turret", "per_card", "cd",
         };
 

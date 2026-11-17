@@ -108,9 +108,24 @@ namespace EarthDef
         public static bool FirstDouble(ProductRow p) => p.firstDouble && !S.iapOnce.Contains("first2x:" + p.id);
         /// <summary>광고 제거 (요청 사항_05) — 세이브 판 번호를 안 올리려고 iapOnce 목록에 "noads" 로 기록</summary>
         public static bool NoAds => S != null && S.iapOnce.Contains("noads");
+        // 골드 부스터 (밸런스 3차): 산 날부터 Gold_Boost_Days 일 동안 판 골드 x Gold_Boost_Mul. 세이브 칸을 새로 만들지 않고 iapOnce 에 "goldboost:끝나는 시각"
+        const string BoostKey = "goldboost:";
+        public static long GoldBoostUntil
+        {
+            get { if (S == null) return 0; foreach (var k in S.iapOnce) if (k.StartsWith(BoostKey) && long.TryParse(k.Substring(BoostKey.Length), out var t)) return t; return 0; }
+        }
+        public static bool GoldBoostOn => SaveData.Clock < GoldBoostUntil;
+        public static int GoldBoostDaysLeft => (int)Math.Ceiling(Math.Max(0, GoldBoostUntil - SaveData.Clock) / 86400.0);
+
         public static int Purchase(ProductRow p)
         {
             if (!IapReady) return 0;
+            if (p.kind == "boost")
+            {   // 남은 기간이 있으면 이어 붙임
+                long until = Math.Max(SaveData.Clock, GoldBoostUntil) + (long)Tables.Ci("Gold_Boost_Days", 30) * 86400;
+                S.iapOnce.RemoveAll(k => k.StartsWith(BoostKey)); S.iapOnce.Add(BoostKey + until);
+                Audio.Play(Audio.Sfx.Coin); S.Save(); return 1;
+            }
             if (p.kind == "noads")
             {
                 if (NoAds) return 0;

@@ -84,9 +84,9 @@ namespace EarthDef
             Combat.Seed(seed + 1);
             lo = Loadout.Build(SaveData.Cur);
             run = new Run(seed + 2, lo);
-            atk = SaveData.Cur.Atk + lo.AtkTotal;
-            baseMax = baseHp = SaveData.Cur.BaseHp + lo.hp;
-            shield = shieldMax = lo.B("shield");
+            atk = lo.AtkOf(SaveData.Cur);
+            baseMax = baseHp = lo.HpOf(SaveData.Cur);
+            shield = shieldMax = lo.ShieldOf(SaveData.Cur);
             immune = (int)Math.Round(lo.B("immune"));
             need = NeedOf(1); nextPickAt = 0;
             nextWave = Tables.Cf("Wave_Len", 30);
@@ -293,9 +293,17 @@ namespace EarthDef
         float RandX() => (float)(rnd.NextDouble() * 2 - 1) * (World.HalfW - 0.6f);
 
         /// <summary>스테이지 보정: Early_Stage_N 아래는 Early_HP_Mul → 1 로 곱으로 서서히 · 10의 배수는 Ten_Stage_HP_Mul (무한 · 엘리트 군단은 그대로)</summary>
+        /// <summary>적 수치를 읽는 스테이지 번호 (엘리트 난이도는 Elite_Mode_Offset 뒤)</summary>
+        public int StatStage => stageNo + (eliteMode ? Tables.Ci("Elite_Mode_Offset", 0) : 0);
+        /// <summary>Stage 표 Hp_Mul — 표 끝을 넘으면(엘리트 91~100) 마지막 값에서 10 스테이지마다 Chapter_Over_HP 배</summary>
+        public static double StageHpMul(int n)
+        {
+            int cnt = Tables.Stages.Count;
+            if (n <= cnt) return Tables.Stage(n).hpMul;
+            return Tables.Stages[cnt - 1].hpMul * Math.Pow(Tables.C("Chapter_Over_HP", 1.3), Math.Ceiling((n - cnt) / 10.0));
+        }
         public (double hp, double atk) StageMul(int n)
         {
-            if (!IsStage) return (1, 1);
             int en = Tables.Ci("Early_Stage_N", 0); double k = 1;
             if (en > 1 && n < en) k = Math.Pow(Math.Max(0.001, Tables.C("Early_HP_Mul", 1)), 1 - (n - 1) / (en - 1.0));   // 곱으로 서서히 (3 ≈ 0.07 · 5 ≈ 0.14 · 8 ≈ 0.46 배)
             double ten = n % 10 == 0 ? Tables.C("Ten_Stage_HP_Mul", 1) : 1;
@@ -309,11 +317,14 @@ namespace EarthDef
         public Enemy Spawn(string id, Vector2 pos, bool minion = false)
         {
             if (!Tables.Enemies.TryGetValue(id, out var r)) { Debug.LogError("적 없음: " + id); return null; }
-            double hp = Tables.C("Mon_HP_Base") * Math.Pow(Tables.C("Mon_HP_Growth"), stageNo - 1) * r.hpMul * stage.hpMul;
-            double atk = Tables.C("Mon_Atk_Base") * Math.Pow(Tables.C("Mon_Atk_Growth"), stageNo - 1) * r.atkMul;
+            // 밸런스 3차: 엘리트 난이도 = Elite_Mode_Offset 스테이지 뒤의 적 (예전엔 체력 x2.6 고정 — 계단 표가 생기면서 후반 엘리트가 너무 셌음)
+            int sn = StatStage;
+            double hp = Tables.C("Mon_HP_Base") * Math.Pow(Tables.C("Mon_HP_Growth"), sn - 1) * r.hpMul * StageHpMul(sn);
+            double atk = Tables.C("Mon_Atk_Base") * Math.Pow(Tables.C("Mon_Atk_Growth"), sn - 1) * r.atkMul;
             // 밸런스 1차 (11-17): 처음 몇 스테이지는 약하게 (튜토리얼) · 10의 배수 스테이지는 조금 세게 (챕터 벽)
-            var sm = StageMul(stageNo); hp *= sm.hp; atk *= sm.atk;
-            if (mode == "endless") hp *= Math.Pow(Tables.C("Endless_Growth", 1.55), time / 60.0);
+            var sm = StageMul(sn); hp *= sm.hp; atk *= sm.atk;
+            // 밸런스 3차: 무한 모드는 깬 최고 스테이지 적의 Endless_Start_Mul 배에서 시작해 1분마다 체력 · 공격력이 커짐
+            if (mode == "endless") { hp *= Tables.C("Endless_Start_Mul", 1) * Math.Pow(Tables.C("Endless_Growth", 1.55), time / 60.0); atk *= Math.Pow(Tables.C("Endless_Atk_Growth", 1), time / 60.0); }
             else hp *= 1 + Tables.C("Run_HP_Ramp", 1.5) * Mathf.Clamp01(time / RunTime);
             if (mode == "survival") hp *= Tables.C("Survival_HP", 1.4);
             if (r.IsElite) { hp *= Tables.C("Elite_HP_Mul", 30); atk *= Tables.C("Elite_Atk_Mul", 3); }
@@ -364,7 +375,7 @@ namespace EarthDef
             if (src != null && !src.dead && frame != null && frame.effect == "thorn") { frameFired++; Combat.Hit(run.turrets[0], src, frameVal, false, true); Fx.Sparks(src.Pos, Art.Hex("#b8e08f"), 4, 4f, 0.9f); }
             // 2차 칩: 처음 N번 막음 → 받는 피해 -N(최소 1) → 보호막이 먼저 받음
             if (immune > 0) { immune--; Fx.Ring(at + Vector2.down * 0.2f, 0.8f, Art.Sky); return; }
-            d = Math.Max(1, d - lo.reduce);
+            d = Tables.C("Reduce_K", 0) > 0 ? Math.Max(1, d * lo.ReduceMul) : Math.Max(1, d - lo.reduce);   // 밸런스 3차: 방어력 = 비율 감소
             if (shield > 0) { double s = Math.Min(shield, d); shield -= s; d -= s; if (d <= 0) { Fx.Ring(at + Vector2.down * 0.2f, 0.6f, Art.Sky); return; } }
             baseHp = Math.Max(0, baseHp - d);
             Fx.Hit(at + Vector2.down * 0.3f, 1.2f);
@@ -497,7 +508,8 @@ namespace EarthDef
             double min = time / 60.0, stMul = 1 + 0.1 * (stageNo - 1);
             if (mode == "endless")
             {
-                RewardGold = Math.Floor(Tables.C("Endless_Gold_Min", 600) * min * stMul + goldGot);
+                // 밸런스 3차: 스테이지 승리 골드와 같은 식 — 1분 버티면 승리 골드의 Endless_Gold_Rate 배 (예전 식은 곱 성장이 빠져 후반에 아주 작았음)
+                RewardGold = Math.Floor(((Tables.C("Win_Gold_Base") + Tables.C("Win_Gold_Per_Stage") * (stageNo - 1)) * min * Tables.C("Endless_Gold_Rate", 0.25) + goldGot) * Math.Pow(Tables.C("Win_Gold_Growth", 1), stageNo - 1));
                 RewardShards = Math.Floor(min * 4);
                 rewardDia = Math.Floor(Tables.C("Endless_Dia_Min", 4) * min);
                 if (time > s.endlessBest) s.endlessBest = time;
@@ -505,7 +517,7 @@ namespace EarthDef
             else if (mode == "survival")
             {
                 double k = win ? 1 : Tables.C("Lose_Mul", 0.35) * Mathf.Clamp01(time / RunTime);
-                RewardGold = Math.Floor((Tables.C("Win_Gold_Base") + Tables.C("Win_Gold_Per_Stage") * (stageNo - 1) + goldGot) * 1.5 * k);
+                RewardGold = Math.Floor((Tables.C("Win_Gold_Base") + Tables.C("Win_Gold_Per_Stage") * (stageNo - 1) + goldGot) * Math.Pow(Tables.C("Win_Gold_Growth", 1), stageNo - 1) * 1.5 * k);
                 RewardShards = Math.Floor((Tables.C("Win_Shards") + Tables.C("Win_Shards_Per_Stage") * (stageNo - 1)) * k);
                 if (win) { rewardDia = Tables.C("Survival_Dia", 30); s.survWins++; }
             }
@@ -516,6 +528,7 @@ namespace EarthDef
                 RewardShards = Math.Floor((Tables.C("Win_Shards") + Tables.C("Win_Shards_Per_Stage") * (stageNo - 1)) * mul);
                 if (FirstClear) rewardDia = eliteMode ? Tables.C("Dia_Elite_First", 10) : Tables.C("Dia_First_Clear", 5) + (stageNo % 10 == 0 ? Tables.C("Dia_First_Clear_10", 50) : 0);
             }
+            if (Store.GoldBoostOn) RewardGold = Math.Floor(RewardGold * Tables.C("Gold_Boost_Mul", 2));   // 밸런스 3차: 골드 부스터 (30일 · 판 골드 x2)
             s.dia += rewardDia;
             s.gold += RewardGold;
             GiveShards((int)RewardShards);

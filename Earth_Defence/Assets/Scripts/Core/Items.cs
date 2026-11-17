@@ -15,8 +15,10 @@ namespace EarthDef
         public GearPartRow Row => Tables.Part(part);
         public GradeRow G => Tables.Grade(grade);
         public int LvMax => G.lvMax;
-        public double V1 => (Row.base1 + Row.perLv1 * (lv - 1)) * G.mul;
-        public double V2 => (Row.base2 + Row.perLv2 * (lv - 1)) * G.mul;
+        // 밸런스 3차: 공격력 · 기지 체력은 레벨마다 곱으로도 커짐 (Gear_Lv_Growth — 기지 공격력이 곱으로 크는데 장비는 더하기라 후반에 묻히던 것)
+        static double Grow(string stat, int lv) => stat is "atk" or "hp" ? Math.Pow(Tables.C("Gear_Lv_Growth", 1), lv - 1) : 1;
+        public double V1 => (Row.base1 + Row.perLv1 * (lv - 1)) * G.mul * Grow(Row.stat1, lv);
+        public double V2 => (Row.base2 + Row.perLv2 * (lv - 1)) * G.mul * Grow(Row.stat2, lv);
         /// <summary>등급별 이름 · 아이콘 (3차 수정안 "등급별로 아이템 이름 · 아이콘 다르게")</summary>
         public string Name => Tables.GearNames.TryGetValue(part + "_" + grade, out var n) ? n : Row.name;
         public string Icon => Row.icon + "_" + grade;
@@ -60,7 +62,7 @@ namespace EarthDef
             "atk" => L.T("st_atk"), "hp" => L.T("st_hp"), "reduce" => L.T("st_reduce"), "crit" => L.T("st_crit"),
             "crit_dmg" => L.T("st_crit_dmg"), "cd" => L.T("st_cd"), _ => k,
         };
-        public static string StatVal(string k, double v) => k is "crit" or "crit_dmg" or "cd" ? $"+{v:0.#}%" : k == "reduce" ? "-" + Num.F(Math.Round(v, 1)) : "+" + Num.F(v);
+        public static string StatVal(string k, double v) => k is "crit" or "crit_dmg" or "cd" ? $"+{v:0.#}%" : k == "reduce" ? "+" + Num.F(Math.Round(v, 1)) : "+" + Num.F(v);   // 밸런스 3차: reduce = 방어력 점수 (+N)
 
         // ---------- 장비 ----------
         public static GearItem On(string part) => S.gear.Find(g => g.on && g.part == part);
@@ -264,7 +266,7 @@ namespace EarthDef
             rnd ??= new System.Random(Environment.TickCount);
             switch (kind)
             {
-                case "gold": S.gold += v; return $"{L.T("r_gold")} +{Num.F(v)}";
+                case "gold": S.gold += Math.Floor(v); return $"{L.T("r_gold")} +{Num.F(v)}";
                 case "parts": S.parts += v; return $"{L.T("r_parts")} +{Num.F(v)}";
                 case "dia": S.dia += v; return $"{L.T("dia")} +{Num.F(v)}";
                 case "stamina": Meta.AddStamina((int)v); return $"{L.T("r_stamina")} +{v:0}";
@@ -288,6 +290,14 @@ namespace EarthDef
     public class Loadout
     {
         public double atk, atkPct, hp, reduce, critDmg;
+        /// <summary>밸런스 3차: 회로 "기지 공격력 +% · 기지 체력 +% · 보호막 = 기지 체력의 %" (예전 고정 값은 기지가 곱으로 크면서 의미가 없어졌음)</summary>
+        public double baseAtkPct, baseHpPct, shieldPct;
+        /// <summary>방어력 → 받는 피해 배율: K / (K + 방어력) (Config Reduce_K · 0 이면 예전처럼 고정 값을 뺌)</summary>
+        public double ReduceMul { get { double k = Tables.C("Reduce_K", 0); return k > 0 ? k / (k + Math.Max(0, reduce)) : 1; } }
+        /// <summary>기지 값까지 넣은 전투 공격력 · 기지 체력 · 시작 보호막</summary>
+        public double AtkOf(SaveData s) => s.Atk * (1 + baseAtkPct / 100.0) + AtkTotal;
+        public double HpOf(SaveData s) => s.BaseHp * (1 + baseHpPct / 100.0) + hp;
+        public double ShieldOf(SaveData s) => B("shield") + HpOf(s) * shieldPct / 100.0;
         public readonly Dictionary<string, double> cond = new(), board = new();
         public readonly Dictionary<string, Dictionary<string, double>> turret = new();   // "*" = 모든 터렛
         public double C(string k) => cond.TryGetValue(k, out var v) ? v : 0;
@@ -311,6 +321,9 @@ namespace EarthDef
                 case "atk": atk += v; break;
                 case "atk_pct": atkPct += v; break;
                 case "hp": hp += v; break;
+                case "base_atk": baseAtkPct += v; break;
+                case "base_hp": baseHpPct += v; break;
+                case "shield_pct": shieldPct += v; break;
                 case "reduce": reduce += v; break;
                 case "crit_dmg": critDmg += v; break;
                 case "crit": AddT("*", "crit", v); break;       // 카드의 crit 키와 같은 %p

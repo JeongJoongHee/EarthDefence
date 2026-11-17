@@ -127,11 +127,12 @@ namespace EarthDef
             var note = UIKit.Label(list, Store.IapReady ? L.T("iap_draft") : L.T("iap_off"), 22, Art.Soft, TextAnchor.MiddleRight, false); note.rectTransform.TL(380, y - 72, 620, 40);
             // 월 1회 패키지는 맨 위에 넓은 띠로 (참고영상.txt 메모 "월 1회 구매 9,900원 다이아 폭탄 패키지 10,000")
             foreach (var mp in Tables.Products) if (mp.kind == "monthly") y = MonthlyCard(mp, y);
+            foreach (var bp in Tables.Products) if (bp.kind == "boost") y = BoostCard(bp, y);
             int idx = 0;
             for (int i = 0; i < Tables.Products.Count; i++)
             {
                 var p = Tables.Products[i];
-                if (p.kind == "monthly") continue;
+                if (p.kind is "monthly" or "boost") continue;
                 int slot = idx++;
                 float x = 20 + slot % 3 * 330, yy = y + slot / 3 * 300;
                 var card = UIKit.Panel(list, "card", "P_" + p.id); card.rectTransform.TL(x, yy, 316, 286);
@@ -164,6 +165,33 @@ namespace EarthDef
                 }
             }
             return y + Mathf.CeilToInt(idx / 3f) * 300 + 10;
+        }
+
+        /// <summary>밸런스 3차: 골드 부스터 (30일 · 판 골드 2배) — 쓰는 중이면 남은 날, 다시 사면 이어 붙음</summary>
+        float BoostCard(ProductRow p, float y)
+        {
+            bool on = Store.GoldBoostOn;
+            var card = UIKit.Panel(list, "card", "P_" + p.id); card.rectTransform.TL(20, y, 980, 200);
+            card.color = Art.Hex("#fff0c4");
+            var ic = UIKit.Img(card.transform, Art.Icon("coin"), "Icon"); ic.raycastTarget = false; ic.rectTransform.TL(44, 34, 132, 132);
+            var x2 = UIKit.Panel(card.transform, "pill", "X2"); x2.color = Art.Red; x2.rectTransform.TL(124, 118, 96, 50);
+            UIKit.Label(x2.transform, "x" + Tables.C("Gold_Boost_Mul", 2).ToString("0.#"), 30).rectTransform.Fill(0, 4, 0, 0);
+            UIKit.Label(card.transform, p.name, 40, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(250, 24, 440, 56);
+            UIKit.Label(card.transform, L.F("boost_desc", Tables.Ci("Gold_Boost_Days", 30), Tables.C("Gold_Boost_Mul", 2).ToString("0.#")), 26, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(250, 82, 440, 44);
+            if (on)
+            {
+                var tag = UIKit.Panel(card.transform, "pill", "Left"); tag.color = Art.Hex("#a9d68c"); tag.rectTransform.TL(250, 134, 220, 46);
+                UIKit.Label(tag.transform, L.F("boost_left", Store.GoldBoostDaysLeft), 26, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
+            }
+            var pp = p;
+            var b = UIKit.Btn(card.transform, Store.IapReady ? "btn_green" : "btn_gray", Num.Comma(p.krw) + "원", 38, () =>
+            {
+                if (!Store.IapReady) { Toast.Show(L.T("iap_off")); return; }
+                if (Store.Purchase(pp) > 0) Toast.Show(L.F("boost_left", Store.GoldBoostDaysLeft));
+                lobby.Refresh();
+            }, "Buy");
+            ((RectTransform)b.transform).TL(700, 52, 250, 100);
+            return y + 216;
         }
 
         float MonthlyCard(ProductRow p, float y)

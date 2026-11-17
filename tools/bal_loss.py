@@ -4,7 +4,7 @@ import json, os, sys
 from collections import Counter
 d = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'Earth_Defence', 'Logs', 'Bal', f'bal_{sys.argv[1]}.json'), encoding='utf8'))
 for lo, hi in ((1, 3), (4, 10), (11, 30), (31, 50), (51, 70), (71, 100)):
-    L = [f for f in d['fights'] if lo <= f['stage'] <= hi and not f.get('farm')]
+    L = [f for f in d['fights'] if lo <= f['stage'] <= hi and not f.get('farm') and not f.get('elite')]
     if not L: continue
     lose = [f for f in L if not f['win']]; win = [f for f in L if f['win']]
     tc = Counter('시간초과' if f['time'] >= 479 else ('보스 전' if f['time'] < 210 else '보스 중') for f in lose)

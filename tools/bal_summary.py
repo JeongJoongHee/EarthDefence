@@ -9,7 +9,7 @@ import json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BAL = os.path.join(HERE, '..', 'Earth_Defence', 'Logs', 'Bal')
-DAYS = (1, 2, 3, 5, 7, 10, 14, 21, 30, 45, 60, 90)
+DAYS = (1, 3, 7, 14, 30, 60, 90, 120, 180, 240, 300, 360, 420)
 BANDS = ((1, 3), (4, 10), (11, 20), (21, 30), (31, 40), (41, 50), (51, 70), (71, 100))
 
 
@@ -21,7 +21,7 @@ def stage_stats(d):
     """스테이지마다: 처음 도전 결과 · 남은 체력 · 깰 때까지 도전 수 (골드 벌기 판은 뺌)"""
     st = {}
     for f in d['fights']:
-        if f.get('farm'): continue
+        if f.get('farm') or f.get('elite'): continue
         s = st.setdefault(f['stage'], dict(tries=0, first=None, cleared=False, hpWin=None, day=f['day']))
         if s['cleared']: continue
         s['tries'] += 1

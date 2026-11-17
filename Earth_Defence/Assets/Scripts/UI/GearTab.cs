@@ -75,7 +75,7 @@ namespace EarthDef
             var hv = me.gameObject.AddComponent<Hover3D>(); hv.shadow = gsh.rectTransform; hv.lit = lit.rectTransform; hv.shade = shade.rectTransform;
             for (int i = 0; i < 3; i++) { Slot(top.transform, Left[i], 34, 22 + i * 192); Slot(top.transform, Right[i], 856, 22 + i * 192); }
             // 2차 수정안: 능력치를 네모 칸으로 (3 x 2 + 칩 수)
-            string[] keys = { "st_atk", "st_hp", "st_reduce", "st_crit", "st_crit_dmg", "st_cd" };
+            string[] keys = { "st_atk", "st_hp", "st_reduce_total", "st_crit", "st_crit_dmg", "st_cd" };
             for (int i = 0; i < keys.Length; i++)
             {
                 var box = UIKit.Panel(root, "card_white", "Stat" + i); box.rectTransform.TL(24 + i % 3 * 346, 624 + i / 3 * 70, 336, 62);
@@ -142,7 +142,9 @@ namespace EarthDef
                 }
             }
             var lo = Loadout.Build(S);
-            statV[0].text = "+" + Num.F(lo.AtkTotal); statV[1].text = "+" + Num.F(lo.hp); statV[2].text = "-" + lo.reduce.ToString("0.#");
+            // 밸런스 3차: 회로의 "기지 공격력 · 체력 +%" 도 더해서 보여 줌 · 받는 피해는 방어력을 비율로 바꾼 값
+            statV[0].text = "+" + Num.F(lo.AtkOf(S) - S.Atk); statV[1].text = "+" + Num.F(lo.HpOf(S) - S.BaseHp);
+            statV[2].text = Tables.C("Reduce_K", 0) > 0 ? $"-{(1 - lo.ReduceMul) * 100:0.#}%" : "-" + lo.reduce.ToString("0.#");
             statV[3].text = $"+{lo.TS("*", "crit"):0.#}%"; statV[4].text = $"+{lo.critDmg:0.#}%"; statV[5].text = $"+{lo.TS("*", "cd"):0.#}%";
             statT.text = $"{L.T("chip")} {lo.ChipCount}";
             partsT.text = Num.F(S.parts);
