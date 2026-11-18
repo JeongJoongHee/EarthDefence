@@ -499,7 +499,8 @@ def turret_b(t, x, by, w=150, deg=45, pad=True):
     return s, tip
 
 
-def command():
+def command(K=.5):
+    """우주 사령탑. K = 탑 크기 배율(11-18 사용자 "절반으로" → .5). 선 굵기 · 터렛 · 대장 카피 크기는 그대로"""
     random.seed(41)
     s = stars_bg()
     # 비스듬히 떨어지는 빛줄 (오른쪽 위 → 왼쪽 아래)
@@ -511,10 +512,9 @@ def command():
     # 지평선 위로 떠오르는 지구 (지키는 것)
     ex, ey, er = 860, 2205, 160
     e = C(ex, ey, er, '#8cc6e6', 7)
-    e += F(f'M{ex - 130} {ey - 60} Q{ex - 70} {ey - 140} {ex + 10} {ey - 110} Q{ex + 40} {ey - 60} {ex - 20} {ey - 30} Q{ex - 90} {ey} {ex - 120} {ey + 20} Q{ex - 160} {ey - 10} {ex - 130} {ey - 60} Z', '#a9cf86')
-    e += L(f'M{ex - 130} {ey - 60} Q{ex - 70} {ey - 140} {ex + 10} {ey - 110} Q{ex + 40} {ey - 60} {ex - 20} {ey - 30} Q{ex - 90} {ey} {ex - 120} {ey + 20} Q{ex - 160} {ey - 10} {ex - 130} {ey - 60} Z', 5)
-    e += F(f'M{ex + 50} {ey - 120} Q{ex + 120} {ey - 120} {ex + 140} {ey - 60} Q{ex + 90} {ey - 40} {ex + 50} {ey - 80} Z', '#a9cf86')
-    e += L(f'M{ex + 50} {ey - 120} Q{ex + 120} {ey - 120} {ex + 140} {ey - 60} Q{ex + 90} {ey - 40} {ex + 50} {ey - 80} Z', 5)
+    for d in (f'M{ex - 130} {ey - 60} Q{ex - 70} {ey - 140} {ex + 10} {ey - 110} Q{ex + 40} {ey - 60} {ex - 20} {ey - 30} Q{ex - 90} {ey} {ex - 120} {ey + 20} Q{ex - 160} {ey - 10} {ex - 130} {ey - 60} Z',
+              f'M{ex + 50} {ey - 120} Q{ex + 120} {ey - 120} {ex + 140} {ey - 60} Q{ex + 90} {ey - 40} {ex + 50} {ey - 80} Z'):
+        e += F(d, '#a9cf86') + L(d, 5)
     e += f'<ellipse cx="{ex - 40}" cy="{ey - 70}" rx="40" ry="12" fill="#fff" opacity=".7"/>'
     s += spr('Fx/glow', ex, ey - 20, 520, op=.35) + wob(e, 2.5, .02)
     # 달 바닥
@@ -523,80 +523,84 @@ def command():
         gnd += f'<ellipse cx="{cx_}" cy="{cy_}" rx="{rx}" ry="{ry}" fill="#b3abc6" stroke="{INK}" stroke-width="4"/>'
         gnd += f'<ellipse cx="{cx_}" cy="{cy_ - ry * .35:.0f}" rx="{rx * .8:.0f}" ry="{ry * .45:.0f}" fill="#a39bb8"/>'
     s += wob(gnd, 2.5, .02)
-    # ---- 사령탑 ----
-    v = ''
-    top = 560
-    xl0, xr0, xl1, xr1 = 92, 268, 118, 242
+    # ---- 사령탑 (BX = 몸통 가운데) ----
+    BX = 180
+    top = G - 1580 * K
+    hb, ht = 88 * K, 62 * K                       # 아래 · 위 반폭
+    xl0, xr0, xl1, xr1 = BX - hb, BX + hb, BX - ht, BX + ht
     def xl(y): return xl0 + (xl1 - xl0) * (G - y) / (G - top)
     def xr(y): return xr0 + (xr1 - xr0) * (G - y) / (G - top)
-    # 안테나 · 레이더 (적이 오는 오른쪽 위를 봄)
-    v += L(f'M180 {top - 60} L180 {top - 230}', 9) + L(f'M180 {top - 150} L232 {top - 230}', 5)
-    v += f'<g transform="rotate(45 236 {top - 120})">' + P(f'M176 {top - 120} Q236 {top - 74} 296 {top - 120} Z', STEEL, 6) + L(f'M236 {top - 104} L236 {top - 150}', 6) + C(236, top - 156, 9, ORANGE, 4) + '</g>'
-    v += L(f'M206 {top - 70} L228 {top - 104}', 7)
-    # 몸통 (위로 가늘어짐) · 판 이음줄 · 동그란 창
-    v += P(f'M{xl0} {G} L{xl1} {top} L{xr1} {top} L{xr0} {G} Z', STEEL, 7)
-    v += F(f'M{xr0 - 44} {G - 4} L{xr1 - 34} {top + 6} L{xr1 - 4} {top + 6} L{xr0 - 6} {G - 4} Z', STEEL2, .55)
-    v += F(f'M{xl0 + 12} {G - 4} L{xl1 + 10} {top + 6} L{xl1 + 34} {top + 6} L{xl0 + 40} {G - 4} Z', '#fff', .45)
-    for y in (720, 1000, 1200, 1580, 1840):
-        v += L(f'M{xl(y) + 4:.0f} {y} L{xr(y) - 4:.0f} {y}', 4, '#8e98ad')
-    for y in (660, 940, 1500, 1770):
-        v += C(180, y, 26, SKY, 6) + F(f'M{166} {y - 10} A16 16 0 0 1 {190} {y - 14} L{180} {y} Z', '#fff', .7)
-    v += rr(xl1 - 14, top - 20, xr1 - xl1 + 28, 40, 14, ORANGE, 6)
-    # 아래 받침 (발 날개 둘)
-    v += P(f'M{xl0 + 6} {G - 150} L10 {G - 10} L{xl0 + 10} {G - 10} Z', ORANGE, 6) + P(f'M{xr0 - 6} {G - 150} L350 {G - 10} L{xr0 - 10} {G - 10} Z', ORANGE, 6)
-    v += rr(xl0 - 26, G - 34, xr0 - xl0 + 52, 44, 14, STEEL2, 6)
+    v = ''
+    # 안테나 · 레이더 (오른쪽 위를 봄)
+    ah = 230 * K
+    v += L(f'M{BX} {top - 40 * K} L{BX} {top - ah}', 7) + L(f'M{BX} {top - ah * .65:.0f} L{BX + 30 * K + 10:.0f} {top - ah:.0f}', 4)
+    dx, dy, dr = BX + 50 * K + 6, top - 115 * K, 60 * K + 8
+    v += L(f'M{BX + 12} {top - 40 * K} L{dx - 4:.0f} {dy + 12:.0f}', 6)
+    v += f'<g transform="rotate(45 {dx:.1f} {dy:.1f})">' + P(f'M{dx - dr:.1f} {dy:.1f} Q{dx:.1f} {dy + dr * .8:.1f} {dx + dr:.1f} {dy:.1f} Z', STEEL, 5) + L(f'M{dx:.1f} {dy + 12:.1f} L{dx:.1f} {dy - dr * .7:.1f}', 5) + C(dx, dy - dr * .7 - 6, 7, ORANGE, 3) + '</g>'
+    # 꼭대기 유리 지붕
+    v += P(f'M{xl1 - 10:.1f} {top - 8:.1f} Q{BX} {top - 70 * K - 30:.1f} {xr1 + 10:.1f} {top - 8:.1f} Z', '#9fd8f5', 5)
+    # 몸통 · 빛 · 그늘 · 판 이음줄 · 창
+    v += P(f'M{xl0:.1f} {G} L{xl1:.1f} {top:.1f} L{xr1:.1f} {top:.1f} L{xr0:.1f} {G} Z', STEEL, 6)
+    v += F(f'M{xr0 - 22:.1f} {G - 4} L{xr1 - 16:.1f} {top + 6:.1f} L{xr1 - 3:.1f} {top + 6:.1f} L{xr0 - 4:.1f} {G - 4} Z', STEEL2, .6)
+    v += F(f'M{xl0 + 7:.1f} {G - 4} L{xl1 + 6:.1f} {top + 6:.1f} L{xl1 + 18:.1f} {top + 6:.1f} L{xl0 + 21:.1f} {G - 4} Z', '#fff', .45)
+    v += rr(xl1 - 8, top - 12, xr1 - xl1 + 16, 24, 10, ORANGE, 5)
     # 가운데 사령실 (대장 카피 자리)
-    DY = 1345
-    v += P(f'M60 {DY} L440 {DY} Q470 {DY + 50} 430 {DY + 110} L80 {DY + 110} Q40 {DY + 50} 60 {DY} Z', ORANGE, 7)
-    v += rr(92, DY + 22, 326, 50, 22, '#9fd8f5', 5)
-    for x in (170, 255, 340): v += L(f'M{x} {DY + 24} L{x} {DY + 70}', 4)
-    v += F(f'M100 {DY + 28} L160 {DY + 28} L150 {DY + 44} L104 {DY + 44} Z', '#fff', .55)
-    v += P(f'M200 {DY + 110} L300 {DY + 110} L280 {DY + 150} L220 {DY + 150} Z', ORANGE2, 6)
-    v += rr(50, DY - 16, 400, 26, 12, CREAM, 6)
-    v += L(f'M64 {DY - 66} L436 {DY - 66}', 5) + ''.join(L(f'M{x} {DY - 66} L{x} {DY - 14}', 4) for x in (64, 140, 436))
-    for x in (90, 410): v += C(x, DY + 92, 8, GOLD, 3)
-    # 체력 이름판 (② 방주처럼 기지 위에)
-    v += rr(40, G - 132, 280, 92, 20, CREAM, 6) + heart(84, G - 100, 40) + bar(112, G - 84, 192, 28, .72, GREEN, '#e9dcc4', 4)
-    v += f'<rect x="114" y="{G - 82}" width="40" height="24" rx="12" fill="{SKY}"/>'
-    # 터렛 발판 (몸통에서 나온 판 + 아래 버팀대) · 이음 고리
-    slots = [(800, 'laser'), (1080, 'missile'), (1640, 'tesla'), (1900, 'cannon')]
-    MX = 418
-    for y, t in slots:
-        v += rr(xl(y) - 12, y - 40, xr(y) - xl(y) + 24, 30, 12, ORANGE, 6)
-        v += L(f'M{xr(y) - 4:.0f} {y + 80} L{MX + 40} {y + 14}', 24) + L(f'M{xr(y) - 4:.0f} {y + 80} L{MX + 40} {y + 14}', 12, STEEL2)
-        v += rr(xr(y) - 14, y - 6, MX + 104 - xr(y), 30, 12, STEEL, 6) + F(f'M{xr(y) - 4:.0f} {y + 2} L{MX + 84} {y + 2} L{MX + 84} {y + 8} L{xr(y) - 4:.0f} {y + 8} Z', '#fff', .6)
-        for lx in (MX - 70, MX + 70): v += C(lx, y + 9, 6, GOLD, 3)
-    # 꼭대기 유리 지붕 (관제실)
-    v += P(f'M{xl1 - 14} {top - 18} Q180 {top - 120} {xr1 + 14} {top - 18} Z', '#9fd8f5', 6) + F(f'M{xl1 + 8} {top - 30} Q150 {top - 96} 186 {top - 92} L170 {top - 70} Q140 {top - 66} {xl1 + 24} {top - 30} Z', '#fff', .55)
-    s += spr('Fx/glow', 180, top - 230, 120, op=.8)
-    s += wob(v, 2.5, .018)
-    s += T(205, G - 104, '2,140', 32, INK, sw=0)
+    DY = G - 790 * K * 1.0 + 0          # 몸통 가운데쯤
+    DY = top + (G - top) * .5 + 20
+    dl, drr, dh = BX - 72, BX + 150, 64
+    v += P(f'M{dl} {DY} L{drr} {DY} Q{drr + 22} {DY + dh * .45:.1f} {drr - 10} {DY + dh} L{dl + 10} {DY + dh} Q{dl - 22} {DY + dh * .45:.1f} {dl} {DY} Z', ORANGE, 6)
+    v += rr(dl + 18, DY + 14, drr - dl - 36, 28, 13, '#9fd8f5', 4)
+    for x in (dl + 80, dl + 150): v += L(f'M{x} {DY + 15} L{x} {DY + 41}', 3)
+    v += P(f'M{BX - 30} {DY + dh} L{BX + 30} {DY + dh} L{BX + 18} {DY + dh + 24} L{BX - 18} {DY + dh + 24} Z', ORANGE2, 5)
+    v += rr(dl - 8, DY - 12, drr - dl + 16, 20, 9, CREAM, 5)
+    v += L(f'M{dl} {DY - 48} L{drr} {DY - 48}', 4) + ''.join(L(f'M{x} {DY - 48} L{x} {DY - 10}', 4) for x in (dl, dl + 60, drr))
+    for x in (dl + 6, drr - 6): v += C(x, DY + dh - 12, 6, GOLD, 3)
+    # 아래 받침 (발 날개 둘)
+    v += P(f'M{xl0 + 3:.1f} {G - 80} L{xl0 - 46:.1f} {G - 6} L{xl0 + 6:.1f} {G - 6} Z', ORANGE, 5) + P(f'M{xr0 - 3:.1f} {G - 80} L{xr0 + 46:.1f} {G - 6} L{xr0 - 6:.1f} {G - 6} Z', ORANGE, 5)
+    v += rr(xl0 - 16, G - 20, xr0 - xl0 + 32, 26, 10, STEEL2, 5)
+    # 터렛 자리: 위 2 · 아래 2 (가운데 사령실을 향해 ">" 모양 — 가까운 칸 / 먼 칸)
+    slots = [(top + 95, 'laser', BX + 150), (DY - 200, 'missile', BX + 290), (DY + dh + 150, 'cannon', BX + 290), (G, 'tesla', BX + 175)]
+    for y, t, mx in slots:
+        if y >= G: continue                       # 맨 아래 칸은 달 바닥 위
+        v += rr(xl(y) - 7, y - 26, xr(y) - xl(y) + 14, 18, 8, ORANGE, 5)
+        by_ = y - 80 if y < DY else y + 70          # 위 칸은 위에서 당기는 버팀대(대장 카피를 안 가리게), 아래 칸은 밑에서 받침
+        v += L(f'M{xr(by_) - 2:.0f} {by_} L{mx + 40} {y + 4}', 20) + L(f'M{xr(by_) - 2:.0f} {by_} L{mx + 40} {y + 4}', 10, STEEL2)
+        v += rr(xr(y) - 10, y - 6, mx + 100 - xr(y), 28, 12, STEEL, 5) + F(f'M{xr(y):.0f} {y + 1} L{mx + 82} {y + 1} L{mx + 82} {y + 7} L{xr(y):.0f} {y + 7} Z', '#fff', .6)
+        for lx in (mx - 66, mx + 66): v += C(lx, y + 8, 5, GOLD, 3)
+    s += spr('Fx/glow', BX, top - ah, 100, op=.8)
+    s += wob(v, 2.2, .02)
+    # 체력 이름판 (사령탑 앞 달 바닥)
+    PX, PY = 34, G + 44
+    hp = rr(PX, PY, 290, 92, 20, CREAM, 6) + heart(PX + 44, PY + 32, 40) + bar(PX + 76, PY + 48, 196, 28, .72, GREEN, '#e9dcc4', 4)
+    hp += f'<rect x="{PX + 78}" y="{PY + 50}" width="40" height="24" rx="12" fill="{SKY}"/>' + L(f'M{PX + 145} {PY} L{PX + 145} {G - 4}', 6)
+    s += wob(hp, 1.5, .04) + T(PX + 174, PY + 36, '2,140', 32, INK, sw=0)
     tips = {}
-    for y, t in slots:
-        g, tip = turret_b(t, MX, y, 150); s += g; tips['Turret/' + t] = tip
-    s += spr('Char/guardian', 330, DY - 10, 150, bottom=True)
-    # 적: 오른쪽 위에서 왼쪽 아래 사령탑으로 (운석 꼬리는 오른쪽 위)
+    for y, t, mx in slots:
+        g, tip = turret_b(t, mx, y, 150); s += g; tips[t] = tip
+    s += spr('Char/guardian', BX + 70, DY - 8, 150, bottom=True)
+    gx, gy = BX + 130, DY - 80                     # 대장 카피 총구 근처
+    # 적: 오른쪽 위에서 사령탑 쪽으로 비스듬히 (운석 꼬리는 오른쪽 위)
     def aim(x, y):
-        return 300, min(2000, max(700, y + (x - 300) * .8))
-    for n, x, y, w in [('Enemy/fire', 600, 370, 96), ('Enemy/ice', 760, 430, 92), ('Enemy/pebble', 470, 500, 64), ('Enemy/iron', 700, 640, 104),
-                       ('Enemy/crack', 1020, 880, 100), ('Enemy/fire', 900, 1000, 100), ('Enemy/ice', 1000, 1220, 96), ('Enemy/fire', 790, 1180, 104),
-                       ('Enemy/iron', 980, 1560, 96), ('Enemy/pebble', 840, 1430, 68), ('Enemy/fire', 690, 1590, 100), ('Enemy/ice', 900, 1760, 92),
-                       ('Enemy/crack', 610, 1820, 92), ('Enemy/pebble', 1040, 1940, 64), ('Enemy/fire', 560, 1080, 92)]:
+        return BX + 40, min(G - 40, max(top, y + (x - BX) * .8))
+    for n, x, y, w in [('Enemy/fire', 600, 370, 96), ('Enemy/ice', 760, 430, 92), ('Enemy/pebble', 470, 520, 64), ('Enemy/crack', 330, 760, 92),
+                       ('Enemy/iron', 640, 1180, 104), ('Enemy/crack', 1020, 880, 100), ('Enemy/fire', 880, 1270, 100), ('Enemy/ice', 1000, 1120, 96),
+                       ('Enemy/fire', 760, 960, 104), ('Enemy/pebble', 520, 980, 68), ('Enemy/iron', 980, 1560, 96), ('Enemy/fire', 760, 1880, 100),
+                       ('Enemy/ice', 900, 1760, 92), ('Enemy/crack', 660, 2010, 92), ('Enemy/pebble', 1040, 1940, 64), ('Enemy/fire', 420, 1180, 88)]:
         tx, ty = aim(x, y); s += meteor(n, x, y, w, tx, ty)
-    for n, x, y, w, fl in [('Enemy/moth', 610, 1250, 120, True), ('Enemy/jelly', 960, 1380, 110, False), ('Enemy/ufo', 760, 860, 130, False),
-                           ('Enemy/beetle', 720, 1990, 110, True), ('Enemy/sdrone', 440, 380, 110, True)]:
+    for n, x, y, w, fl in [('Enemy/moth', 640, 1640, 120, True), ('Enemy/jelly', 960, 1380, 110, False), ('Enemy/ufo', 560, 780, 130, False),
+                           ('Enemy/beetle', 980, 2060, 110, True), ('Enemy/sdrone', 230, 470, 110, True)]:
         s += spr(n, x, y, w, flip=fl)
     # 보스 (오른쪽 위 모서리에 반쯤)
     s += spr('Enemy/planet', 960, 560, 280) + bar(860, 384, 180, 24, .66, RED, sw=4)
     # 공격 (오른쪽 위로)
-    lx, ly = tips['Turret/laser']; s += beam(lx, ly, 700, 640, SKY, 12)
-    mx_, my_ = tips['Turret/missile']; s += shot('Fx/missile', mx_ + 150, my_ - 50, -32, 110) + shot('Fx/mini_missile', mx_ + 290, my_ - 30, -12, 80)
-    tx_, ty_ = tips['Turret/tesla']; s += zap(tx_, ty_, 690, 1590, 7)
-    cx_, cy_ = tips['Turret/cannon']; s += shot('Fx/cannonball', cx_ + 40, cy_ - 30, -45, 48) + shot('Fx/cannonball', cx_ + 85, cy_ - 22, -45, 44)
-    s += shot('Fx/bullet', 450, 1258, -4, 100) + shot('Fx/bullet', 540, 1246, -4, 100)
-    s += boom(700, 640, 140) + boom(900, 1000, 110) + boom(690, 1590, 110) + spr('Fx/hit', 610, 1250, 90) + spr('Fx/hit', 610, 1820, 80)
-    s += dmg(700, 575, '1.4K', 60, '#ffb36b') + dmg(900, 940, '486', 44) + dmg(690, 1530, '520', 44, '#ffd34d') + T(690, 1488, '약점', 26, '#fde39a', sw=5)
-    s += dmg(610, 1190, '210', 40) + dmg(610, 1770, '96', 34, '#fff', .7) + dmg(1000, 1160, '88', 32, '#fff', .6)
+    lx, ly = tips['laser']; s += beam(lx, ly, 640, 1180, SKY, 12)
+    mx_, my_ = tips['missile']; s += shot('Fx/missile', mx_ + 140, my_ - 90, -40, 110) + shot('Fx/mini_missile', mx_ + 270, my_ - 190, -38, 80)
+    tx_, ty_ = tips['tesla']; s += zap(tx_, ty_, 650, 2010, 7)
+    cx_, cy_ = tips['cannon']; s += shot('Fx/cannonball', cx_ + 90, cy_ - 30, -30, 48) + shot('Fx/cannonball', cx_ + 170, cy_ - 50, -25, 44)
+    s += shot('Fx/bullet', gx + 110, gy + 20, 4, 100) + shot('Fx/bullet', gx + 220, gy + 30, 4, 100)
+    s += boom(640, 1180, 140) + boom(880, 1270, 110) + boom(760, 1880, 110) + spr('Fx/hit', 640, 1640, 90) + spr('Fx/hit', 660, 2010, 80)
+    s += dmg(640, 1115, '1.4K', 60, '#ffb36b') + dmg(880, 1210, '486', 44) + dmg(760, 1820, '520', 44, '#ffd34d') + T(760, 1778, '약점', 26, '#fde39a', sw=5)
+    s += dmg(640, 1580, '210', 40) + dmg(660, 1960, '96', 34, '#fff', .7) + dmg(1000, 1060, '88', 32, '#fff', .6)
     s += hud_route()
     return s
 
