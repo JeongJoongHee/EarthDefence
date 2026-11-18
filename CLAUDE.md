@@ -174,6 +174,7 @@
 
 ## 폴더
 - Unity 프로젝트: `Earth_Defence/` (Unity 6000.0.84f1, URP 2D, 씬 Assets/Scenes/Main.unity) — 에디터 `C:\Program Files\Unity Hub\6000.0.84f1\Editor\Unity.exe`
+- **APK (폰 시험용, 11-18)**: 메뉴 지구 방위대 › APK 빌드 (폰에 바로 설치)... 또는 `BATCH_TIMEOUT=2400 bash tools/unity_batch.sh EarthDef.EditorTools.BuildApk.Build`(개발용 빌드 = BuildDev) → `Earth_Defence/Builds/earthdefence-1.0.N[-dev].apk`. 개발용 키 서명 · 패키지 com.zkfpf.earthdefence 는 **임시**(첫 AAB 전에 사용자 결정) · 앱 아이콘 아직 없음(Unity 기본). 빌드 대상은 이제 Android.
 - `tools/todo_checks.py` HTML 체크·의견 읽기 (카피바라 타워에서 복사)
 - `tools/doodle_kit.py`(화풍 스킬 복사) · `tools/earth_art.py`(게임 그림, **PowerShell 에서** `$env:PYTHONUTF8='1'; python tools/earth_art.py sample`) · `tools/fonts/Jua-Regular.ttf`
 - 영상에서 본 것: 터렛 칸 = 가디언 + 4 · 카드 3장 + 광고 새로고침 1/1 · 한 판 약 5분(레벨 20) · 별 4칸 + 단계 숫자.
