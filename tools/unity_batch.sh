@@ -3,6 +3,7 @@
 # 사용: bash tools/unity_batch.sh <메서드> [--play]
 #   씬 다시 만들기(+표 변환) : EarthDef.EditorTools.SceneBuilder.BuildAll
 #   자동 시험              : EarthDef.EditorTools.PlayTest.Run --play   (화면은 Earth_Defence/Logs/PlayTest/*.png)
+#   폰 시험용 APK          : BATCH_TIMEOUT=1800 … EarthDef.EditorTools.BuildApk.Build  (개발용 빌드 = BuildDev, 결과 Earth_Defence/Builds/)
 METHOD="$1"; [ -z "$METHOD" ] && { echo "메서드 이름을 넣어 주세요"; exit 2; }
 UE="/c/Program Files/Unity Hub/6000.0.84f1/Editor/Unity.exe"
 P="D:/00 Earth_Defence/Earth_Defence"
@@ -14,5 +15,5 @@ QUIT="-quit"; [ "$2" = "--play" ] && QUIT=""
 timeout ${BATCH_TIMEOUT:-580} "$UE" -batchmode $QUIT -projectPath "$P" -executeMethod "$METHOD" -logFile "$LOG"
 CODE=$?
 echo "exit=$CODE  log=$LOG"
-grep -n "error CS\|Exception\|\[TEST\]\|\[SceneBuilder\]" "$LOG" | grep -v "Licensing" | head -${BATCH_LINES:-120}
+grep -n "error CS\|Exception\|\[TEST\]\|\[SceneBuilder\]\|\[BuildApk\]" "$LOG" | grep -v "Licensing\| kb	" | head -${BATCH_LINES:-120}
 exit $CODE
