@@ -17,6 +17,34 @@ namespace EarthDef
     {
         public static bool Has(string art) => art is "laser" or "bolt" or "rail" or "drone" or "hive" or "missile"
                                                   or "cannon" or "focus" or "vortex" or "wheel" or "tesla";
+        /// <summary>받침 그림 (관통포는 11-18 에 포신을 머리로 나눠 받침 = rail_stand)</summary>
+        public static string BaseSprite(string art) => art == "rail" ? "rail_stand" : art + "_base";
+
+        // ---------- 11-18 사령탑: 쏘는 머리만 45° 오른쪽 위로 (사용자 "탑이 아래에서 위로 쏘는 느낌 → 45도 · 머리만") ----------
+        // 머리 = 회전 중심(pivot)에 둔 Head 아래 HeadIn(-pivot) — 조각들은 예전 좌표 그대로 HeadIn 에 붙음 → Head 를 돌리면 머리만 돎
+        readonly System.Collections.Generic.List<Transform> heads = new(), inners = new();
+        readonly System.Collections.Generic.List<Vector2> tips = new();
+        public bool HasHead => heads.Count > 0;
+        Transform NewHead(float px, float py, float tx, float ty)
+        {
+            var h = new GameObject("Head").transform; h.SetParent(transform, false);
+            var pv = L2U(px, py); h.localPosition = pv;
+            var inner = new GameObject("HeadIn").transform; inner.SetParent(h, false); inner.localPosition = -pv;
+            heads.Add(h); inners.Add(inner); tips.Add(L2U(tx, ty));
+            return inner;
+        }
+        /// <summary>머리 방향 (도, 0 = 오른쪽 · 90 = 위)</summary>
+        public void SetAim(float deg) { var q = Quaternion.Euler(0, 0, deg - 90f); foreach (var h in heads) h.localRotation = q; }
+        /// <summary>쏘는 곳 (머리 끝, 미사일은 두 개 가운데)</summary>
+        public Vector2 TipWorld
+        {
+            get
+            {
+                Vector2 s = Vector2.zero;
+                for (int i = 0; i < inners.Count; i++) s += (Vector2)inners[i].TransformPoint(tips[i]);
+                return s / Mathf.Max(1, inners.Count);
+            }
+        }
         public int Parts { get; private set; }
         public float Intensity { get; private set; }
 
@@ -60,8 +88,9 @@ namespace EarthDef
             if (art == "laser")
             {
                 ringB = Part("RingBack", Art.Turret("laser_ring_back"), 4, true);
-                crystal = Part("Crystal", Art.Turret("laser_crystal"), 5, false);
-                crystalGlow = Part("CrystalGlow", Art.Fx("glow"), 5, true);
+                var hd = NewHead(100, 92, 100, 26);
+                crystal = Part("Crystal", Art.Turret("laser_crystal"), 5, false, hd);
+                crystalGlow = Part("CrystalGlow", Art.Fx("glow"), 5, true, hd);
                 crystalGlow.transform.localPosition = L2U(100, 62);
                 ringF = Part("RingFront", Art.Turret("laser_ring_front"), 6, true);
                 dots = new[] { Part("Dot0", Art.Fx("glow"), 6, true), Part("Dot1", Art.Fx("glow"), 6, true) };
@@ -69,11 +98,13 @@ namespace EarthDef
             }
             else if (art == "rail")
             {
-                wheel = Part("Wheel", Art.Get("Turret/rail_wheel", Art.PPU), 4, false);
+                var hd = NewHead(100, 150, 100, 28);
+                Part("Barrel", Art.Turret("rail_barrel"), 3, false, hd);
+                wheel = Part("Wheel", Art.Get("Turret/rail_wheel", Art.PPU), 4, false, hd);
                 wheel.transform.localPosition = L2U(100, 138);
-                Part("WheelHl", Art.Turret("rail_hl"), 5, false);
-                tipGlow = Part("TipGlow", Art.Fx("glow"), 5, true); tipGlow.transform.localPosition = L2U(100, 30);
-                hubGlow = Part("HubGlow", Art.Fx("glow"), 5, true); hubGlow.transform.localPosition = L2U(100, 138);
+                Part("WheelHl", Art.Turret("rail_hl"), 5, false, hd);
+                tipGlow = Part("TipGlow", Art.Fx("glow"), 5, true, hd); tipGlow.transform.localPosition = L2U(100, 30);
+                hubGlow = Part("HubGlow", Art.Fx("glow"), 5, true, hd); hubGlow.transform.localPosition = L2U(100, 138);
             }
             else if (art == "drone")
             {
@@ -94,14 +125,16 @@ namespace EarthDef
             }
             else if (art == "missile")
             {
-                mis = new[] { Part("MisL", Art.Turret("missile_l"), 2, false), Part("MisR", Art.Turret("missile_r"), 2, false) };   // 상자(받침) 뒤
+                var hl = NewHead(78, 112, 78, 32); var hr = NewHead(122, 104, 122, 24);
+                mis = new[] { Part("MisL", Art.Turret("missile_l"), 2, false, hl), Part("MisR", Art.Turret("missile_r"), 2, false, hr) };   // 상자(받침) 뒤
                 misGlow = new[] { Part("Light0", Art.Fx("glow"), 4, true), Part("Light1", Art.Fx("glow"), 4, true) };
                 misGlow[0].transform.localPosition = L2U(76, 136); misGlow[1].transform.localPosition = L2U(124, 136);
             }
             else if (art == "cannon")
             {
-                barrel = Part("Barrel", Art.Turret("cannon_barrel"), 4, false);
-                fuse = Part("Fuse", Art.Fx("glow"), 5, true); fuse.transform.localPosition = L2U(100, 40);
+                var hd = NewHead(100, 120, 100, 28);
+                barrel = Part("Barrel", Art.Turret("cannon_barrel"), 4, false, hd);
+                fuse = Part("Fuse", Art.Fx("glow"), 5, true, hd); fuse.transform.localPosition = L2U(100, 40);
             }
             else if (art is "focus" or "vortex" or "wheel")
             {
@@ -134,6 +167,8 @@ namespace EarthDef
                 }
             }
         }
+
+        public void RestAim() { if (HasHead) SetAim(Tables.Cf("Head_Rest_Deg", 45f)); }
 
         SpriteRenderer Part(string name, Sprite s, int order, bool add, Transform parent = null)
         {

@@ -18,7 +18,7 @@ namespace EarthDef
         public static void Invalidate() => cached = false;
         static void Recache()
         {
-            groundY = Tables.Cf("Ground_Y", -7.52f); shieldY = Tables.Cf("Shield_Y", -4.6f);
+            groundY = Tables.Cf("Ground_Y", -7.52f); shieldY = Tables.Cf("Shield_Y", -4.6f); shieldX = Tables.Cf("Shield_X", -2.1f);
             spawnY = Mathf.Min(Tables.Cf("Spawn_Y", 10.6f), I ? I.PlayTop - Tables.Cf("Spawn_Below_Hud", 0.6f) : 99f);
             cached = I;      // 월드가 생기기 전(로딩 중)엔 매번 다시 계산
         }
@@ -38,25 +38,44 @@ namespace EarthDef
                 return Top - world;
             }
         }
-        /// <summary>터렛 칸 x (안쪽부터 채움: 왼쪽 안 · 오른쪽 안 · 왼쪽 밖 · 오른쪽 밖)</summary>
-        public static readonly float[] SlotX = { -2.72f, 2.72f, -4.3f, 4.3f };
+        // ---------- 11-18 전투 배치 2판: 우주 사령탑 (전투배치_시안.html, 그림 tools/tower_art.py) ----------
+        // 사령탑은 화면 왼쪽 벽에 붙어 서고, 적은 오른쪽 위에서 비스듬히 날아와 사령탑 앞 방어선(Shield_X)에 닿으면 때림.
+        // 칸 좌표는 tools/earth_export.py tower 가 찍는 값과 같게 (땅 Ground_Y 위 높이).
+        /// <summary>터렛 칸 1~4 (위 2 · 아래 2 — 1 = 맨 위, 4 = 달 바닥) 의 땅 위 높이 · x</summary>
+        public static readonly float[] SlotUp = { 10.9f, 7.725f, 3.285f, 0f };
+        public const float SlotXPos = -3.1f;
+        public static Vector2 SlotPos(int slot) => new(SlotXPos, GroundY + SlotUp[Mathf.Clamp(slot - 1, 0, 3)] - (slot == 4 ? 0.06f : 0f));
+        /// <summary>대장 카피 자리 = 가운데 사령실 난간 위 (11-18 "대장 카피는 가운데 고정")</summary>
+        public static Vector2 GuardianPos => new(-3.9f, GroundY + 5.805f);
+        public static float TowerTop => GroundY + 11.85f;
+        /// <summary>방어선 x — 적은 이 선(사령탑 앞 · 터렛 오른쪽)에 닿으면 멈춰 때리거나 부딪쳐 터짐</summary>
+        public static float ShieldX { get { if (!cached) Recache(); return shieldX; } }
+        /// <summary>싸우는 하늘 가운데 (소용돌이 필살기 등)</summary>
+        public static Vector2 FieldCenter => new((ShieldX + HalfW) * 0.5f, 1.5f);
+        /// <summary>기지 효과(회복 · 얼림 · 부활)가 퍼지는 곳 = 사령실 앞</summary>
+        public static Vector2 BaseCenter => new(-3.6f, GroundY + 5.2f);
+        /// <summary>화면 안 (적을 노릴 수 있음): 위 UI 아래 · 오른쪽 끝 안쪽</summary>
+        public static bool OnField(Vector2 p) => p.y < SpawnY - 0.3f && p.x < HalfW - 0.15f;
+        static float shieldX;
+
         public float Top => cam.transform.position.y + cam.orthographicSize;
         readonly SpriteRenderer[] slotMarks = new SpriteRenderer[4];
-        SpriteRenderer dome, domeGlow, rabbit;
+        SpriteRenderer tower, towerGlow, rabbit;
         float rabbitT;
         public bool RabbitDown { get; private set; }
         float glowT; Color glowCol;
+        public SpriteRenderer SlotMark(int slot) => slotMarks[Mathf.Clamp(slot - 1, 0, 3)];
 
-        /// <summary>기지 외형 (3차): 돔 색 + 둘레 은은한 빛 (보통 그리기 — 빛 더하기는 밝은 땅에서 하얗게 탐)</summary>
+        /// <summary>기지 외형 (3차 → 11-18 사령탑 7종): 외형마다 다른 사령탑 그림 + 둘레 은은한 빛</summary>
         public void SetFrame(FrameRow f)
         {
-            if (!dome) return;
-            // 6차 수정안: 외형마다 다른 돔 그림 (그림에 색이 들어 있음) — 그림이 없으면 예전처럼 기본 돔에 색만
-            var sp = f != null ? Art.Get("Bg/dome_" + f.id, 100f) : null;
-            dome.sprite = sp ? sp : Art.Get("Bg/dome", 100f);
-            dome.color = sp ? Color.white : f != null ? f.tint : Color.white;
+            if (!tower) return;
+            var sp = f != null ? TowerSprite("Bg/tower_" + f.id) : null;
+            tower.sprite = sp ? sp : TowerSprite("Bg/tower");
             glowCol = f != null && f.id != "basic" ? f.glow : new Color(1, 1, 1, 0);
         }
+        /// <summary>사령탑 그림 420x1440 (PPU 100) — 피벗 = 왼쪽 아래에서 땅 높이(아래 40px)</summary>
+        static Sprite TowerSprite(string path) => Art.Get(path, 100f, new Vector2(0f, 40f / 1440f));
 
         public void Build(Camera c)
         {
@@ -65,16 +84,15 @@ namespace EarthDef
             Spr("Sky", Art.Get("Bg/sky", 100f), new Vector2(0, Bottom + 12f), -100);
             // 2차 수정안: 달토끼 — 하늘 그림의 달(915, 780px) 위에서 방아를 찧음 (공이 위 · 아래 두 장을 번갈아)
             rabbit = Spr("MoonRabbit", Art.Get("Bg/moon_rabbit_0", 100f), new Vector2((915 - 540) / 100f, Bottom + 24f - 7.8f), -99);
-            Spr("Ground", Art.Get("Bg/ground", 100f), new Vector2(0, Bottom + 2.8f), -50);
-            domeGlow = Spr("DomeGlow", Art.Fx("glow"), new Vector2(0, Bottom + 3.1f), -41);
-            domeGlow.transform.localScale = new Vector3(15f, 7.5f, 1); domeGlow.color = new Color(1, 1, 1, 0);
-            dome = Spr("Dome", Art.Get("Bg/dome", 100f), new Vector2(0, Bottom + 2.8f), -40);
+            // 11-18: 풀밭 + 돔 → 달 바닥(지평선 위 지구) + 왼쪽 벽 사령탑. 땅 그림 1080x460 = 월드 y -9.6 ~ -5.0
+            Spr("Ground", Art.Get("Bg/ground_moon", 100f), new Vector2(0, Bottom + 2.3f), -50);
+            towerGlow = Spr("TowerGlow", Art.Fx("glow"), new Vector2(-4.4f, GroundY + 6f), -41);
+            towerGlow.transform.localScale = new Vector3(5f, 16f, 1); towerGlow.color = new Color(1, 1, 1, 0);
+            tower = Spr("Tower", TowerSprite("Bg/tower"), new Vector2(-HalfW, GroundY), -40);
             if (SaveData.Cur != null) SetFrame(Tables.Frame(SaveData.Cur.frame));
             for (int i = 0; i < 4; i++)
-            {
-                slotMarks[i] = Spr("Slot" + i, Art.Get("Bg/slot", 100f), new Vector2(SlotX[i], GroundY - 0.02f), -30);
-            }
-            ShowSlots(0);
+                slotMarks[i] = Spr("Slot" + i, Art.Get("Bg/slot", 100f), SlotPos(i + 1) + new Vector2(0, 0.05f), -30);
+            ShowSlots(false);
         }
 
         /// <summary>폭 10.8칸이 꼭 보이게 + 화면 아래 끝을 y -9.6 에 맞춤</summary>
@@ -98,15 +116,31 @@ namespace EarthDef
                 bool down = Mathf.Repeat(rabbitT, 0.7f) > 0.45f;
                 if (down != RabbitDown) { RabbitDown = down; rabbit.sprite = Art.Get("Bg/moon_rabbit_" + (down ? 1 : 0), 100f); }
             }
-            if (domeGlow) { glowT += Time.deltaTime; var c = glowCol; c.a = glowCol.a > 0 ? 0.22f + 0.08f * Mathf.Sin(glowT * 1.6f) : 0; domeGlow.color = c; }
+            if (towerGlow) { glowT += Time.deltaTime; var c = glowCol; c.a = glowCol.a > 0 ? 0.22f + 0.08f * Mathf.Sin(glowT * 1.6f) : 0; towerGlow.color = c; }
             if (cam && Mathf.Abs(cam.aspect - lastAspect) > 0.001f) { lastAspect = cam.aspect; Fit(); }
+            // 자리 고르기 중이면 빈 칸이 숨쉬듯 반짝 (11-18 "터렛을 고를 때 자리를 고르는 흐름")
+            if (pulse)
+            {
+                float k = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6f);
+                foreach (var m in slotMarks) if (m.enabled) { m.color = Color.Lerp(Color.white, Art.Gold, k); m.transform.localScale = Vector3.one * (1.05f + 0.15f * k); }
+            }
         }
 
-        /// <summary>빈 칸 표시 (터렛이 놓인 칸 수 = used)</summary>
-        public void ShowSlots(int used, bool show = true)
+        bool pulse;
+        /// <summary>빈 칸 표시: 터렛이 없는 칸만 (11-18: 칸을 골라 놓으므로 앞에서부터 채워지지 않음). pick = 자리 고르기 중 반짝</summary>
+        public void ShowSlots(bool show, bool pick = false)
         {
-            for (int i = 0; i < 4; i++) slotMarks[i].enabled = show && i >= used;
+            var run = Battle.I != null ? Battle.I.run : null;
+            pulse = show && pick;
+            for (int i = 0; i < 4; i++)
+            {
+                bool used = run != null && run.turrets.Exists(t => t.slot == i + 1);
+                slotMarks[i].enabled = show && !used;
+                if (!pulse) { slotMarks[i].color = Color.white; slotMarks[i].transform.localScale = Vector3.one; }
+            }
         }
+        /// <summary>예전 호출 모양 (칸 수) — 이제 칸 수는 안 씀</summary>
+        public void ShowSlots(int used, bool show = true) => ShowSlots(show);
 
         public SpriteRenderer Spr(string name, Sprite s, Vector2 pos, int order)
         {

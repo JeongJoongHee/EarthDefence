@@ -38,7 +38,7 @@ namespace EarthDef.EditorTools
             for (int i = 0; i < need && i < 6; i++)
             {
                 string id = B.stage.enemies[prnd.Next(B.stage.enemies.Length)];
-                B.Spawn(id, new Vector2((float)(prnd.NextDouble() * 2 - 1) * 4.6f, Mathf.Lerp(World.ShieldY + 1.5f, World.SpawnY - 0.5f, (float)prnd.NextDouble())));
+                B.Spawn(id, new Vector2(Mathf.Lerp(World.ShieldX + 1.5f, World.HalfW - 0.3f, (float)prnd.NextDouble()), Mathf.Lerp(World.GroundY + 1.5f, World.SpawnY - 0.5f, (float)prnd.NextDouble())));
             }
         }
 

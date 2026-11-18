@@ -54,7 +54,7 @@ namespace EarthDef
                     {
                         acc -= 1;
                         var st = Tables.Stage(stage);
-                        b.Spawn(st.enemies[Random.Range(0, st.enemies.Length)], new Vector2(Random.Range(-4.6f, 4.6f), World.SpawnY - Random.value * 0.6f));
+                        b.Spawn(st.enemies[Random.Range(0, st.enemies.Length)], b.SpawnPoint());
                     }
                     break;
                 case "dummy":

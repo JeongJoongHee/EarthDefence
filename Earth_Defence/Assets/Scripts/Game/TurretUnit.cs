@@ -34,9 +34,10 @@ namespace EarthDef
             // 11-16 밤 대기 효과 — 받침 그림 + 움직이는 조각 (터렛 6종 모두)
             if (!IsGuardian && TurretIdle.Has(t.row.art) && Tables.Cf("Idle_Fx", 1f) > 0)
             {
-                sr.sprite = Art.Turret(t.row.art + "_base");
+                sr.sprite = Art.Turret(TurretIdle.BaseSprite(t.row.art));
                 idle = gameObject.AddComponent<TurretIdle>();
                 idle.Setup(this, t.row.art);
+                headDeg = Tables.Cf("Head_Rest_Deg", 45f); idle.RestAim();
             }
             RefreshTier();
         }
@@ -103,7 +104,7 @@ namespace EarthDef
             Fx.Word(Head + Vector2.up * 0.6f, k.ultName, Color.Lerp(col, Color.white, 0.3f));
             Fx.Ring(Head, 2.2f, col); Fx.Glow(Head, 1.2f, new Color(col.r, col.g, col.b, 0.8f), 0.4f);
             Audio.Play(Audio.Sfx.Break);
-            var tp = target != null && !target.dead ? target.Pos : new Vector2(0, 3f);
+            var tp = target != null && !target.dead ? target.Pos : World.FieldCenter;
             float ang = Mathf.Atan2(tp.y - Head.y, tp.x - Head.x) * Mathf.Rad2Deg;
             switch (k.ult)
             {
@@ -112,20 +113,20 @@ namespace EarthDef
                 case "drone":
                 {
                     float y = b.CrowdY();
-                    for (int i = -1; i <= 1; i++) b.Add(new Field(t, Mathf.Clamp(y + i * 2.4f, World.ShieldY + 1f, 8f), 0.9f * t.Area, 4f, 0.4f, rate));
+                    for (int i = -1; i <= 1; i++) b.Add(new Field(t, Mathf.Clamp(y + i * 2.4f, World.GroundY + 1.2f, 8f), 0.9f * t.Area, 4f, 0.4f, rate));
                     break;
                 }
                 case "hive": for (int i = 0; i < 15; i++) b.Add(new Bee(t, Head + new Vector2(Random.Range(-0.6f, 0.6f), Random.Range(0f, 0.4f)), 5, rate)); break;
                 case "missile":
                     for (int i = 0; i < 12; i++)
                     {
-                        var from = new Vector2(Random.Range(-4.5f, 4.5f), World.SpawnY - 0.2f);
+                        var from = new Vector2(Random.Range(World.ShieldX + 0.5f, World.HalfW - 0.5f), World.SpawnY - 0.2f);
                         var m = new Projectile(t, "missile", from, Vector2.down, t.row.speed, rate, 0, 1f) { target = b.RandomEnemy(), turn = 5f, life = 5f, hitR = 0.25f };
                         m.onHit = (p, e) => { Combat.Hit(t, e, rate); Combat.Explode(t, p.pos, 1.1f, rate * 0.6, Elem.Color("fire")); };
                         b.Add(m);
                     }
                     break;
-                case "bolt": for (int i = 0; i < 7; i++) b.Add(new Strike(t, -4.2f + i * 1.4f, 0.7f, 1.2f, 0.3f, rate)); break;
+                case "bolt": for (int i = 0; i < 7; i++) b.Add(new Strike(t, Mathf.Lerp(World.ShieldX + 0.5f, World.HalfW - 0.4f, i / 6f), 0.7f, 1.2f, 0.3f, rate)); break;
                 case "cannon":
                 {
                     var d = (tp - Head).normalized;
@@ -144,7 +145,7 @@ namespace EarthDef
                     for (int i = 0; i < 3; i++) { var e = b.Nearest(Head, t.Range * 1.5f, skip); if (e == null) break; skip.Add(e); b.Add(new FocusBeam(t, e, 5f, t.row.radius * 1.5f)); }
                     break;
                 }
-                case "vortex": b.Add(new Vortex(t, new Vector2(0, 1.5f), Vector2.up, 0, 3f, 2.4f, rate, 7f, true)); break;
+                case "vortex": b.Add(new Vortex(t, World.FieldCenter, Vector2.up, 0, 3f, 2.4f, rate, 7f, true)); break;
                 case "wheel":
                     for (int i = 0; i < 6; i++)
                     {
@@ -251,12 +252,32 @@ namespace EarthDef
         }
 
         public Vector2 Head => IsGuardian ? (Vector2)gunT.TransformPoint(Art.GunMuzzle)
+                                   : idle != null && idle.HasHead ? idle.TipWorld
                                    : (Vector2)transform.position + Vector2.up * Art.TurretHead * transform.localScale.x;
+        // ---------- 11-18 사령탑: 머리 45° (쉴 때) → 적 쪽 (사거리 안에 적이 있으면) ----------
+        float headDeg = 90f, headWant = 90f, headT;
+        public float HeadDeg => headDeg;
+        /// <summary>머리가 보는 방향 (머리가 없는 터렛은 위)</summary>
+        public Vector2 HeadDir => idle != null && idle.HasHead ? new Vector2(Mathf.Cos(headDeg * Mathf.Deg2Rad), Mathf.Sin(headDeg * Mathf.Deg2Rad)) : Vector2.up;
+        float AngleTo(Vector2 p) { var d = p - (Vector2)transform.position - Vector2.up * 0.7f; return Mathf.Clamp(Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, -35f, 115f); }
+        void HeadStep(float dt)
+        {
+            if (idle == null || !idle.HasHead) return;
+            if ((headT -= dt) <= 0)
+            {
+                headT = 0.1f;
+                var tg = Battle.I.Nearest(transform.position, t.Range);
+                headWant = tg != null ? AngleTo(tg.Pos) : Tables.Cf("Head_Rest_Deg", 45f);
+            }
+            headDeg = Mathf.MoveTowardsAngle(headDeg, headWant, Tables.Cf("Head_Turn", 240f) * dt);
+            idle.SetAim(headDeg);
+        }
 
         public void Step(float dt)
         {
             if (!IsGuardian && kick > 0) { kick -= dt; transform.position = new Vector3(transform.position.x, baseY - 0.06f * kick / 0.1f, 0); }
-            if (IsGuardian) { Move(dt); AimStep(dt); }
+            if (IsGuardian) { if (Tables.Ci("Guardian_Fixed", 1) != 1) Move(dt); AimStep(dt); }   // 11-18: 대장 카피는 사령실 가운데 고정
+            else HeadStep(dt);
             if (IsGuardian && Battle.I.lab != null && !Battle.I.lab.guardianFire) return;   // 시험장: 대장 카피 쏘기 끔
             if (Charging) { ChargeStep(dt); return; }
             cd -= dt;
@@ -265,7 +286,7 @@ namespace EarthDef
             var target = b.Nearest(IsGuardian ? HandPos : Head, t.Range);
             if (target == null) { cd = 0.1f; return; }
             cd = t.Cooldown;
-            if (idle) idle.OnFire();
+            if (idle) { idle.OnFire(); if (idle.HasHead) { headDeg = headWant = AngleTo(target.Pos); idle.SetAim(headDeg); } }   // 쏠 때는 머리가 적을 봄
             Fire(target);
             fired++;
             UltStep(target);
@@ -328,10 +349,10 @@ namespace EarthDef
                 case "field":
                 {
                     float half = t.row.radius * t.Area;
-                    float y = Mathf.Clamp(b.CrowdY(), World.ShieldY + half + 0.3f, 7.5f);
+                    float y = Mathf.Clamp(b.CrowdY(), World.GroundY + half + 0.3f, 7.5f);
                     int n = 1 + (int)t.S("count_free");
                     for (int i = 0; i < n; i++)
-                        b.Add(new Field(t, Mathf.Clamp(y + i * 2.6f, World.ShieldY + half + 0.3f, 8.5f), half, t.Duration, t.Tick, t.row.rate));
+                        b.Add(new Field(t, Mathf.Clamp(y + i * 2.6f, World.GroundY + half + 0.3f, 8.5f), half, t.Duration, t.Tick, t.row.rate));
                     break;
                 }
                 case "hive":
@@ -340,7 +361,7 @@ namespace EarthDef
                 case "missile":
                     for (int i = 0; i < t.Shots; i++)
                     {
-                        var d = Rot(Vector2.up, (i - (t.Shots - 1) / 2f) * 25f);
+                        var d = Rot(HeadDir, (i - (t.Shots - 1) / 2f) * 25f);   // 11-18: 머리(45°) 쪽으로 나감
                         var m = new Projectile(t, "missile", Head, d, t.row.speed, t.row.rate, 0, 1f) { target = target, turn = 4.5f, life = 5f, hitR = 0.25f };
                         Fx.Sparks(Head, Projectile.ShotColor("missile"), 4, 2.5f, 0.9f, 80f, -90f + Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg - 90f);
                         m.onHit = (p, e) => MissileHit(p.pos, e, 1.0);
@@ -483,7 +504,7 @@ namespace EarthDef
                 for (int i = 0; i < n; i++)
                 {
                     // 11-16: 맞은 자리에서 튀어나오던 것 → 미사일 터렛에서 발사해 맞은 자리 근처 적을 쫓음
-                    var d = Rot(Vector2.up, (i - (n - 1) / 2f) * 22f);
+                    var d = Rot(HeadDir, (i - (n - 1) / 2f) * 22f);
                     var m = new Projectile(t, "mini_missile", Head, d, t.row.speed * 0.9f, 0, 0, 1f) { turn = 6f, life = 4f, hitR = 0.18f, target = Battle.I.Nearest(at, 4f) };
                     double k = 0.4 * (1 + t.S("split_dmg") / 100.0);
                     m.onHit = (p, en) => MissileHit(p.pos, en, k);

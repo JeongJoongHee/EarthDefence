@@ -71,8 +71,24 @@ def export_frames():
         out('Icon', f'frame_{fid}', Rr(svg, 380, 210, A.WOB['icon'], .02))
     print('frames', len(FRAME_IDS))
 
+# ------------------------------------------------------------------ 11-18 전투 배치 2판: 우주 사령탑 (tools/tower_art.py)
+def export_tower():
+    import tower_art as TA
+    # 사령탑 기본 + 외형 7종 (Bg/tower_<id>) · 외형 목록 아이콘 (Icon/frame_<id>, 예전 돔 아이콘 자리)
+    out('Bg', 'tower', Rr(TA.tower('basic'), TA.TW, TA.TH, A.WOB['ui'], .02))
+    for fid in FRAME_IDS:
+        out('Bg', f'tower_{fid}', Rr(TA.tower(fid), TA.TW, TA.TH, A.WOB['ui'], .02))
+        out('Icon', f'frame_{fid}', Rr(TA.frame_icon(fid), 380, 210, A.WOB['icon'], .02))
+    out('Bg', 'ground_moon', Rr(TA.moon_ground(), 1080, 460, A.WOB['bg'] * .6, .01))
+    # 관통포 머리 나눔 (받침 rail_stand + 포신 rail_barrel, 같은 캔버스)
+    out('Turret', 'rail_stand', A.piece(TA.t_rail_stand(), 200, 222, 1.56, A.WOB['turret'], .018))
+    out('Turret', 'rail_barrel', A.piece(TA.t_rail_barrel(), 200, 222, 1.56, A.WOB['turret'], .018))
+    print('tower  slots(world)', [TA.world(TA.SX, y) for y in TA.SLOTS], ' guardian', TA.world(TA.BX + 70, TA.DY - 8),
+          ' top', TA.world(TA.BX, TA.TOP), ' wall x', round((TA.SX + 100) / 100 - 5.4, 3))
+
+
 # ------------------------------------------------------------------ 가디언 · 터렛
-GK = 1.8   # 대장 카피 그림 배율 (PPU 200 → 화면 0.9배) — 11-16 "너무 큼, 0.7~0.8" → 2.4 의 0.75배 — 게임 Art.cs 의 Guardian* 값과 같게
+GK = 1.8  # 대장 카피 그림 배율 (PPU 200 → 화면 0.9배) — 11-16 "너무 큼, 0.7~0.8" → 2.4 의 0.75배 — 게임 Art.cs 의 Guardian* 값과 같게
 
 
 def export_char():
@@ -600,7 +616,8 @@ def export_icon():
 
 
 if __name__ == '__main__':
-    want = set(sys.argv[1:]) or {'bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'frames'}
-    for n in ('bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'frames'):
+    want = set(sys.argv[1:]) or {'bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'tower'}
+    if 'frames' in want: want.add('tower')       # 11-18: 외형 7종 = 사령탑 (예전 돔 export_frames 는 쓰지 않음 — 아이콘을 덮어씀)
+    for n in ('bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'tower'):
         if n in want:
             globals()['export_' + n]()

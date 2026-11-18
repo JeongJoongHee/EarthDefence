@@ -189,13 +189,15 @@ namespace EarthDef
         {
             if (!startRT || UIRoot.I == null || World.I == null) return;
             var page = (RectTransform)startRT.parent;
-            var sp = World.I.cam.WorldToScreenPoint(new Vector3(0, Tables.Cf("Dome_Top_Y", -4.05f), 0));
+            // 11-18 사령탑: 돔이 없어져 사령탑 오른쪽 하늘 가운데(Lobby_Btn_X)에 — 높이는 예전 돔 꼭대기 그대로
+            var sp = World.I.cam.WorldToScreenPoint(new Vector3(Tables.Cf("Lobby_Btn_X", 1.55f), Tables.Cf("Dome_Top_Y", -4.05f), 0));
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(page, sp, UIRoot.I.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : UIRoot.I.canvas.worldCamera, out var lp)) return;
             float y = lp.y - page.rect.yMin + 8;               // 페이지 아래 끝에서 잰 높이
             y = Mathf.Max(y, 20);
-            if (Mathf.Abs(patrolRT.anchoredPosition.y - y) < 0.01f) return;      // 11-17: 매 프레임 같은 자리를 다시 넣지 않음 (화면이 바뀐 때만)
-            patrolRT.anchoredPosition = new Vector2(0, y);
-            startRT.anchoredPosition = new Vector2(0, y + 150 + 18);
+            float x = Mathf.Clamp(lp.x - page.rect.center.x, -page.rect.width / 2 + 310, page.rect.width / 2 - 310);
+            if (Mathf.Abs(patrolRT.anchoredPosition.y - y) < 0.01f && Mathf.Abs(patrolRT.anchoredPosition.x - x) < 0.01f) return;      // 11-17: 매 프레임 같은 자리를 다시 넣지 않음 (화면이 바뀐 때만)
+            patrolRT.anchoredPosition = new Vector2(x, y);
+            startRT.anchoredPosition = new Vector2(x, y + 150 + 18);
         }
 
         (Image, Text) BossTile(Transform p, float x, string title)

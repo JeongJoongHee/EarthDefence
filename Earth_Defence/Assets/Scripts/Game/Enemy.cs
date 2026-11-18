@@ -3,7 +3,9 @@ using UnityEngine;
 namespace EarthDef
 {
     /// <summary>
-    /// 적 하나. 위에서 내려와 방어막(Shield_Y)에 닿으면: 운석(Crash)은 부딪쳐 터지며 큰 피해, 나머지는 멈춰서 계속 때림.
+    /// 적 하나. 11-18 전투 배치 2판: 오른쪽 위에서 사령탑을 향해 비스듬히 날아와 방어선(Shield_X)에 닿으면:
+    /// 운석(Crash)은 부딪쳐 터지며 큰 피해, 나머지는 멈춰서 계속 때림. 흔들림(zigzag · hover · boss)은 날아가는 줄의 옆으로.
+    /// 꼬리 달린 운석은 날아가는 쪽으로 머리를 돌림.
     /// 움직임(Move): fall 곧게 · zigzag 흔들며 · fast 빠르게 · walk 천천히 · hover 좌우로 크게 · boss 느리게 + 부하 부르기.
     /// 상태이상: 둔화 · 마비 · 화상 · 취약. 맞으면 흰 실루엣이 잠깐 번쩍.
     /// </summary>
@@ -19,11 +21,28 @@ namespace EarthDef
         Vector2 pos;
         public Vector2 Pos => pos;
         /// <summary>위치 바꾸기 (시험 · 시험장에서 직접 옮길 때도 이것으로)</summary>
-        public void Teleport(Vector2 p) { pos = p; x0 = p.x; transform.position = p; }
+        public void Teleport(Vector2 p) { pos = p; basePos = p - perp * sway; transform.position = p; }
+        // 11-18: 날아가는 줄 (basePos 가 dir 로 나아가고 화면 위치 = basePos + 옆 흔들림)
+        Vector2 basePos, dir = Vector2.down, perp = Vector2.right; float sway;
+        public Vector2 Dir => dir;
+        bool turnToDir;
+        /// <summary>목표(사령탑 앞 한 점)를 향하게 — Battle.Spawn 이 부름</summary>
+        public void Aim(Vector2 target)
+        {
+            var d = target - pos;
+            dir = d.sqrMagnitude > 0.0001f ? d.normalized : Vector2.left;
+            perp = new Vector2(-dir.y, dir.x);
+            if (turnToDir) transform.localRotation = baseRot = Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + 90f);
+        }
+        Quaternion baseRot = Quaternion.identity;
+        /// <summary>방어선까지 남은 거리 (날아가는 방향으로)</summary>
+        public float Remain => atShield ? 0f : dir.x < -0.05f ? Mathf.Max(0f, (pos.x - radius - World.ShieldX) / -dir.x) : Mathf.Max(0f, pos.x - radius - World.ShieldX) + 3f;
+        /// <summary>예전 세로 전장의 높이로 바꾼 값 (= Shield_Y + 남은 거리) — Pos_Near_Y · Pos_Far_Y 같은 예전 기준을 그대로 쓰려고</summary>
+        public float VY => World.ShieldY + Remain;
 
         SpriteRenderer sr, white;
         SpriteRenderer barBg, barFill;
-        float flash, age, x0, phase, hitT, summonT;
+        float flash, age, phase, hitT, summonT;
         bool atShield;
         // 상태이상
         public float slow, slowT, para, vulnT;
@@ -38,7 +57,8 @@ namespace EarthDef
         public void Init(EnemyRow r, Vector2 p, double hp, double atk)
         {
             row = r; this.hp = maxHp = hp; this.atk = atk;
-            pos = p; transform.position = p;
+            pos = basePos = p; transform.position = p;
+            turnToDir = r.crash && r.pivotY < 0.4f;     // 꼬리 달린 운석 (그림이 아래로 떨어지는 모양)
             // 2차 수정안: 중간 보스 x3 · 보스 x3.5 (Config Elite_Size_Mul · Boss_Size_Mul)
             size = r.size * (r.IsBoss ? Tables.Cf("Boss_Size_Mul", 3.5f) : r.IsElite ? Tables.Cf("Elite_Size_Mul", 3f) : 1f);
             transform.localScale = Vector3.one * size;
@@ -48,7 +68,7 @@ namespace EarthDef
             white = w.AddComponent<SpriteRenderer>(); white.sprite = Art.Enemy(r, true); white.sortingOrder = sr.sortingOrder; white.color = new Color(1, 1, 1, 0);
             // 맞는 크기: 그림 242px(PPU200) = 1.21칸 → 반지름 약 0.42 x Size (보스 그림은 2배)
             radius = (r.IsBoss && r.art == "planet" ? 0.95f : 0.42f) * size;
-            x0 = p.x; phase = Random.Range(0f, 6.28f);
+            phase = Random.Range(0f, 6.28f);
             summonT = Tables.Cf("Boss_Summon_Gap", 4f);
             if (r.IsBoss || r.IsElite)
             {
@@ -119,18 +139,22 @@ namespace EarthDef
             }
             if (Paralyzed || hold) return;
 
-            float spd = row.speed * (1 - slow) * (rageT > 0 ? Tables.Cf("Boss_Rage_Speed", 2.5f) : 1f);
-            var p = pos;
+            // 11-18: 사령탑까지 오는 길이 예전(화면 높이)보다 짧아 Enemy_Speed_Mul 로 맞춤 (밸런스 3차 측정에서 다시)
+            float spd = row.speed * Tables.Cf("Enemy_Speed_Mul", 1f) * (1 - slow) * (rageT > 0 ? Tables.Cf("Boss_Rage_Speed", 2.5f) : 1f);
+            basePos += dir * spd * dt;
             switch (row.move)
             {
-                case "zigzag": p.y -= spd * dt; p.x = x0 + Mathf.Sin(age * 2.2f + phase) * 0.9f; break;
-                case "hover": p.y -= spd * dt; p.x = x0 + Mathf.Sin(age * 0.9f + phase) * 1.8f; break;
-                case "boss": p.y -= spd * dt; p.x = x0 + Mathf.Sin(age * 0.5f) * 1.2f; break;
-                default: p.y -= spd * dt; break;
+                case "zigzag": sway = Mathf.Sin(age * 2.2f + phase) * 0.9f; break;
+                case "hover": sway = Mathf.Sin(age * 0.9f + phase) * 1.8f; break;
+                case "boss": sway = Mathf.Sin(age * 0.5f) * 1.2f; break;
+                default: sway = 0; break;
             }
-            p.x = Mathf.Clamp(p.x, -World.HalfW + radius, World.HalfW - radius);
+            // 달 바닥에 닿으면 바닥을 따라 사령탑 쪽으로 (낮게 오는 적)
+            if (basePos.y < World.GroundY + radius * 0.6f) { basePos.y = World.GroundY + radius * 0.6f; if (dir.y < 0) { dir = Vector2.left; perp = Vector2.down; } }
+            var p = basePos + perp * sway;
+            p.y = Mathf.Max(p.y, World.GroundY + radius * 0.4f);
             pos = p; transform.position = p;
-            if (p.y - radius <= World.ShieldY)
+            if (p.x - radius <= World.ShieldX)
             {
                 if (row.crash) { Battle.I?.HurtBase(atk * Tables.C("Crash_Mul", 3), Pos, this); Fx.Burst(Pos, 0.6f * size); dead = true; return; }
                 atShield = true; hitT = 0.3f;
@@ -142,7 +166,8 @@ namespace EarthDef
         void Wobble() { wob = 0.15f; }
         void LateUpdate()
         {
-            if (wob > 0) { wob -= Time.deltaTime; transform.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(wob * 60) * 8 * wob / 0.15f); }
+            if (wob > 0) { wob -= Time.deltaTime; transform.localRotation = baseRot * Quaternion.Euler(0, 0, Mathf.Sin(wob * 60) * 8 * wob / 0.15f); }
+            if (hasBar && turnToDir) { barBg.transform.rotation = Quaternion.identity; barFill.transform.rotation = Quaternion.identity; }
             if (hasBar && hp != barHp) { barHp = hp; float k = (float)(hp / maxHp); barFill.size = new Vector2(1.6f * Mathf.Clamp01(k), 0.3f); barFill.transform.localPosition = barBg.transform.localPosition + new Vector3(-0.8f * (1 - k) * barK / size, 0, 0); }
         }
 
@@ -168,25 +193,25 @@ namespace EarthDef
         }
         public void Burn(double dps, float time, TurretInst src) { burnDps = burnT > 0 ? System.Math.Max(burnDps, dps) : dps; burnT = time; burnSrc = src; }   // 11-17: 큰 수가 float 로 깎이던 것 · 화상이 끝난 뒤에도 예전 큰 값이 남던 것 고침
         public void Vulnerable(double amt, float time) { vuln = System.Math.Max(vuln, amt); vulnT = time; }
-        /// <summary>밀어내기 (쾅쾅 대포 · 기뢰 충격파 · 충격 미사일): 위로 d 칸. 보스는 안 밀림 · 중간 보스는 30%만</summary>
+        /// <summary>밀어내기 (쾅쾅 대포 · 기뢰 충격파 · 충격 미사일): 온 길로 d 칸 되돌림(11-18: 예전 = 위로). 보스는 안 밀림 · 중간 보스는 30%만</summary>
         public void Knock(float d)
         {
             if (row.IsBoss || d <= 0 || dead) return;
             if (row.IsElite) d *= 0.3f;
             Knocks++;
-            var p = pos;
-            p.y = Mathf.Min(p.y + d, World.SpawnY - 0.3f);
-            pos = p; transform.position = p;
-            if (atShield && p.y - radius > World.ShieldY + 0.05f) atShield = false;
+            var b = basePos - dir * d;
+            b.y = Mathf.Min(b.y, World.SpawnY - 0.3f); b.x = Mathf.Min(b.x, World.HalfW - 0.3f);
+            basePos = b; pos = b + perp * sway; transform.position = pos;
+            if (atShield && pos.x - radius > World.ShieldX + 0.05f) atShield = false;
         }
 
         /// <summary>끌어당김 (장판 · 소용돌이)</summary>
         public void Pull(Vector2 to, float amt)
         {
             if (row.IsBoss) return;
-            pos = Vector2.MoveTowards(pos, to, amt);
+            var np = Vector2.MoveTowards(pos, to, amt);
+            basePos += np - pos; pos = np;
             transform.position = pos;
-            x0 = pos.x;
         }
     }
 }

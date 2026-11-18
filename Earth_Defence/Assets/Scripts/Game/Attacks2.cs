@@ -282,8 +282,8 @@ namespace EarthDef
             if (dead) return;
             t += dt; life -= dt; tickT -= dt;
             pos += vel * dt;
-            float top = World.SpawnY - 0.6f, bot = World.ShieldY + r + 0.1f;
-            if (pos.x < -World.HalfW + r) { pos.x = -World.HalfW + r; vel.x = Mathf.Abs(vel.x); Bounce(); }
+            float top = World.SpawnY - 0.6f, bot = World.GroundY + r + 0.1f;   // 11-18: 벽 = 방어선(왼쪽) · 오른쪽 끝 · 위 · 달 바닥
+            if (pos.x < World.ShieldX + r) { pos.x = World.ShieldX + r; vel.x = Mathf.Abs(vel.x); Bounce(); }
             if (pos.x > World.HalfW - r) { pos.x = World.HalfW - r; vel.x = -Mathf.Abs(vel.x); Bounce(); }
             if (pos.y > top) { pos.y = top; vel.y = -Mathf.Abs(vel.y); Bounce(); }
             if (pos.y < bot) { pos.y = bot; vel.y = Mathf.Abs(vel.y); Bounce(); }

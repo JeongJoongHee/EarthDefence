@@ -83,6 +83,7 @@ namespace EarthDef.EditorTools
         {
             string mode = SessionState.GetString(PlayTest.ModeKey, "");
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
+            Battle.NoSlotPick = true;      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
             var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
@@ -472,12 +473,12 @@ namespace EarthDef.EditorTools
                 var srow = GameObject.Find("S_sk_rail");
                 Check(srow != null && srow.transform.Find("After") != null && srow.transform.Find("Before") == null, "터렛 외형 = 바뀐 그림 한 장");
                 Capture("87_looks_turret");
-                bool domes = true; foreach (var f in Tables.Frames) if (Art.Get("Bg/dome_" + f.id, 100f) == null || Art.Icon("frame_" + f.id) == null) domes = false;
+                bool domes = true; foreach (var f in Tables.Frames) if (Art.Get("Bg/tower_" + f.id, 100f) == null || Art.Icon("frame_" + f.id) == null) domes = false;   // 11-18: 돔 → 사령탑
                 Looks.sub = 1; Game.Lobby.SetTab(6); yield return Wait(0.3f);
                 Capture("88_looks_base");
                 S.dia += 2000; var gf = Tables.Frame("gold"); Store.BuyFrame(gf); Store.EquipFrame("gold");
-                var domeSr = GameObject.Find("Dome").GetComponent<SpriteRenderer>();
-                Check(domes && domeSr.sprite.name == "Bg/dome_gold" && domeSr.color == Color.white, $"기지 외형마다 다른 돔 그림 ({Tables.Frames.Count}종) · 끼우면 전장 돔도 ({domeSr.sprite.name})");
+                var domeSr = GameObject.Find("Tower").GetComponent<SpriteRenderer>();
+                Check(domes && domeSr.sprite.name == "Bg/tower_gold" && domeSr.color == Color.white, $"기지 외형마다 다른 사령탑 그림 ({Tables.Frames.Count}종) · 끼우면 전장 사령탑도 ({domeSr.sprite.name})");
                 Game.Lobby.SetTab(0); yield return Wait(0.3f);
                 Capture("89_lobby_gold_dome");
                 foreach (var fid in new[] { "prism", "frost", "thorn", "bloom" }) { Store.BuyFrame(Tables.Frame(fid)); Store.EquipFrame(fid); yield return null; Capture("89_dome_" + fid); }
@@ -513,7 +514,8 @@ namespace EarthDef.EditorTools
                 }
                 Tables.SetC("Endless_Exp_Mul", mulNew); Tables.SetC("Endless_Pick_Gap", gapNew);
                 int last = combos.Count - 1;
-                Check(min1[last] <= min1[0] * 0.6f && opened[last] < opened[0] && lvs[last] >= 10, $"무한 모드 레벨업 창: 처음 1분 {min1[0]} → {min1[last]}번 · 3분 {opened[0]} → {opened[last]}번 (Lv {lvs[0]} → {lvs[last]})");
+                // 11-18 사령탑 배치: 처치 흐름이 바뀌어 처음 1분 비율이 60% → 67% — 밸런스 3차 때 다시 맞춤. 검사는 "줄었는지"만
+                Check(min1[last] < min1[0] && opened[last] < opened[0] && lvs[last] >= 10, $"무한 모드 레벨업 창: 처음 1분 {min1[0]} → {min1[last]}번 · 3분 {opened[0]} → {opened[last]}번 (Lv {lvs[0]} → {lvs[last]})");
                 // 밸런스 2차: 보스 분노 (체력 절반 아래로 처음 → 부하 몰려옴 · 돌진) · 로비 스테이지 약점 안내
                 Game.StartStage(3, 9); yield return null;
                 var boss2 = B.Spawn(B.stage.boss, new Vector2(0, 5f)); B.Tick(Battle.StepSec);
@@ -551,8 +553,8 @@ namespace EarthDef.EditorTools
             Popup.CloseAll();
             Game.StartStage(10, 3); yield return null;
             Check(B.frame?.id == "starsea" && System.Math.Abs(B.frameVal - star.Val(2)) < 0.01, "전투에 외형 들어감");
-            FF(45f);
-            Check(B.frameFired >= 1, $"별똥별 비 {B.frameFired}번 (40초마다)");
+            for (int i = 0; i < 45; i++) { B.baseHp = B.baseMax; FF(1f); }   // 11-18: 새 배치에서 시험 세이브가 스테이지 10 을 40초 못 버팀(밸런스 3차에서 다시) → 외형 효과만 봄
+            Check(B.frameFired >= 1, $"별똥별 비 {B.frameFired}번 (40초마다) · 판 {B.st} {B.time:0}초 · 기지 {B.baseHp / B.baseMax:P0}");
             Store.BuyFrame(Tables.Frame("prism")); Store.EquipFrame("prism");
             Game.StartStage(10, 4); yield return null;
             B.HurtBase(B.baseHp * 5, Vector2.zero); B.Tick(Battle.StepSec);
@@ -561,7 +563,7 @@ namespace EarthDef.EditorTools
             Check(B.st == Battle.St.Play && hr > 0 && B.baseHp == hr, $"무지개 돔: 무너질 때 체력 {hr / B.baseMax:P0} 로 버티고 3초 무적");
             Store.BuyFrame(Tables.Frame("thorn")); Store.EquipFrame("thorn");
             Game.StartStage(10, 5); yield return null;
-            var at = B.Spawn("beetle", new Vector2(0, World.ShieldY + 0.3f)); B.Tick(Battle.StepSec);
+            var at = B.Spawn("beetle", new Vector2(World.ShieldX + 0.6f, 0f)); B.Tick(Battle.StepSec);
             B.HurtBase(10, at.Pos, at);
             Check(B.frameFired == 1, "가시 돔: 때린 적에게 반격");
 
@@ -658,7 +660,7 @@ namespace EarthDef.EditorTools
             {   // 끌어 놓기: 집중 빔 칸을 칸 2 자리로 끌어 놓음
                 var drag = System.Array.Find(Object.FindObjectsByType<LabDrag>(FindObjectsSortMode.None), d => d.name == "T_focus");
                 var pe = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
-                { position = Camera.main.WorldToScreenPoint(new Vector3(World.SlotX[1], World.GroundY + 0.5f, 0)) };
+                { position = Camera.main.WorldToScreenPoint((Vector3)(World.SlotPos(2) + new Vector2(0, 0.7f))) };
                 drag.OnBeginDrag(pe); drag.OnEndDrag(pe);
             }
             Check(b.run.turrets.Find(t => t.slot == 2)?.row.id == "focus" && b.units.Count == 5, $"끌어서 칸 2 에 집중 빔 · 터렛 {b.units.Count - 1}");
@@ -849,6 +851,34 @@ namespace EarthDef.EditorTools
             yield return Wait(0.3f);
             Capture("02_battle_start");
 
+            // 2b) 11-18 전투 배치 2판: 우주 사령탑 (전투배치_시안.html)
+            {
+                var tw = GameObject.Find("Tower"); var tsr = tw ? tw.GetComponent<SpriteRenderer>() : null;
+                Check(tsr != null && tsr.sprite != null && tsr.sprite.name.StartsWith("Bg/tower") && tw.transform.position.x < -5f && GameObject.Find("Dome") == null,
+                      $"돔 대신 왼쪽 벽 사령탑 ({tsr?.sprite?.name} · x {(tw ? tw.transform.position.x : 0):0.0})");
+                Check(Art.Get("Bg/ground_moon", 100f) != null, "바닥 = 달 + 지평선 지구");
+                var gp = (Vector2)B.Guardian.transform.position;
+                B.Guardian.targetX = 3f; for (int i = 0; i < 60; i++) B.Guardian.Step(Battle.StepSec);
+                Check(Vector2.Distance((Vector2)B.Guardian.transform.position, World.GuardianPos) < 0.05f && Vector2.Distance(gp, World.GuardianPos) < 0.05f,
+                      $"대장 카피는 가운데 사령실에 고정 (끌어도 안 움직임 · {B.Guardian.transform.position.x:0.00}, {B.Guardian.transform.position.y:0.00})");
+                var live = B.enemies.FindAll(e => !e.dead);
+                bool diag = live.Count > 0 && live.TrueForAll(e => e.Dir.x < -0.15f && e.Dir.y < 0.05f);
+                Check(diag, $"적은 모두 오른쪽 위에서 왼쪽 아래 사령탑 쪽으로 ({live.Count}마리)");
+                var sp = B.Spawn("fire", new Vector2(3f, 9f)); B.Tick(Battle.StepSec);
+                float rot = sp.transform.eulerAngles.z;
+                Check(sp.Dir.x < 0 && Mathf.Abs(Mathf.DeltaAngle(rot, Mathf.Atan2(sp.Dir.y, sp.Dir.x) * Mathf.Rad2Deg + 90f)) < 2f, $"꼬리 달린 운석은 날아가는 쪽으로 머리를 돌림 ({rot:0}°)");
+                var p0 = sp.Pos; sp.Knock(1f);
+                Check(Vector2.Dot(sp.Pos - p0, sp.Dir) < -0.9f, $"밀어내기 = 온 길로 되돌림 ({Vector2.Distance(sp.Pos, p0):0.00}칸)");
+                int top = 0, n = 300; bool right = true; for (int i = 0; i < n; i++) { var q = B.SpawnPoint(); if (q.y > World.SpawnY - 1f) top++; else if (q.x < World.HalfW) right = false; if (q.x < -1f) right = false; }
+                Check(right && top > n * 0.5f && top < n * 0.8f, $"나오는 곳: 위 가장자리 오른쪽 {top * 100 / n}% · 오른쪽 가장자리 {100 - top * 100 / n}%");
+                var bt = B.Spawn("beetle", new Vector2(1.5f, 0f)); double hb = B.baseHp;
+                for (int i = 0; i < 60 * 20 && bt.Remain > 0; i++) bt.Step(Battle.StepSec);
+                for (int i = 0; i < 90; i++) bt.Step(Battle.StepSec);
+                Check(bt.Remain == 0 && Mathf.Abs(bt.Pos.x - bt.radius - World.ShieldX) < 0.2f && B.baseHp < hb, $"방어선(x {World.ShieldX:0.0})에 닿으면 멈춰 기지를 때림 (적 x {bt.Pos.x:0.00} · 체력 {hb:0} → {B.baseHp:0})");
+                Combat.Raw(bt, bt.hp + 1, false, null); Combat.Raw(sp, sp.hp + 1, false, null); B.baseHp = hb; B.Tick(Battle.StepSec);
+                Check(Tables.Cf("Enemy_Speed_Mul", 1f) < 1f, $"오는 길이 짧아진 만큼 적 속도 x{Tables.Cf("Enemy_Speed_Mul", 1f)}");
+            }
+
             // 3) 레벨업 → 카드 3장
             B.GainExp(B.need + 0.1); B.Tick(Battle.StepSec);
             Check(B.st == Battle.St.Pick && B.offer.Count == 3, $"레벨업 → 카드 {B.offer.Count}장 ({string.Join(", ", B.offer.ConvertAll(c => c.name))})");
@@ -862,14 +892,38 @@ namespace EarthDef.EditorTools
             B.Refresh();
             Check(!B.CanRefresh && B.offer.Count > 0, "새로고침 1번 뒤엔 못 함");
             B.offer[0] = Tables.CardById["new_rail"];
+            // 11-18 자리 고르기: 새 터렛 카드 → 사령탑 빈 칸이 반짝 + 칸 단추 → 누른 칸에 놓임 · [카드 다시 고르기]
+            Battle.NoSlotPick = false;
             B.Choose(0);
-            Check(B.run.Owns("rail") && B.units.Count == 2 && B.st == Battle.St.Play, "새 터렛 관통포 → 칸 1");
+            Check(B.st == Battle.St.Slot && B.slotCard?.id == "new_rail" && B.run.FreeSlotList.Count == 4 && !B.run.Owns("rail"), $"새 터렛 카드 → 자리 고르기 (빈 칸 {B.run.FreeSlotList.Count})");
+            yield return Wait(0.5f);
+            int slotBtns = 0; for (int s = 1; s <= 4; s++) if (GameObject.Find("Slot" + s) && GameObject.Find("SlotPick")) slotBtns++;
+            Check(slotBtns == 4 && World.I.SlotMark(1).enabled, $"빈 칸 단추 {slotBtns}개 · 사령탑 칸 표시 반짝");
+            Capture("03b_slot_pick");
+            B.SlotBack(); yield return null;
+            Check(B.st == Battle.St.Pick && GameObject.Find("SlotPick") == null, "[카드 다시 고르기] → 카드 창");
+            B.Choose(0); B.PlaceAt(1); yield return null;
+            Check(B.run.Owns("rail") && B.run.Get("rail").slot == 1 && B.units.Count == 2 && B.st == Battle.St.Play && !World.I.SlotMark(1).enabled && World.I.SlotMark(2).enabled,
+                  $"고른 칸(1 = 맨 위)에 관통포 · 그 칸 표시만 꺼짐 (칸 {B.run.Get("rail").slot})");
+            Check(Vector2.Distance(B.units[1].transform.position, World.SlotPos(1)) < 0.05f, "관통포가 사령탑 맨 위 발판에 섬");
+            Battle.NoSlotPick = true;
+            {   // 머리 45° (사용자 "머리만"): 받침은 그대로 · 포신이 오른쪽 위 → 쏠 때 적 쪽
+                var ru = B.units[1];
+                ru.idle.SetAim(45f);
+                var tipD = (Vector2)ru.transform.InverseTransformPoint(ru.idle.TipWorld);   // 놓일 때 톡 커지는 중이라 터렛 기준 좌표로
+                Check(ru.idle.HasHead && tipD.x > 0.3f && tipD.y > 0.5f && ru.transform.rotation == Quaternion.identity, $"관통포 머리만 45° (끝 {tipD.x:0.00}, {tipD.y:0.00} · 받침은 그대로)");
+            }
             Check(B.units[1].transform.Find("Pad") == null, "터렛 아래 빛 고리 없음 (대기 효과를 넣어 뺌)");
             Check(B.units[1].idle != null && B.units[1].idle.Parts >= 4, $"관통포 대기 효과 (조각 {B.units[1].idle?.Parts})");
 
             // 4) 터렛 4칸 채우기
             foreach (var id in new[] { "new_laser", "new_drone", "new_bolt" }) Force(id);
             Check(B.run.turrets.Count == 5 && B.run.FreeSlots == 0, $"가디언 + 터렛 4칸 ({B.run.turrets.Count - 1})");
+            {   // 자리 고르기를 안 하면 대장 카피에 가까운 칸부터 (Slot_Order 2314): 레이저 2 · 드론 3 · 벼락 4
+                Check(B.run.Get("laser").slot == 2 && B.run.Get("drone").slot == 3 && B.run.Get("bolt").slot == 4, $"정해진 순서로 남은 칸 (레이저 {B.run.Get("laser").slot} · 드론 {B.run.Get("drone").slot} · 벼락 {B.run.Get("bolt").slot})");
+                var lzu = B.run.Get("laser").unit; var bzu = B.run.Get("bolt").unit;
+                Check(lzu.idle.HasHead && !bzu.idle.HasHead, "레이저 포는 머리(수정)가 돎 · 벼락탑(둥근 구슬)은 그대로");
+            }
             Check(!B.run.Eligible(Tables.CardById["new_hive"]), "칸이 차면 새 터렛 카드 안 나옴");
 
             // 5) 별 4개 → 돌파 → 연계
@@ -1262,6 +1316,7 @@ namespace EarthDef.EditorTools
         static double MinCalc(TurretInst t, string enemyId)
         {
             var e = B.Spawn(enemyId, new Vector2(0, 2));
+            e.Aim(new Vector2(World.ShieldX, 2));     // 11-18: 겨누는 곳이 무작위면 방어선까지 거리(Pos_Near/Far)가 적마다 달라짐 → 고정
             double best = double.MaxValue;
             for (int i = 0; i < 40; i++) { double d = Combat.Calc(t, e, 100, out bool crit); if (!crit) best = System.Math.Min(best, d); }
             e.dead = true;

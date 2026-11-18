@@ -14,7 +14,8 @@ namespace EarthDef
     {
         public Battle b;
         Text stageT, timeT, lvT, hpT, speedT, banner, shieldT;
-        Image expFill, chargeFill;
+        Image expFill, chargeFill, hpFill, shieldFill;
+        RectTransform routeShip, routeDone; float routeX0, routeW;
         RectTransform hpBox, chargeBox, bannerBox;
         CanvasGroup bannerGroup;
         float bannerT;
@@ -27,25 +28,32 @@ namespace EarthDef
             // 끌기 영역 (맨 뒤, 투명)
             var drag = gameObject.AddComponent<Image>(); drag.color = new Color(0, 0, 0, 0); drag.raycastTarget = true;
 
-            var pause = UIKit.Tile(root, "btn_orange", Color.white, Art.Icon("pause"), 0.56f, "Pause"); pause.rectTransform.TL(26, 34, 100, 100);
+            // 11-18 전투 배치 2판: 위 줄 = ② 카피 방주의 항로 막대 (사용자 "방주 UI 줄 사용") — 일시정지 · 항로(웨이브 점 → 지금 위치 → 보스 행성) · 시계 · 카드 / 레벨 배지 · 경험치 · 배속
+            var pause = UIKit.Tile(root, "btn_cream", Color.white, Art.Icon("pause"), 0.5f, "Pause"); pause.rectTransform.TL(28, 34, 104, 104);
             UIKit.Clickable(pause, ShowPause);
-            var sp = UIKit.Btn(root, "pill", null, 38, ToggleSpeed, "Speed"); ((RectTransform)sp.transform).TL(140, 46, 134, 78);
-            speedT = UIKit.Label(sp.transform, "x1", 38, Art.Ink, TextAnchor.MiddleCenter, false); speedT.rectTransform.Fill(0, 6, 0, 0);
-            var mid = UIKit.Panel(root, "pill", "Stage"); mid.rectTransform.TL(296, 30, 488, 108);
-            string stTitle = b.mode == "stage" ? L.F("stage_n", b.stageNo) : L.T("mode_" + b.mode);
-            stageT = UIKit.Label(mid.transform, stTitle, 42, b.eliteMode || b.mode != "stage" ? Art.Purple : Art.Ink, TextAnchor.UpperCenter, false); stageT.rectTransform.Fill(0, 40, 0, 10);
-            if (b.eliteMode) { var cr = UIKit.Img(mid.transform, Art.Icon("crown"), "Elite"); cr.raycastTarget = false; cr.rectTransform.Place(0, 0.5f, new Vector2(14, 4), new Vector2(70, 70), new Vector2(0, 0.5f)); }
-            timeT = UIKit.Label(mid.transform, "", 30, Art.Soft, TextAnchor.LowerCenter, false); timeT.rectTransform.Fill(0, 10, 0, 50);
-            var cards = UIKit.Tile(root, "btn_orange", Color.white, Art.Icon("cards"), 0.6f, "Cards"); cards.rectTransform.TL(954, 34, 100, 100);
+            var cards = UIKit.Tile(root, "btn_cream", Color.white, Art.Icon("cards"), 0.6f, "Cards"); cards.rectTransform.TL(948, 34, 104, 104);
             UIKit.Clickable(cards, ShowCards);
-            expFill = UIKit.Bar(root, Art.Sky, "Exp"); expFill.transform.parent.GetComponent<RectTransform>().TL(30, 160, 1020, 44);
-            lvT = UIKit.Label(expFill.transform.parent, "", 32); lvT.rectTransform.Fill(0, 4, 0, 0);
+            var mid = UIKit.Panel(root, "pill_dark", "Stage"); mid.rectTransform.TL(150, 30, 780, 160); mid.color = new Color(1, 1, 1, 0.94f);
+            string stTitle = b.mode == "stage" ? L.F("stage_n", b.stageNo) : L.T("mode_" + b.mode);
+            stageT = UIKit.Label(mid.transform, stTitle, 42, b.eliteMode || b.mode != "stage" ? Art.Hex("#d9c6ff") : Color.white, TextAnchor.MiddleLeft); stageT.rectTransform.TL(54, 14, 480, 66);
+            if (b.eliteMode) { var cr = UIKit.Img(mid.transform, Art.Icon("crown"), "Elite"); cr.raycastTarget = false; cr.rectTransform.TL(-6, -14, 62, 62); }
+            timeT = UIKit.Label(mid.transform, "", 34, Art.Gold, TextAnchor.MiddleRight, false); timeT.rectTransform.TL(480, 18, 246, 56);
+            Route(mid.rectTransform);
+            expFill = UIKit.Bar(root, Art.Sky, "Exp"); expFill.transform.parent.GetComponent<RectTransform>().TL(150, 212, 780, 44);
+            var lvB = UIKit.Panel(root, "pill", "LvBadge"); lvB.color = Art.Purple; lvB.rectTransform.TL(34, 180, 108, 108);
+            lvT = UIKit.Label(lvB.transform, "", 34); lvT.rectTransform.Fill(0, 6, 0, 0);
+            var sp = UIKit.Btn(root, "btn_cream", null, 34, ToggleSpeed, "Speed"); ((RectTransform)sp.transform).TL(948, 192, 104, 84);
+            speedT = UIKit.Label(sp.transform, "x1", 34, Art.Ink, TextAnchor.MiddleCenter, false); speedT.rectTransform.Fill(0, 8, 0, 0);
 
-            // 기지 체력 (돔 위)
-            hpBox = UIKit.Rect(root, "BaseHp"); hpBox.sizeDelta = new Vector2(400, 70); hpBox.anchorMin = hpBox.anchorMax = new Vector2(0.5f, 0.5f);
-            var heart = UIKit.Img(hpBox, Art.Icon("heart"), "Heart"); heart.rectTransform.Place(0.5f, 0.5f, new Vector2(-120, 0), new Vector2(62, 62));
-            hpT = UIKit.Label(hpBox, "", 48, Color.white, TextAnchor.MiddleLeft); hpT.rectTransform.Place(0.5f, 0.5f, new Vector2(80, 0), new Vector2(300, 70));
-            shieldT = UIKit.Label(hpBox, "", 30, Art.Sky, TextAnchor.MiddleLeft); shieldT.rectTransform.Place(0.5f, 0.5f, new Vector2(80, -50), new Vector2(300, 40));
+            // 기지 체력: 사령탑 앞 달 바닥의 이름판 (② 방주처럼 기지에 붙은 판 — 11-18)
+            hpBox = UIKit.Rect(root, "BaseHp"); hpBox.sizeDelta = new Vector2(290, 92); hpBox.anchorMin = hpBox.anchorMax = new Vector2(0.5f, 0.5f);
+            var hpBg = UIKit.Panel(hpBox, "card_white", "Plate"); hpBg.rectTransform.Fill();
+            var heart = UIKit.Img(hpBox, Art.Icon("heart"), "Heart"); heart.raycastTarget = false; heart.rectTransform.TL(14, 12, 64, 64);
+            hpT = UIKit.Label(hpBox, "", 34, Art.Ink, TextAnchor.MiddleCenter, false); hpT.rectTransform.TL(82, 4, 196, 42);
+            hpFill = UIKit.Bar(hpBox, Art.Green, "HpBar"); hpFill.transform.parent.GetComponent<RectTransform>().TL(82, 48, 192, 30);
+            shieldFill = UIKit.Bar(hpFill.transform.parent, Art.Sky, "Shield"); var shTrack = shieldFill.transform.parent.GetComponent<Image>(); if (shTrack) shTrack.color = new Color(1, 1, 1, 0);
+            shieldFill.transform.parent.GetComponent<RectTransform>().Fill();
+            shieldT = UIKit.Label(hpBox, "", 26, Art.Sky, TextAnchor.MiddleLeft); shieldT.rectTransform.TL(296, 46, 160, 36);
             // 충전 게이지 (가디언 아래)
             chargeFill = UIKit.Bar(root, Art.Gold, "Charge");
             chargeBox = chargeFill.transform.parent.GetComponent<RectTransform>();
@@ -62,9 +70,37 @@ namespace EarthDef
             b.Changed += OnChanged;
             b.Banner += s => { banner.text = s; bannerBox.gameObject.SetActive(true); bannerT = 2.2f; };
             Refresh();
-            // 2차 도움말: 처음 전투 = 끌어서 이동 (손가락이 좌우로)
-            Tutorial.Show("t_move", L.T("tut_move"), null, 5f, true, 0.42f);
+            // 2차 도움말: 처음 전투 = 끌어서 이동 (손가락이 좌우로) — 11-18 대장 카피 고정이면 안 띄움
+            if (Tables.Ci("Guardian_Fixed", 1) != 1) Tutorial.Show("t_move", L.T("tut_move"), null, 5f, true, 0.42f);
         }
+
+        /// <summary>항로 막대 (② 방주): 지난 길 주황 · 남은 길 남색 · 웨이브마다 점 · 중간 보스 왕관 · 끝 = 보스 행성(해골)</summary>
+        void Route(RectTransform mid)
+        {
+            routeX0 = 56; routeW = 600; float y = 112;
+            var back = UIKit.Plain(mid, Art.Hex("#56609a"), "RouteBack"); back.rectTransform.TL(routeX0, y - 4, routeW, 8);
+            var done = UIKit.Plain(mid, Art.Orange, "RouteDone"); routeDone = done.rectTransform; routeDone.TL(routeX0, y - 4, 0, 8);
+            float end = RouteEnd;
+            if (b.mode == "stage")
+            {
+                for (float w = Tables.Cf("Wave_Len", 30); w < end - 1; w += Tables.Cf("Wave_Len", 30))
+                {
+                    var dot = UIKit.Img(mid, Art.Fx("dot"), "Wave"); dot.raycastTarget = false; dot.color = Art.Cream;
+                    dot.rectTransform.Place(0, 1, new Vector2(routeX0 + routeW * w / end, -y), new Vector2(22, 22), new Vector2(0.5f, 0.5f));
+                }
+                var cr = UIKit.Img(mid, Art.Icon("crown"), "EliteMark"); cr.raycastTarget = false;
+                cr.rectTransform.Place(0, 1, new Vector2(routeX0 + routeW * Tables.Cf("Mid_Boss_Time", 120) / end, -y), new Vector2(40, 40), new Vector2(0.5f, 0.5f));
+            }
+            var pl = UIKit.Img(mid, Art.Fx("dot"), "BossPlanet"); pl.raycastTarget = false; pl.color = Art.Hex("#f6a2b6");
+            pl.rectTransform.Place(0, 1, new Vector2(routeX0 + routeW + 34, -y), new Vector2(54, 54), new Vector2(0.5f, 0.5f));
+            var sk = UIKit.Img(mid, Art.Icon("skull"), "BossSkull"); sk.raycastTarget = false;
+            sk.rectTransform.Place(0, 1, new Vector2(routeX0 + routeW + 34, -y), new Vector2(40, 40), new Vector2(0.5f, 0.5f));
+            var ship = UIKit.Img(mid, Art.Icon("play"), "Ship"); ship.raycastTarget = false; ship.color = Art.Cream;
+            routeShip = ship.rectTransform; routeShip.Place(0, 1, new Vector2(routeX0, -y), new Vector2(46, 46), new Vector2(0.5f, 0.5f));
+        }
+        /// <summary>항로 끝 시각: 스테이지 = 보스 등장 · 엘리트 군단 = 버티는 시간 · 무한 = 다음 보스</summary>
+        float RouteEnd => b.mode == "stage" ? Tables.Cf("Boss_Time", 210) : b.mode == "survival" ? b.RunTime : Tables.Cf("Endless_Boss_Gap", 150);
+        float RouteK => b.mode == "endless" ? Mathf.Repeat(b.time, RouteEnd) / RouteEnd : Mathf.Clamp01(b.time / RouteEnd);
 
         void OnDestroy() { if (b) b.Changed -= OnChanged; }
 
@@ -73,7 +109,7 @@ namespace EarthDef
         public void OnDrag(PointerEventData e) => MoveTo(e.position);
         void MoveTo(Vector2 screen)
         {
-            if (b == null || b.st != Battle.St.Play || b.Guardian == null) return;
+            if (b == null || b.st != Battle.St.Play || b.Guardian == null || Tables.Ci("Guardian_Fixed", 1) == 1) return;   // 11-18 대장 카피 고정
             if (Tutorial.Cur && Tutorial.Cur.name == "Tutorial_t_move") Tutorial.CloseCur();
             b.Guardian.targetX = World.I.ScreenToWorld(screen).x;
         }
@@ -109,18 +145,21 @@ namespace EarthDef
                 lastSec = sec;
                 timeT.text = b.mode == "endless" ? L.F("endless_time", Num.Clock(b.ClockSec)) : b.mode == "survival" ? L.F("survive_left", Num.Clock(b.ClockSec)) : Num.Clock(b.TimeLeft);
             }
-            if (b.level != lastLv) { lastLv = b.level; lvT.text = b.level >= b.LevelMax ? L.F("lv", b.level) + " MAX" : L.F("lv", b.level); }
+            if (b.level != lastLv) { lastLv = b.level; lvT.text = b.level >= b.LevelMax ? "MAX" : "Lv\n" + b.level; lvT.lineSpacing = 0.8f; }
             UIKit.SetBar(expFill, b.level >= b.LevelMax ? 1 : (float)(b.exp / b.need));
+            float rk = RouteK;
+            routeShip.anchoredPosition = new Vector2(routeX0 + routeW * rk, routeShip.anchoredPosition.y);
+            routeDone.sizeDelta = new Vector2(routeW * rk, routeDone.sizeDelta.y);
             double hp = System.Math.Ceiling(b.baseHp), sh = System.Math.Ceiling(b.shield);
-            if (hp != lastHp) { lastHp = hp; hpT.text = Num.Comma(b.baseHp); }
-            if (sh != lastShield) { lastShield = sh; shieldT.text = b.shield > 0 ? "+" + Num.Comma(b.shield) : ""; }
-            hpBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(0, World.ShieldY + 0.7f));
+            if (hp != lastHp) { lastHp = hp; hpT.text = Num.Comma(b.baseHp); UIKit.SetBar(hpFill, (float)(b.baseHp / System.Math.Max(1, b.baseMax))); }
+            if (sh != lastShield) { lastShield = sh; shieldT.text = b.shield > 0 ? "+" + Num.Comma(b.shield) : ""; UIKit.SetBar(shieldFill, b.shieldMax > 0 ? (float)(b.shield / b.shieldMax) * 0.35f : 0f); }
+            hpBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(Tables.Cf("Hp_Plate_X", -3.6f), World.GroundY - 1.0f));
             var g = b.Guardian;
             bool showCharge = g != null && g.t.Has("charge");
             if ((showCharge ? 1 : 0) != lastCharge) { lastCharge = showCharge ? 1 : 0; chargeBox.gameObject.SetActive(showCharge); }
             if (showCharge)
             {
-                chargeBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(g.transform.position.x, World.GroundY - 0.45f));
+                chargeBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(g.transform.position.x, g.transform.position.y + 1.75f));   // 11-18: 사령실 유리창 띠와 헷갈려 머리 위로
                 chargeFill.color = g.Charging ? Art.Sky : Art.Gold;
                 UIKit.SetBar(chargeFill, g.ChargeK);
             }
@@ -133,7 +172,39 @@ namespace EarthDef
                     if (t.stars >= Tables.Ci("Stars_Per_Tier", 4) && t.tier < Tables.Ci("Tier_Max", 3)) { Tutorial.Show("t_star", L.T("tut_star"), null, 4f, false, 0.62f); break; }
             if (b.st == Battle.St.Pick) ShowPick();
             else if (pick != null) { pick.Close(false); pick = null; }
+            if (b.st == Battle.St.Slot) ShowSlotPick();
+            else if (slotUI) { Destroy(slotUI.gameObject); slotUI = null; }
             if (b.st == Battle.St.End) ShowResult();
+        }
+
+        // ---------- 11-18 자리 고르기 (사용자 "터렛을 선택할 때 자리를 선택하는 흐름이 나오며 그 자리에 배치") ----------
+        // 카드 창이 닫히고 사령탑의 빈 칸이 반짝 + 칸마다 고른 터렛 그림(흐리게) 단추 · 위에 안내 · 아래 [카드 다시 고르기]
+        RectTransform slotUI;
+        public void ShowSlotPick()
+        {
+            if (slotUI) Destroy(slotUI.gameObject);
+            Tutorial.CloseCur();      // 카드 도움말이 칸 단추를 가리지 않게
+            slotUI = UIKit.Rect(UIRoot.I.popups, "SlotPick").Fill();
+            var dim = UIKit.Plain(slotUI, new Color(0.1f, 0.12f, 0.25f, 0.35f), "Dim"); dim.rectTransform.Fill(); dim.raycastTarget = true;
+            var turret = Tables.TurretById[b.slotCard.turret];
+            var tip = UIKit.Panel(slotUI, "pill_dark", "Tip"); tip.rectTransform.Place(0.5f, 1, new Vector2(80, -330), new Vector2(760, 110), new Vector2(0.5f, 0.5f));
+            var ti = UIKit.Img(tip.transform, Art.TurretIcon(turret), "Icon"); ti.raycastTarget = false; ti.rectTransform.TL(20, 10, 90, 90);
+            UIKit.Label(tip.transform, L.F("slot_pick", turret.name), 38, Art.Gold, TextAnchor.MiddleLeft).rectTransform.Fill(124, 6, 20, 0);
+            foreach (int s in b.run.FreeSlotList)
+            {
+                int slot = s;
+                var at = UIRoot.I.WorldToUI(World.SlotPos(slot) + new Vector2(0, 0.85f));
+                var bt = UIKit.Tile(slotUI, "slot", Color.white, Art.TurretIcon(turret), 0.78f, "Slot" + slot);
+                bt.rectTransform.anchorMin = bt.rectTransform.anchorMax = new Vector2(0.5f, 0.5f); bt.rectTransform.sizeDelta = new Vector2(170, 170);
+                bt.rectTransform.anchoredPosition = at;
+                var ic = bt.transform.Find("Icon")?.GetComponent<Image>(); if (ic) ic.color = new Color(1, 1, 1, 0.6f);
+                var gl = UIKit.Img(bt.transform, Art.UI("glow_frame"), "Glow"); gl.color = Art.Gold; gl.raycastTarget = false; gl.rectTransform.Fill(-24, -24, -24, -24);
+                gl.gameObject.AddComponent<GlowPulse>();
+                var plus = UIKit.Img(bt.transform, Art.Icon("plus"), "Plus"); plus.raycastTarget = false; plus.rectTransform.Place(1, 1, new Vector2(10, 10), new Vector2(54, 54), new Vector2(1, 1));
+                UIKit.Clickable(bt, () => b.PlaceAt(slot));
+            }
+            var back = UIKit.Btn(slotUI, "btn_orange", L.T("slot_back"), 40, () => b.SlotBack(), "Back");
+            ((RectTransform)back.transform).Place(0.5f, 0, new Vector2(160, 330), new Vector2(460, 120), new Vector2(0.5f, 0.5f));
         }
 
         // ---------- 레벨업 창 ----------

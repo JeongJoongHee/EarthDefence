@@ -135,8 +135,9 @@ namespace EarthDef
                 var t = b.run.turrets.Find(x => x.slot == s);
                 box.gameObject.SetActive(t != null);
                 if (t == null) continue;
-                float wx = s == 0 ? (t.unit ? t.unit.transform.position.x : 0) : World.SlotX[s - 1];
-                box.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(Mathf.Clamp(wx, -4.25f, 4.25f), World.GroundY + (s == 0 ? 2.2f : 2.5f) + (s >= 3 ? 1.05f : 0)));
+                // 11-18 사령탑: 칸 오른쪽에 이름 · 초당 피해
+                var wp = s == 0 ? (t.unit ? (Vector2)t.unit.transform.position : World.GuardianPos) : World.SlotPos(s);
+                box.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(wp.x + 2.6f, wp.y + 0.9f));
                 nm.text = s == 0 ? t.row.name : $"{t.row.name} {L.T("lab_p_" + PresetOf(t))}";
                 dps.text = L.F("lab_dps", Num.F(Dps(t)));
             }
@@ -170,9 +171,9 @@ namespace EarthDef
             dragging = false;
             if (ghost) Destroy(ghost.gameObject);
             var w = World.I.ScreenToWorld(e.position);
-            if (w.y > -1f) return;                           // 위쪽에 놓으면 취소
+            if (w.x > 0f) return;                            // 사령탑에서 먼 곳(오른쪽)에 놓으면 취소 (11-18)
             int best = 1; float bd = 99;
-            for (int s = 0; s < 4; s++) { float d = Mathf.Abs(World.SlotX[s] - w.x); if (d < bd) { bd = d; best = s + 1; } }
+            for (int s = 1; s <= 4; s++) { float d = Vector2.Distance(World.SlotPos(s) + new Vector2(0, 0.7f), w); if (d < bd) { bd = d; best = s; } }
             ui.Place(best, id);
         }
         public void OnPointerClick(PointerEventData e) { if (!dragging && !e.dragging) ui.PlaceFree(id); }

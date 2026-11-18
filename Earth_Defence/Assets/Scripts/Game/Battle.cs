@@ -14,7 +14,7 @@ namespace EarthDef
         public static Battle I;
         public const float StepSec = 1f / 60f;
 
-        public enum St { Play, Pick, Pause, End }
+        public enum St { Play, Pick, Pause, End, Slot }
         public St st = St.Play;
         public StageRow stage;
         public int stageNo;
@@ -91,7 +91,7 @@ namespace EarthDef
             need = NeedOf(1); nextPickAt = 0;
             nextWave = Tables.Cf("Wave_Len", 30);
             AddUnit(run.turrets[0]);
-            World.I.ShowSlots(0);
+            World.I.ShowSlots(true);
             Time.timeScale = 1;
         }
 
@@ -118,7 +118,7 @@ namespace EarthDef
             var t = run.AddAt(Tables.TurretById[id], slot);
             Lab.ApplyPreset(t, preset);
             AddUnit(t);
-            World.I.ShowSlots(0, false);
+            World.I.ShowSlots(false);
             return t;
         }
         public void LabRemove(int slot)
@@ -134,7 +134,8 @@ namespace EarthDef
             var go = new GameObject("Turret_" + t.row.id);
             go.transform.SetParent(transform, false);
             var u = go.AddComponent<TurretUnit>();
-            Vector2 pos = t.slot == 0 ? new Vector2(0, World.GroundY - 0.04f) : new Vector2(World.SlotX[t.slot - 1], World.GroundY - 0.06f);
+            // 11-18 사령탑: 대장 카피 = 가운데 사령실 · 터렛 = 고른 칸의 발판 (World.SlotPos)
+            Vector2 pos = t.slot == 0 ? World.GuardianPos : World.SlotPos(t.slot);
             u.Init(t, pos);
             units.Add(u);
             return u;
@@ -189,31 +190,63 @@ namespace EarthDef
                 spawnAcc -= 1;
                 if (alive++ >= max) continue;
                 string id = stage.enemies[rnd.Next(stage.enemies.Length)];
-                Spawn(id, new Vector2(RandX(), World.SpawnY - 0.8f * (float)rnd.NextDouble()));   // 11-16: 나오는 줄 아래쪽으로 (UI 에 안 가리게)
+                Spawn(id, SpawnPoint());
             }
             // 웨이브마다 몰려오기 (한 종류가 한 곳에 무리로)
             if (time >= nextWave && time < Tables.Cf("Boss_Time", 210))
             {
                 nextWave += Tables.Cf("Wave_Len", 30);
-                float cx = RandX() * 0.7f;
-                int n = Tables.Ci("Swarm_Size", 8);
-                for (int i = 0; i < n; i++) Spawn(stage.swarm, new Vector2(cx + (float)(rnd.NextDouble() - 0.5) * 3f, World.SpawnY + i * 0.35f));
+                Swarm();
             }
             if (!eliteSpawned && time >= Tables.Cf("Mid_Boss_Time", 120))
             {
                 eliteSpawned = true;
-                Spawn(stage.elite, new Vector2(0, World.SpawnY + 0.5f));
+                Spawn(stage.elite, BigSpawn(0.5f));
                 Banner?.Invoke(L.T("elite_warn"));
                 Audio.Play(Audio.Sfx.EliteWarn);
             }
             if (!bossSpawned && time >= Tables.Cf("Boss_Time", 210))
             {
                 bossSpawned = true;
-                boss = Spawn(stage.boss, new Vector2(0, World.SpawnY + 1f));
+                boss = Spawn(stage.boss, BigSpawn(1f));
                 Banner?.Invoke(L.T("boss_warn"));
                 Audio.Play(Audio.Sfx.BossWarn);
                 Audio.Music("boss");
             }
+        }
+
+        // ---------- 11-18 사령탑: 적이 나오는 곳 · 겨누는 곳 ----------
+        /// <summary>나오는 곳: 위 가장자리 오른쪽(Spawn_Top_Share) 또는 오른쪽 가장자리 위쪽 (사용자 "운석은 대각선 오른쪽에서 왼쪽으로 떨어지듯")</summary>
+        public Vector2 SpawnPoint()
+        {
+            if (rnd.NextDouble() < Tables.C("Spawn_Top_Share", 0.65))
+                return new Vector2(Mathf.Lerp(Tables.Cf("Spawn_Top_X0", -0.5f), World.HalfW - 0.5f, (float)rnd.NextDouble()), World.SpawnY - 0.8f * (float)rnd.NextDouble());
+            return new Vector2(World.HalfW + 0.4f, Mathf.Lerp(Tables.Cf("Spawn_Right_Y0", 0f), World.SpawnY - 0.3f, (float)rnd.NextDouble()));
+        }
+        /// <summary>중간 보스 · 보스: 오른쪽 위 모서리 쪽 (몸이 커서 반쯤 화면 밖)</summary>
+        Vector2 BigSpawn(float up) => new(Mathf.Min(World.HalfW - 1.6f, 2.6f + (float)rnd.NextDouble()), World.SpawnY + up);
+        void Swarm()
+        {
+            var c = SpawnPoint(); c.x = Mathf.Min(c.x, World.HalfW - 1f);
+            var tgt = AimTarget(c);
+            int n = Tables.Ci("Swarm_Size", 8);
+            for (int i = 0; i < n; i++)
+            {
+                var p = c + new Vector2((float)(rnd.NextDouble() - 0.5) * 2.4f, i * 0.35f);
+                var e = Spawn(stage.swarm, p);
+                e?.Aim(tgt + new Vector2(0, (float)(rnd.NextDouble() - 0.5) * 1.2f));   // 무리는 같은 곳을 노림
+            }
+        }
+        /// <summary>겨누는 곳: 방어선 위 사령탑 높이 안에서, 내려오는 각도가 Approach_Min ~ Approach_Max 도인 곳 (무작위)</summary>
+        public Vector2 AimTarget(Vector2 from)
+        {
+            float sx = World.ShieldX, lo = World.GroundY + 0.6f, hi = World.TowerTop - 0.4f;
+            float dx = Mathf.Max(0.5f, from.x - sx);
+            float a = from.y - dx * Mathf.Tan(Tables.Cf("Approach_Max", 70f) * Mathf.Deg2Rad);
+            float b = from.y - dx * Mathf.Tan(Tables.Cf("Approach_Min", 25f) * Mathf.Deg2Rad);
+            float l = Mathf.Max(lo, a), h = Mathf.Min(hi, b);
+            float ty = l <= h ? Mathf.Lerp(l, h, (float)rnd.NextDouble()) : b < lo ? lo : hi;
+            return new Vector2(sx, ty);
         }
 
         /// <summary>무한 모드 · 엘리트 군단: 시간이 갈수록 많이 · 중간 보스 · 보스(무한만)</summary>
@@ -229,25 +262,24 @@ namespace EarthDef
             {
                 spawnAcc -= 1;
                 if (alive++ >= max) continue;
-                Spawn(stage.enemies[rnd.Next(stage.enemies.Length)], new Vector2(RandX(), World.SpawnY - 0.8f * (float)rnd.NextDouble()));
+                Spawn(stage.enemies[rnd.Next(stage.enemies.Length)], SpawnPoint());
             }
             if (time >= nextWave)
             {
                 nextWave += Tables.Cf("Wave_Len", 30);
-                float cx = RandX() * 0.7f;
-                for (int i = 0; i < Tables.Ci("Swarm_Size", 8); i++) Spawn(stage.swarm, new Vector2(cx + (float)(rnd.NextDouble() - 0.5) * 3f, World.SpawnY + i * 0.35f));
+                Swarm();
             }
             if (time >= nextElite)
             {
                 nextElite += mode == "survival" ? Tables.Cf("Survival_Elite_Gap", 12) : Tables.Cf("Endless_Boss_Gap", 150);
                 var els = SurvivalElites;
-                Spawn(mode == "survival" ? els[rnd.Next(els.Length)] : stage.elite, new Vector2(RandX() * 0.6f, World.SpawnY + 0.5f));
+                Spawn(mode == "survival" ? els[rnd.Next(els.Length)] : stage.elite, BigSpawn(0.5f));
                 if (!eliteSpawned) { eliteSpawned = true; Banner?.Invoke(L.T("elite_warn")); Audio.Play(Audio.Sfx.EliteWarn); }
             }
             if (mode == "endless" && time >= nextBoss)
             {
                 nextBoss += Tables.Cf("Endless_Boss_Gap", 150);
-                boss = Spawn(rnd.Next(2) == 0 ? "planet" : "queen", new Vector2(0, World.SpawnY + 1f));
+                boss = Spawn(rnd.Next(2) == 0 ? "planet" : "queen", BigSpawn(1f));
                 Banner?.Invoke(L.T("boss_warn")); Audio.Play(Audio.Sfx.BossWarn); Audio.Music("boss");
             }
         }
@@ -268,7 +300,7 @@ namespace EarthDef
                     for (int i = enemies.Count - 1; i >= 0; i--) if (i < enemies.Count && !enemies[i].dead) Combat.Hit(g, enemies[i], frameVal, false, true);
                     for (int i = 0; i < 14; i++)
                     {
-                        var p = new Vector2(RandX(), Mathf.Lerp(World.ShieldY + 1f, World.SpawnY - 1f, (float)rnd.NextDouble()));
+                        var p = new Vector2(Mathf.Lerp(World.ShieldX + 0.8f, World.HalfW - 0.4f, (float)rnd.NextDouble()), Mathf.Lerp(World.GroundY + 1f, World.SpawnY - 1f, (float)rnd.NextDouble()));
                         Fx.Glow(p, 0.5f, new Color(0.75f, 0.82f, 1f, 0.9f), 0.35f);
                         Fx.Sparks(p, new Color(0.85f, 0.9f, 1f), 3, 5f, 1f, 30f, -110f);
                     }
@@ -279,18 +311,17 @@ namespace EarthDef
                 {
                     frameFired++;
                     foreach (var e in enemies)
-                        if (!e.dead && e.Pos.y < World.ShieldY + 3.5f) { e.Paralyze((float)frameVal); Fx.Ring(e.Pos, 0.5f, Art.Hex("#9fe8ff")); }
-                    Fx.Ring(new Vector2(0, World.ShieldY + 0.5f), 4f, Art.Hex("#9fe8ff"));
+                        if (!e.dead && e.VY < World.ShieldY + 3.5f) { e.Paralyze((float)frameVal); Fx.Ring(e.Pos, 0.5f, Art.Hex("#9fe8ff")); }   // 방어선까지 3.5칸 안
+                    Fx.Ring(World.BaseCenter, 4f, Art.Hex("#9fe8ff"));
                     Audio.Play(Audio.Sfx.Zap);
                     break;
                 }
                 case "regen":
-                    if (baseHp < baseMax) { frameFired++; Heal(frameVal / 100.0); Fx.Glow(new Vector2(0, World.ShieldY + 0.6f), 1.2f, new Color(1f, 0.7f, 0.8f, 0.5f), 0.4f); }
+                    if (baseHp < baseMax) { frameFired++; Heal(frameVal / 100.0); Fx.Glow(World.BaseCenter, 1.2f, new Color(1f, 0.7f, 0.8f, 0.5f), 0.4f); }
                     break;
             }
         }
 
-        float RandX() => (float)(rnd.NextDouble() * 2 - 1) * (World.HalfW - 0.6f);
 
         /// <summary>스테이지 보정: Early_Stage_N 아래는 Early_HP_Mul → 1 로 곱으로 서서히 · 10의 배수는 Ten_Stage_HP_Mul (무한 · 엘리트 군단은 그대로)</summary>
         /// <summary>적 수치를 읽는 스테이지 번호 (엘리트 난이도는 Elite_Mode_Offset 뒤)</summary>
@@ -334,6 +365,7 @@ namespace EarthDef
             go.transform.SetParent(transform, false);
             var e = go.AddComponent<Enemy>();
             e.Init(r, pos, hp, atk);
+            e.Aim(AimTarget(pos));          // 11-18: 사령탑 쪽으로 비스듬히
             addE.Add(e);
             return e;
         }
@@ -369,16 +401,16 @@ namespace EarthDef
         public void HurtBase(double d, Vector2 at, Enemy src = null)
         {
             if (st == St.End) return;
-            if (lab != null) { Fx.Hit(at + Vector2.down * 0.3f, 0.8f); return; }   // 시험장: 기지는 안 닳음
-            if (invulnT > 0) { Fx.Ring(at + Vector2.down * 0.2f, 0.6f, Art.Hex("#f3dcff")); return; }
+            if (lab != null) { Fx.Hit(at + Vector2.left * 0.3f, 0.8f); return; }   // 시험장: 기지는 안 닳음 (11-18: 기지 = 왼쪽)
+            if (invulnT > 0) { Fx.Ring(at + Vector2.left * 0.2f, 0.6f, Art.Hex("#f3dcff")); return; }
             // 가시 돔: 때린 적에게 반격
             if (src != null && !src.dead && frame != null && frame.effect == "thorn") { frameFired++; Combat.Hit(run.turrets[0], src, frameVal, false, true); Fx.Sparks(src.Pos, Art.Hex("#b8e08f"), 4, 4f, 0.9f); }
             // 2차 칩: 처음 N번 막음 → 받는 피해 -N(최소 1) → 보호막이 먼저 받음
-            if (immune > 0) { immune--; Fx.Ring(at + Vector2.down * 0.2f, 0.8f, Art.Sky); return; }
+            if (immune > 0) { immune--; Fx.Ring(at + Vector2.left * 0.2f, 0.8f, Art.Sky); return; }
             d = Tables.C("Reduce_K", 0) > 0 ? Math.Max(1, d * lo.ReduceMul) : Math.Max(1, d - lo.reduce);   // 밸런스 3차: 방어력 = 비율 감소
-            if (shield > 0) { double s = Math.Min(shield, d); shield -= s; d -= s; if (d <= 0) { Fx.Ring(at + Vector2.down * 0.2f, 0.6f, Art.Sky); return; } }
+            if (shield > 0) { double s = Math.Min(shield, d); shield -= s; d -= s; if (d <= 0) { Fx.Ring(at + Vector2.left * 0.2f, 0.6f, Art.Sky); return; } }
             baseHp = Math.Max(0, baseHp - d);
-            Fx.Hit(at + Vector2.down * 0.3f, 1.2f);
+            Fx.Hit(at + Vector2.left * 0.3f, 1.2f);
             Audio.Play(Audio.Sfx.BaseHit);
             // 무지개 돔: 처음 무너질 때 한 번 버팀
             if (baseHp <= 0 && frame != null && frame.effect == "revive" && !revived)
@@ -386,7 +418,7 @@ namespace EarthDef
                 revived = true; frameFired++;
                 baseHp = baseMax * frameVal / 100.0; invulnT = 3f;
                 Banner?.Invoke(L.T("frame_eff_revive"));
-                Fx.Ring(new Vector2(0, World.ShieldY + 0.5f), 5f, Art.Hex("#f3dcff"));
+                Fx.Ring(World.BaseCenter, 5f, Art.Hex("#f3dcff"));
                 Audio.Play(Audio.Sfx.Break);
             }
         }
@@ -402,7 +434,7 @@ namespace EarthDef
             Enemy best = null; float bd = range * range;
             foreach (var e in enemies)
             {
-                if (e.dead || (skip != null && skip.Contains(e)) || e.Pos.y > World.SpawnY - 0.3f) continue;
+                if (e.dead || (skip != null && skip.Contains(e)) || !World.OnField(e.Pos)) continue;
                 float d = (e.Pos - from).sqrMagnitude;
                 if (d < bd) { bd = d; best = e; }
             }
@@ -414,31 +446,31 @@ namespace EarthDef
         {
             int n = 0; Enemy pick = null;
             foreach (var e in enemies)
-                if (!e.dead && e != not && e.Pos.y < World.SpawnY - 0.3f && Vector2.Distance(e.Pos, at) <= r && rnd.Next(++n) == 0) pick = e;
+                if (!e.dead && e != not && World.OnField(e.Pos) && Vector2.Distance(e.Pos, at) <= r && rnd.Next(++n) == 0) pick = e;
             return pick;
         }
 
         public Enemy RandomEnemy()
         {
             int n = 0; Enemy pick = null;
-            foreach (var e in enemies) if (!e.dead && e.Pos.y < World.SpawnY - 0.3f && rnd.Next(++n) == 0) pick = e;
+            foreach (var e in enemies) if (!e.dead && World.OnField(e.Pos) && rnd.Next(++n) == 0) pick = e;
             return pick;
         }
 
-        static readonly int[] crowdCnt = new int[20];
+        static readonly int[] crowdCnt = new int[24];
         static readonly string[] SurvivalElites = { "big", "moth_king", "beetle_steel", "mother" };
-        /// <summary>적이 가장 많이 모인 높이 (장판 놓을 곳) — 1칸 높이 칸마다 세어 가장 많은 곳</summary>
+        /// <summary>적이 가장 많이 모인 높이 (장판 놓을 곳) — 달 바닥부터 1칸 높이 칸마다 세어 가장 많은 곳 (11-18: 예전 = 방어막부터)</summary>
         public float CrowdY()
         {
             var cnt = crowdCnt; Array.Clear(cnt, 0, cnt.Length);
             foreach (var e in enemies)
             {
                 if (e.dead) continue;
-                int i = Mathf.FloorToInt(e.Pos.y - World.ShieldY);
+                int i = Mathf.FloorToInt(e.Pos.y - World.GroundY);
                 if (i >= 0 && i < cnt.Length) cnt[i] += e.row.IsBoss || e.row.IsElite ? 3 : 1;
             }
-            int best = 1; for (int i = 0; i < cnt.Length; i++) if (cnt[i] > cnt[best]) best = i;
-            return World.ShieldY + best + 0.5f;
+            int best = 4; for (int i = 0; i < cnt.Length; i++) if (cnt[i] > cnt[best]) best = i;
+            return World.GroundY + best + 0.5f;
         }
 
         // ---------- 카드 ----------
@@ -455,22 +487,58 @@ namespace EarthDef
         /// <summary>카드 장수 (칩 "첫 카드 N장 더" = 첫 레벨업에만)</summary>
         int Choices => Tables.Ci("Card_Choices", 3) + (picks == 0 ? run.firstExtra : 0);
 
-        public void Choose(int i)
+        public void Choose(int i, int slot = 0)
         {
             if (st != St.Pick || i < 0 || i >= offer.Count) return;
             var c = offer[i];
             picks++;
             Audio.Play(c.kind == "break" ? Audio.Sfx.Break : c.kind == "new" ? Audio.Sfx.Place : Audio.Sfx.CardPick);
             if (c.kind == "break" && lo.B("heal_break") > 0) Heal(lo.B("heal_break") / 100.0);
+            // 11-18 사용자 "터렛을 고를 때 자리를 고르는 흐름이 나오며 그 자리에 배치": 새 터렛 + 빈 칸이 2개 이상이면 자리 고르기
+            if (c.kind == "new" && slot <= 0 && AskSlot && run.FreeSlotList.Count >= 2)
+            {
+                slotCard = c; st = St.Slot; slotAsks++;
+                World.I.ShowSlots(true, true);
+                Changed?.Invoke();
+                return;
+            }
+            Finish(c, slot);
+        }
+
+        /// <summary>자리 고르기에서 [뒤로] — 카드 창으로 돌아감 (같은 카드)</summary>
+        public void SlotBack()
+        {
+            if (st != St.Slot) return;
+            slotCard = null; st = St.Pick;
+            World.I.ShowSlots(true);
+            Changed?.Invoke();
+        }
+
+        /// <summary>자리 고르기에서 칸(1~4)을 누름</summary>
+        public void PlaceAt(int slot)
+        {
+            if (st != St.Slot || slotCard == null || !run.FreeSlotList.Contains(slot)) return;
+            var c = slotCard; slotCard = null;
+            Finish(c, slot);
+        }
+
+        void Finish(CardRow c, int slot)
+        {
             int before = run.turrets.Count;
-            var t = run.Pick(c);
-            if (run.turrets.Count > before) { AddUnit(t); World.I.ShowSlots(run.turrets.Count - 1); }
+            var t = run.Pick(c, slot);
+            if (run.turrets.Count > before) { AddUnit(t); World.I.ShowSlots(true); }
             else if (t?.unit != null && c.kind == "break") t.unit.RefreshTier();
             if (offerIsBoss) pendingBoss--; else pendingLevel--;
             st = St.Play;
             if (mode == "endless") nextPickAt = time + Tables.Cf("Endless_Pick_Gap", 0);
             Changed?.Invoke();
         }
+
+        /// <summary>자리 고르기를 할지 (Config Slot_Pick 1) — 밸런스 측정 · 자동 시험은 끔(정해진 순서로 자동)</summary>
+        public static bool NoSlotPick;
+        bool AskSlot => !NoSlotPick && Tables.Ci("Slot_Pick", 1) == 1 && lab == null;
+        public CardRow slotCard;
+        public int slotAsks;      // 시험용
 
         /// <summary>새로고침: 광고(판마다 Refresh_Ad 번) 또는 무료</summary>
         public bool CanRefresh => run.refreshFree > 0 || run.refreshAd > 0;
@@ -582,7 +650,7 @@ namespace EarthDef
 
         public void Pause(bool on)
         {
-            if (st == St.End || st == St.Pick) return;
+            if (st == St.End || st == St.Pick || st == St.Slot) return;
             st = on ? St.Pause : St.Play;
             Changed?.Invoke();
         }
@@ -590,8 +658,8 @@ namespace EarthDef
         public void Close()
         {
             Time.timeScale = 1;
-            World.I.ShowSlots(0, false);
             if (I == this) I = null;
+            World.I.ShowSlots(false);
             Destroy(gameObject);
         }
     }

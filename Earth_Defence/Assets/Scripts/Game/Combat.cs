@@ -27,7 +27,7 @@ namespace EarthDef
             if (lo.C("early") > 0 && b.time < 120f) v += lo.C("early");
             if (lo.C("low_hp") > 0 && b.baseHp < b.baseMax * 0.3) v += lo.C("low_hp");
             if (lo.C("debuff") > 0 && e.Debuffed) v += lo.C("debuff");
-            if (lo.C("near") > 0 && e.Pos.y < Tables.Cf("Pos_Near_Y")) v += lo.C("near");
+            if (lo.C("near") > 0 && e.VY < Tables.Cf("Pos_Near_Y")) v += lo.C("near");   // 11-18: 높이 대신 방어선까지 거리 (VY)
             if (lo.C("boss_on") > 0 && b.BossOnField) v += lo.C("boss_on");
             v += lo.C("per_turret") * (b.run.turrets.Count - 1) + lo.C("per_card") * b.picks;
             return v / 100.0;
@@ -47,7 +47,7 @@ namespace EarthDef
             // 밸런스 2차: 스테이지 약점(Stage 표 Weak) — 이 스테이지 적은 모두(보스 포함) 그 속성에 약함. 적 자기 약점과 같은 값(Weak_Mul), 겹치진 않음
             var bs = Battle.I; bool stageWeak = bs != null && bs.stage != null && bs.IsStage && !string.IsNullOrEmpty(bs.stage.weak) && bs.stage.weak == t.row.elem;
             double weak = e.row.weak == t.row.elem || stageWeak ? Tables.C("Weak_Mul", 1.5) : e.row.resist == t.row.elem ? Tables.C("Resist_Mul", 0.6) : 1;
-            float y = e.Pos.y;
+            float y = e.VY;   // 11-18 사령탑: 기지 근처 · 먼 적 = 방어선까지 남은 거리로 (예전 세로 높이와 같은 기준)
             double pos = y < Tables.Cf("Pos_Near_Y") ? Tables.C("Pos_Near", 1.1) : y > Tables.Cf("Pos_Far_Y") ? Tables.C("Pos_Far", 0.9) : 1;
             double d = Atk * ratePct / 100.0 * (1 + ordinary) * (1 + late) * critMul * weak * pos * t.Penalty * (1 + e.vuln) * (1 - e.row.armor);
             // 칩 "치명 때 적 최대 체력 N% 더" (상한 = 원래 피해 x Crit_Hp_Cap)
@@ -97,7 +97,7 @@ namespace EarthDef
             {
                 // 11-16: 맞은 자리에서 아무 방향으로 나가던 작은 레이저 → 레이저 포에서 그 적을 향해 (사용자 "타워에서 나갈 수 있도록")
                 var lu = Battle.I?.run.Get("laser")?.unit;
-                Vector2 o = lu ? lu.Head : (t.unit ? t.unit.Head : at + Vector2.down * 2f);
+                Vector2 o = lu ? lu.Head : (t.unit ? t.unit.Head : at + Vector2.left * 2f);
                 var dv = at - o;
                 Battle.I?.Add(new Beam(t, o, Mathf.Atan2(dv.y, dv.x) * Mathf.Rad2Deg, 0.28f, 0.28f, 0.2f, Tables.C("Mini_Laser_Rate", 80), mini: true, len: dv.magnitude + 0.6f));
             }

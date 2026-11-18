@@ -32,7 +32,7 @@ namespace EarthDef
         void Build()
         {
             baseY = World.GroundY - 0.04f;
-            x = target = Random.Range(-0.8f, 0.8f);
+            x = target = Tables.Cf("Lobby_Walk_X", 0.8f) + Random.Range(-0.8f, 0.8f);   // 11-18: 사령탑 오른쪽 달 바닥
             transform.position = new Vector3(x, baseY, 0);
             body = gameObject.AddComponent<SpriteRenderer>();
             body.sprite = Art.Guardian; body.sortingOrder = 5;
@@ -56,14 +56,14 @@ namespace EarthDef
         {
             float dt = Mathf.Min(Time.deltaTime, 0.05f);
             t += dt;
-            float max = Tables.Cf("Guardian_X_Max", 1.5f) + 0.3f;
+            float max = 1.6f, cx = Tables.Cf("Lobby_Walk_X", 0.8f);
             if (wait > 0)
             {
                 wait -= dt;
                 if (wait <= 0)
                 {
                     // 다음 자리: 너무 가까우면 다시 고름
-                    for (int i = 0; i < 5 && Mathf.Abs(target - x) < 0.6f; i++) target = Random.Range(-max, max);
+                    for (int i = 0; i < 5 && Mathf.Abs(target - x) < 0.6f; i++) target = cx + Random.Range(-max, max);
                     left = target < x;
                 }
             }

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전투 배치 적용</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red:#b5432f;--red-bg:#fbe6e0;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1180px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:21px;margin:40px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)} .tip.orange{background:var(--orange-bg)}
+  .tip ul,.tip ol{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:12px 0}
+  .grid figure{margin:0} .grid img{width:100%;border:4px solid #3b281c;border-radius:22px;display:block}
+  figcaption{font-size:14px;margin-top:6px;text-align:center;font-weight:bold}
+  table.cmp{border-collapse:collapse;width:100%;background:#fff;font-size:14.5px;margin:8px 0} table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top} table.cmp th{background:#f1e8d8}
+  code{background:#f1e8d8;border-radius:4px;padding:0 4px;font-size:13px}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:64px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  ul.todo > li.checked{border-color:#9cc48f;background:#f6fbf2}
+  #stat{font-size:14px;color:var(--soft)}
+  @media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}
+</style></head><body><main>
+
+<h1>전투 배치 적용 결과 <small style="font-size:15px;color:var(--soft);font-weight:normal">2026-11-18 (수) · ③ 우주 사령탑을 게임에 옮김</small></h1>
+<p class="note">전투배치_시안.html 2판에 체크 · 의견 주신 대로(이대로 진행 · 머리만 45° · 대장 카피 가운데 고정 · 로비 · 외형도 사령탑) 실제 게임에 옮겼습니다. 새로 주신 <b>"터렛을 고를 때 자리를 고르는 흐름"</b>도 넣었습니다. 자동 시험 <b>기본 137줄 · 시험장 13줄 · 3차 107줄 모두 오류 0</b>.</p>
+
+<div class="tip orange"><b>제가 정해서 넣은 것 (다르면 의견 칸에 적어 주세요)</b>
+<ol>
+<li><b>자리 고르기</b>: 새 터렛 카드를 고르면 카드 창이 닫히고 사령탑의 빈 칸이 반짝이며, 칸마다 그 터렛 그림 단추가 뜹니다. 누른 칸에 놓이고, [카드 다시 고르기]로 돌아갈 수도 있습니다. <b>빈 칸이 하나만 남았으면 묻지 않고 바로 놓습니다</b> (Config <code>Slot_Pick</code> 0 이면 자리 고르기를 끔).</li>
+<li><b>머리만 45°</b>: 머리가 있는 4종(쾅쾅 대포 포신 · 유도 미사일 2발 · 레이저 포 수정 · 관통포 포신)만 쉴 때 45° 오른쪽 위를 보고, <b>쏠 때는 머리가 적 쪽으로 돕니다</b>. 둥근 터렛 7종(벌집 · 찌릿 코일 · 벼락탑 · 끈끈이 드론 · 불바퀴 · 소용돌이포 · 집중 빔)은 기울일 방향이 없어 그대로입니다. 관통포는 포신이 받침과 한 장이어서 둘로 나눠 다시 그렸습니다.</li>
+<li><b>대장 카피 고정</b>: 화면 끌기가 없어졌고, 첫 전투의 "끌어서 이동" 도움말도 안 뜹니다 (Config <code>Guardian_Fixed</code> 0 이면 예전처럼 좌우 끌기).</li>
+<li><b>적이 오는 길</b>: 위 가장자리 오른쪽(65%)과 오른쪽 가장자리 위쪽(35%)에서 나와, 사령탑 높이 안의 한 점을 향해 <b>25~70° 로 비스듬히</b> 떨어집니다. 꼬리 달린 운석은 날아가는 쪽으로 머리를 돌리고, 보스는 오른쪽 위 모서리에서 나옵니다. 오는 길이 예전보다 짧아(평균 14.8 → 10.5칸) <b>적 속도를 0.72배</b>로 맞춰 오는 시간을 같게 했습니다.</li>
+<li><b>방어선</b>: 예전 돔 방어막(가로줄) 대신 사령탑 · 터렛 오른쪽의 세로줄(Config <code>Shield_X</code>)입니다. 닿으면 운석은 부딪쳐 터지고, 나머지는 멈춰 때립니다.</li>
+<li><b>기지 쪽 기준이 있던 것들</b>: 기지 근처 · 먼 적 피해 배율, 얼음 사령탑의 "근처 적 얼림", 회로 "가까운 적"은 <b>방어선까지 남은 거리</b>로 바꿨습니다(예전 높이 기준과 같은 값). 밀어내기는 위로가 아니라 <b>온 길로 되돌립니다</b>. 끈끈이 드론 장판(가로 띠)은 방어선 오른쪽 하늘에만 깔리고, 불바퀴는 방어선 · 달 바닥에서 튕깁니다.</li>
+<li><b>로비</b>: 왼쪽에 사령탑, 바닥은 달 + 지구입니다. [전투 시작] · 순찰 단추는 사령탑을 가리지 않게 오른쪽으로 옮겼고, 대장 카피는 달 바닥을 어슬렁거립니다.</li>
+<li><b>기지 외형 7종</b>: 돔 7가지 → 사령탑 7가지(색 · 띠 · 유리 + 무지개 띠 · 별 · 고드름 · 덩굴 · 꽃 · 금 리벳 · 왕관)로 그렸습니다. 이름도 "OO 돔" → "OO 사령탑"으로 바꿨습니다(별바다 장막은 그대로). 효과 · 값은 그대로입니다.</li>
+</ol></div>
+
+<h2>전 · 뒤</h2>
+<div class="grid">
+<figure><a href="캡쳐본 모음/전투UI_제안/now_full.jpg"><img src="캡쳐본 모음/전투UI_제안/now_full.jpg"></a><figcaption>전: 돔 + 위에서 오는 적</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_시안/command.png"><img src="캡쳐본 모음/전투배치_시안/command.png"></a><figcaption>시안 2판 (0.75배 · 벽에 붙임)</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/04b_battle_full.png"><img src="캡쳐본 모음/전투배치_적용/04b_battle_full.png"></a><figcaption>뒤: 실제 게임 (터렛 4칸)</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/zoom_tower.png"><img src="캡쳐본 모음/전투배치_적용/zoom_tower.png"></a><figcaption>사령탑 확대 (머리 45° · 대장 카피)</figcaption></figure>
+</div>
+
+<h2>장면별</h2>
+<div class="grid">
+<figure><a href="캡쳐본 모음/전투배치_적용/02_battle_start.png"><img src="캡쳐본 모음/전투배치_적용/02_battle_start.png"></a><figcaption>전투 시작 (대장 카피만)</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/03b_slot_pick.png"><img src="캡쳐본 모음/전투배치_적용/03b_slot_pick.png"></a><figcaption>새 터렛 → 자리 고르기</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/05_elite.png"><img src="캡쳐본 모음/전투배치_적용/05_elite.png"></a><figcaption>중간 보스</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/07_boss.png"><img src="캡쳐본 모음/전투배치_적용/07_boss.png"></a><figcaption>보스 (오른쪽 위에서)</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/18c_lobby_walk.png"><img src="캡쳐본 모음/전투배치_적용/18c_lobby_walk.png"></a><figcaption>로비</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/88_looks_base.png"><img src="캡쳐본 모음/전투배치_적용/88_looks_base.png"></a><figcaption>기지 외형 7종</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/89_lobby_gold_dome.png"><img src="캡쳐본 모음/전투배치_적용/89_lobby_gold_dome.png"></a><figcaption>황금 사령탑 끼움</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/34_endless.png"><img src="캡쳐본 모음/전투배치_적용/34_endless.png"></a><figcaption>무한 모드 (가시 사령탑)</figcaption></figure>
+</div>
+<div class="grid">
+<figure><a href="캡쳐본 모음/전투배치_적용/tower_all.png"><img src="캡쳐본 모음/전투배치_적용/tower_all.png"></a><figcaption>사령탑 7종 · 외형 아이콘 · 달 바닥 · 관통포 나눔</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_시안/tilt.png"><img src="캡쳐본 모음/전투배치_시안/tilt.png"></a><figcaption>45° 방법 비교 (B 를 씀)</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/23_lab_dummy.png"><img src="캡쳐본 모음/전투배치_적용/23_lab_dummy.png"></a><figcaption>터렛 시험장</figcaption></figure>
+<figure><a href="캡쳐본 모음/전투배치_적용/03_levelup.png"><img src="캡쳐본 모음/전투배치_적용/03_levelup.png"></a><figcaption>레벨업 창 (그대로)</figcaption></figure>
+</div>
+
+<h2>밸런스에 준 영향 (한 번 재 봄)</h2>
+<p class="note">밸런스 3차 최종 측정과 같은 설정(무과금 · 광고 안 봄 · 하루 18판 · 씨앗 1000)으로 새 배치를 120일까지 쟀습니다. 한 번 잰 값은 ±30% 흔들립니다.</p>
+<table class="cmp">
+<tr><th>최고 스테이지</th><th>3일</th><th>30일</th><th>60일</th><th>90일</th><th>120일</th><th>4~10 처음 승률</th><th>31~40 처음 승률</th></tr>
+<tr><td>예전 배치 (11-18 최종 n9)</td><td>17</td><td>39</td><td>47</td><td>59</td><td>69</td><td>100%</td><td>100%</td></tr>
+<tr><td>사령탑 배치</td><td>14</td><td>39</td><td>50</td><td>60</td><td>71</td><td>67%</td><td>56%</td></tr>
+</table>
+<div class="tip blue">전체 진행 속도는 거의 같습니다(적 속도 0.72배가 오는 시간을 잘 맞춤). 다만 <b>스테이지마다 처음 깨는 비율이 조금 낮아졌습니다</b>. 사령탑 위 · 아래 끝으로 오는 적이 생기면서 일부가 더 빨리 닿기 때문으로 보입니다. 정한 순서대로 <b>밸런스 3차 때 새 배치로 측정을 다시 돌려</b> 맞추겠습니다. 시험 세이브로는 스테이지 10 을 40초 못 버텨서, 외형 효과 시험은 기지 체력을 채워 가며 보게 바꿨습니다.</div>
+
+<h2>바뀐 것 (코드 · 표 · 그림)</h2>
+<table class="cmp">
+<tr><th style="width:160px">곳</th><th>내용</th></tr>
+<tr><td>전장 (World)</td><td>돔 · 풀밭 → 왼쪽 벽 사령탑(Bg/tower_&lt;외형&gt;) + 달 바닥(Bg/ground_moon). 터렛 칸 1~4 = 위 2 · 아래 2(4 = 달 바닥) · 대장 카피 = 가운데 사령실. 빈 칸 표시는 터렛이 없는 칸만.</td></tr>
+<tr><td>적 (Enemy · Battle)</td><td>나오는 곳 · 겨누는 곳(25~70°) · 무리는 같은 곳을 노림 · 날아가는 줄 옆으로 흔들림 · 달 바닥에 닿으면 바닥을 따라 · 꼬리 운석 돌리기 · 밀어내기 = 온 길로.</td></tr>
+<tr><td>터렛 (TurretUnit · TurretIdle)</td><td>머리 조각을 회전 축에 붙여 45° · 사거리 안 적 쪽으로 240°/초 · 쏠 때 바로 적 쪽 · 미사일은 머리 쪽으로 나감. 관통포 받침/포신 나눔.</td></tr>
+<tr><td>자리 고르기 (Battle · Run · BattleUI)</td><td>새 상태 <code>Slot</code> · 칸 단추 · [카드 다시 고르기]. 자동(밸런스 측정 · 시험)은 대장 카피에 가까운 칸부터(2 → 3 → 1 → 4).</td></tr>
+<tr><td>전투 위 줄 (BattleUI)</td><td>② 방주 항로 막대: 일시정지 · 스테이지 · 시계 · 항로(지난 길 주황 · 웨이브 점 · 중간 보스 왕관 · 끝 보스 행성) · 카드 / 레벨 배지 · 경험치 · 배속. 무한 모드는 다음 보스까지, 엘리트 군단은 버틸 시간.</td></tr>
+<tr><td>기지 체력판</td><td>사령탑 앞 달 바닥의 판 (하트 · 숫자 · 초록 막대 + 보호막 하늘색). 대장 카피 충전 막대는 머리 위로.</td></tr>
+<tr><td>표</td><td><code>tools/layout2_tables.py</code>: Config 15개 (Shield_X -2.1 · Enemy_Speed_Mul 0.72 · Spawn_Top_Share 0.65 · Spawn_Top_X0 · Spawn_Right_Y0 · Approach_Min 25 · Approach_Max 70 · Guardian_Fixed 1 · Head_Rest_Deg 45 · Head_Turn 240 · Slot_Pick 1 · Slot_Order 2314 · Lobby_Btn_X · Lobby_Walk_X · Hp_Plate_X) · 글자 2개 · 외형 이름 6개.</td></tr>
+<tr><td>그림</td><td><code>tools/tower_art.py</code> → <code>python tools/earth_export.py tower</code> (사령탑 8장 · 외형 아이콘 7 · 달 바닥 · 관통포 2조각). 칸 좌표를 찍어 주며 World.cs 값과 같음.</td></tr>
+</table>
+
+<h2>정해 주실 것 <span id="stat"></span></h2>
+<ul class="todo">
+<li data-id="a-play"><label><input type="checkbox"><span><span class="tag">확인</span>직접 해 보신 느낌 (적이 오는 각도 · 빠르기 · 사령탑 크기 · 자리 고르기)<span class="why">값 하나로 바꿀 수 있습니다: 각도 Approach_Min/Max · 위/오른쪽 비율 Spawn_Top_Share · 빠르기 Enemy_Speed_Mul · 머리 각도 Head_Rest_Deg.</span></span></label></li>
+<li data-id="a-slot1"><label><input type="checkbox"><span><span class="tag">결정</span>빈 칸이 하나 남았을 때도 자리 고르기 창을 띄울까요? (추천: 지금처럼 바로 놓기)<span class="why">고를 칸이 하나뿐이면 한 번 더 누르는 것만 늘어서 바로 놓게 했습니다.</span></span></label></li>
+<li data-id="a-ui"><label><input type="checkbox"><span><span class="tag">결정</span>전투UI_제안.html 을 사령탑 배치에 맞게 고쳐 다시 드릴까요? (추천)<span class="why">제안 54개 중 돔 기준 항목(돔 체력 호 막대 · 맞을 때 돔 출렁 · 돔에 금 가기 · 바닥 빈 칸 점선 · 돔 근처 위험선 · 위 줄 배치)이 있어, 사령탑 기준으로 바꾸고 이번에 이미 한 것(항로 막대 · 체력판 · 레벨 배지)은 "끝남"으로 표시해 다시 드리겠습니다. 정하신 순서대로 그다음 밸런스 3차를 새 배치로 다시 잽니다.</span></span></label></li>
+</ul>
+<p class="note">의견 읽기: <code>PYTHONUTF8=1 python tools/todo_checks.py 전투배치_적용_결과.html</code></p>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-layout3-1118', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){ var c=0,n=0; items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; }); document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n; }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row'; li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견'; row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='의견을 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open'); li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+})();
+</script>
+</body></html>

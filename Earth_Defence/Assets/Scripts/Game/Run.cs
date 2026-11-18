@@ -87,15 +87,41 @@ namespace EarthDef
 
         public int MaxSlots => Tables.Ci("Turret_Slots", 4);
         public int FreeSlots => MaxSlots - (turrets.Count - 1);
+        /// <summary>11-18 사령탑: 빈 칸 번호(1~4). 고르지 않으면 대장 카피에 가까운 칸부터 (Slot_Order 2314 — 위 2 · 아래 2 중 사령실 바로 위아래 먼저)</summary>
+        public List<int> FreeSlotList
+        {
+            get
+            {
+                var l = new List<int>();
+                foreach (var s in SlotOrder) if (s >= 1 && s <= MaxSlots && !turrets.Exists(t => t.slot == s)) l.Add(s);
+                return l;
+            }
+        }
+        static int[] slotOrder; static int slotOrderSrc;
+        /// <summary>Config Slot_Order = 칸 번호를 이어 쓴 숫자 (2314 = 2 · 3 · 1 · 4 순서)</summary>
+        static int[] SlotOrder
+        {
+            get
+            {
+                int src = Tables.Ci("Slot_Order", 2314);
+                if (slotOrder != null && src == slotOrderSrc) return slotOrder;
+                slotOrderSrc = src;
+                var l = new List<int>();
+                foreach (var ch in src.ToString()) { int v = ch - '0'; if (v >= 1 && v <= 4 && !l.Contains(v)) l.Add(v); }
+                for (int i = 1; i <= 4; i++) if (!l.Contains(i)) l.Add(i);
+                return slotOrder = l.ToArray();
+            }
+        }
         public TurretInst Get(string id) { for (int i = 0; i < turrets.Count; i++) if (turrets[i].row.id == id) return turrets[i]; return null; }
         public bool Owns(string id) => Get(id) != null;
 
         /// <summary>터렛 시험장: 정한 칸에 놓기</summary>
-        public TurretInst AddAt(TurretRow r, int slot) { var t = Add(r); t.slot = slot; return t; }
+        public TurretInst AddAt(TurretRow r, int slot) => Add(r, slot);
 
-        TurretInst Add(TurretRow r)
+        TurretInst Add(TurretRow r, int slot = -1)
         {
-            var t = new TurretInst { row = r, slot = turrets.Count, metaLv = SaveData.Cur != null ? SaveData.Cur.TurretLv(r.id) : 1 };
+            if (slot < 0) slot = turrets.Count == 0 ? 0 : (FreeSlotList.Count > 0 ? FreeSlotList[0] : turrets.Count);
+            var t = new TurretInst { row = r, slot = slot, metaLv = SaveData.Cur != null ? SaveData.Cur.TurretLv(r.id) : 1 };
             // 장비 · 칩: 모든 터렛("*") + 이 터렛 전용
             var all = lo.For("*"); var mine = lo.For(r.id);
             if (all != null || mine != null)
@@ -167,14 +193,14 @@ namespace EarthDef
         }
 
         /// <summary>카드 고르기 → 터렛 추가 · 별 · 단계 · 수치</summary>
-        public TurretInst Pick(CardRow c)
+        public TurretInst Pick(CardRow c, int slot = 0)
         {
             history.Add(c);
             TurretInst t;
             if (c.kind == "new")
             {
                 if (FreeSlots <= 0 || Owns(c.turret)) { Debug.LogWarning("빈 칸이 없거나 이미 있는 터렛: " + c.id); return null; }
-                t = Add(Tables.TurretById[c.turret]);
+                t = Add(Tables.TurretById[c.turret], slot > 0 && FreeSlotList.Contains(slot) ? slot : -1);   // 11-18: 고른 칸 (없으면 정해진 순서)
                 // 칩 "놓으면 별 +N" — 돌파를 기다리는 별 최대에서 멈춤 (기획서 3장)
                 t.stars = Mathf.Min(StarsPer, 1 + (int)Math.Round(lo.TS(c.turret, "start_stars")));
                 return t;

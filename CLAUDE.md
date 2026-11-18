@@ -1,5 +1,13 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-18 오후 — 전투 배치 적용 끝)
+- 시안 2판 의견(키 earthdef-layout2-1118): 이대로 · 머리만 45° · 대장 카피 고정(+ "터렛을 고를 때 자리를 고르는 흐름") · 로비/외형 사령탑. → 게임에 옮김.
+- 보고 = `전투배치_적용_결과.html` (키 earthdef-layout3-1118, 캡처 `캡쳐본 모음/전투배치_적용/`). 결정 대기: a-play(직접 해 본 느낌) · a-slot1(빈 칸 1개도 묻기? 추천 바로) · a-ui(전투UI_제안을 사령탑 기준으로 고쳐 다시 — 추천) → 그다음 밸런스 3차 새 배치로 다시 측정.
+- 구조: World.SlotPos(1~4 위 2 · 아래 2) · GuardianPos · ShieldX(방어선 세로줄) · OnField · 사령탑 그림 Bg/tower_<외형>(피벗 왼쪽 아래 40px = 땅) · 달 바닥 Bg/ground_moon. Enemy = basePos 가 dir 로 + 옆 흔들림 · Aim(target) · Remain/VY(예전 높이 기준 = Shield_Y + 남은 거리 → Pos_Near/Far · 얼림) · Knock = 온 길로. Battle.SpawnPoint/AimTarget/Swarm/BigSpawn · St.Slot · PlaceAt · SlotBack · NoSlotPick(시험 · 측정은 true). Run.FreeSlotList(Slot_Order 2314). TurretIdle 머리(NewHead · SetAim · TipWorld, 대포 · 미사일 · 레이저 · 관통포) · TurretUnit.HeadStep. BattleUI 위 줄 = 방주 항로 막대 · 체력판 달 바닥 · ShowSlotPick.
+- 표 tools/layout2_tables.py (Config 15 · 글자 2 · 외형 이름 "OO 사령탑") · 그림 tools/tower_art.py → `earth_export.py tower` (frames 도 tower 로 — 예전 돔 아이콘이 덮어쓰지 않게). 시안 tools/layout_mock.py command(K=.75).
+- 밸런스: 새 배치 1회 측정(씨앗 1000, 120일) 30일 39 · 60일 50 · 90일 60 · 120일 71 (예전 39 · 47 · 59 · 69) — 진행 속도 거의 같음 · 처음 승률은 낮아짐(4~10 100→67%). Enemy_Speed_Mul 0.72. 시험 세이브로 스테이지 10 을 40초 못 버팀 → 별똥별 시험은 기지 체력 채우며.
+- 시험: 기본 137 · 시험장 13 · 3차 107 오류 0.
+
 ## ▶ 재개 메모 (2026-11-18 아침 — 전투 배치 2판)
 - 1판 의견(키 earthdef-layout-1118): ③ 배치 + ② 방주 위 줄(항로 막대) · 등대 → **우주 사령탑** · 대장 카피 가운데 · 위 2 아래 2 · 터렛 45° · 운석 오른쪽 위 → 왼쪽 아래 · 순서 = 배치 → 전투 UI 제안 → 밸런스 3차.
 - 2판 = `전투배치_시안.html` (키 earthdef-layout2-1118, 그림 `캡쳐본 모음/전투배치_시안/command.png` · `tilt.png`, `tools/layout_mock.py command tilt`). 결정 대기: l2-ok · l2-tilt(추천 B 머리 조각만 45°, 쏠 때 적 쪽으로) · l2-move(추천 가운데 고정) · l2-look(로비 · 외형 7종 사령탑으로).
