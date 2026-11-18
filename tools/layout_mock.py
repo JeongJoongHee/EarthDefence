@@ -499,8 +499,8 @@ def turret_b(t, x, by, w=150, deg=45, pad=True):
     return s, tip
 
 
-def command(K=.5):
-    """우주 사령탑. K = 탑 크기 배율(11-18 사용자 "절반으로" → .5). 선 굵기 · 터렛 · 대장 카피 크기는 그대로"""
+def command(K=.75):
+    """우주 사령탑. K = 탑 크기 배율(11-18 사용자 "절반으로" → .5 → "1.5배만 키워줘 · 벽에 붙여" → .75). 선 굵기 · 터렛 · 대장 카피 크기는 그대로"""
     random.seed(41)
     s = stars_bg()
     # 비스듬히 떨어지는 빛줄 (오른쪽 위 → 왼쪽 아래)
@@ -524,7 +524,7 @@ def command(K=.5):
         gnd += f'<ellipse cx="{cx_}" cy="{cy_ - ry * .35:.0f}" rx="{rx * .8:.0f}" ry="{ry * .45:.0f}" fill="#a39bb8"/>'
     s += wob(gnd, 2.5, .02)
     # ---- 사령탑 (BX = 몸통 가운데) ----
-    BX = 180
+    BX = 14 + 88 * K                              # 왼쪽 벽에 바짝 (몸통 왼쪽 끝 = 14)
     top = G - 1580 * K
     hb, ht = 88 * K, 62 * K                       # 아래 · 위 반폭
     xl0, xr0, xl1, xr1 = BX - hb, BX + hb, BX - ht, BX + ht
@@ -555,11 +555,15 @@ def command(K=.5):
     v += rr(dl - 8, DY - 12, drr - dl + 16, 20, 9, CREAM, 5)
     v += L(f'M{dl} {DY - 48} L{drr} {DY - 48}', 4) + ''.join(L(f'M{x} {DY - 48} L{x} {DY - 10}', 4) for x in (dl, dl + 60, drr))
     for x in (dl + 6, drr - 6): v += C(x, DY + dh - 12, 6, GOLD, 3)
+    # 동그란 창 (칸 사이)
+    for y in ((top + 95 + DY - 200) / 2 + 40, (DY + dh + 180 + G) / 2 - 20):
+        v += C(BX, y, 13 + 6 * K, SKY, 5) + F(f'M{BX - 8} {y - 6} A10 10 0 0 1 {BX + 6} {y - 8} L{BX} {y} Z', '#fff', .7)
     # 아래 받침 (발 날개 둘)
     v += P(f'M{xl0 + 3:.1f} {G - 80} L{xl0 - 46:.1f} {G - 6} L{xl0 + 6:.1f} {G - 6} Z', ORANGE, 5) + P(f'M{xr0 - 3:.1f} {G - 80} L{xr0 + 46:.1f} {G - 6} L{xr0 - 6:.1f} {G - 6} Z', ORANGE, 5)
     v += rr(xl0 - 16, G - 20, xr0 - xl0 + 32, 26, 10, STEEL2, 5)
     # 터렛 자리: 위 2 · 아래 2 (가운데 사령실을 향해 ">" 모양 — 가까운 칸 / 먼 칸)
-    slots = [(top + 95, 'laser', BX + 150), (DY - 200, 'missile', BX + 290), (DY + dh + 150, 'cannon', BX + 290), (G, 'tesla', BX + 175)]
+    SX = BX + 150                                 # 터렛 4칸은 탑 바로 옆 한 줄 (탑이 높아져 위아래로 쌓을 자리가 생김)
+    slots = [(top + 95, 'laser', SX), (DY - 200, 'missile', SX), (DY + dh + 180, 'cannon', SX), (G, 'tesla', SX)]
     for y, t, mx in slots:
         if y >= G: continue                       # 맨 아래 칸은 달 바닥 위
         v += rr(xl(y) - 7, y - 26, xr(y) - xl(y) + 14, 18, 8, ORANGE, 5)
@@ -584,7 +588,7 @@ def command(K=.5):
         return BX + 40, min(G - 40, max(top, y + (x - BX) * .8))
     for n, x, y, w in [('Enemy/fire', 600, 370, 96), ('Enemy/ice', 760, 430, 92), ('Enemy/pebble', 470, 520, 64), ('Enemy/crack', 330, 760, 92),
                        ('Enemy/iron', 640, 1180, 104), ('Enemy/crack', 1020, 880, 100), ('Enemy/fire', 880, 1270, 100), ('Enemy/ice', 1000, 1120, 96),
-                       ('Enemy/fire', 760, 960, 104), ('Enemy/pebble', 520, 980, 68), ('Enemy/iron', 980, 1560, 96), ('Enemy/fire', 760, 1880, 100),
+                       ('Enemy/fire', 760, 960, 104), ('Enemy/pebble', 520, 980, 68), ('Enemy/iron', 980, 1560, 96), ('Enemy/fire', 760, 1880, 100), ('Enemy/fire', 700, 1500, 100),
                        ('Enemy/ice', 900, 1760, 92), ('Enemy/crack', 660, 2010, 92), ('Enemy/pebble', 1040, 1940, 64), ('Enemy/fire', 420, 1180, 88)]:
         tx, ty = aim(x, y); s += meteor(n, x, y, w, tx, ty)
     for n, x, y, w, fl in [('Enemy/moth', 640, 1640, 120, True), ('Enemy/jelly', 960, 1380, 110, False), ('Enemy/ufo', 560, 780, 130, False),
@@ -593,14 +597,16 @@ def command(K=.5):
     # 보스 (오른쪽 위 모서리에 반쯤)
     s += spr('Enemy/planet', 960, 560, 280) + bar(860, 384, 180, 24, .66, RED, sw=4)
     # 공격 (오른쪽 위로)
-    lx, ly = tips['laser']; s += beam(lx, ly, 640, 1180, SKY, 12)
-    mx_, my_ = tips['missile']; s += shot('Fx/missile', mx_ + 140, my_ - 90, -40, 110) + shot('Fx/mini_missile', mx_ + 270, my_ - 190, -38, 80)
+    # 탑이 커지고 벽에 붙어서(11-18) 공격 표적을 터렛 오른쪽 위로 다시 고름
+    lx, ly = tips['laser']; s += beam(lx, ly, 560, 780, SKY, 12)
+    mx_, my_ = tips['missile']; s += shot('Fx/missile', mx_ + 150, my_ - 20, -10, 110) + shot('Fx/mini_missile', mx_ + 270, my_ - 40, -8, 80)
+    cx_, cy_ = tips['cannon']; s += shot('Fx/cannonball', cx_ + 120, cy_ - 57, -25, 48) + shot('Fx/cannonball', cx_ + 250, cy_ - 118, -25, 44)
     tx_, ty_ = tips['tesla']; s += zap(tx_, ty_, 650, 2010, 7)
-    cx_, cy_ = tips['cannon']; s += shot('Fx/cannonball', cx_ + 90, cy_ - 30, -30, 48) + shot('Fx/cannonball', cx_ + 170, cy_ - 50, -25, 44)
-    s += shot('Fx/bullet', gx + 110, gy + 20, 4, 100) + shot('Fx/bullet', gx + 220, gy + 30, 4, 100)
-    s += boom(640, 1180, 140) + boom(880, 1270, 110) + boom(760, 1880, 110) + spr('Fx/hit', 640, 1640, 90) + spr('Fx/hit', 660, 2010, 80)
-    s += dmg(640, 1115, '1.4K', 60, '#ffb36b') + dmg(880, 1210, '486', 44) + dmg(760, 1820, '520', 44, '#ffd34d') + T(760, 1778, '약점', 26, '#fde39a', sw=5)
-    s += dmg(640, 1580, '210', 40) + dmg(660, 1960, '96', 34, '#fff', .7) + dmg(1000, 1060, '88', 32, '#fff', .6)
+    gx, gy = BX + 130, DY - 80
+    s += shot('Fx/bullet', gx + 120, gy + 42, 19, 100) + shot('Fx/bullet', gx + 240, gy + 84, 19, 100)
+    s += boom(640, 1180, 150) + boom(560, 780, 110) + boom(700, 1500, 120) + spr('Fx/hit', 640, 1640, 90) + spr('Fx/hit', 650, 2010, 80)
+    s += dmg(640, 1110, '1.4K', 60, '#ffb36b') + dmg(560, 720, '486', 44) + dmg(700, 1440, '520', 44, '#ffd34d') + T(700, 1398, '약점', 26, '#fde39a', sw=5)
+    s += dmg(640, 1580, '210', 40) + dmg(650, 1960, '96', 34, '#fff', .7) + dmg(1000, 1060, '88', 32, '#fff', .6)
     s += hud_route()
     return s
 
