@@ -34,7 +34,7 @@ namespace EarthDef
                 es.AddComponent<StandaloneInputModule>();
             }
             UIRoot.Build(cam);
-            Game.ToLobby();
+            Game.ToTitle();     // 7차 수정안: 타이틀 → [게임 시작] → 구글 연동 / 게스트 → 로비
             BootMs = sw.Elapsed.TotalMilliseconds;
         }
 
@@ -48,14 +48,27 @@ namespace EarthDef
         public static Lobby Lobby;
         public static BattleUI BattleUI;
 
+        /// <summary>7차 수정안: 타이틀 (Config Title_On 0 이면 바로 로비)</summary>
+        public static void ToTitle()
+        {
+            if (Tables.Ci("Title_On", 1) != 1) { ToLobby(); return; }
+            World.I.SetLobby(true);
+            World.I.ShowSlots(0, false);
+            LobbyWalker.Show(true);
+            Title.Show();
+            Audio.Music("lobby");
+        }
+
         public static void ToLobby()
         {
+            if (Title.I) UnityEngine.Object.Destroy(Title.I.gameObject);
             Popup.CloseAll();
             Tutorial.CloseCur();
             if (BattleUI) { UnityEngine.Object.Destroy(BattleUI.gameObject); BattleUI = null; }
             Battle.I?.Close();
             if (Lobby) UnityEngine.Object.Destroy(Lobby.gameObject);
             Lobby = UIKit.Rect(UIRoot.I.pages, "Lobby").Fill().gameObject.AddComponent<Lobby>();
+            World.I.SetLobby(true);       // 7차: 로비 = 사령탑 없이 심플한 하늘 + 큰 지구 ("기지 외형은 게임 안에서만")
             Lobby.Build();
             World.I.ShowSlots(0, false);
             LobbyWalker.Show(true);       // 11-16 저녁: 기지 앞을 대장 카피가 어슬렁어슬렁
@@ -89,6 +102,8 @@ namespace EarthDef
             if (mode == "stage") SaveData.Cur.stage = stage;
             Tutorial.CloseCur();
             LobbyWalker.Show(false);
+            if (Title.I) UnityEngine.Object.Destroy(Title.I.gameObject);
+            World.I.SetLobby(false);
             var b = Battle.Begin(stage, seed, elite, mode);
             Audio.Music("battle");
             BattleUI = UIKit.Rect(UIRoot.I.pages, "BattleUI").Fill().gameObject.AddComponent<BattleUI>();

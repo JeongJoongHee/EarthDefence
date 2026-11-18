@@ -42,6 +42,8 @@ namespace EarthDef.EditorTools
         public static void RunPerf() => Start("perf");
         /// <summary>11-17 밸런스 측정 (Editor/PlayTestBal.cs) → Logs/Bal/bal_<이름>.json</summary>
         public static void RunBal() => Start("bal");
+        /// <summary>11-18 7차 수정안 시험 (Editor/PlayTest7.cs): 타이틀 · 입장 · 로비 큰 지구 · 별똥별 · 전투 배치 · 달토끼 · 적 Fade in · 장비 탭 · 자리 고르기</summary>
+        public static void RunR7() => Start("r7");
 
         static void Start(string mode)
         {
@@ -84,7 +86,8 @@ namespace EarthDef.EditorTools
             string mode = SessionState.GetString(PlayTest.ModeKey, "");
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
             Battle.NoSlotPick = true;      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : Steps());
+            if (mode != "r7" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -483,15 +486,16 @@ namespace EarthDef.EditorTools
                 Capture("89_lobby_gold_dome");
                 foreach (var fid in new[] { "prism", "frost", "thorn", "bloom" }) { Store.BuyFrame(Tables.Frame(fid)); Store.EquipFrame(fid); yield return null; Capture("89_dome_" + fid); }
                 Store.EquipFrame("basic");
-                // 9) 장비 탭 대장 카피: 둥실둥실 + 몸 돌리기
+                // 9) 장비 탭 대장 카피: 둥실둥실 (7차: 2D 로 떠다님 · 총 없음)
                 Game.Lobby.SetTab(2); yield return Wait(0.2f);
-                var hv = Object.FindAnyObjectByType<Hover3D>(); var hrt = hv ? (RectTransform)hv.transform : null;
-                Vector2 hvP0 = hrt ? hrt.anchoredPosition : Vector2.zero; float hy0 = hrt ? hrt.localEulerAngles.y : 0;
+                var hv = Object.FindAnyObjectByType<Float2D>(); var hrt = hv ? (RectTransform)hv.transform : null;
+                Vector2 hvP0 = hrt ? hrt.anchoredPosition : Vector2.zero;
                 Capture("90_gear_capy_a");
                 for (int f = 0; f < 12; f++) { yield return Wait(0.3f); Capture($"90_capy_{f:00}"); }    // 보고서 GIF 용 (0.3초 간격)
                 Capture("90_gear_capy_b");
-                Check(hv != null && hv.shadow != null && hv.lit != null && (hrt.anchoredPosition - hvP0).magnitude > 4f && Mathf.Abs(Mathf.DeltaAngle(hrt.localEulerAngles.y, hy0)) > 3f,
-                      $"장비 탭 카피바라 둥실둥실 (움직임 {(hrt ? (hrt.anchoredPosition - hvP0).magnitude : 0):0} · 몸 돌림 {(hrt ? Mathf.DeltaAngle(hrt.localEulerAngles.y, hy0) : 0):0}°)");
+                var hvImg = hv ? hv.GetComponent<Image>() : null;
+                Check(hv != null && (hrt.anchoredPosition - hvP0).magnitude > 4f && hvImg.sprite.name.EndsWith("guardian_float") && Object.FindAnyObjectByType<GearTab>().GetComponentsInChildren<Mask>().Length == 0,
+                      $"장비 탭 카피바라 2D 로 둥실둥실 · 총 없는 그림 (움직임 {(hrt ? (hrt.anchoredPosition - hvP0).magnitude : 0):0} · {(hvImg ? hvImg.sprite.name : "-")})");
                 // 10) 무한 모드: 레벨업 창이 덜 자주 (3분 동안 연 창 수 예전 ↔ 지금)
                 double mulNew = Tables.C("Endless_Exp_Mul", 1), gapNew = Tables.C("Endless_Pick_Gap", 0);
                 // 몇 가지 조합을 재서 로그에 남김 (마지막 = 지금 표 값). 같은 씨앗 · 스테이지 15 (시험 세이브 전력에 맞춤 — 30 은 대장 카피 혼자 겨우 잡아서 결과가 흔들림)
@@ -818,7 +822,7 @@ namespace EarthDef.EditorTools
             Check(B.kills >= 3 && B.enemies.Count > 0, $"14초: 처치 {B.kills} · 적 {B.enemies.Count} · Lv {B.level}");
             Check(B.Guardian.shotsFired > 20, $"가디언 연사 {B.Guardian.shotsFired}번");
             Check(GameObject.Find("spark") != null && GameObject.Find("muzzle") != null, "맞으면 불꽃 튐 · 총구 섬광 나옴");
-            Check(World.SpawnY <= World.I.PlayTop - 0.5f, $"적은 위쪽 UI 아래에서 나옴 (나오는 줄 {World.SpawnY:0.0} · UI 아래 끝 {World.I.PlayTop:0.0})");
+            Check(World.SpawnY <= World.I.PlayTop - 0.4f, $"적은 위쪽 UI(Lv 게이지) 아래에서 나옴 — 7차: 나올 땐 투명 (나오는 줄 {World.SpawnY:0.0} · UI 아래 끝 {World.I.PlayTop:0.0})");
             {   // 피해 숫자: 같은 적이 바로 또 맞으면 합침 (카치건 방식)
                 int n0 = Fx.NumCount; var key = new object();
                 Fx.Number(Vector2.zero, 10, false, key); Fx.Number(Vector2.zero, 15, false, key); Fx.Number(Vector2.zero, 5, true, key);
@@ -900,9 +904,23 @@ namespace EarthDef.EditorTools
             int slotBtns = 0; for (int s = 1; s <= 4; s++) if (GameObject.Find("Slot" + s) && GameObject.Find("SlotPick")) slotBtns++;
             Check(slotBtns == 4 && World.I.SlotMark(1).enabled, $"빈 칸 단추 {slotBtns}개 · 사령탑 칸 표시 반짝");
             Capture("03b_slot_pick");
-            B.SlotBack(); yield return null;
-            Check(B.st == Battle.St.Pick && GameObject.Find("SlotPick") == null, "[카드 다시 고르기] → 카드 창");
-            B.Choose(0); B.PlaceAt(1); yield return null;
+            {   // 7차: 안내는 화면 가운데 크게 (칸 단추와 안 겹침) · [카드 다시 고르기] 없음
+                var tipRt = FindDeep("SlotPick/Tip")?.GetComponent<RectTransform>();
+                bool noOverlap = tipRt != null;
+                var tc = new Vector3[4]; if (tipRt) tipRt.GetWorldCorners(tc);
+                var tipR = Rect.MinMaxRect(tc[0].x, tc[0].y, tc[2].x, tc[2].y);
+                for (int s = 1; s <= 4; s++)
+                {
+                    var sb = FindDeep("SlotPick/Slot" + s)?.GetComponent<RectTransform>(); if (!sb || !tipRt) continue;
+                    var c = new Vector3[4]; sb.GetWorldCorners(c);
+                    if (tipR.Overlaps(Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y))) noOverlap = false;
+                }
+                var tcam = Camera.main;
+                float cy = tipRt ? (RectTransformUtility.WorldToScreenPoint(tcam, tc[0]).y + RectTransformUtility.WorldToScreenPoint(tcam, tc[2]).y) / 2 / tcam.pixelHeight : 0;
+                Check(tipRt != null && Mathf.Abs(cy - 0.5f) < 0.06f && tipRt.rect.height >= 200 && noOverlap && FindDeep("SlotPick/Back") == null,
+                      $"자리 고르기 안내 = 화면 가운데 크게 (높이 {cy:0.00} · 판 {(tipRt ? tipRt.rect.height : 0):0}) · 칸과 안 겹침 · [카드 다시 고르기] 없음");
+            }
+            B.PlaceAt(1); yield return null;
             Check(B.run.Owns("rail") && B.run.Get("rail").slot == 1 && B.units.Count == 2 && B.st == Battle.St.Play && !World.I.SlotMark(1).enabled && World.I.SlotMark(2).enabled,
                   $"고른 칸(1 = 맨 위)에 관통포 · 그 칸 표시만 꺼짐 (칸 {B.run.Get("rail").slot})");
             Check(Vector2.Distance(B.units[1].transform.position, World.SlotPos(1)) < 0.05f, "관통포가 사령탑 맨 위 발판에 섬");

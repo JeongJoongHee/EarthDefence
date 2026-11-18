@@ -62,17 +62,11 @@ namespace EarthDef
         {
             lobby = l; root = (RectTransform)transform;
             var top = UIKit.Panel(root, "card", "Top"); top.rectTransform.TL(20, 4, 1040, 610);
-            // 6차 수정안 "가운데 카피바라는 약간 3D 로 생동감 있게 · 좌우로 둥실둥실" (Hover3D): 발밑 그림자 + 몸 모양 안의 빛 · 그늘이 돌 때 따라 움직임
-            var gsh = UIKit.Img(top.transform, Art.Fx("glow"), "GuardianShadow"); gsh.raycastTarget = false; gsh.color = new Color(0.16f, 0.1f, 0.06f, 0.4f);
-            gsh.rectTransform.Place(0.5f, 1, new Vector2(0, -566), new Vector2(330, 70), new Vector2(0.5f, 0.5f));
-            var me = UIKit.Img(top.transform, Art.TurretUI("guardian"), "Guardian"); me.raycastTarget = false;
-            me.rectTransform.Place(0.5f, 1, new Vector2(0, -36), new Vector2(560, 560), new Vector2(0.5f, 1));   // 요청 사항_05: 능력치 칸을 판 밖으로 빼고 대장 카피를 크게
-            me.gameObject.AddComponent<Mask>().showMaskGraphic = true;      // 빛 · 그늘이 몸 모양 밖으로 안 나가게
-            var lit = UIKit.Img(me.transform, Art.Fx("glow"), "Light"); lit.raycastTarget = false; lit.color = new Color(1f, 1f, 0.94f, 0.2f);
-            lit.rectTransform.Place(0.5f, 0.5f, new Vector2(-130, 130), new Vector2(330, 330), new Vector2(0.5f, 0.5f));
-            var shade = UIKit.Img(me.transform, Art.Fx("glow"), "Shade"); shade.raycastTarget = false; shade.color = new Color(0.22f, 0.12f, 0.3f, 0.4f);
-            shade.rectTransform.Place(0.5f, 0.5f, new Vector2(250, -150), new Vector2(560, 560), new Vector2(0.5f, 0.5f));
-            var hv = me.gameObject.AddComponent<Hover3D>(); hv.shadow = gsh.rectTransform; hv.lit = lit.rectTransform; hv.shade = shade.rectTransform;
+            // 7차 수정안 "장비 탭 카피바라는 2D 로 그냥 둥실둥실 다니는 느낌 · 총은 없고 우주복": 총 없는 그림(Char/guardian_float) 이
+            //   장비 칸 사이 빈 곳을 천천히 떠다님 (Float2D — 6차의 3D 몸 돌림 · 빛 · 그늘 · 발밑 그림자는 뺌)
+            var me = UIKit.Img(top.transform, Art.Get("Char/guardian_float", 100f), "Guardian"); me.raycastTarget = false; me.preserveAspect = true;
+            me.rectTransform.Place(0.5f, 1, new Vector2(0, -300), new Vector2(380, 410), new Vector2(0.5f, 0.5f));
+            me.gameObject.AddComponent<Float2D>();
             for (int i = 0; i < 3; i++) { Slot(top.transform, Left[i], 34, 22 + i * 192); Slot(top.transform, Right[i], 856, 22 + i * 192); }
             // 2차 수정안: 능력치를 네모 칸으로 (3 x 2 + 칩 수)
             string[] keys = { "st_atk", "st_hp", "st_reduce_total", "st_crit", "st_crit_dmg", "st_cd" };
@@ -534,33 +528,27 @@ namespace EarthDef
         }
     }
 
-    /// <summary>6차 수정안: 장비 탭 대장 카피 — 좌우로 둥실둥실 + 살짝 몸을 돌림(세로 축 회전 = 입체감) · 빛은 도는 쪽 반대로, 그늘은 같은 쪽으로 미끄러짐 · 발밑 그림자는 떠오르면 작고 옅게</summary>
-    public class Hover3D : MonoBehaviour
+    /// <summary>7차 수정안: 장비 탭 대장 카피 — 무중력처럼 둥실둥실 떠다님 (2D). 칸 사이 빈 곳(가운데 ±Range) 안에서 다음 자리를 골라 천천히 가고,
+    /// 가는 쪽을 보며(좌우 뒤집기) 속도만큼 살짝 기울고 · 위아래로 출렁 · 천천히 빙글</summary>
+    public class Float2D : MonoBehaviour
     {
-        public RectTransform shadow, lit, shade;   // "light" 는 Component 의 옛 속성 이름과 겹쳐서 lit
-        RectTransform rt; Vector2 p0, s0, l0, d0; Image shImg; float a0, t;
-        public float Sway => Mathf.Sin(t * 0.9f);     // 시험용
-        void Start()
-        {
-            rt = (RectTransform)transform; p0 = rt.anchoredPosition;
-            if (shadow) { s0 = shadow.anchoredPosition; shImg = shadow.GetComponent<Image>(); a0 = shImg.color.a; }
-            if (lit) l0 = lit.anchoredPosition;
-            if (shade) d0 = shade.anchoredPosition;
-        }
+        public static Vector2 Range = new(120f, 90f);
+        RectTransform rt; Vector2 p0, pos, vel, target; float t, wait, face = 1;
+        public Vector2 Offset => pos;         // 시험용: 처음 자리에서 떨어진 정도
+        public float Face => face;
+        void Start() { rt = (RectTransform)transform; p0 = rt.anchoredPosition; Next(); }
+        void Next() { target = new Vector2(Random.Range(-Range.x, Range.x), Random.Range(-Range.y, Range.y)); wait = Random.Range(2.2f, 3.6f); }
         void Update()
         {
-            t += Time.unscaledDeltaTime;
-            float sx = Mathf.Sin(t * 0.9f), up = (Mathf.Sin(t * 1.8f) + 1) * 0.5f;      // 좌우 한 번에 위아래 두 번
-            rt.anchoredPosition = p0 + new Vector2(sx * 24f, 6f + up * 16f);
-            rt.localEulerAngles = new Vector3(0, -sx * 18f, -sx * 3f);
-            if (lit) lit.anchoredPosition = l0 + new Vector2(-sx * 60f, 0);
-            if (shade) shade.anchoredPosition = d0 + new Vector2(-sx * 70f, 0);
-            if (shadow)
-            {
-                shadow.anchoredPosition = s0 + new Vector2(sx * 24f, 0);
-                shadow.localScale = new Vector3(1f - up * 0.16f, 1f - up * 0.16f, 1);
-                var c = shImg.color; c.a = a0 * (1f - up * 0.35f); shImg.color = c;
-            }
+            float dt = Mathf.Min(Time.unscaledDeltaTime, 0.05f);
+            t += dt;
+            if ((wait -= dt) <= 0) Next();
+            pos = Vector2.SmoothDamp(pos, target, ref vel, 1.4f, 90f, dt);
+            if (Mathf.Abs(vel.x) > 6f) face = Mathf.MoveTowards(face, vel.x < 0 ? -1 : 1, dt * 3f);
+            float bob = Mathf.Sin(t * 1.7f) * 10f;
+            rt.anchoredPosition = p0 + pos + new Vector2(0, bob);
+            rt.localScale = new Vector3(Mathf.Abs(face) < 0.15f ? 0.15f * Mathf.Sign(face == 0 ? 1 : face) : face, 1, 1);
+            rt.localEulerAngles = new Vector3(0, 0, Mathf.Sin(t * 0.8f) * 7f - vel.x * 0.08f * Mathf.Sign(face));
         }
     }
 }

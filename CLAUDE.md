@@ -1,5 +1,13 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-18 밤 — 7차 수정안 반영 끝)
+- 요청 = `요청 사항/7차 수정안.docx` (13줄 — 앞 5줄 로비, "전투 입장에서" 아래 7줄 전투로 읽음). 보고 = `7차_수정안_결과.html` (키 earthdef-req7-1118, 캡처 `캡쳐본 모음/7차_수정안_캡처/`, 전 = before_*). 의견 읽기 `PYTHONUTF8=1 python tools/todo_checks.py 7차_수정안_결과.html`.
+- 시험: 기본 137 · 시험장 13 · 3차 107 · **7차 25 (`PlayTest.RunR7`, Editor/PlayTest7.cs)** 오류 0. 다른 시험은 PlayTestRunner.Start 에서 타이틀을 바로 넘김.
+- 바뀐 것: 타이틀(UI/Title.cs · Game.ToTitle · Config Title_On) → [게임 시작] → 구글 [초안] / 게스트(저장 안 됨 확인 창) · 로비 = World.SetLobby(사령탑 · 달 바닥 · 달 숨김 · Bg/sky_plain · 큰 지구 Bg/earth_big · 별똥별 StarStep) · LobbyWalker 는 지구 면(World.EarthSurf · EarthTilt) 위 · 로비 단추 가운데(Lobby_Btn_X 0 · Dome_Top_Y -2, 스테이지 칸과 안 겹치게 내려옴) · 장비 탭 Float2D(Char/guardian_float, 총 없음) · 전투: 사령탑 가늘게(SlotXPos -3.9 · 대장 카피 -2.9 발코니 — 탄도가 터렛 안 지남) · 달 Bg/moon 따로(왼쪽 위 PlaceMoon · Moon_X · Moon_Below_Hud) · 땅 1080x700 큰 지구 · Hud_H 300(= Lv 게이지 아래) · 적 Fade in(World.FadeTop · Enemy_Fade_Len · Spawn_Below_Hud 0.45) · 자리 고르기 안내 가운데 크게(Slot_Tip_X) · [카드 다시 고르기] 뺌(Battle.SlotBack 없앰).
+- 표 = tools/fix7_tables.py (Config 14 · 글자 14) · 그림 = tools/tower_art.py earth()/lobby_earth/shooting_star/moon_disk · earth_art.sky(moon, plain) · guardian_float → `earth_export.py bg char tower`. 보고서 = tools/report7.py. 고치기 전 그림 = 세션 스크래치 art_before7 (지워질 수 있음, git 에도 있음).
+- 해석(보고 첫머리): 전투 "떨어지는 별똥별" = 적(운석) · 게스트 = 이 폰엔 저장(계정엔 안 됨) · 외형 탭 목록 그림은 그대로 · 지지대는 폭만 줄이고 칸 높이 그대로(밸런스 그대로).
+- **재개 첫 순서**: ① 7차 결과 의견 읽기 → 반영 ② 그 전 결정 대기(아래 오후 메모: a-play · a-slot1 · a-ui) ③ 전투UI_제안 사령탑 기준으로 다시 ④ 밸런스 3차 재측정 (Hud_H 300 으로 적 나오는 줄이 0.4칸 낮아짐 — 측정에 반영됨).
+
 ## ▶ 재개 메모 (2026-11-18 오후 — 전투 배치 적용 끝)
 - 시안 2판 의견(키 earthdef-layout2-1118): 이대로 · 머리만 45° · 대장 카피 고정(+ "터렛을 고를 때 자리를 고르는 흐름") · 로비/외형 사령탑. → 게임에 옮김.
 - 보고 = `전투배치_적용_결과.html` (키 earthdef-layout3-1118, 캡처 `캡쳐본 모음/전투배치_적용/`). 결정 대기: a-play(직접 해 본 느낌) · a-slot1(빈 칸 1개도 묻기? 추천 바로) · a-ui(전투UI_제안을 사령탑 기준으로 고쳐 다시 — 추천) → 그다음 밸런스 3차 새 배치로 다시 측정.

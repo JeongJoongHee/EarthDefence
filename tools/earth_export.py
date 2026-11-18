@@ -45,8 +45,10 @@ def export_bg():
     old = A.H_
     rnd = random.Random(12)
     top = ''.join(f'<circle cx="{rnd.randint(0, 1080)}" cy="{rnd.randint(0, 480)}" r="{rnd.uniform(1.6, 3.4):.1f}" fill="#fff4dc" opacity="{rnd.uniform(.4, .9):.2f}"/>' for _ in range(40))
-    svg = f'<rect width="1080" height="2400" fill="{A.NIGHT}"/>' + top + f'<g transform="translate(0,480)">{A.sky()}</g>'
-    out('Bg', 'sky', Rr(svg, 1080, 2400, A.WOB['bg'], .008))
+    svg = f'<rect width="1080" height="2400" fill="{A.NIGHT}"/>' + top + f'<g transform="translate(0,480)">{A.sky(moon=False)}</g>'
+    out('Bg', 'sky', Rr(svg, 1080, 2400, A.WOB['bg'], .008))      # 7차: 달은 따로 (Bg/moon — 전투 왼쪽 위 빈 곳)
+    svg = f'<rect width="1080" height="2400" fill="{A.NIGHT}"/>' + top + f'<g transform="translate(0,480)">{A.sky(plain=True)}</g>'
+    out('Bg', 'sky_plain', Rr(svg, 1080, 2400, A.WOB['bg'], .008))   # 7차 로비 "배경은 심플하게"
     y0 = 1360   # 1920 캔버스의 이 높이부터 아래(월드 -4.0 ~ -9.6)
     out('Bg', 'ground', Rr(f'<g transform="translate(0,{-y0})">{A.ground() + A.base_back()}</g>', 1080, 560, A.WOB['bg'], .01))
     out('Bg', 'dome', Rr(f'<g transform="translate(0,{-y0})">{A.dome_front()}</g>', 1080, 560, A.WOB['ui'], .02))
@@ -79,12 +81,16 @@ def export_tower():
     for fid in FRAME_IDS:
         out('Bg', f'tower_{fid}', Rr(TA.tower(fid), TA.TW, TA.TH, A.WOB['ui'], .02))
         out('Icon', f'frame_{fid}', Rr(TA.frame_icon(fid), 380, 210, A.WOB['icon'], .02))
-    out('Bg', 'ground_moon', Rr(TA.moon_ground(), 1080, 460, A.WOB['bg'] * .6, .01))
+    out('Bg', 'ground_moon', Rr(TA.moon_ground(), 1080, TA.GM_H, A.WOB['bg'] * .6, .01))
+    # 7차 수정안: 로비 큰 지구 · 별똥별 · 전투 달
+    out('Bg', 'earth_big', Rr(TA.lobby_earth(), TA.LE_W, TA.LE_H, A.WOB['bg'] * .5, .008))
+    out('Bg', 'shooting_star', Rr(TA.shooting_star(), 360, 64, 0, .02))
+    out('Bg', 'moon', Rr(TA.moon_disk(), 260, 260, A.WOB['char'], .02))
     # 관통포 머리 나눔 (받침 rail_stand + 포신 rail_barrel, 같은 캔버스)
     out('Turret', 'rail_stand', A.piece(TA.t_rail_stand(), 200, 222, 1.56, A.WOB['turret'], .018))
     out('Turret', 'rail_barrel', A.piece(TA.t_rail_barrel(), 200, 222, 1.56, A.WOB['turret'], .018))
-    print('tower  slots(world)', [TA.world(TA.SX, y) for y in TA.SLOTS], ' guardian', TA.world(TA.BX + 70, TA.DY - 8),
-          ' top', TA.world(TA.BX, TA.TOP), ' wall x', round((TA.SX + 100) / 100 - 5.4, 3))
+    print('tower  slots(world)', [TA.world(TA.SX, y) for y in TA.SLOTS], ' guardian', TA.world(TA.GX, TA.DY - 8),
+          ' top', TA.world(TA.BX, TA.TOP), ' wall x', round((TA.DR) / 100 - 5.4, 3))
 
 
 # ------------------------------------------------------------------ 가디언 · 터렛
@@ -96,6 +102,7 @@ def export_char():
     out('Char', 'guardian', A.guardian_img(GK))
     out('Char', 'guardian_gun', A.guardian_gun_img(GK))
     out('Char', 'guardian_ui', A.guardian_ui_img(1.6))
+    out('Char', 'guardian_float', A.guardian_float_img(1.6))      # 7차: 장비 탭 (총 없이 둥실둥실)
     x0, y0, w, h = A.GUN_BOX
     print('char  body pivot', round(A.G_CX / A.G_W, 4), round((A.G_H - A.G_FOOT) / A.G_H, 4),
           ' hand(units)', round((A.HAND[0] - A.G_CX) * GK / 200, 4), round((A.G_FOOT - A.HAND[1]) * GK / 200, 4),

@@ -178,18 +178,27 @@ namespace EarthDef
         }
 
         // ---------- 11-18 자리 고르기 (사용자 "터렛을 선택할 때 자리를 선택하는 흐름이 나오며 그 자리에 배치") ----------
-        // 카드 창이 닫히고 사령탑의 빈 칸이 반짝 + 칸마다 고른 터렛 그림(흐리게) 단추 · 위에 안내 · 아래 [카드 다시 고르기]
+        // 카드 창이 닫히고 사령탑의 빈 칸이 반짝 + 칸마다 고른 터렛 그림(흐리게) 단추 + 안내
+        // 7차 수정안: 안내는 화면 가운데 크게 ("최대한 잘 보이게", 칸 줄 오른쪽에 — 칸을 가리지 않게) · [카드 다시 고르기] 없음 ("이전에 새로 고침이 있음")
         RectTransform slotUI;
         public void ShowSlotPick()
         {
             if (slotUI) Destroy(slotUI.gameObject);
             Tutorial.CloseCur();      // 카드 도움말이 칸 단추를 가리지 않게
             slotUI = UIKit.Rect(UIRoot.I.popups, "SlotPick").Fill();
-            var dim = UIKit.Plain(slotUI, new Color(0.1f, 0.12f, 0.25f, 0.35f), "Dim"); dim.rectTransform.Fill(); dim.raycastTarget = true;
+            var dim = UIKit.Plain(slotUI, new Color(0.1f, 0.12f, 0.25f, 0.45f), "Dim"); dim.rectTransform.Fill(); dim.raycastTarget = true;
             var turret = Tables.TurretById[b.slotCard.turret];
-            var tip = UIKit.Panel(slotUI, "pill_dark", "Tip"); tip.rectTransform.Place(0.5f, 1, new Vector2(80, -330), new Vector2(760, 110), new Vector2(0.5f, 0.5f));
-            var ti = UIKit.Img(tip.transform, Art.TurretIcon(turret), "Icon"); ti.raycastTarget = false; ti.rectTransform.TL(20, 10, 90, 90);
-            UIKit.Label(tip.transform, L.F("slot_pick", turret.name), 38, Art.Gold, TextAnchor.MiddleLeft).rectTransform.Fill(124, 6, 20, 0);
+            var tip = UIKit.Panel(slotUI, "pill_dark", "Tip"); tip.rectTransform.Place(0.5f, 0.5f, new Vector2(Tables.Cf("Slot_Tip_X", 110f), 0), new Vector2(760, 250), new Vector2(0.5f, 0.5f));
+            var glow = UIKit.Img(tip.transform, Art.UI("glow_frame"), "Glow"); glow.color = Art.Gold; glow.raycastTarget = false; glow.rectTransform.Fill(-22, -22, -22, -22);
+            glow.gameObject.AddComponent<GlowPulse>();
+            var ti = UIKit.Img(tip.transform, Art.TurretIcon(turret), "Icon"); ti.raycastTarget = false; ti.preserveAspect = true; ti.rectTransform.TL(26, 30, 190, 190);
+            var nm = UIKit.Label(tip.transform, turret.name, 54, Art.Gold, TextAnchor.MiddleLeft); nm.rectTransform.TL(234, 34, 500, 80);
+            var ask = UIKit.Label(tip.transform, L.T("slot_pick2"), 44, Color.white, TextAnchor.MiddleLeft); ask.rectTransform.TL(234, 126, 510, 80); ask.name = "Ask";
+            // 칸 쪽(왼쪽)을 가리키는 화살표
+            var arrow = UIKit.Img(slotUI, Art.Icon("play"), "Arrow"); arrow.raycastTarget = false; arrow.color = Art.Gold;
+            arrow.rectTransform.Place(0.5f, 0.5f, new Vector2(Tables.Cf("Slot_Tip_X", 110f) - 380 - 44, 0), new Vector2(70, 70), new Vector2(0.5f, 0.5f));
+            arrow.rectTransform.localScale = new Vector3(-1, 1, 1);
+            tip.gameObject.AddComponent<SlotTipBob>().arrow = arrow.rectTransform;
             foreach (int s in b.run.FreeSlotList)
             {
                 int slot = s;
@@ -203,8 +212,6 @@ namespace EarthDef
                 var plus = UIKit.Img(bt.transform, Art.Icon("plus"), "Plus"); plus.raycastTarget = false; plus.rectTransform.Place(1, 1, new Vector2(10, 10), new Vector2(54, 54), new Vector2(1, 1));
                 UIKit.Clickable(bt, () => b.PlaceAt(slot));
             }
-            var back = UIKit.Btn(slotUI, "btn_orange", L.T("slot_back"), 40, () => b.SlotBack(), "Back");
-            ((RectTransform)back.transform).Place(0.5f, 0, new Vector2(160, 330), new Vector2(460, 120), new Vector2(0.5f, 0.5f));
         }
 
         // ---------- 레벨업 창 ----------
@@ -430,6 +437,19 @@ namespace EarthDef
             var nb = p.Btn("btn_green", next ? L.T("next") : L.T("retry"), 200, 70, 340, () => Game.TryStart(next ? stage + 1 : stage, elite));
             var ne = UIKit.Img(nb.transform, Art.Icon("energy"), "Energy"); ne.raycastTarget = false; ne.rectTransform.Place(1, 1, new Vector2(10, 22), new Vector2(56, 56), new Vector2(1, 1));
             var nc = UIKit.Label(ne.transform, Meta.StaminaCost(elite).ToString(), 26); nc.rectTransform.Place(0.5f, 0, new Vector2(0, -16), new Vector2(60, 34), new Vector2(0.5f, 0.5f));
+        }
+    }
+
+    /// <summary>7차: 자리 고르기 안내가 살짝 숨쉬고 화살표가 칸 쪽으로 톡톡</summary>
+    public class SlotTipBob : MonoBehaviour
+    {
+        public RectTransform arrow; float t; Vector2 a0;
+        void Start() { if (arrow) a0 = arrow.anchoredPosition; }
+        void Update()
+        {
+            t += Time.unscaledDeltaTime;
+            transform.localScale = Vector3.one * (1f + 0.025f * Mathf.Sin(t * 4f));
+            if (arrow) arrow.anchoredPosition = a0 + new Vector2(-Mathf.Abs(Mathf.Sin(t * 4f)) * 18f, 0);
         }
     }
 }

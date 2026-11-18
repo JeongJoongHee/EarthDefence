@@ -15,13 +15,16 @@ from earth_art import P, L, C, E, F, rr, G, blur, shade, mix, INK, CREAM, CREAM2
 TW, TH = 420, 1440
 GY = 1400                      # 땅
 K = .75                        # 시안 0.75배
-BX = 14 + 88 * K               # 몸통 가운데 x (= 80, 왼쪽 벽에 바짝)
-TOP = GY - 1580 * K            # 몸통 꼭대기 (= 215)
-HB, HT = 88 * K, 62 * K        # 아래 · 위 반폭
+# 11-18 7차 수정안 "타워 지지대는 최대한 컴팩트하게": 몸통을 가늘게 · 벽에 더 붙임 · 터렛 칸을 몸통 바로 옆 짧은 선반으로 · 긴 버팀대 없앰
+#   · 대장 카피 사령실은 터렛 줄보다 오른쪽으로 내밀어 쏘는 탄이 위 터렛을 지나지 않게 ("중간 카피바라 탄도가 위쪽 터렛과 겹치지 않게")
+BX = 50                        # 몸통 가운데 x (예전 80)
+TOP = GY - 1580 * K            # 몸통 꼭대기 (= 215, 칸 높이는 예전 그대로 = 밸런스 그대로)
+HB, HT = 34, 26                # 아래 · 위 반폭 (예전 66 · 46.5)
 DY = TOP + (GY - TOP) * .5 + 20  # 사령실 윗면 (대장 카피 발)
-DL, DR, DH = BX - 72, BX + 150, 64
-SX = BX + 150                  # 터렛 칸 x (= 230)
-SLOTS = (TOP + 95, DY - 200, DY + DH + 180, GY)   # 터렛 칸 1~4 의 발판 윗면 (위 2 · 아래 2)
+GX = 250                       # 대장 카피 x (월드 -2.9) — 터렛 오른쪽 끝(SX+56)보다 오른쪽
+DL, DR, DH = BX + 20, GX + 78, 56
+SX = 150                       # 터렛 칸 x (= 월드 -3.9, 예전 230)
+SLOTS = (TOP + 95, DY - 200, DY + 64 + 180, GY)   # 터렛 칸 1~4 의 발판 윗면 (위 2 · 아래 2)
 STEEL, STEEL2 = '#dfe4ee', '#b4bdcf'
 
 
@@ -69,9 +72,9 @@ def tower(fid='basic', slots=True):
 
     v = ''
     # 안테나 · 레이더 (적이 오는 오른쪽 위를 봄) · 깜빡이 등
-    ah = 230 * K
+    ah = 120                       # 7차: 짧게 (예전 172) — 왼쪽 위 달토끼 자리
     v += L(f'M{BX} {TOP - 40 * K:.1f} L{BX} {TOP - ah:.1f}', 7) + L(f'M{BX} {TOP - ah * .65:.1f} L{BX + 30 * K + 10:.1f} {TOP - ah:.1f}', 4)
-    dx, dy, dr = BX + 50 * K + 6, TOP - 115 * K, 60 * K + 8
+    dx, dy, dr = BX + 34, TOP - 62, 30
     v += L(f'M{BX + 12} {TOP - 40 * K:.1f} L{dx - 4:.1f} {dy + 12:.1f}', 6)
     v += (f'<g transform="rotate(45 {dx:.1f} {dy:.1f})">' + P(f'M{dx - dr:.1f} {dy:.1f} Q{dx:.1f} {dy + dr * .8:.1f} {dx + dr:.1f} {dy:.1f} Z', G(body), 5)
           + L(f'M{dx:.1f} {dy + 12:.1f} L{dx:.1f} {dy - dr * .7:.1f}', 5) + C(dx, dy - dr * .7 - 6, 7, band, 3) + '</g>')
@@ -88,30 +91,28 @@ def tower(fid='basic', slots=True):
     v += rr(xl1 - 8, TOP - 12, xr1 - xl1 + 16, 24, 10, G(band), 5)
     # 동그란 창 (칸 사이)
     for y in ((SLOTS[0] + SLOTS[1]) / 2 + 40, (SLOTS[2] + GY) / 2 - 20):
-        v += blur(C(BX, y, 22, '#bfe9ff', 0), 6, .6) + C(BX, y, 17.5, G(SKY, 'r'), 5) + F(f'M{BX - 9} {y - 7} A11 11 0 0 1 {BX + 6} {y - 10} L{BX} {y} Z', '#ffffff', .75)
-    # 가운데 사령실 (대장 카피 자리)
-    v += P(f'M{DL} {DY} L{DR} {DY} Q{DR + 22} {DY + DH * .45:.1f} {DR - 10} {DY + DH} L{DL + 10} {DY + DH} Q{DL - 22} {DY + DH * .45:.1f} {DL} {DY} Z', G(band, 'v', .86, .2), 6)
-    v += rr(DL + 18, DY + 14, DR - DL - 36, 28, 13, G(glass, 'v', .9, .45), 4)
-    v += blur(rr(DL + 24, DY + 18, DR - DL - 48, 20, 10, '#e9f9ff', 0), 4, .5)
-    for x in (DL + 80, DL + 150):
-        v += L(f'M{x} {DY + 15} L{x} {DY + 41}', 3)
-    v += P(f'M{BX - 30} {DY + DH} L{BX + 30} {DY + DH} L{BX + 18} {DY + DH + 24} L{BX - 18} {DY + DH + 24} Z', G(band2), 5)
-    v += rr(DL - 8, DY - 12, DR - DL + 16, 20, 9, G(CREAM), 5)
-    v += L(f'M{DL} {DY - 48} L{DR} {DY - 48}', 4) + ''.join(L(f'M{x} {DY - 48} L{x} {DY - 10}', 4) for x in (DL, DL + 60, DR))
-    for x in (DL + 6, DR - 6):
-        v += blur(C(x, DY + DH - 12, 10, '#fff2a8', 0), 4, .8) + C(x, DY + DH - 12, 6, GOLD, 3)
-    # 아래 받침 (발 날개 둘)
-    v += P(f'M{xl0 + 3:.1f} {GY - 80} L{xl0 - 46:.1f} {GY - 6} L{xl0 + 6:.1f} {GY - 6} Z', G(band), 5) + P(f'M{xr0 - 3:.1f} {GY - 80} L{xr0 + 46:.1f} {GY - 6} L{xr0 - 6:.1f} {GY - 6} Z', G(band), 5)
-    v += rr(xl0 - 16, GY - 20, xr0 - xl0 + 32, 26, 10, G(body2), 5)
-    # 터렛 발판 (몸통에서 나온 판 · 위 칸은 위에서 당기는 버팀대 · 아래 칸은 밑에서 받침 · 맨 아래 칸은 달 바닥)
+        v += blur(C(BX, y, 17, '#bfe9ff', 0), 5, .6) + C(BX, y, 13, G(SKY, 'r'), 4.4) + F(f'M{BX - 7} {y - 5} A8 8 0 0 1 {BX + 4} {y - 8} L{BX} {y} Z', '#ffffff', .75)
+    # 가운데 사령실 (대장 카피 자리) — 7차: 몸통에서 오른쪽으로 내민 짧은 발코니 (대장 카피가 터렛 줄보다 오른쪽에 서게)
+    xd = xr(DY + DH)
+    v += P(f'M{xd - 2:.1f} {DY + DH} L{xd + 70:.1f} {DY + DH} L{xd - 2:.1f} {DY + DH + 64} Z', G(band2), 5)          # 아래 받침 (작은 삼각)
+    v += P(f'M{DL} {DY} L{DR} {DY} Q{DR + 18} {DY + DH * .45:.1f} {DR - 10} {DY + DH} L{DL + 6} {DY + DH} L{DL} {DY} Z', G(band, 'v', .86, .2), 6)
+    v += rr(DL + 40, DY + 13, DR - DL - 62, 24, 11, G(glass, 'v', .9, .45), 4)
+    v += blur(rr(DL + 46, DY + 17, DR - DL - 74, 16, 8, '#e9f9ff', 0), 4, .5)
+    for x in (DL + 110, DL + 180):
+        v += L(f'M{x} {DY + 14} L{x} {DY + 36}', 3)
+    v += rr(DL - 6, DY - 12, DR - DL + 14, 20, 9, G(CREAM), 5)
+    v += L(f'M{GX - 70} {DY - 44} L{DR} {DY - 44}', 4) + ''.join(L(f'M{x} {DY - 44} L{x} {DY - 10}', 4) for x in (GX - 70, DR))
+    v += blur(C(DR - 6, DY + DH - 12, 10, '#fff2a8', 0), 4, .8) + C(DR - 6, DY + DH - 12, 6, GOLD, 3)
+    # 아래 받침 (발 날개 둘, 작게)
+    v += P(f'M{xl0 + 3:.1f} {GY - 56} L{xl0 - 24:.1f} {GY - 6} L{xl0 + 6:.1f} {GY - 6} Z', G(band), 4.4) + P(f'M{xr0 - 3:.1f} {GY - 56} L{xr0 + 26:.1f} {GY - 6} L{xr0 - 6:.1f} {GY - 6} Z', G(band), 4.4)
+    v += rr(xl0 - 10, GY - 18, xr0 - xl0 + 20, 22, 9, G(body2), 4.6)
+    # 터렛 발판 — 7차: 몸통 바로 옆 짧은 선반 + 밑에 작은 삼각 받침 (긴 버팀대 없앰) · 맨 아래 칸은 달 바닥
     if slots:
         for y in SLOTS[:3]:
-            by = y - 80 if y < DY else y + 70
-            v += rr(xl(y) - 7, y - 26, xr(y) - xl(y) + 14, 18, 8, G(band), 5)
-            v += L(f'M{xr(by) - 2:.1f} {by:.1f} L{SX + 40} {y + 4:.1f}', 20) + L(f'M{xr(by) - 2:.1f} {by:.1f} L{SX + 40} {y + 4:.1f}', 10, body2)
-            v += rr(xr(y) - 10, y - 6, SX + 100 - xr(y), 28, 12, G(body), 5) + F(f'M{xr(y):.1f} {y + 1:.1f} L{SX + 82} {y + 1:.1f} L{SX + 82} {y + 6:.1f} L{xr(y):.1f} {y + 6:.1f} Z', '#ffffff', .6)
-            for lx in (SX - 66, SX + 66):
-                v += C(lx, y + 8, 5, GOLD, 3)
+            v += rr(xl(y) - 5, y - 22, xr(y) - xl(y) + 10, 16, 7, G(band), 4.6)
+            v += P(f'M{xr(y) - 2:.1f} {y + 14} L{xr(y) + 42:.1f} {y + 14} L{xr(y) - 2:.1f} {y + 52} Z', G(body2), 4.4)
+            v += rr(xr(y) - 8, y - 4, SX + 62 - xr(y), 24, 10, G(body), 5) + F(f'M{xr(y):.1f} {y + 2:.1f} L{SX + 50} {y + 2:.1f} L{SX + 50} {y + 6:.1f} L{xr(y):.1f} {y + 6:.1f} Z', '#ffffff', .6)
+            v += C(SX + 44, y + 8, 4.5, GOLD, 2.8)
     v += _deco(fid, xl, xr, lk)
     return v
 
@@ -173,26 +174,82 @@ def _deco(fid, xl, xr, lk):
     return s
 
 
+GM_H, GM_G = 700, 492            # 7차: 달 바닥 캔버스 1080 x 700 (월드 -9.6 ~ -2.6) · 땅 = y 492 (월드 -7.52)
+
+
+def earth(ex, ey, er, sw=7, seed=4, clouds=True):
+    """지구 한 덩이 (바다 · 대륙 · 구름 · 밤 그늘 · 대기 빛) — 원 밖은 안 그림 (clip)"""
+    rnd = random.Random(seed)
+    cid = f'eclip{seed}_{int(er)}'
+    s = blur(C(ex, ey, er + 34, '#9fd8ff', 0), 22, .5)                 # 대기 빛
+    s += C(ex, ey, er, G('#7fc0e8', 'r', .82, .3), 0)
+    s += f'<clipPath id="{cid}"><circle cx="{ex}" cy="{ey}" r="{er}"/></clipPath><g clip-path="url(#{cid})">'
+    # 대륙 (둥근 얼룩 몇 개) — 낙서풍: 연두 + 진한 선
+    blobs = ((-.45, -.55, .42), (.25, -.7, .3), (.55, -.15, .34), (-.2, .05, .26), (-.7, .2, .22), (.15, .45, .3))
+    for bx, by, br in blobs:
+        cx_, cy_, r_ = ex + bx * er, ey + by * er, br * er
+        pts = []
+        for i in range(9):
+            a = math.radians(i * 40 + rnd.uniform(-12, 12)); q = r_ * rnd.uniform(.72, 1.12)
+            pts.append((cx_ + math.cos(a) * q, cy_ + math.sin(a) * q * .8))
+        mid = [((pts[i][0] + pts[(i + 1) % 9][0]) / 2, (pts[i][1] + pts[(i + 1) % 9][1]) / 2) for i in range(9)]
+        d = f'M{mid[0][0]:.1f} {mid[0][1]:.1f} ' + ' '.join(f'Q{pts[(i + 1) % 9][0]:.1f} {pts[(i + 1) % 9][1]:.1f} {mid[(i + 1) % 9][0]:.1f} {mid[(i + 1) % 9][1]:.1f}' for i in range(9)) + ' Z'
+        s += P(d, G('#a9d68c', 'v', .86, .3), sw * .75)
+        s += F(f'M{cx_ - r_ * .3:.1f} {cy_ - r_ * .25:.1f} Q{cx_:.1f} {cy_ - r_ * .45:.1f} {cx_ + r_ * .25:.1f} {cy_ - r_ * .2:.1f} Q{cx_:.1f} {cy_ - r_ * .3:.1f} {cx_ - r_ * .3:.1f} {cy_ - r_ * .25:.1f} Z', '#d7f0b8', .7)
+    if clouds:   # 구름 띠 (흰 반투명)
+        for i in range(9):
+            cx_, cy_ = ex + rnd.uniform(-.75, .75) * er, ey + rnd.uniform(-.92, -.2) * er
+            w_, h_ = er * rnd.uniform(.22, .4), er * rnd.uniform(.035, .06)
+            s += f'<ellipse cx="{cx_:.1f}" cy="{cy_:.1f}" rx="{w_:.1f}" ry="{h_:.1f}" fill="#ffffff" opacity=".72" transform="rotate({rnd.uniform(-12, 8):.1f} {cx_:.1f} {cy_:.1f})"/>'
+    # 밤 그늘 (오른쪽 아래) + 빛 (왼쪽 위)
+    s += f'<circle cx="{ex + er * .55:.1f}" cy="{ey + er * .5:.1f}" r="{er * 1.05:.1f}" fill="#2c3a78" opacity=".22"/>'
+    s += f'<circle cx="{ex - er * .45:.1f}" cy="{ey - er * .5:.1f}" r="{er * .55:.1f}" fill="#ffffff" opacity=".12"/>'
+    s += '</g>'
+    s += C(ex, ey, er, 'none', sw)
+    s += f'<circle cx="{ex}" cy="{ey}" r="{er - sw * 1.3:.1f}" fill="none" stroke="#d9f3ff" stroke-width="{sw * .7:.1f}" opacity=".55"/>'
+    return s
+
+
 def moon_ground():
-    """달 바닥 + 지평선 위로 떠오르는 지구 (캔버스 1080 x 460, 땅 = y 252)"""
-    g = 252
-    ex, ey, er = 860, g + 65, 160
-    s = blur(C(ex, ey - 20, 230, '#9fd8ff', 0), 30, .35)
-    land = (f'M{ex - 130} {ey - 60} Q{ex - 70} {ey - 140} {ex + 10} {ey - 110} Q{ex + 40} {ey - 60} {ex - 20} {ey - 30} Q{ex - 90} {ey} {ex - 120} {ey + 20} Q{ex - 160} {ey - 10} {ex - 130} {ey - 60} Z',
-            f'M{ex + 50} {ey - 120} Q{ex + 120} {ey - 120} {ex + 140} {ey - 60} Q{ex + 90} {ey - 40} {ex + 50} {ey - 80} Z')
-    s += C(ex, ey, er, G('#8cc6e6', 'r', .8, .25), 7)
-    for d in land:
-        s += F(d, '#a9cf86') + L(d, 5)
-    s += f'<ellipse cx="{ex - 40}" cy="{ey - 70}" rx="40" ry="12" fill="#fff" opacity=".7"/>'
-    s += P(f'M-20 {g} Q200 {g - 30} 420 {g - 4} T860 {g + 6} T1100 {g - 10} L1100 480 L-20 480 Z', G('#cfc8dc', 'v', .86, .15), 7)
+    """달 바닥 + 지평선 위로 떠오르는 지구 (캔버스 1080 x 700, 땅 = y 492)
+    7차 수정안 "지구를 지킨다는 느낌으로 하단의 지구를 조금 더 크게": 반지름 160 → 330, 지평선 위로 더 올라옴"""
+    g = GM_G
+    s = earth(790, g + 70, 330, 7, seed=4)
+    s += P(f'M-20 {g} Q200 {g - 30} 420 {g - 4} T860 {g + 6} T1100 {g - 10} L1100 720 L-20 720 Z', G('#cfc8dc', 'v', .86, .15), 7)
     s += F(f'M-20 {g + 8} Q200 {g - 22} 420 {g + 4} T860 {g + 14} T1100 {g - 2} L1100 {g + 16} T860 {g + 26} T420 {g + 16} Q200 {g - 8} -20 {g + 22} Z', '#ffffff', .25)
     for cx_, cy_, rx, ry in ((560, g + 90, 74, 20), (780, g + 165, 50, 14), (990, g + 110, 62, 18), (420, g + 180, 40, 12), (120, g + 140, 46, 13)):
         s += E(cx_, cy_, rx, ry, '#b3abc6', 4) + f'<ellipse cx="{cx_}" cy="{cy_ - ry * .35:.0f}" rx="{rx * .8:.0f}" ry="{ry * .45:.0f}" fill="#a39bb8"/>'
     rnd = random.Random(9)
     for _ in range(18):
-        x, y = rnd.randint(20, 1060), rnd.randint(g + 30, 450)
+        x, y = rnd.randint(20, 1060), rnd.randint(g + 30, GM_H - 10)
         s += f'<circle cx="{x}" cy="{y}" r="{rnd.uniform(3, 7):.1f}" fill="#bdb5cf"/>'
     return s
+
+
+# ------------------------------------------------------------------ 7차 수정안: 로비 (사령탑 없이 · 심플한 하늘 · 큰 지구)
+LE_W, LE_H, LE_TOP, LE_R = 1080, 760, 100, 780     # 로비 지구: 캔버스 1080 x 760 · 지구 꼭대기 y 100 · 반지름 780 (월드 7.8)
+
+
+def lobby_earth():
+    """로비 아래 큰 지구 (꼭대기 = 캔버스 y 100, 가운데 x 540) — 대장 카피가 그 위를 걸음"""
+    return earth(LE_W / 2, LE_TOP + LE_R, LE_R, 8, seed=11)
+
+
+def shooting_star():
+    """별똥별 (360 x 64): 머리 = 오른쪽 (320, 32) · 꼬리는 왼쪽으로 가늘고 옅게"""
+    hx, hy = 320, 32
+    gid = 'ssTail'
+    A._DEFS[gid] = (f'<linearGradient id="{gid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff4dc" stop-opacity="0"/>'
+                    f'<stop offset=".7" stop-color="#ffe9a8" stop-opacity=".55"/><stop offset="1" stop-color="#ffffff" stop-opacity="1"/></linearGradient>')
+    s = blur(f'<path d="M20 {hy} L{hx} {hy - 9} L{hx} {hy + 9} Z" fill="url(#{gid})"/>', 3, .9)
+    s += f'<path d="M60 {hy} L{hx} {hy - 4} L{hx} {hy + 4} Z" fill="url(#{gid})"/>'
+    s += blur(C(hx, hy, 20, '#fff2a8', 0), 7, .9) + C(hx, hy, 8, '#ffffff', 0)
+    return s
+
+
+def moon_disk():
+    """전투 달 (260 x 260, 가운데 (130,130), 반지름 78) — 예전엔 하늘 그림에 그려져 있었음 → 따로 빼서 빈 곳(왼쪽 위)에 둠 (빛 번짐이 네모로 잘리지 않게 여백)"""
+    return blur(C(130, 130, 92, '#f3e3c3', 0), 10, .35) + C(130, 130, 78, G('#f3e3c3', 'r', .88, .4), 5.5) + A.craters(130, 130, 78, '#e1cda3', 5, 4)
 
 
 def frame_icon(fid):

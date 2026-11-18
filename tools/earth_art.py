@@ -201,6 +201,19 @@ def guardian_full_svg(ang=-50):
     return capy_guardian() + f'<g transform="translate({HAND[0]},{HAND[1]}) rotate({ang})">{guardian_gun()}</g>'
 
 
+def guardian_float_svg():
+    """7차 수정안 "장비 탭 카피바라는 2D 로 둥실둥실 · 총 없이 우주복": 몸 + 두 손(총 대신) + 산소통 아래 작은 분사 빛"""
+    hx, hy = HAND
+    s = blur(E(G_OX + 10, 146, 9, 14, NEON, 0), 4, .8) + E(G_OX + 10, 142, 5, 9, '#e9fdff', 0)     # 산소통 분사
+    s += capy_guardian()
+    s += (C(hx, hy, 10, G(SUIT_GR, 'r'), CAPY_SW) + L(f'M{hx - 4} {hy - 6} Q{hx + 2} {hy - 10} {hx + 7} {hy - 5}', 2.4)).replace(INK, CAPY_INK)
+    return s
+
+
+def guardian_float_img(k):
+    return piece(f'<g transform="translate(10,30)">{guardian_float_svg()}</g>', G_W + 20, G_H + 40, k, WOB['char'])
+
+
 def guardian_ui_img(k, ang=-50):
     return piece(f'<g transform="translate(0,40)">{guardian_full_svg(ang)}</g>', G_W + 40, G_H + 40, k, WOB['char'])
 
@@ -696,13 +709,14 @@ W_, H_ = 1080, 1920
 GROUND_Y = 1712
 
 
-def sky():
+def sky(moon=True, plain=False):
+    """moon = 하늘에 달 그리기 (7차: 전투 달은 따로 Bg/moon) · plain = 로비용 심플 (은하수 얼룩 · 고리 행성 없음)"""
     rnd = random.Random(8)
     _DEFS.setdefault('skyv', f'<linearGradient id="skyv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{NIGHT}"/><stop offset=".72" stop-color="#34407a"/><stop offset="1" stop-color="#46538f"/></linearGradient>')
     s = [f'<rect width="{W_}" height="{H_}" fill="url(#skyv)"/>']
-    for x, y, r in ((180, 420, 260), (860, 900, 300), (300, 1250, 240)):          # 은하수 얼룩 (테두리 없음)
+    for x, y, r in (() if plain else ((180, 420, 260), (860, 900, 300), (300, 1250, 240))):          # 은하수 얼룩 (테두리 없음)
         s.append(f'<g opacity=".45">{puff(x, y, r, NIGHT2, 0, 9, x)}</g>')
-    for x, y, r in ((200, 380, 120), (820, 940, 140)):
+    for x, y, r in (() if plain else ((200, 380, 120), (820, 940, 140))):
         s.append(f'<g opacity=".35">{puff(x, y, r, NEBULA, 0, 7, y)}</g>')
     for _ in range(110):
         s.append(f'<circle cx="{rnd.randint(0, W_)}" cy="{rnd.randint(0, 1600)}" r="{rnd.uniform(1.6, 3.6):.1f}" fill="#fff4dc" opacity="{rnd.uniform(.4, .9):.2f}"/>')
@@ -710,8 +724,9 @@ def sky():
         x, y, q = rnd.randint(40, W_ - 40), rnd.randint(80, 1450), rnd.randint(9, 15)
         s.append(P(f'M{x} {y - q} Q{x + 2} {y - 2} {x + q} {y} Q{x + 2} {y + 2} {x} {y + q} Q{x - 2} {y + 2} {x - q} {y} Q{x - 2} {y - 2} {x} {y - q} Z', '#fff4dc', 3))
     # 달 · 작은 고리 행성
-    s.append(blur(C(915, 300, 96, '#f3e3c3', 0), 18, .35) + C(915, 300, 78, G('#f3e3c3', 'r', .88, .4), 5.5) + craters(915, 300, 78, '#e1cda3', 5, 4))
-    s.append(f'<g transform="rotate(-18 110 1460)">' + L('M60 1460 A50 12 0 0 1 160 1460', 12) + L('M60 1460 A50 12 0 0 1 160 1460', 6, '#f3d7a0') + '</g>'
+    if plain: return ''.join(s)
+    if moon: s.append(blur(C(915, 300, 96, '#f3e3c3', 0), 18, .35) + C(915, 300, 78, G('#f3e3c3', 'r', .88, .4), 5.5) + craters(915, 300, 78, '#e1cda3', 5, 4))
+    if moon: s.append(f'<g transform="rotate(-18 110 1460)">' + L('M60 1460 A50 12 0 0 1 160 1460', 12) + L('M60 1460 A50 12 0 0 1 160 1460', 6, '#f3d7a0') + '</g>'
              + C(110, 1460, 30, G('#f4a9b8', 'r'), 5)
              + f'<g transform="rotate(-18 110 1460)">' + L('M60 1460 A50 12 0 0 0 160 1460', 12) + L('M60 1460 A50 12 0 0 0 160 1460', 6, '#f3d7a0') + '</g>')
     return ''.join(s)

@@ -75,7 +75,7 @@ namespace EarthDef
                 barBg = Bar("BarBg", Art.UI("track"), 20); barFill = Bar("BarFill", Art.UI("fill"), 21);
                 barFill.color = Art.Red; hasBar = true;
             }
-            SetAlpha(0);
+            SetAlpha(0); Alpha = 0;
         }
 
         SpriteRenderer Bar(string name, Sprite s, int order)
@@ -92,13 +92,23 @@ namespace EarthDef
         }
 
         bool shown;
+        /// <summary>시험용: 지금 투명도</summary>
+        public float Alpha { get; private set; } = 1f;
         void SetAlpha(float a) { var c = sr.color; c.a = a; sr.color = c; }
 
         public void Step(float dt)
         {
             if (dead) return;
             age += dt;
-            if (age < 0.4f) SetAlpha(age / 0.4f); else if (!shown) { shown = true; SetAlpha(1); }
+            if (!shown)
+            {
+                // 7차 "떨어지는 별똥별은 Lv 게이지 밑부터 Fade in": 그림 윗끝이 Lv 게이지 아래(World.FadeTop)를 지나면서 Enemy_Fade_Len 칸 동안 서서히
+                //   (오른쪽 가장자리 · 큰 보스는 예전처럼 나온 뒤 0.4초)
+                float a = Mathf.Clamp01(age / 0.4f);
+                if (!row.IsBoss && !row.IsElite) a = Mathf.Min(a, Mathf.Clamp01((World.FadeTop - pos.y - 0.45f * size) / Tables.Cf("Enemy_Fade_Len", 1.2f)));
+                SetAlpha(a); Alpha = a;
+                if (a >= 1f) shown = true;
+            }
             // 상태이상 시간
             if (slowT > 0) { slowT -= dt; if (slowT <= 0) slow = 0; }
             if (para > 0) para -= dt;

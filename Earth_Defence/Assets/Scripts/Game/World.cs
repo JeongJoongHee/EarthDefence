@@ -43,24 +43,27 @@ namespace EarthDef
         // 칸 좌표는 tools/earth_export.py tower 가 찍는 값과 같게 (땅 Ground_Y 위 높이).
         /// <summary>터렛 칸 1~4 (위 2 · 아래 2 — 1 = 맨 위, 4 = 달 바닥) 의 땅 위 높이 · x</summary>
         public static readonly float[] SlotUp = { 10.9f, 7.725f, 3.285f, 0f };
-        public const float SlotXPos = -3.1f;
+        public const float SlotXPos = -3.9f;      // 7차 "타워 지지대 컴팩트": 몸통 바로 옆 (예전 -3.1)
         public static Vector2 SlotPos(int slot) => new(SlotXPos, GroundY + SlotUp[Mathf.Clamp(slot - 1, 0, 3)] - (slot == 4 ? 0.06f : 0f));
-        /// <summary>대장 카피 자리 = 가운데 사령실 난간 위 (11-18 "대장 카피는 가운데 고정")</summary>
-        public static Vector2 GuardianPos => new(-3.9f, GroundY + 5.805f);
+        /// <summary>대장 카피 자리 = 가운데 사령실 발코니 위 (11-18 "대장 카피는 가운데 고정").
+        /// 7차 "중간 카피바라 탄도가 위쪽 터렛과 겹치지 않게": 터렛 줄(오른쪽 끝 -3.35)보다 오른쪽 -2.9 → 위로 쏘는 탄도 터렛을 안 지남</summary>
+        public static Vector2 GuardianPos => new(-2.9f, GroundY + 5.805f);
         public static float TowerTop => GroundY + 11.85f;
         /// <summary>방어선 x — 적은 이 선(사령탑 앞 · 터렛 오른쪽)에 닿으면 멈춰 때리거나 부딪쳐 터짐</summary>
         public static float ShieldX { get { if (!cached) Recache(); return shieldX; } }
         /// <summary>싸우는 하늘 가운데 (소용돌이 필살기 등)</summary>
         public static Vector2 FieldCenter => new((ShieldX + HalfW) * 0.5f, 1.5f);
         /// <summary>기지 효과(회복 · 얼림 · 부활)가 퍼지는 곳 = 사령실 앞</summary>
-        public static Vector2 BaseCenter => new(-3.6f, GroundY + 5.2f);
+        public static Vector2 BaseCenter => new(-3.4f, GroundY + 5.2f);
         /// <summary>화면 안 (적을 노릴 수 있음): 위 UI 아래 · 오른쪽 끝 안쪽</summary>
         public static bool OnField(Vector2 p) => p.y < SpawnY - 0.3f && p.x < HalfW - 0.15f;
+        /// <summary>7차 "떨어지는 별똥별(적)은 Lv 게이지 밑부터 Fade in": 이 높이(위 UI 아래 끝 = Lv 게이지 아래)부터 나타나기 시작</summary>
+        public static float FadeTop => I ? I.PlayTop : SpawnY + 0.6f;
         static float shieldX;
 
         public float Top => cam.transform.position.y + cam.orthographicSize;
         readonly SpriteRenderer[] slotMarks = new SpriteRenderer[4];
-        SpriteRenderer tower, towerGlow, rabbit;
+        SpriteRenderer tower, towerGlow, rabbit, moon, sky, ground, earthBig;
         float rabbitT;
         public bool RabbitDown { get; private set; }
         float glowT; Color glowCol;
@@ -81,18 +84,87 @@ namespace EarthDef
         {
             I = this; cam = c;
             Fit();
-            Spr("Sky", Art.Get("Bg/sky", 100f), new Vector2(0, Bottom + 12f), -100);
-            // 2차 수정안: 달토끼 — 하늘 그림의 달(915, 780px) 위에서 방아를 찧음 (공이 위 · 아래 두 장을 번갈아)
-            rabbit = Spr("MoonRabbit", Art.Get("Bg/moon_rabbit_0", 100f), new Vector2((915 - 540) / 100f, Bottom + 24f - 7.8f), -99);
-            // 11-18: 풀밭 + 돔 → 달 바닥(지평선 위 지구) + 왼쪽 벽 사령탑. 땅 그림 1080x460 = 월드 y -9.6 ~ -5.0
-            Spr("Ground", Art.Get("Bg/ground_moon", 100f), new Vector2(0, Bottom + 2.3f), -50);
-            towerGlow = Spr("TowerGlow", Art.Fx("glow"), new Vector2(-4.4f, GroundY + 6f), -41);
-            towerGlow.transform.localScale = new Vector3(5f, 16f, 1); towerGlow.color = new Color(1, 1, 1, 0);
+            sky = Spr("Sky", Art.Get("Bg/sky", 100f), new Vector2(0, Bottom + 12f), -100);
+            // 2차 수정안: 달토끼 — 달 위에서 방아를 찧음 (공이 위 · 아래 두 장을 번갈아)
+            // 7차 "달토끼는 다른 이미지와 겹치지 않게": 하늘 그림에서 달을 빼 따로 — 사령탑 위 왼쪽 위 빈 곳 (적 · 탄은 방어선 오른쪽에만 다님) · PlaceMoon
+            moon = Spr("Moon", Art.Get("Bg/moon", 100f), Vector2.zero, -99);
+            rabbit = Spr("MoonRabbit", Art.Get("Bg/moon_rabbit_0", 100f), Vector2.zero, -98);
+            PlaceMoon();
+            // 11-18: 풀밭 + 돔 → 달 바닥(지평선 위 지구) + 왼쪽 벽 사령탑. 7차: 땅 그림 1080x700 = 월드 y -9.6 ~ -2.6 (지구를 크게)
+            ground = Spr("Ground", Art.Get("Bg/ground_moon", 100f), new Vector2(0, Bottom + 3.5f), -50);
+            towerGlow = Spr("TowerGlow", Art.Fx("glow"), new Vector2(-4.9f, GroundY + 6f), -41);
+            towerGlow.transform.localScale = new Vector3(4f, 16f, 1); towerGlow.color = new Color(1, 1, 1, 0);
             tower = Spr("Tower", TowerSprite("Bg/tower"), new Vector2(-HalfW, GroundY), -40);
+            // 7차 로비: 사령탑 없이 심플한 하늘 + 아래 큰 지구 (꼭대기 = Lobby_Earth_Top) — 대장 카피가 그 위를 걸음
+            earthBig = Spr("EarthBig", Art.Get("Bg/earth_big", 100f, new Vector2(0.5f, 1f)), new Vector2(0, EarthTop + 1f), -50);
             if (SaveData.Cur != null) SetFrame(Tables.Frame(SaveData.Cur.frame));
             for (int i = 0; i < 4; i++)
                 slotMarks[i] = Spr("Slot" + i, Art.Get("Bg/slot", 100f), SlotPos(i + 1) + new Vector2(0, 0.05f), -30);
             ShowSlots(false);
+            SetLobby(false);
+        }
+
+        // ---------- 7차 수정안: 로비(타이틀) 배경 ----------
+        public bool Lobby { get; private set; }
+        /// <summary>로비 큰 지구 꼭대기 높이 (월드) · 반지름 — 그림 tools/tower_art.py LE_* 와 같게</summary>
+        public static float EarthTop => Tables.Cf("Lobby_Earth_Top", -3.4f);
+        public const float EarthR = 7.8f;
+        /// <summary>로비 지구 표면 높이 (x 에서) · 그 자리의 기울기(도)</summary>
+        public static float EarthSurf(float x) => EarthTop - EarthR + Mathf.Sqrt(Mathf.Max(0, EarthR * EarthR - x * x));
+        public static float EarthTilt(float x) => -Mathf.Asin(Mathf.Clamp(x / EarthR, -1, 1)) * Mathf.Rad2Deg;
+        /// <summary>로비 = 사령탑 · 달 바닥 · 달토끼 숨김, 하늘은 심플판, 큰 지구 + 별똥별 ("기지 외형은 게임 안에서만")</summary>
+        public void SetLobby(bool on)
+        {
+            Lobby = on;
+            tower.enabled = ground.enabled = moon.enabled = rabbit.enabled = !on;
+            towerGlow.gameObject.SetActive(!on);
+            earthBig.enabled = on;
+            sky.sprite = Art.Get(on ? "Bg/sky_plain" : "Bg/sky", 100f);
+            starT = 0.6f;
+            if (!on) foreach (var st in stars) st.sr.enabled = false;
+            if (on) ShowSlots(false);
+        }
+
+        /// <summary>달: 사령탑 위 왼쪽 위 — 위 UI(Lv 게이지) 아래, 안테나 위</summary>
+        void PlaceMoon()
+        {
+            float y = Mathf.Max(PlayTop - Tables.Cf("Moon_Below_Hud", 0.95f), TowerTop + 1.85f);
+            var p = new Vector2(Tables.Cf("Moon_X", -4.45f), y);
+            moon.transform.position = p;
+            rabbit.transform.position = p;      // 달토끼 그림 160x160 의 가운데 = 달 가운데
+        }
+
+        // 별똥별 (7차 "배경 화면에 약간의 애니메이션 · 별똥별 떨어지는 느낌", 로비만): 하늘 위쪽에서 왼쪽 아래로 빠르게 긋고 사라짐
+        class Star { public SpriteRenderer sr; public Vector2 p, v; public float t, life; }
+        readonly System.Collections.Generic.List<Star> stars = new();
+        float starT;
+        public int StarsShot { get; private set; }     // 시험용
+        void StarStep(float dt)
+        {
+            if (!Lobby) return;
+            if ((starT -= dt) <= 0)
+            {
+                starT = Random.Range(Tables.Cf("Shoot_Star_Gap_Min", 1.2f), Tables.Cf("Shoot_Star_Gap_Max", 3.2f));
+                var st = stars.Find(x => !x.sr.enabled);
+                if (st == null) { st = new Star { sr = Spr("ShootStar", Art.Get("Bg/shooting_star", 100f, new Vector2(320f / 360f, 0.5f)), Vector2.zero, -90) }; stars.Add(st); }
+                float ang = Random.Range(200f, 222f) * Mathf.Deg2Rad, sp = Random.Range(9f, 13f);
+                st.p = new Vector2(Random.Range(-3f, HalfW + 1.5f), Random.Range(EarthTop + 4f, Top - 1f));
+                st.v = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * sp;
+                st.t = 0; st.life = Random.Range(0.7f, 1.1f);
+                st.sr.enabled = true;
+                st.sr.transform.rotation = Quaternion.Euler(0, 0, ang * Mathf.Rad2Deg);
+                st.sr.transform.localScale = Vector3.one * Random.Range(0.7f, 1.1f);
+                StarsShot++;
+            }
+            foreach (var st in stars)
+            {
+                if (!st.sr.enabled) continue;
+                st.t += dt; st.p += st.v * dt;
+                float k = st.t / st.life;
+                if (k >= 1 || st.p.y < EarthSurf(st.p.x) - 0.3f) { st.sr.enabled = false; continue; }     // 지구 뒤로 넘어가면 끝
+                st.sr.transform.position = st.p;
+                st.sr.color = new Color(1, 1, 1, Mathf.Min(1, k * 6f) * (1 - k * k));
+            }
         }
 
         /// <summary>폭 10.8칸이 꼭 보이게 + 화면 아래 끝을 y -9.6 에 맞춤</summary>
@@ -117,7 +189,8 @@ namespace EarthDef
                 if (down != RabbitDown) { RabbitDown = down; rabbit.sprite = Art.Get("Bg/moon_rabbit_" + (down ? 1 : 0), 100f); }
             }
             if (towerGlow) { glowT += Time.deltaTime; var c = glowCol; c.a = glowCol.a > 0 ? 0.22f + 0.08f * Mathf.Sin(glowT * 1.6f) : 0; towerGlow.color = c; }
-            if (cam && Mathf.Abs(cam.aspect - lastAspect) > 0.001f) { lastAspect = cam.aspect; Fit(); }
+            if (cam && Mathf.Abs(cam.aspect - lastAspect) > 0.001f) { lastAspect = cam.aspect; Fit(); if (moon) PlaceMoon(); }
+            StarStep(Time.deltaTime);
             // 자리 고르기 중이면 빈 칸이 숨쉬듯 반짝 (11-18 "터렛을 고를 때 자리를 고르는 흐름")
             if (pulse)
             {

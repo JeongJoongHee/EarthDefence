@@ -505,14 +505,7 @@ namespace EarthDef
             Finish(c, slot);
         }
 
-        /// <summary>자리 고르기에서 [뒤로] — 카드 창으로 돌아감 (같은 카드)</summary>
-        public void SlotBack()
-        {
-            if (st != St.Slot) return;
-            slotCard = null; st = St.Pick;
-            World.I.ShowSlots(true);
-            Changed?.Invoke();
-        }
+        // 7차 수정안: 자리 고르기에서 [카드 다시 고르기]는 뺌 (카드 창에 이미 새로고침이 있음) — 고른 카드는 꼭 놓음
 
         /// <summary>자리 고르기에서 칸(1~4)을 누름</summary>
         public void PlaceAt(int slot)

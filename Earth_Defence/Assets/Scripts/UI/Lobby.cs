@@ -190,9 +190,18 @@ namespace EarthDef
             if (!startRT || UIRoot.I == null || World.I == null) return;
             var page = (RectTransform)startRT.parent;
             // 11-18 사령탑: 돔이 없어져 사령탑 오른쪽 하늘 가운데(Lobby_Btn_X)에 — 높이는 예전 돔 꼭대기 그대로
-            var sp = World.I.cam.WorldToScreenPoint(new Vector3(Tables.Cf("Lobby_Btn_X", 1.55f), Tables.Cf("Dome_Top_Y", -4.05f), 0));
+            // 7차: 로비에서 사령탑을 빼고 큰 지구 → 가운데(Lobby_Btn_X 0) · 지구 위 대장 카피 머리 위(Dome_Top_Y)
+            var sp = World.I.cam.WorldToScreenPoint(new Vector3(Tables.Cf("Lobby_Btn_X", 0f), Tables.Cf("Dome_Top_Y", -2f), 0));
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(page, sp, UIRoot.I.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : UIRoot.I.canvas.worldCamera, out var lp)) return;
             float y = lp.y - page.rect.yMin + 8;               // 페이지 아래 끝에서 잰 높이
+            // 7차: 화면이 짧은 폰(16:9)에서 [적 정보]를 펼치면 스테이지 칸과 겹칠 수 있음 → 스테이지 칸 아래 끝까지만 올라감 (그땐 대장 카피 앞으로 내려옴)
+            if (stageCard)
+            {
+                var c = new Vector3[4]; stageCard.rectTransform.GetWorldCorners(c);
+                var ucam = UIRoot.I.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : UIRoot.I.canvas.worldCamera;
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(page, RectTransformUtility.WorldToScreenPoint(ucam, c[0]), ucam, out var cb))
+                    y = Mathf.Min(y, cb.y - page.rect.yMin - 20 - 150 - 18 - 150);
+            }
             y = Mathf.Max(y, 20);
             float x = Mathf.Clamp(lp.x - page.rect.center.x, -page.rect.width / 2 + 310, page.rect.width / 2 - 310);
             if (Mathf.Abs(patrolRT.anchoredPosition.y - y) < 0.01f && Mathf.Abs(patrolRT.anchoredPosition.x - x) < 0.01f) return;      // 11-17: 매 프레임 같은 자리를 다시 넣지 않음 (화면이 바뀐 때만)
