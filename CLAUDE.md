@@ -7,6 +7,8 @@
 - 표 tools/layout2_tables.py (Config 15 · 글자 2 · 외형 이름 "OO 사령탑") · 그림 tools/tower_art.py → `earth_export.py tower` (frames 도 tower 로 — 예전 돔 아이콘이 덮어쓰지 않게). 시안 tools/layout_mock.py command(K=.75).
 - 밸런스: 새 배치 1회 측정(씨앗 1000, 120일) 30일 39 · 60일 50 · 90일 60 · 120일 71 (예전 39 · 47 · 59 · 69) — 진행 속도 거의 같음 · 처음 승률은 낮아짐(4~10 100→67%). Enemy_Speed_Mul 0.72. 시험 세이브로 스테이지 10 을 40초 못 버팀 → 별똥별 시험은 기지 체력 채우며.
 - 시험: 기본 137 · 시험장 13 · 3차 107 오류 0.
+- 상태: 커밋 ff702b5 · 사용자가 push 끝(origin/master 와 같음) · 작업 트리 깨끗 · 하다 만 작업 없음.
+- **재개 첫 순서**: ① `PYTHONUTF8=1 python tools/todo_checks.py 전투배치_적용_결과.html` 로 a-play · a-slot1 · a-ui 읽기 (비어 있으면 "전투배치_적용_결과 보셨나요? 빈 칸 1개일 땐 바로 놓기 · 전투UI_제안 사령탑 기준으로 고치기 — 추천대로 갈까요?" 하고 물음) → ② a-slot1 이 추천대로면 Battle.Choose 에서 FreeSlotList.Count>=2 조건 그대로(이미 1칸이면 바로 놓음) · 다르면 Config 하나로 → ③ `전투UI_제안.html`(키 earthdef-battleui-1118, 체크 0) 의 돔 기준 항목을 사령탑 배치로 고쳐 다시 드림(고치기 전 스크래치 백업) → ④ 밸런스 3차 다시 측정(씨앗 2개 이상, `bash tools/bal_run.sh` — 처음 승률 4~10 · 31~40 이 낮아진 것 · 무한 첫 1분 8칸 · 별똥별 시험) + `밸런스_3차.html` 결정 b3-tier · b3-noads · b3-turret.
 
 ## ▶ 재개 메모 (2026-11-18 아침 — 전투 배치 2판)
 - 1판 의견(키 earthdef-layout-1118): ③ 배치 + ② 방주 위 줄(항로 막대) · 등대 → **우주 사령탑** · 대장 카피 가운데 · 위 2 아래 2 · 터렛 45° · 운석 오른쪽 위 → 왼쪽 아래 · 순서 = 배치 → 전투 UI 제안 → 밸런스 3차.
