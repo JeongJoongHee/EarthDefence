@@ -6,6 +6,7 @@
   body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
   main{max-width:1080px;margin:auto}
   h1{font-size:25px;margin:0 0 4px} h2{font-size:21px;margin:40px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  h3{font-size:17px;margin:26px 0 6px;color:var(--orange)}
   p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
   .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)} .tip.orange{background:var(--orange-bg)} .tip.red{background:var(--red-bg)}
   .tip ul,.tip ol{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
@@ -16,98 +17,373 @@
   ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
   ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
   .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
-  .tag.must{background:var(--red-bg);color:var(--red)} .tag.you{background:var(--blue-bg);color:#2f5a86}
+  .tag.must{background:var(--red-bg);color:var(--red)} .tag.you{background:var(--blue-bg);color:#2f5a86} .tag.new{background:var(--orange-bg);color:var(--orange)}
   .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
   .why b{color:var(--ink)}
+  .steps{padding:0 16px 12px 41px;font-size:14.5px}
+  .steps ol,.steps ul{margin:4px 0;padding-left:22px} .steps li{margin:4px 0}
+  .steps .done{background:var(--green-bg);border-radius:8px;padding:6px 10px;margin-top:8px}
+  .steps .stuck{background:var(--gray-bg);border-radius:8px;padding:6px 10px;margin-top:6px}
+  .steps table.cmp{font-size:13.5px}
+  .path{font-weight:bold;color:#2f5a86}
+  .cp{border:1px solid var(--line);background:#fff;border-radius:6px;padding:0 7px;font-size:12px;cursor:pointer;color:var(--soft);margin-left:4px}
+  .cp.ok{background:var(--green-bg);color:var(--green)}
   .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
   li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
   .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
   .notebox textarea{width:100%;box-sizing:border-box;min-height:64px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
   .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
   ul.todo > li.checked{border-color:#9cc48f;background:#f6fbf2}
+  details.past{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 14px;margin:10px 0}
+  details.past summary{cursor:pointer;font-weight:bold}
   #stat{font-size:14px;color:var(--soft)}
-  @media(max-width:700px){table.cmp{font-size:13px}}
+  @media(max-width:700px){table.cmp{font-size:13px}.steps{padding-left:16px}}
 </style></head><body><main>
 
-<h1>비공개 테스트 준비 <small style="font-size:15px;color:var(--soft);font-weight:normal">2026-11-19 (목) · 지금 비공개 테스트를 열고, 남은 UI · 밸런스 · 콘텐츠는 테스트 기간에</small></h1>
-<p class="note">질문: "지금 비공개 테스트를 진행하고, 테스트 기간에 나머지 UI와 밸런스, 컨텐츠 추가를 해도 되나?" → <b>됩니다.</b> 다만 첫 AAB 전에 정해야 하는 것이 있어 결정 칸으로 모았습니다. 추천대로면 체크만, 다르면 ✎ 의견에 적어 주세요.</p>
+<h1>비공개 테스트 준비 <small style="font-size:15px;color:var(--soft);font-weight:normal">2026-11-19 (목) 다시 씀 · 테스터 = 대행업체(설치 · 실행만) 기준</small></h1>
+<p class="note">이번 판에서 바뀐 것: ① 대행 테스터는 게임을 하지 않는다는 점을 기준으로 위험 · 대책 · 신청서 답 방향을 새로 적음 ② <b>직접 하실 일</b>을 단계별로 메뉴 경로 · 칸마다 넣을 값 · 끝난 표시까지 자세히 ③ 체크 · 의견 주신 결정 9개는 맨 아래 "정해진 결정"으로 접음. 고치기 전 문서는 세션 스크래치에 백업해 두었습니다.<br>
+체크는 이 브라우저에 저장(키 <code>earthdef-closed-1119b</code>) · 제가 <code>python tools/todo_checks.py 비공개_테스트_준비.html</code> 로 읽습니다.</p>
 
-<div class="tip green"><b>구글 공식 문서 (answer/14151465 — 오늘 한국어 · 영어판 확인)</b>
+<div class="tip orange"><b>의견을 이렇게 읽었습니다 (다르면 아래 "확인할 것"의 의견 칸에)</b>
 <ul>
-<li>개인 계정(2023-11-13 뒤 만든 계정)은 <b>테스터 12명 이상이 14일 연속 참여</b>해야 프로덕션 신청 가능. 날짜는 <b>테스터 참여</b>로 세고 앱 버전과는 상관없음. 중간에 나갔다 다시 들어온 테스터는 다시 14일 연속이어야 함.</li>
-<li>"프로덕션 전에 비공개 테스트에서 업데이트하면 낮은 평점을 줄인다", "버그를 고치는 동안 테스트를 계속하라" — <b>테스트 중 업데이트를 권함</b>.</li>
-<li>프로덕션 신청서 질문: 테스터 모집이 쉬웠나 · 테스터가 모든 기능을 썼나 · 의견 요약과 모은 방법 · <b>테스트에서 배운 것으로 바꾼 것</b> · 출시 준비가 됐다고 판단한 방법 → 테스트 중 고친 게 오히려 답이 됨.</li>
-<li>구글이 보는 것: 테스터 참여가 부족하면 테스트를 더 하라고 함 · <b>튕김 · 고장 난 기능 · 빈 화면이 없을 것</b> · 검토는 보통 7일 안.</li>
-<li><b>문서에 없는 것</b>: 업데이트를 올리면 14일이 다시 시작되는지 → 문서에 없음(날짜를 테스터 참여로 세니 다시 시작되지 않는 것으로 읽힘). 카치건도 테스트 기간(10-24 ~)에 광고 · 결제 빌드를 올렸고 그대로 신청했습니다.</li>
+<li><b>치트</b> "추가해도 무방함" → 테스트 빌드는 치트를 켠 채로 올림(<code>Cheat_On 1</code> — 사용자 폰에서 Play 로 받은 판으로도 시험 가능). <b>프로덕션 신청 전 마지막 빌드부터 끔</b>(<code>0</code>). 체크하신 원래 추천(테스트부터 끔)과 반대라 확인 칸 h-cheat 에 다시 올림.</li>
+<li><b>라이선스 테스터</b>(돈 안 나가는 시험 결제)는 대행 테스터를 넣지 않고 <b>본인 계정만</b> — 추천이 바뀐 까닭: 대행 테스터는 상점을 쓰지 않으니 넣을 이유가 없어짐.</li>
+<li><b>앱 이름</b>은 의견대로 <b>"카피바라 지구를 지켜라"</b>(느낌표 없이)로 적었습니다. 느낌표를 원하시면 h-name 에.</li>
+<li><b>테스트 기간 업데이트</b> "주기적으로" → 순서를 정해 두지 않고 준비되는 대로 올림. 다만 프로덕션 신청 <b>3일 전쯤엔 마지막 빌드</b>를 올려 두는 것만 지킴(사전 출시 보고서 · 비정상 종료 기록을 보고 신청하려고).</li>
+<li><b>광고 ④</b>는 체크 · 의견이 없어 아직 남은 결정입니다 (아래 첫 칸).</li>
 </ul></div>
 
-<div class="tip red"><b>지금 게임에서 찾은 것 — 테스트 빌드 전에 꼭 고칠 것</b>
-<ol>
-<li><b>광고 [초안]이 폰에서도 "바로 성공"</b> (<code>Ads.Draft = true</code> → 광고 없이 보상 2배 · 광고 상자). 이대로 나가면 테스터가 광고 보상을 공짜로 받아서 밸런스 의견이 틀어지고, 프로덕션에 나가면 광고 수익도 없습니다 → 결정 ④.</li>
-<li><b>구글 연동 [초안]</b>이 폰에서도 가짜 연동("draft-user")이 되고 "[초안]" 글자가 보입니다 → 구글이 보는 "고장 난 기능"으로 보일 수 있음 → 결정 ⑥.</li>
-<li>결제는 폰에서 이미 꺼져 있음(상점 다이아 칸 "준비 중") — 그대로 두거나 켜기 → 결정 ⑤.</li>
-<li>개발용 키로만 서명 · 앱 아이콘이 Unity 기본 · AAB 빌드 도구 없음(APK 만) → 제가 준비 (아래 "제가 할 것").</li>
-</ol></div>
+<h2>대행 테스터라서 달라지는 것</h2>
+<div class="tip red"><b>위험 — 구글 공식 문서(answer/14151465, 오늘 다시 읽음)</b>
+<ul>
+<li>프로덕션 신청을 거절하고 "테스트를 더 하라"는 이유로 <b>"테스터가 12명보다 적음"</b>과 함께 <b>"테스트 기간 중 테스터 참여(engagement)가 부족함"</b>을 적어 두었습니다. 즉 12명 · 14일을 채워도 참여가 적어 보이면 다시 테스트하라고 할 수 있습니다.</li>
+<li>신청서 1부가 직접 묻습니다: <b>"테스터가 앱의 모든 기능을 썼나요? 실제 사용자와 어떻게 달랐나요?"</b> · "받은 의견 요약과 모은 방법".</li>
+<li>대행업체 · 유료 테스터 · 설치만 하는 테스터를 인정하는지 여부는 <b>문서에 없습니다</b>(확인 못 함). 금지 문구도 없습니다.</li>
+<li>우리 경험: 카치건은 같은 방식(대행 12명)으로 10-24 테스트 시작 → 11-07 신청 → 통과해 11-10 스토어 공개, 불도깨비도 통과. 그러니 막힐 가능성이 크진 않지만, 신청서 답은 <b>사실대로</b> 써야 하고(카치건 답안의 "테스터들이 강화 · 뽑기 · 보스전을 사용했다" 같은 문장은 이번엔 쓰면 안 됨) 대신 <b>개발자가 직접 한 점검</b>을 보여 주는 쪽으로 갑니다.</li>
+</ul></div>
 
-<h2>정해 주실 것 <span id="stat"></span></h2>
-<p class="note"><span class="tag must">첫 AAB 전</span> = 첫 AAB 를 올리면 못 바꾸거나 바꾸기 어려운 것. <span class="tag">결정</span> = 나중에 바꿀 수 있지만 지금 정하면 빠른 것.</p>
+<div class="tip green"><b>대책 — 테스터 대신 "점검한 증거"를 쌓기</b>
+<ol>
+<li><b>사용자 본인이 Play 에서 받은 테스트 판을 직접 플레이</b> — 본인 Gmail 을 테스터 목록에 같이 넣음. 플레이한 날 · 해 본 기능을 짧게 메모(아래 C-2) → 신청서 "참여도" · "출시 준비 판단" 답의 재료.</li>
+<li><b>사전 출시 보고서</b>(구글이 실제 기기 여러 대에서 자동으로 켜 보는 시험) — AAB 를 올릴 때마다 자동으로 돌고 보통 <b>1시간 안</b>에 결과. 위치: <span class="path">테스트 및 출시 › 테스트 › 사전 출시 보고서 › 개요</span>. 튕김 · 빈 화면이 0 인지 봄.</li>
+<li><b>Android vitals</b>(비정상 종료 · ANR) — 대행 테스터가 켜기만 해도 기록이 쌓이므로 "켰을 때 안 튕긴다"는 증거가 됨.</li>
+<li><b>자동 플레이 시험</b>(지금 기본 137 · 3차 107 · 7차 24 · 8차 28줄)과 업데이트마다 바꾼 것 목록 — 제가 정리해 신청서 답안에 넣음.</li>
+<li>(선택) <b>실제로 해 줄 지인 2~3명</b>을 테스터에 더함 — 12명에 꼭 셀 필요는 없고, "실제 의견"을 한두 줄이라도 받을 수 있으면 신청서 ③ · ④ 답이 훨씬 단단해집니다 → 확인할 것 h-real.</li>
+</ol>
+<p style="margin:8px 0 0">좋은 점도 있습니다: 테스터가 게임을 하지 않으니 <b>세이브 · 밸런스를 바꿔도 테스터 진행이 깨질 걱정이 거의 없고</b>, 광고 [초안]이 공짜 보상을 줘도 밸런스 의견이 틀어질 일이 없습니다. 테스트 기간 동안 UI · 밸런스 · 콘텐츠를 마음껏 바꿔도 됩니다.</p>
+</div>
+
+<h2>남은 결정 · 확인할 것 <span id="stat"></span></h2>
+<p class="note">추천대로면 체크만, 다르면 ✎ 의견에.</p>
 <ul class="todo">
-<li data-id="d-pkg"><label><input type="checkbox"><span><span class="tag must">첫 AAB 전</span>① 패키지 이름: <code>com.zkfpf.earthdefence</code> 그대로 (추천)<span class="why">카치건 <code>com.zkfpf.kachizombie</code> · 불도깨비 <code>com.zkfpf.buldokkaebi</code> 와 같은 꼴입니다. 사용자에게는 스토어 주소에만 보입니다. <b>첫 AAB 를 올리면 영영 못 바꿉니다.</b> 다른 이름을 원하시면 의견 칸에 그대로 적어 주세요 (영어 소문자 · 숫자 · 점).</span></span></label></li>
-<li data-id="d-account"><label><input type="checkbox"><span><span class="tag must">첫 AAB 전</span>② 올릴 계정: 결제까지 할 계정(카치건을 옮긴 Cachisi 쪽)에 처음부터 (추천)<span class="why">카치건 · 불도깨비는 "옛 계정 출시 → 앱 이전 → 새 계정 결제"를 거쳤는데, 이번엔 사업자 · 통신판매업 · 결제 프로필이 이미 있는 계정에 바로 올리면 <b>이전 단계가 통째로 없어집니다</b> (이전 영업일 2일 · 테스트 그룹 · 앱 콘텐츠 초기화 · Google Cloud 소유자 옮기기 · "인앱 상품이 있는 앱은 이전 뒤 게시 취소"). 그 계정도 개인 계정이면 이 앱도 12명 · 14일을 채워야 합니다. 다른 계정이면 의견 칸에.</span></span></label></li>
-<li data-id="d-testers"><label><input type="checkbox"><span><span class="tag you">직접</span>③ 테스터 12명: 카치건 때 명단(이메일)을 이 앱 테스트에 다시 쓰기 (추천)<span class="why">테스터 목록은 앱마다 고르는 것이라 같은 사람을 다시 넣을 수 있습니다. 카치건 테스트 그룹은 이전 때 안 넘어갔으니 새 계정에 목록을 다시 만들어야 할 수 있습니다. <b>14일은 12명을 채운 날부터</b> — 넉넉히 15명 이상 추천 (중간에 나가면 그 사람은 다시 14일). 테스터가 실제로 해 봐야 하니(참여 부족이면 테스트 연장) "하루 한 판" 부탁 글을 드릴게요.</span></span></label></li>
-<li data-id="d-ads"><label><input type="checkbox"><span><span class="tag must">첫 AAB 전</span>④ 광고: 첫 빌드부터 실제 보상형 광고 (추천 — 카치건 방식 그대로)<span class="why">Google Mobile Ads 11.5.0 · UMP 동의 · 끝까지 봐야 보상 · 못 불러오면 토스트만 · 개발용 APK 는 구글 테스트 광고, AAB 는 실제 광고 · 판 끝 전면 광고는 넣지 않음(보상형만). 첫 빌드에 넣으면 앱 콘텐츠의 광고 · 광고 ID 답을 처음 한 번만 하면 됩니다 (나중에 넣으면 그 업데이트 전에 답부터 바꿔야 "불완전한 광고 ID 선언"을 피함). <b>필요한 것: AdMob 에 이 앱 + 보상형 광고 단위 1개 만들기(사용자, 스토어에 없는 앱으로 만들 수 있음) → ID 두 개를 알려 주시면 제가 넣습니다.</b><br>다른 길: 첫 빌드는 광고 단추를 숨기고 테스트 중 업데이트로 넣기 (테스트 시작이 하루 빨라지지만 앱 콘텐츠 답을 두 번 해야 함).</span></span></label></li>
-<li data-id="d-iap"><label><input type="checkbox"><span><span class="tag">결정</span>⑤ 결제: 첫 빌드에 실제 결제 코드(Unity IAP 5 · 결제 권한)를 넣고, 테스터 12명을 <b>라이선스 테스터</b>로도 넣기 (추천)<span class="why">인앱 상품은 <b>결제 권한이 든 빌드를 올린 뒤에야</b> 만들 수 있어서 첫 빌드에 넣는 게 빠릅니다. 라이선스 키가 있으면 켜지고 없으면 지금처럼 "준비 중" (카치건의 Configured 방식). 테스터를 라이선스 테스터로 넣으면 <b>그들의 결제는 돈이 안 나가는 시험 결제</b>라, 테스트 중 밸런스 · 세이브를 바꿔도 "돈 낸 걸 잃었다"는 문제가 없습니다. 라이선스 키가 앱을 만들자마자 수익 창출 설정에 보이는지는 화면으로 확인할게요 (안 보이면 상품 만든 뒤 새 빌드로 켬).<br>다른 길: 테스트 동안은 결제를 꺼 두고 프로덕션 빌드에서 켜기 — 상점 결제를 아무도 못 써 보고 출시하게 됩니다.</span></span></label></li>
-<li data-id="d-login"><label><input type="checkbox"><span><span class="tag">결정</span>⑥ 구글 로그인 · 클라우드 저장: 첫 빌드는 게스트만(가짜 연동 · "[초안]" 글자 숨김), 실제 Play 게임즈는 테스트 중 1차 업데이트로 (추천)<span class="why">실제 로그인은 Play 게임즈 프로젝트 · OAuth 동의 화면 · 사용자 인증 정보(앱 서명 키 SHA-1 — <b>첫 업로드 뒤에야 나옴</b>) 순서라 어차피 첫 업로드 다음입니다. 첫 빌드에서는 타이틀 [게임 시작] → 바로 게스트로 들어가고, 설정의 구글 계정 칸은 "곧 열림"으로 둡니다. 게스트 세이브는 나중에 연동하면 그대로 클라우드로 올라갑니다.</span></span></label></li>
-<li data-id="d-save"><label><input type="checkbox"><span><span class="tag">결정</span>⑦ 테스트 기간 세이브: 업데이트해도 테스터 진행은 지키기 (추천)<span class="why">밸런스를 바꿔도 세이브 칸은 그대로 읽게 하고, 칸을 바꿀 땐 옛 세이브를 옮기는 코드를 같이 넣습니다(카치건처럼 판 번호를 함부로 올리지 않음). 출시 때 초기화도 안 함 — 테스터가 그대로 첫 사용자가 되고, 리뷰도 남겨 줄 수 있습니다.<br>다른 길: "출시 전에 한 번 초기화"를 테스터에게 미리 알리기 (밸런스를 크게 엎을 수 있지만 테스터가 그만둘 수 있음).</span></span></label></li>
-<li data-id="d-cheat"><label><input type="checkbox"><span><span class="tag">결정</span>⑧ 치트: 스토어 빌드(테스트 포함)에서는 끔 — <code>Cheat_On 0</code>, AAB 점검 항목에 넣음 (추천)<span class="why">테스터가 치트를 쓰면 진행 · 밸런스 의견이 쓸모없어지고, 같은 빌드가 프로덕션에 그대로 나갈 수 있어서입니다. 사용자 폰에서 쓸 치트는 지금처럼 개발용 APK(BuildDev)로.</span></span></label></li>
-<li data-id="d-store"><label><input type="checkbox"><span><span class="tag">결정</span>⑨ 앱 이름 "카피바라 지구를 지켜라!" · 국가 대한민국만 · 한국어만 (추천 — 카치건과 같게)<span class="why">이름 · 아이콘 · 스토어 그림은 나중에 바꿀 수 있습니다. 띄어쓰기가 있어 삼성 홈 화면에서 두 줄로 안 잘립니다(카치건 때 확인한 규칙). 영어 · 다른 나라는 출시 뒤 업데이트로.</span></span></label></li>
-<li data-id="d-plan"><label><input type="checkbox"><span><span class="tag">결정</span>⑩ 테스트 기간 업데이트 순서: 1차(실제 로그인 · 전투 UI) → 2차 마지막 큰 업데이트(밸런스 3차 다시 측정 · 콘텐츠) → 그 뒤엔 버그만 (추천)<span class="why">큰 업데이트는 <b>14일이 끝나기 일주일 전까지</b> 올려 테스터가 써 보게 합니다 (카치건 규칙). 프로덕션은 테스트에서 마지막으로 돌린 빌드(또는 번호만 올린 같은 내용)로 — 스토어 스크린샷 · 설명이 실제 빌드와 맞게. 아래 일정 예시 참고.</span></span></label></li>
+<li data-id="d-ads2"><label><input type="checkbox"><span><span class="tag must">첫 AAB 전</span>④ 광고: 첫 빌드부터 실제 보상형 광고 (추천 — 카치건 방식 그대로)<span class="why">대행 테스터 기준으로 다시 따져 봐도 추천은 같습니다. 까닭: <b>앱 콘텐츠의 "광고 · 광고 ID · 데이터 보안" 답을 처음 한 번만</b> 하면 됨(나중에 넣으면 그 업데이트 전에 세 답을 다시 바꿔야 하고, 순서가 틀리면 "불완전한 광고 ID 선언"으로 막힘 — 불도깨비 · 점프점프 때 실제로 막힘) · 프로덕션엔 어차피 실제 광고가 필요 · AdMob 은 카치건과 <b>같은 계정(pub-5299482082775448)</b>이라 app-ads.txt(jeongjoonghee.github.io)도 이미 있음.<br>
+조심할 것 하나: Play 에서 받은 판에는 <b>실제 광고</b>가 나옵니다. 본인 광고를 누르거나 반복해서 보면 AdMob 무효 트래픽이 될 수 있어 → <b>본인 폰을 AdMob 테스트 기기로 등록</b>(아래 A-2) 하면 같은 판에서도 테스트 광고가 나옵니다.<br>
+다른 길: 첫 빌드는 광고 단추를 숨기고 나중에 업데이트로 — 지금 할 일(A-1 · A-2)이 줄지만 앱 콘텐츠 답을 두 번 하게 됩니다.</span></span></label></li>
+<li data-id="h-cheat"><label><input type="checkbox"><span><span class="tag new">해석 확인</span>치트: 테스트 빌드는 켬(<code>Cheat_On 1</code>) → 프로덕션 신청 전 마지막 빌드부터 끔 (의견 "추가해도 무방함"을 이렇게 읽음)<span class="why">Play 에서 받은 판에서도 사용자가 치트로 장비 · 단계를 바로 만들어 후반을 시험할 수 있습니다. aab_check 가 치트 상태를 찍어 주고, "프로덕션용" 점검에서는 켜져 있으면 실패로 막습니다. 테스트 판에서도 설정 창 맨 아래 [치트] 단추가 보이는 게 싫으면 의견에 "숨김 진입"(예: 버전 글자 5번 누르기)이라고 적어 주세요.</span></span></label></li>
+<li data-id="h-name"><label><input type="checkbox"><span><span class="tag new">해석 확인</span>앱 이름 = "카피바라 지구를 지켜라" (느낌표 없이, 의견 그대로)<span class="why">Play 스토어 이름 · 폰 홈 화면 이름 둘 다 이것으로. 띄어쓰기가 있어 삼성 홈 화면에서도 두 줄로 나뉘어 안 잘림. 스토어 이름은 나중에 바꿀 수 있습니다(패키지 이름만 못 바꿈).</span></span></label></li>
+<li data-id="h-list"><label><input type="checkbox"><span><span class="tag new">확인</span>테스터 명단: 카치건 때 대행 명단(이메일)을 받아 <b>Cachisi 계정에 새 이메일 목록</b>으로 만들고, 본인 Gmail 도 같이 넣기<span class="why">카치건 때 명단("규랩스 테스터 목록")은 <b>옛 계정(zkfpf1)</b>에 만든 것이라 Cachisi 계정 화면엔 없습니다(앱 이전 때 테스트 그룹은 안 넘어감 — 구글 문서). 대행업체가 같은 사람들을 다시 넣어 줄 수 있는지, 이메일 목록(CSV) 방식인지 구글 그룹 방식인지를 먼저 물어보세요 (아래 A-3).</span></span></label></li>
+<li data-id="h-real"><label><input type="checkbox"><span><span class="tag">선택</span>실제로 해 줄 지인 2~3명을 테스터에 더하기 (추천 — 가능하면)<span class="why">구글이 "참여 부족"을 거절 사유로 적어 둔 만큼, 실제 의견이 한두 줄이라도 있으면 신청서가 단단해집니다. 어렵다면 본인 직접 플레이 + 사전 출시 보고서 + 자동 시험으로 답을 씁니다(카치건도 대체로 그랬음). 지인이 있으면 이메일만 의견 칸에 — 명단에 같이 넣는 법은 B-4.</span></span></label></li>
 </ul>
 
-<h2>일정 예시 (결정이 오늘 나오면)</h2>
-<p class="note">검토 · 테스터 모집 날에 따라 밀립니다. 요일은 달력으로 확인함.</p>
+<h2>일정 (오늘 결정 기준 · 요일은 달력으로 확인)</h2>
 <table class="cmp">
 <tr><th>날</th><th>할 일</th><th>누가</th></tr>
-<tr><td>11-19 (목)</td><td>이 문서 결정 · AdMob 앱 + 보상형 단위 만들기(④) · Play Console 에 앱 만들기(②, 패키지 이름은 첫 업로드 때 정해짐)</td><td>사용자</td></tr>
-<tr><td>11-20 (금) ~ 11-22 (일)</td><td>업로드 키 · AAB 빌드 도구 · 광고 · 결제 코드 · [초안] 숨김 · 앱 아이콘 · 스토어 그림 · 방침 페이지 · 답안 문서 → <b>1번 AAB + 점검</b> → 폰 시험</td><td>저</td></tr>
-<tr><td>11-23 (월)</td><td>스토어 등록 · 앱 콘텐츠 답 · 내부 테스트 → 비공개 테스트 제출 (답안 [복사] 문서대로)</td><td>사용자 (제가 화면 확인)</td></tr>
-<tr><td>~11-25 (수)</td><td>검토 통과 · 테스터 12명 채움 → <b>14일 시작</b></td><td>사용자 · 테스터</td></tr>
-<tr><td>~11-28 (토)</td><td>1차 업데이트 (실제 구글 로그인 · 클라우드 · 전투 UI)</td><td>저 → 사용자 업로드</td></tr>
-<tr><td>~12-02 (수)</td><td><b>마지막 큰 업데이트</b> (밸런스 · 콘텐츠) — 끝나기 일주일 전</td><td>저 → 사용자 업로드</td></tr>
-<tr><td>12-08 (화)</td><td>14일 끝 (11-25 시작이면)</td><td></td></tr>
-<tr><td>12-09 (수)</td><td>프로덕션 신청 (답안: 테스트 중 바꾼 것 · 의견 요약)</td><td>사용자</td></tr>
-<tr><td>~12-16 (수)</td><td>검토 통과 → 출시 (보통 7일 안)</td><td></td></tr>
+<tr><td>11-19 (목) ~ 11-20 (금)</td><td>위 결정 · <b>A 단계</b>(AdMob 앱 · 테스트 기기 · 대행업체 문의 · Play Console 앱 만들기)</td><td>사용자</td></tr>
+<tr><td>11-20 (금) ~ 11-22 (일)</td><td>업로드 키 · AAB 도구 · 광고 · 결제 코드 · [초안] 숨김 · 아이콘 · 스토어 그림 · 방침 · <b>답안 문서([복사] 버튼)</b> → <b>1번 AAB + 점검</b> → 개발용 APK 로 폰 확인</td><td>저</td></tr>
+<tr><td>11-23 (월)</td><td><b>B 단계</b>: 앱 설정 답 · 스토어 등록 · 내부 테스트로 설치 확인 → 비공개 테스트 트랙 → 검토 전송</td><td>사용자 (제가 Chrome 으로 화면 확인)</td></tr>
+<tr><td>~11-25 (수)</td><td>검토 통과 → 참여 링크를 대행업체에 → <b>12명 채운 날 = 14일 시작</b></td><td>사용자 · 대행</td></tr>
+<tr><td>11-25 ~ 12-09</td><td><b>C 단계</b>: 업데이트는 준비되는 대로(실제 구글 로그인 · 결제 상품 · UI · 밸런스 · 콘텐츠) · 주 2번 점검 · 직접 플레이 메모</td><td>저 → 사용자 업로드</td></tr>
+<tr><td>~12-06 (일)</td><td><b>마지막 빌드</b>(치트 끔 · 프로덕션에 나갈 판)를 비공개 트랙에</td><td>저 → 사용자</td></tr>
+<tr><td>12-09 (수)</td><td>14일 채움(11-25 시작이면) → <b>D 단계</b>: 프로덕션 신청 (답안 문서 따로 드림)</td><td>사용자</td></tr>
+<tr><td>~12-16 (수)</td><td>검토 통과(보통 7일 안) → 프로덕션 출시</td><td></td></tr>
 </table>
 
-<h2>제가 할 것 (결정 뒤 바로)</h2>
-<table class="cmp">
-<tr><th>할 것</th><th>방법</th></tr>
-<tr><td>업로드 키</td><td>새로 만들어 <code>키 보관/</code>(git 밖) + 비번.txt — USB · 클라우드 백업은 사용자 몫. Play 앱 서명(구글이 앱 서명 키 보관) 사용.</td></tr>
-<tr><td>AAB 빌드 · 점검</td><td>카치건 BuildAab.cs · aab_check.py 를 가져와 이름만 바꿈 → 패키지 · 버전 코드 · 64비트 · 서명 · AD_ID · BILLING · AdMob ID · <b>Cheat_On 0</b> · [초안] 글자 없음 점검.</td></tr>
-<tr><td>광고 · 결제 코드</td><td>카치건 것 그대로(광고 11.5.0 + EDM · Unity IAP 5 · 앱 안 서명 확인 · 주문 번호로 중복 방지) → 안드로이드 컴파일 + PlayTest 검사 줄 + 개발용 APK 로 폰 확인.</td></tr>
-<tr><td>앱 아이콘</td><td>낙서풍 대장 카피 + 지구 (햇살 줄무늬 없이) → 512 · 둥근 · 적응형.</td></tr>
-<tr><td>스토어 그림</td><td>PlayTest.RunStore 촬영 → 1080x1920 스크린샷 + 그래픽 이미지 1024x500.</td></tr>
-<tr><td>개인정보처리방침</td><td>기존 Worker 에 <code>/earthdefence-privacy</code> 경로 추가 — 파일만 준비, <b>배포는 "배포해도 돼" 받은 뒤</b>.</td></tr>
-<tr><td>답안 문서</td><td>스토어 등록 글 · 데이터 보안 · 콘텐츠 등급(유료 재화 무작위 상자 = "무작위 아이템 구매 예") · 광고 ID "예" · 메뉴 경로를 [복사] 버튼 HTML 로.</td></tr>
-</table>
+<h2>직접 하실 것 — 단계별 상세</h2>
+<p class="note">각 칸: 들어가는 곳 → 순서 → 넣을 값 → <b>끝난 표시</b>. 끝나면 체크하고 대화창에 한마디("A-1 했어") 주시면 다음으로 넘어갑니다. Chrome 확장이 연결돼 있으면 "봐줘" 하실 때 제가 화면을 읽어 칸별로 확인합니다(저장 · 제출 단추는 사용자가 누름).</p>
 
-<h2>직접 하실 것</h2>
+<h3>A. 첫 AAB 전 (지금 ~ 11-20)</h3>
 <ul class="todo">
-<li data-id="u-admob"><label><input type="checkbox"><span><span class="tag you">직접</span>AdMob: 앱 추가(스토어에 없는 앱 · Android · 이름 "카피바라 지구를 지켜라!") → 보상형 광고 단위 1개 → 앱 ID(<code>ca-app-pub-…~…</code>) · 단위 ID(<code>ca-app-pub-…/…</code>) 를 의견 칸에<span class="why">비밀이 아니라 앱 안에 들어가는 값이라 의견 칸에 적어도 됩니다. 스토어 연결은 출시 뒤.</span></span></label></li>
-<li data-id="u-console"><label><input type="checkbox"><span><span class="tag you">직접</span>Play Console(②의 계정): [앱 만들기] — 이름 · 기본 언어 한국어 · 게임 · 무료 · 선언 체크<span class="why">끝나면 "만들었어" 해 주세요 — Chrome 확장이 연결돼 있으면 제가 화면을 읽어 다음 칸을 안내합니다.</span></span></label></li>
-<li data-id="u-testers"><label><input type="checkbox"><span><span class="tag you">직접</span>테스터 명단(이메일 15명 이상) 준비 · 참여 부탁 연락</span></label></li>
+<li data-id="u-a1"><label><input type="checkbox"><span><span class="tag you">A-1</span>AdMob: 앱 추가 + 보상형 광고 단위 1개 → ID 2개를 의견 칸에 (④ 가 추천대로일 때)</span></label>
+<div class="steps">
+<p>들어가는 곳: <span class="path">apps.admob.com</span> — 오른쪽 위 계정이 카치건 광고가 있는 계정(게시자 ID <code>pub-5299482082775448</code>)인지 먼저 확인.</p>
+<ol>
+<li>왼쪽 <b>앱</b> › <b>[앱 추가]</b></li>
+<li>플랫폼 <b>Android</b> · "지원되는 앱 스토어에 앱이 등록되어 있나요?" → <b>아니요</b> (아직 스토어에 없음) → [계속]</li>
+<li>앱 이름 <code>카피바라 지구를 지켜라</code><button class="cp" data-t="카피바라 지구를 지켜라">복사</button> · 사용자 측정항목은 켠 그대로 → [앱 추가] → 화면에 나오는 <b>앱 ID</b>(<code>ca-app-pub-5299482082775448~숫자</code>) 메모</li>
+<li>[광고 단위 추가] (또는 앱 › 광고 단위 › [광고 단위 추가]) → <b>보상형</b> 고르기</li>
+<li>광고 단위 이름 <code>reward_main</code><button class="cp" data-t="reward_main">복사</button> · 보상 금액 <code>1</code> · 보상 항목 <code>reward</code> (게임은 이 값을 쓰지 않고 단추마다 정한 보상을 줌) · 나머지 기본 → [광고 단위 만들기] → <b>광고 단위 ID</b>(<code>ca-app-pub-5299482082775448/숫자</code>) 메모 → [완료]</li>
+<li>두 ID 를 이 칸 ✎ 의견에 적기 (비밀번호가 아니라 앱 안에 그대로 들어가는 값이라 적어도 됩니다)</li>
+</ol>
+<div class="done">✔ 끝난 표시: AdMob 앱 목록에 "카피바라 지구를 지켜라 · Android" 줄 · 광고 단위 1개. 상태가 "준비 중 · 검토 필요"로 보이는 건 정상(스토어 연결은 출시 뒤 — 카치건도 같았음).</div>
+</div></li>
+
+<li data-id="u-a2"><label><input type="checkbox"><span><span class="tag you">A-2</span>AdMob: 본인 폰을 테스트 기기로 등록 (본인 광고 클릭 사고 막기)</span></label>
+<div class="steps">
+<ol>
+<li>폰에서 광고 ID 찾기: <span class="path">설정 › Google › 광고</span> (삼성은 설정 › Google › 모든 서비스 › 광고) → "내 광고 ID" 길게 눌러 복사 · 카톡 나와의 채팅 등으로 PC 에 옮김</li>
+<li>AdMob 왼쪽 <b>설정</b> › <b>테스트 기기</b> › <b>[테스트 기기 추가]</b></li>
+<li>기기 이름(예: <code>내 폰</code>) · 플랫폼 Android · 광고 ID 붙여넣기 · 광고 검사기 제스처 "없음" → [저장]</li>
+</ol>
+<div class="done">✔ 끝난 표시: 테스트 기기 목록에 한 줄. 반영까지 최대 1시간(가끔 24시간) — 그 뒤 Play 판에서 광고를 열면 위에 "Test Ad" 글자가 보임.</div>
+<div class="stuck">광고 ID 를 "재설정"하면 다시 등록해야 합니다. 광고 ID 를 "삭제"한 폰이면 이 방법이 안 되니 말씀해 주세요.</div>
+</div></li>
+
+<li data-id="u-a3"><label><input type="checkbox"><span><span class="tag you">A-3</span>대행업체에 문의 · 계약 — 물어볼 것 7가지</span></label>
+<div class="steps">
+<table class="cmp">
+<tr><th>물어볼 것</th><th>왜</th></tr>
+<tr><td>① 카치건 때 테스터들을 이 앱에도 다시 넣을 수 있나</td><td>의견대로 같은 명단을 쓰려고. 안 되면 새 명단이어도 상관없음</td></tr>
+<tr><td>② 명단을 <b>이메일 목록(CSV · 이메일 붙여넣기)</b>로 주나, <b>구글 그룹</b> 주소로 주나</td><td>B-4 에서 넣는 칸이 다름</td></tr>
+<tr><td>③ 언제부터 · 몇 명(12명보다 넉넉히 — 15명 이상 권함) · <b>14일 동안 한 명도 안 나가게</b> 보장하나 · 빠지면 채워 주나</td><td>중간에 나간 사람은 다시 들어와도 14일을 처음부터 셈 → 12명 아래로 떨어지면 신청 날이 밀림</td></tr>
+<tr><td>④ 테스트 중 <b>업데이트가 나오면</b> 테스터 폰에서 업데이트해 다시 실행해 주나</td><td>업데이트를 자주 올릴 예정 — 새 판이 실제 기기에서 켜지는 기록이 남는 게 좋음</td></tr>
+<tr><td>⑤ 테스터가 <b>매일 실행</b>해 주나(며칠에 한 번인지)</td><td>구글이 "참여 부족"을 볼 수 있어서 — 실행 횟수가 많을수록 나음</td></tr>
+<tr><td>⑥ 끝날 때 <b>보고서</b>(실행 화면 캡처 · 기기 이름 · 한 줄 의견)를 주나 · 실제로 몇 분이라도 플레이해 주는 옵션이 있나</td><td>신청서 ④ "받은 의견과 모은 방법"에 사실대로 쓸 재료</td></tr>
+<tr><td>⑦ 우리가 줄 것: <b>참여 링크</b>(B-6 에서 나옴) 말고 더 필요한 것</td><td>업체마다 다름 (앱 스토어 주소 · 앱 이름 · 아이콘 등)</td></tr>
+</table>
+<div class="done">✔ 끝난 표시: 명단(이메일 목록 파일이나 그룹 주소)을 받았거나 받을 날짜가 정해짐 → 이 칸 의견에 "② 방식 · 인원 · 시작 가능일" 적기.</div>
+</div></li>
+
+<li data-id="u-a4"><label><input type="checkbox"><span><span class="tag you">A-4</span>Play Console(Cachisi 계정): [앱 만들기]</span></label>
+<div class="steps">
+<p>들어가는 곳: <span class="path">play.google.com/console</span> — 오른쪽 위 계정 그림이 <b>Cachisi(kachigoogoo)</b>인지 먼저(주소에 <code>/u/1/</code> 같은 번호가 붙을 수 있음. 카치건 · 불도깨비가 목록에 보이면 맞는 계정).</p>
+<ol>
+<li><b>모든 앱</b> 화면 오른쪽 위 <b>[앱 만들기]</b></li>
+<li>앱 이름 <code>카피바라 지구를 지켜라</code><button class="cp" data-t="카피바라 지구를 지켜라">복사</button></li>
+<li>기본 언어 <b>한국어 – ko-KR</b></li>
+<li>앱 또는 게임 → <b>게임</b></li>
+<li>무료 또는 유료 → <b>무료</b> (무료로 낸 앱은 나중에 유료로 못 바꿈 — 인앱 결제는 무료 앱에서 됨)</li>
+<li>선언 두 개(개발자 프로그램 정책 · 미국 수출 법규) 체크 → 오른쪽 아래 <b>[앱 만들기]</b></li>
+</ol>
+<p>패키지 이름(<code>com.zkfpf.earthdefence</code>)은 이 화면에서 정하지 않습니다 — <b>첫 AAB 를 올리는 순간</b> 정해지고 영영 못 바꿉니다(제가 AAB 에 넣어 드림).</p>
+<div class="done">✔ 끝난 표시: 앱 대시보드가 열리고 "앱 설정" 할 일 목록이 보임 → "만들었어" 해 주세요.</div>
+</div></li>
 </ul>
+
+<h3>B. 1번 AAB 받은 뒤 (11-23 예정) — 답안 문서와 같이 드림</h3>
+<p class="note">아래는 무엇을 고르는지 미리 보시라고 적은 요약입니다. 그날엔 제가 [복사] 버튼이 붙은 <code>스토어 등록/앱_콘텐츠_답안.html</code> · <code>스토어 등록/스토어_등록정보.html</code> 을 따로 드립니다(카치건 형식). 첫 빌드 기준: 실제 광고(④ 추천대로) · 결제 코드(키 없으면 꺼짐) · 구글 로그인 없음(게스트) · 우리 서버로 보내는 데이터 없음(코드 확인 — 네트워크 코드 없음).</p>
+<ul class="todo">
+<li data-id="u-b1"><label><input type="checkbox"><span><span class="tag you">B-1</span>앱 설정(앱 콘텐츠) 11개 답하기 — 약 30분</span></label>
+<div class="steps">
+<p>들어가는 곳: 앱 대시보드 › "앱 설정" 목록의 각 줄 (또는 <span class="path">모니터링 및 개선 › 정책 및 프로그램 › 앱 콘텐츠</span> — 못 찾으면 맨 위 검색창에 "앱 콘텐츠"). 항목마다 마지막에 <b>[저장]</b>.</p>
+<table class="cmp">
+<tr><th>#</th><th>항목</th><th>답 (요약)</th><th>까닭</th></tr>
+<tr><td>1</td><td>개인정보처리방침</td><td><code>https://survival-ranking.jeongsan-license.workers.dev/earthdefence-privacy</code><button class="cp" data-t="https://survival-ranking.jeongsan-license.workers.dev/earthdefence-privacy">복사</button></td><td>제가 파일을 만들고 "배포해도 돼" 받은 뒤 올림 — <b>배포 전에 넣지 말 것</b>(주소가 안 열리면 거절)</td></tr>
+<tr><td>2</td><td>앱 액세스</td><td>"특수한 액세스 권한 없이 모든 기능 이용 가능"</td><td>게스트로 바로 시작 · 검토자에게 줄 아이디 없음</td></tr>
+<tr><td>3</td><td>광고</td><td><b>예</b></td><td>AdMob 보상형 광고(④). 광고 제거 상품이 있어도 "예"</td></tr>
+<tr><td>4</td><td>광고 ID</td><td><b>예</b> — 용도: 광고 또는 마케팅 · 애널리틱스 · 사기 예방/보안/규정 준수</td><td>AAB 에 AD_ID 권한이 들어감(제가 점검). "아니요"면 "불완전한 광고 ID 선언"</td></tr>
+<tr><td>5</td><td>콘텐츠 등급(설문)</td><td>이메일 <code>jjhfibe@gmail.com</code><button class="cp" data-t="jjhfibe@gmail.com">복사</button> · 카테고리 게임 · 폭력 <b>예</b>(사람이 아닌 대상 · 판타지 · 만화풍 · 멀리서 · 험악한 소리[보스 경고]) · 실존 동물 대상 폭력 <b>예</b>(외계 나방 · 딱정벌레 · 거미 — 보수적으로) · 디지털 구매 <b>예</b> · <b>무작위 상품 예</b>(다이아로 장비 상자) · 나머지(성 · 욕설 · 약물 · 도박 · 소통 · 위치 · 인터넷) 아니요</td><td>낮게 답했다 다르게 판정되면 등급 변경 · 게시 중단이 될 수 있어 애매하면 높게. 예상: 한국 전체이용가~12세 (확인 못 함)</td></tr>
+<tr><td>6</td><td>타겟층</td><td>13~15 · 16~17 · 18세 이상 / 어린이 관심 <b>아니요</b></td><td>13세 미만을 고르면 가족 정책 심사 · 광고 · 결제 제한</td></tr>
+<tr><td>7</td><td>데이터 보안</td><td>수집 · 공유 <b>예</b> · 전송 중 암호화 <b>예</b> · 계정: "앱에서 사용자가 계정을 만들도록 허용하지 않음" · 외부 계정 로그인 <b>아니요</b>(첫 빌드) · 삭제 요청 <b>아니요</b> · 유형 4개: 대략적인 위치 · 기기 또는 기타 ID · 앱 상호작용 · 비정상 종료 로그(모두 수집+공유 · 필수)</td><td>카치건 2번 빌드(광고 + 결제 코드, 로그인 없음) 답과 같음. <b>실제 구글 로그인 업데이트 전에</b> 이름 · 사용자 ID · 구매 내역 · 기타 작업 · 진단을 더해야 함(C-4 에 적음)</td></tr>
+<tr><td>8</td><td>판매자 상태</td><td>"판매자 상태가 이 앱에 적용됨"</td><td>사업자 계정에서 유료 상품을 팖 — 카치건 · 불도깨비와 같음</td></tr>
+<tr><td>9~11</td><td>건강 · 금융 · 정부 앱</td><td>모두 "없음 / 아니요"</td><td>인앱 결제는 금융 기능이 아님</td></tr>
+</table>
+<div class="done">✔ 끝난 표시: 대시보드 "앱 설정" 목록이 전부 초록 체크.</div>
+</div></li>
+
+<li data-id="u-b2"><label><input type="checkbox"><span><span class="tag you">B-2</span>스토어 등록정보 · 스토어 설정 — 약 15분</span></label>
+<div class="steps">
+<ol>
+<li><span class="path">사용자 늘리기 › 스토어 등재 › 기본 스토어 등록정보</span>: 앱 이름(30칸) · 간단한 설명(80칸) · 자세한 설명 — 제 문서에서 [복사] · 앱 아이콘 512 · 그래픽 이미지 1024x500 · 휴대전화 스크린샷 4~8장(1080x1920) — 제가 <code>스토어 등록/</code> 폴더에 넣어 드림 → [저장]</li>
+<li><span class="path">사용자 늘리기 › 스토어 등재 › 스토어 설정</span>: 앱 카테고리 <b>전략</b>(타워 디펜스 — 다른 안: 캐주얼) · 태그 최대 5개(목록에서) · 이메일 <code>jjhfibe@gmail.com</code> · 웹사이트 <code>https://jeongjoonghee.github.io</code><button class="cp" data-t="https://jeongjoonghee.github.io">복사</button> → [저장]</li>
+</ol>
+<p>웹사이트 칸이 필요한 까닭: AdMob 이 이 주소의 <code>/app-ads.txt</code> 를 확인합니다. 같은 AdMob 계정이라 이미 들어 있는 줄로 충분합니다(새로 올릴 것 없음).</p>
+<div class="done">✔ 끝난 표시: 두 화면 모두 저장됨 · 빨간 "필수" 표시 없음.</div>
+</div></li>
+
+<li data-id="u-b3"><label><input type="checkbox"><span><span class="tag you">B-3</span>내부 테스트로 먼저 올려 본인 폰에 설치 확인 — 약 10분 + 기다림</span></label>
+<div class="steps">
+<ol>
+<li><span class="path">테스트 및 출시 › 테스트 › 내부 테스트</span> › <b>테스터</b> 탭 › [이메일 목록 만들기] → 이름 <code>본인</code> · 본인 Gmail 한 줄 → [변경사항 저장] → 목록 체크 → [저장]</li>
+<li><b>버전</b> 탭 › [새 버전 만들기] → 앱 서명 안내가 나오면 <b>"Google Play 앱 서명 사용"</b>(구글이 앱 서명 키를 보관 — 권장, 첫 번째에만 나옴)</li>
+<li>App Bundle 칸에 제가 드린 <code>Earth_Defence/Builds/earthdefence-1.0.1.aab</code>(이름은 그날 알려 드림)를 끌어 놓기 → 올라가면 패키지 <code>com.zkfpf.earthdefence</code> · 버전 코드 1 이 보이는지 확인</li>
+<li>출시 노트 칸에 제 문서의 글 붙여넣기 → [다음] → 경고(노란색)는 읽고 넘어가도 됨, 오류(빨간색)면 멈추고 "봐줘" → [저장] → 내부 테스트는 바로 [출시] (또는 게시 개요에서 전송)</li>
+<li>테스터 탭의 <b>"웹에서 참여"</b> 링크를 폰에서 열기 → [테스터 되기] → Play 스토어에서 설치 → 켜서 타이틀 · 전투 1판 · 상점 · 광고 단추(테스트 기기면 "Test Ad")까지 확인</li>
+</ol>
+<div class="done">✔ 끝난 표시: 폰에 Play 에서 받은 앱이 설치되고 켜짐 → "설치됐어".</div>
+<div class="stuck">왜 내부 테스트부터: 검토 없이 몇 분 안에 내 폰에서 Play 판을 확인할 수 있고, 같은 번들을 비공개 트랙에 그대로 옮길 수 있어서(B-5 [라이브러리에서 추가]). 내부 테스트에 올린 버전 코드는 다시 못 쓰므로 문제가 있으면 제가 번호를 올려 다시 굽습니다.</div>
+</div></li>
+
+<li data-id="u-b4"><label><input type="checkbox"><span><span class="tag you">B-4</span>비공개 테스트 트랙 설정 (국가 · 테스터 목록)</span></label>
+<div class="steps">
+<ol>
+<li><span class="path">테스트 및 출시 › 테스트 › 비공개 테스트</span> → 기본 트랙 "비공개 테스트 - Alpha"(Closed testing - Alpha) 오른쪽 <b>[트랙 관리]</b></li>
+<li><b>국가/지역</b> 탭 › [국가/지역 추가] → <b>대한민국</b>만 → [추가]</li>
+<li><b>테스터</b> 탭:
+  <ul>
+  <li>대행업체가 <b>이메일 목록</b>을 줬으면: [이메일 목록 만들기] → 이름 <code>대행 테스터 1119</code><button class="cp" data-t="대행 테스터 1119">복사</button> → CSV 업로드(또는 쉼표로 붙여넣기) → <b>본인 Gmail · 지인(h-real) 도 같이</b> → [변경사항 저장] → 목록 체크</li>
+  <li>대행업체가 <b>구글 그룹</b> 주소를 줬으면: "Google 그룹" 고르고 그룹 이메일 입력 (본인은 위 "본인" 목록을 같이 체크)</li>
+  </ul></li>
+<li>"의견 URL 또는 이메일 주소" 칸: <code>jjhfibe@gmail.com</code><button class="cp" data-t="jjhfibe@gmail.com">복사</button> → [저장]</li>
+</ol>
+<div class="done">✔ 끝난 표시: 테스터 탭 위에 목록 이름과 인원 수(12명 이상 + 본인)가 보임.</div>
+</div></li>
+
+<li data-id="u-b5"><label><input type="checkbox"><span><span class="tag you">B-5</span>비공개 트랙에 1번 버전 올리고 검토 전송</span></label>
+<div class="steps">
+<ol>
+<li>비공개 테스트 - Alpha › [새 버전 만들기] → App Bundle 칸 오른쪽 <b>[라이브러리에서 추가]</b> → 내부 테스트에 올린 버전 1 고르기 → [출시에 추가]</li>
+<li>출시 노트(같은 글) → [다음] → [저장]</li>
+<li>왼쪽 <b>게시 개요</b> › "검토를 위해 변경사항 전송" 아래 목록(앱 설정 · 스토어 등록정보 · 비공개 테스트)이 보이는지 → 오른쪽 <b>[검토를 위해 변경사항 전송]</b> → [전송]</li>
+</ol>
+<div class="done">✔ 끝난 표시: 게시 개요 "검토 중인 변경사항"에 비공개 테스트 줄이 있음. <b>[저장]만 하고 전송을 안 누르면 그대로 멈춰 있음</b>(카치건 때 실제로 있었던 일) → "보냈어" 하면 제가 화면으로 확인.</div>
+<div class="stuck">새 앱의 첫 검토는 보통 1~3일(카치건은 하루 안). 관리형 게시가 꺼져 있으면 통과 즉시 테스터에게 열립니다.</div>
+</div></li>
+
+<li data-id="u-b6"><label><input type="checkbox"><span><span class="tag you">B-6</span>통과 뒤: 참여 링크를 대행업체에 · 14일 시작 날 적기</span></label>
+<div class="steps">
+<ol>
+<li>비공개 테스트 - Alpha › <b>테스터</b> 탭 맨 아래 <b>"테스터 참여 방법"</b> › 웹에서 참여 링크 [복사] (<code>https://play.google.com/apps/testing/com.zkfpf.earthdefence</code> 모양)</li>
+<li>대행업체에 링크 전달 (A-3 ⑦ 에서 말한 다른 것도 같이)</li>
+<li>1~2일 뒤 <span class="path">비공개 테스트 - Alpha</span> 화면(또는 대시보드 "프로덕션 액세스" 카드)에서 <b>참여 테스터 수가 12명 이상</b>이 된 날을 이 칸 의견에 적기 → 제가 14일 끝 · 마지막 빌드 날 · 신청 날을 맞춰 다시 알려 드림</li>
+</ol>
+<div class="done">✔ 끝난 표시: 대시보드 "프로덕션 액세스" 카드에 "12명 이상 테스터 참여" 줄 체크 · 14일 남은 날 표시.</div>
+</div></li>
+</ul>
+
+<h3>C. 14일 동안 (11-25 ~ 12-09)</h3>
+<ul class="todo">
+<li data-id="u-c1"><label><input type="checkbox"><span><span class="tag you">C-1</span>주 2번 점검 (월 · 목 추천, 5분)</span></label>
+<div class="steps">
+<table class="cmp">
+<tr><th>볼 곳</th><th>정상</th><th>이상하면</th></tr>
+<tr><td><span class="path">테스트 및 출시 › 테스트 › 비공개 테스트</span> 참여 테스터 수</td><td>12명 이상 그대로</td><td>줄었으면 대행업체에 바로 연락 (빠진 사람은 14일을 다시 셈)</td></tr>
+<tr><td><span class="path">테스트 및 출시 › 테스트 › 사전 출시 보고서 › 개요</span> (새 버전 올린 뒤 1시간쯤)</td><td>비정상 종료 0 · 경고는 대부분 "접근성"(글자 대비 · 단추 크기 — 출시를 막지 않음)</td><td>비정상 종료 · ANR 이 있으면 "봐줘" — 그 기기 이름 · 영상이 나옴</td></tr>
+<tr><td><span class="path">모니터링 및 개선 › Android vitals › 비정상 종료 및 ANR</span></td><td>비어 있음</td><td>숫자가 생기면 알려 주세요 — 원인부터 봄</td></tr>
+<tr><td><span class="path">모니터링 및 개선 › 평점 및 리뷰 › 테스트 의견</span> · jjhfibe 메일</td><td>(대행이라 거의 없을 것)</td><td>의견이 오면 그대로 대화창에 — 신청서 ④ 재료</td></tr>
+</table>
+</div></li>
+
+<li data-id="u-c2"><label><input type="checkbox"><span><span class="tag you">C-2</span>본인 직접 플레이 (Play 에서 받은 판) + 짧은 메모</span></label>
+<div class="steps">
+<p>신청서 "테스터 참여도 · 출시 준비 판단"에 사실대로 쓸 재료입니다. 하루 몇 판이면 충분하고, 이 칸 의견에 날짜 · 한 줄씩:</p>
+<ul>
+<li>예: <code>11-26 스테이지 1~6 · 장비 합성 · 상점 광고 상자(Test Ad) · 무한 모드 1판 — 문제 없음</code></li>
+<li>한 번씩은 꼭: 타이틀 → 게스트 시작 · 전투(카드 · 돌파 · 보스) · 장비 · 회로 · 터렛 강화 · 외형 · 도전(무한 · 엘리트) · 미션 · 출석 · 순찰 받기 · 상점(광고 2배 · 상자) · 설정 · 폰 뒤로 가기 → 종료 · 앱을 껐다 켜도 진행이 남는지</li>
+<li>업데이트가 나오면 Play 스토어 › 앱 › [업데이트] 후 같은 것 몇 개</li>
+</ul>
+<p>치트(h-cheat)로 후반을 만들어 봐도 됩니다 — 메모에 "치트로 스테이지 80 장비 맞춰 시험"처럼 적어 두면 됩니다.</p>
+</div></li>
+
+<li data-id="u-c3"><label><input type="checkbox"><span><span class="tag you">C-3</span>업데이트 올리는 법 (매번 같음 · 5분)</span></label>
+<div class="steps">
+<ol>
+<li>제가 "N번 AAB 준비됨 + 출시 노트"를 드림 (버전 코드는 매번 +1, 점검 통과한 것만)</li>
+<li><span class="path">비공개 테스트 - Alpha › [새 버전 만들기]</span> → App Bundle 업로드 → 출시 노트 붙여넣기 → [다음] → [저장]</li>
+<li><span class="path">게시 개요 › [검토를 위해 변경사항 전송]</span> → "검토 중인 변경사항"에 줄이 생겼는지 확인</li>
+</ol>
+<p>업데이트는 14일을 다시 시작하지 않습니다(날짜는 테스터 참여로 셈 — 구글 문서). 업데이트마다 짧은 검토가 있어 보통 몇 시간~하루 뒤 테스터에게 나갑니다. 데이터 보안 · 광고 같은 <b>앱 콘텐츠 답이 바뀌는 업데이트</b>는 제가 미리 말씀드리고 답을 먼저 바꾸게 합니다.</p>
+</div></li>
+
+<li data-id="u-c4"><label><input type="checkbox"><span><span class="tag you">C-4</span>실제 구글 로그인 · 클라우드 저장 (업데이트 1번째 추천) — Play 게임즈 설정 약 40분</span></label>
+<div class="steps">
+<p>앱 서명 키가 첫 업로드 뒤에 생기므로 B-3 뒤에 합니다. 카치건 11-12 에 한 순서 그대로입니다 — 그날 Chrome 으로 칸마다 같이 봅니다.</p>
+<ol>
+<li><span class="path">사용자 늘리기 › Play 게임즈 서비스 › 설정 및 관리 › 구성</span> → "Google API 를 사용하나요?" → <b>아니요</b> → <b>새 프로젝트 만들기</b>(카치건 · 불도깨비 프로젝트는 고르지 않기) → [새 클라우드 프로젝트 만들기]</li>
+<li><b>OAuth 동의 화면</b>(Google Cloud 로 넘어감): 앱 이름 · 지원 이메일 · 대상 <b>외부</b> · 브랜딩에 홈페이지 <code>https://jeongjoonghee.github.io</code> + 개인정보처리방침 주소 + 승인된 도메인 <code>jeongsan-license.workers.dev</code> · <code>jeongjoonghee.github.io</code> · 범위 <code>games</code> · <code>games_lite</code> · <code>drive.appdata</code> → <b>[앱 게시]</b>. 앱 로고는 올리지 않음(올리면 인증 심사)</li>
+<li><b>사용자 인증 정보</b> › [+ 클라이언트 만들기] → Android · 패키지 <code>com.zkfpf.earthdefence</code> · SHA-1 은 창에 나온 <b>앱 서명 키</b> 값(업로드 키와 다름 — 제가 비교해 확인)</li>
+<li>Play 게임즈 <b>속성</b>: "저장된 게임" <b>사용</b> (카치건 때 "사용 안함"으로 남아 있었던 칸) · 설명 · 카테고리 · 그래픽 이미지 1024x500 → [저장]</li>
+<li><b>[게시]</b> › [출시] → 화면 위 <b>애플리케이션 ID</b>(숫자 12자리쯤)를 이 칸 의견에</li>
+<li>업데이트를 올리기 <b>전에</b> 앱 콘텐츠 › 데이터 보안: 외부 계정 로그인 <b>예</b>(Play 게임즈) + 이름 · 사용자 ID · 구매 내역 · 기타 작업 · 진단 추가 (카치건 앱_콘텐츠_답안 ③ 과 같은 값 — 그날 표로 드림) · 방침 새 판은 제가 준비(배포는 허락 뒤)</li>
+</ol>
+<div class="done">✔ 끝난 표시: Play 게임즈 "게시됨" · App ID 를 받음 → 제가 넣고 굽고, 폰에서 로그인 · 클라우드 올리기/내려받기를 adb 로그로 확인.</div>
+</div></li>
+
+<li data-id="u-c5"><label><input type="checkbox"><span><span class="tag you">C-5</span>결제: 라이선스 키 → 상품 8개 → 라이선스 테스터(본인만) — 약 40분 + 2시간 기다림</span></label>
+<div class="steps">
+<ol>
+<li><span class="path">수익 창출 › 수익 창출 설정</span> → "Google Play 결제 › 라이선스" 의 긴 키(MIIB… 로 시작) 복사 → 프로젝트 <code>키 보관/google_play_license_key.txt</code> 로 저장 → "키 넣었어" (공개 키라 비밀은 아니지만 화면에 붙이지 않아도 됨)</li>
+<li><span class="path">수익 창출 › 제품 › 인앱 상품</span> › [상품 만들기] — 아래 8개. 제품 ID 는 <b>한 번 만들면 못 바꾸고 지워도 다시 못 씀</b> → [복사]로 정확히. 칸: 제품 ID · 이름 · 설명 · [가격 설정] 대한민국 원화 → [저장] → <b>[활성화]</b>
+<table class="cmp">
+<tr><th>제품 ID</th><th>이름</th><th>가격(원)</th></tr>
+<tr><td><code>earth_dia_80</code><button class="cp" data-t="earth_dia_80">복사</button></td><td>다이아 한 줌</td><td>1,200</td></tr>
+<tr><td><code>earth_dia_420</code><button class="cp" data-t="earth_dia_420">복사</button></td><td>다이아 주머니</td><td>5,900</td></tr>
+<tr><td><code>earth_dia_900</code><button class="cp" data-t="earth_dia_900">복사</button></td><td>다이아 상자</td><td>12,000</td></tr>
+<tr><td><code>earth_dia_1900</code><button class="cp" data-t="earth_dia_1900">복사</button></td><td>다이아 궤짝</td><td>25,000</td></tr>
+<tr><td><code>earth_dia_5000</code><button class="cp" data-t="earth_dia_5000">복사</button></td><td>다이아 산더미</td><td>59,000</td></tr>
+<tr><td><code>earth_noads</code><button class="cp" data-t="earth_noads">복사</button></td><td>광고 제거</td><td>5,900</td></tr>
+<tr><td><code>earth_dia_month</code><button class="cp" data-t="earth_dia_month">복사</button></td><td>다이아 폭탄 패키지 (월 1회)</td><td>9,900</td></tr>
+<tr><td><code>earth_gold_boost</code><button class="cp" data-t="earth_gold_boost">복사</button></td><td>골드 부스터 (30일)</td><td>9,900</td></tr>
+</table>
+가격은 지금 Shop 표 값(밸런스 마지막에 바뀔 수 있음 — 바뀌면 상품 가격만 고치면 됨, ID 는 그대로).</li>
+<li>Play Console <b>홈(앱 밖)</b> › <span class="path">설정 › 라이선스 테스트</span> → 본인 Gmail 이 든 목록 체크(카치건 때 만든 것이 있으면 그대로) · 라이선스 응답 <code>RESPOND_NORMALLY</code> → [변경사항 저장]. <b>대행 테스터는 넣지 않음</b>.</li>
+<li>상품은 만든 뒤 <b>약 2시간</b> 지나야 폰에 내려옴(카치건 실제) → 그 뒤 제가 키 넣은 빌드로 시험 결제(본인 폰 · 돈 안 나감)</li>
+</ol>
+<div class="stuck">결제 프로필 · 판매자 상태는 Cachisi 계정에 이미 있음(카치건 결제가 돌아가는 계정) — 새로 할 것 없음. 상품 메뉴가 회색이면 결제 권한이 든 빌드가 아직 안 올라간 것(1번 AAB 에 넣어 드림).</div>
+</div></li>
+</ul>
+
+<h3>D. 14일 끝 무렵 (12-06 ~ 12-09)</h3>
+<ul class="todo">
+<li data-id="u-d1"><label><input type="checkbox"><span><span class="tag you">D-1</span>마지막 빌드(치트 끔)를 비공개 트랙에 · 3일쯤 지켜보기</span></label>
+<div class="steps">
+<p>프로덕션은 <b>비공개 트랙에서 마지막으로 돌린 그 번들</b>을 그대로 [라이브러리에서 추가]로 냅니다 — 스토어 스크린샷 · 설명도 이 빌드 내용에 맞춥니다. 올린 뒤 사전 출시 보고서 · vitals 가 깨끗한지(C-1) 보고 신청.</p>
+</div></li>
+<li data-id="u-d2"><label><input type="checkbox"><span><span class="tag you">D-2</span>프로덕션 신청 (답안 문서 따로 드림 · 사실대로)</span></label>
+<div class="steps">
+<p>들어가는 곳: 앱 대시보드 › <b>"프로덕션 액세스"</b> 카드 › [프로덕션 액세스 신청] (조건 3개가 모두 체크돼야 단추가 열림). 질문은 3부 7개 — 대행 테스터 기준 답 방향:</p>
+<table class="cmp">
+<tr><th>질문</th><th>답 방향 (사실만, [ ] 는 그때 채움)</th></tr>
+<tr><td>① 테스터 모집 방법</td><td>1인 개발이라 주변 안드로이드 사용자가 적어 <b>비공개 테스트 모집 서비스</b>로 [N]명 + [본인 · 지인 N명]</td></tr>
+<tr><td>② 모집 난이도</td><td>객관식 — "보통이었음" (지난 앱들과 같음)</td></tr>
+<tr><td>③ 테스터 참여도 · 실제 사용자와 차이</td><td>모집 서비스 테스터는 <b>설치 · 실행 위주</b>로 참여했고 깊이 플레이하지는 않았다 → 그래서 개발자가 Play 테스트 판으로 [N]일 직접 플레이(C-2 메모) · 기능별 자동 플레이 시험 · 사전 출시 보고서로 전 기능을 점검 · 실제 사용자는 더 오래 키우며 후반 스테이지 · 도전 모드까지 쓸 것</td></tr>
+<tr><td>④ 의견 요약 · 모은 방법</td><td>[대행 보고서 · Play 테스트 의견 · 메일]로 받음 · 받은 의견은 [실제 받은 것만 — 없으면 "강제 종료 · 진행 막힘 보고 없음"] · 직접 플레이로 찾아 고친 것 목록</td></tr>
+<tr><td>⑤⑥⑦ 대상 · 게임 소개 · 첫해 설치 수</td><td>제가 초안 (설치 수는 가장 낮은 구간)</td></tr>
+<tr><td>⑧ 테스트 결과로 바꾼 것</td><td>버전마다 바꾼 것 — git 기록 그대로 제가 정리</td></tr>
+<tr><td>⑨ 출시 준비 판단</td><td>14일 이상 · vitals 비정상 종료 [0] · 사전 출시 보고서 [통과] · 자동 시험 [N]줄 오류 0 · 방침 갖춤</td></tr>
+</table>
+<div class="stuck">"테스트를 더 하세요"로 돌아오면: 비공개 테스트를 이어 가며(대행 연장 또는 지인 추가) 다시 신청 — 거절 메일에 적힌 이유를 대화창에 붙여 주시면 그 기준으로 다시 짭니다.</div>
+</div></li>
+</ul>
+
+<h2>제가 할 것 (결정 받는 대로)</h2>
+<table class="cmp">
+<tr><th>할 것</th><th>방법 · 대행 테스터라서 바뀐 점</th></tr>
+<tr><td>[초안] 정리</td><td>광고 [초안](폰에서 바로 보상) → 실제 광고로 · 구글 연동 [초안] → 첫 빌드는 게스트만, 설정의 구글 칸 "곧 열림" · 화면에 "[초안]" 글자 없게 + PlayTest 검사 줄</td></tr>
+<tr><td>업로드 키</td><td>새로 만들어 <code>키 보관/</code>(git 밖) + 비번.txt — USB · 클라우드 백업은 사용자 몫</td></tr>
+<tr><td>AAB 빌드 · 점검</td><td>카치건 BuildAab.cs · aab_check.py 가져와 이름만 → 패키지 · 버전 코드 · 64비트 · 서명 · AD_ID · BILLING · AdMob ID · [초안] 글자 · <b>치트 상태(테스트 판 켬 / 프로덕션용 점검은 꺼야 통과)</b></td></tr>
+<tr><td>광고 · 결제 코드</td><td>카치건 것 그대로(광고 11.5.0 + UMP · Unity IAP 5 · 키 없으면 꺼짐) → 안드로이드 컴파일 + 개발용 APK(테스트 광고)로 폰 확인</td></tr>
+<tr><td>앱 아이콘 · 스토어 그림</td><td>낙서풍 대장 카피 + 지구(햇살 줄무늬 없이) 512 · 적응형 / RunStore 촬영 → 1080x1920 스크린샷 + 1024x500</td></tr>
+<tr><td>개인정보처리방침</td><td><code>/earthdefence-privacy</code>(개발자 카치(Cachisi) · AdMob · 결제) — 파일만 준비, <b>배포는 "배포해도 돼" 뒤</b></td></tr>
+<tr><td>답안 문서</td><td>앱 콘텐츠 · 스토어 등록정보([복사] 버튼) · 출시 노트 · 나중에 프로덕션 신청 답안(사실대로 · [ ] 칸)</td></tr>
+<tr><td>세이브</td><td>테스터가 게임을 안 하니 테스트 기간엔 세이브 칸을 자유롭게 바꿈. 다만 <b>사용자 본인 폰 진행</b>과 출시 뒤를 위해 옛 세이브 읽기는 계속 지킴(⑦ 그대로)</td></tr>
+</table>
+
+<h2>정해진 결정 · 지난 판</h2>
+<details class="past"><summary>체크 · 의견 주신 결정 9개 (11-19, 키 earthdef-closed-1119)</summary>
+<table class="cmp">
+<tr><th>결정</th><th>정해진 답</th><th>의견 그대로</th></tr>
+<tr><td>① 패키지 이름</td><td><code>com.zkfpf.earthdefence</code></td><td>이대로 진행</td></tr>
+<tr><td>② 올릴 계정</td><td>Cachisi 계정에 처음부터 (앱 이전 없음)</td><td>Cachisi 계정에 올릴 예정</td></tr>
+<tr><td>③ 테스터</td><td>대행업체 · 카치건 때 명단 → 이번 판: Cachisi 계정에 목록 새로(h-list)</td><td>대행을 쓸 예정이기때문에 카치건때 명단을 그대로 쓸 예정</td></tr>
+<tr><td>⑤ 결제</td><td>첫 빌드에 결제 코드(키 없으면 꺼짐) → 이번 판: 라이선스 테스터는 본인만</td><td>추천대로 진행</td></tr>
+<tr><td>⑥ 로그인</td><td>첫 빌드 게스트만 · 실제 Play 게임즈는 업데이트로(C-4)</td><td>추천대로 진행</td></tr>
+<tr><td>⑦ 세이브</td><td>업데이트해도 진행 지키기</td><td>(체크만)</td></tr>
+<tr><td>⑧ 치트</td><td>→ 이번 판 해석: 테스트 판 켬 · 프로덕션 전 끔 (h-cheat 확인)</td><td>추가해도 무방함 // 테스터는 대행업체이며 게임을 깊게 플레이 하지 않음</td></tr>
+<tr><td>⑨ 이름 · 나라 · 언어</td><td>"카피바라 지구를 지켜라" · 대한민국 · 한국어 (h-name 확인)</td><td>카피바라 지구를 지켜라</td></tr>
+<tr><td>⑩ 업데이트 순서</td><td>주기적으로 · 콘텐츠는 테스트하며 수정 · 신청 3일 전 마지막 빌드</td><td>주기적으로 업데이트를 할 예정 // 컨텐츠는 테스트 진행하면서 수정</td></tr>
+</table>
+</details>
+<details class="past"><summary>이 판 근거 — 확인한 문서 · 사실</summary>
+<ul>
+<li>구글 answer/14151465 (11-19 다시 읽음): 12명 · 14일 연속 · 거절 사유 "12명 미만 또는 테스트 기간 중 참여 부족" · 신청서 3부(비공개 테스트 · 앱/게임 · 출시 준비) · 대행 · 유료 테스터에 대한 언급 없음.</li>
+<li>구글 answer/9842757 사전 출시 보고서: App Bundle 을 올리면 자동(기기 실험실 여유에 따라) · 보통 1시간 안 · 2일 넘게 안 끝나면 다시 업로드 · 위치 테스트 및 출시 › 테스트 › 사전 출시 보고서.</li>
+<li>AdMob answer/9691433 테스트 기기: 설정 › 테스트 기기 › [테스트 기기 추가] · 반영 최대 1시간(가끔 24시간).</li>
+<li>게임 코드: 네트워크 코드 없음 · 광고 · 결제 · Play 게임즈 패키지 아직 없음 · <code>Ads.Draft = true</code> · 상품 8개(Product 표).</li>
+<li>카치건: AdMob <code>pub-5299482082775448</code> · app-ads.txt 는 jeongjoonghee.github.io · 비공개 10-24 → 신청 11-07 → 공개 11-10 · 앱 콘텐츠 답(11-12, Cachisi).</li>
+</ul>
+</details>
+
 <p class="note">의견 읽기: <code>PYTHONUTF8=1 python tools/todo_checks.py 비공개_테스트_준비.html</code></p>
 </main>
 <script>
 (function(){
-  var KEY='earthdef-closed-1119', st={c:{},n:{}};
+  var KEY='earthdef-closed-1119b', st={c:{},n:{}};
   try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
   function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
   var items=document.querySelectorAll('ul.todo > li[data-id]');
-  function stat(){ var c=0,n=0; items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; }); document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n; }
+  function stat(){ var c=0,n=0; items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; }); var el=document.getElementById('stat'); if(el) el.textContent='체크 '+c+' / '+items.length+' · 의견 '+n; }
   items.forEach(function(li){
-    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var id=li.dataset.id, label=li.querySelector('label'), cb=label.querySelector('input');
     var row=document.createElement('div'); row.className='row'; li.insertBefore(row,label); row.appendChild(label);
     var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견'; row.appendChild(pen);
     var box=document.createElement('div'); box.className='notebox';
@@ -120,6 +396,13 @@
     cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
     ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
     pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  document.querySelectorAll('.cp').forEach(function(b){
+    b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation();
+      var t=b.dataset.t, done=function(){ b.classList.add('ok'); b.textContent='복사됨'; setTimeout(function(){ b.classList.remove('ok'); b.textContent='복사'; },1200); };
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done,function(){}); }
+      else { var x=document.createElement('textarea'); x.value=t; document.body.appendChild(x); x.select(); try{document.execCommand('copy'); done();}catch(_){} x.remove(); }
+    });
   });
   stat();
 })();

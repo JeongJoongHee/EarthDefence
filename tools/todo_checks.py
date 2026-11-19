@@ -92,7 +92,7 @@ if "c" in data or "n" in data or (not data and "data-id=\"" in doc):
     # 10-05 형식: {"c":{항목id:true}, "n":{항목id:"의견"}} — 항목id = li data-id
     checks, notes = data.get("c", {}), data.get("n", {})
     # 10-12: 단계 목록(ol.steps)이 들어 있어 여러 줄인 항목도 읽게 re.S · 공백 정리
-    items = re.findall(r'<li data-id="([^"]+)"><label><input type="checkbox"><span>(.*?)</span></label></li>', doc, re.S)
+    items = re.findall(r'<li data-id="([^"]+)"><label><input type="checkbox"><span>(.*?)</span></label>', doc, re.S)  # 11-19: label 뒤에 단계 설명(div.steps)이 붙은 항목도
     for id_, t in items:
         t = " ".join(html.unescape(re.sub("<[^>]+>", " ", t)).split())
         note = (notes.get(id_) or "").strip()
