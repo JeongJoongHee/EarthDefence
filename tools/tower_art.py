@@ -226,6 +226,73 @@ def moon_ground():
     return s
 
 
+# ------------------------------------------------------------------ 8차 수정안: 전투 바닥 = 지구
+# "전투 화면의 바닥은 지구 형태 // 지구로 보이는 이미지는 일반 행성으로 (우주 사령탑이 지구에 있고 지구로 떨어지는 운석을 막는 느낌)"
+# 캔버스는 달 바닥과 같음 (1080 x 700, 땅 = y 492 = 월드 Ground_Y). 지구 윗면 = 가운데 x EG_CX · 반지름 EG_R 의 원
+#   → 게임 World.FloorY(x) 가 같은 식 (EG_CX 월드 -3.4 · EG_R 32) — 바꾸면 같이 바꿀 것
+EG_CX, EG_R = 200, 3200
+
+
+def _land(cx_, cy_, r_, rnd, sw, flat=.8):
+    """대륙 한 덩이 (지구 earth() 와 같은 낙서풍 얼룩)"""
+    pts = []
+    for i in range(9):
+        a = math.radians(i * 40 + rnd.uniform(-12, 12)); q = r_ * rnd.uniform(.72, 1.12)
+        pts.append((cx_ + math.cos(a) * q, cy_ + math.sin(a) * q * flat))
+    mid = [((pts[i][0] + pts[(i + 1) % 9][0]) / 2, (pts[i][1] + pts[(i + 1) % 9][1]) / 2) for i in range(9)]
+    d = f'M{mid[0][0]:.1f} {mid[0][1]:.1f} ' + ' '.join(f'Q{pts[(i + 1) % 9][0]:.1f} {pts[(i + 1) % 9][1]:.1f} {mid[(i + 1) % 9][0]:.1f} {mid[(i + 1) % 9][1]:.1f}' for i in range(9)) + ' Z'
+    s = P(d, G('#a9d68c', 'v', .86, .3), sw * .75)
+    s += F(f'M{cx_ - r_ * .3:.1f} {cy_ - r_ * .25 * flat:.1f} Q{cx_:.1f} {cy_ - r_ * .45 * flat:.1f} {cx_ + r_ * .25:.1f} {cy_ - r_ * .2 * flat:.1f} Q{cx_:.1f} {cy_ - r_ * .3 * flat:.1f} {cx_ - r_ * .3:.1f} {cy_ - r_ * .25 * flat:.1f} Z', '#d7f0b8', .7)
+    return s
+
+
+def planet(px, py, pr, sw=6):
+    """일반 행성 (지구처럼 안 보이게): 차분한 살구색 줄무늬 가스 행성 + 작은 점 무늬 — 고리 없음 (하늘 그림에 고리 행성이 따로 있음)"""
+    cid = f'pclip{int(pr)}'
+    s = blur(C(px, py, pr + 26, '#ffd9c2', 0), 18, .35)
+    s += C(px, py, pr, G('#e8b9a2', 'r', .8, .32), 0)
+    s += f'<clipPath id="{cid}"><circle cx="{px}" cy="{py}" r="{pr}"/></clipPath><g clip-path="url(#{cid})">'
+    for k, (dy, h, col, op) in enumerate(((-.62, .1, '#f6d7c4', .8), (-.35, .14, '#d39a86', .7), (-.05, .08, '#f3cdb8', .7),
+                                         (.18, .16, '#c98a78', .6), (.5, .1, '#efc3ae', .7), (.75, .12, '#c48676', .55))):
+        s += f'<ellipse cx="{px}" cy="{py + dy * pr:.1f}" rx="{pr * 1.3:.1f}" ry="{h * pr:.1f}" fill="{col}" opacity="{op}" transform="rotate(-8 {px} {py})"/>'
+    s += E(px + pr * .32, py + pr * .22, pr * .14, pr * .08, '#b9786a', 0)          # 큰 점 (폭풍)
+    s += f'<circle cx="{px + pr * .5:.1f}" cy="{py + pr * .45:.1f}" r="{pr * 1.0:.1f}" fill="#2c3a78" opacity=".22"/>'   # 밤 그늘
+    s += '</g>' + C(px, py, pr, 'none', sw)
+    s += f'<circle cx="{px}" cy="{py}" r="{pr - sw * 1.3:.1f}" fill="none" stroke="#fff0e4" stroke-width="{sw * .6:.1f}" opacity=".5"/>'
+    return s
+
+
+def earth_ground():
+    """8차 전투 바닥: 큰 지구 윗면 (바다 · 대륙 · 구름 · 대기 빛) + 오른쪽 뒤로 떠오르는 일반 행성 (캔버스 1080 x 700, 땅 = y 492)"""
+    g, cx, R = GM_G, EG_CX, EG_R
+    cy = g + R
+
+    def surf(x): return cy - math.sqrt(max(0, R * R - (x - cx) ** 2))
+    s = planet(880, g - 30, 190)
+    s += blur(C(cx, cy, R + 30, '#9fd8ff', 0), 16, .55)                      # 대기 빛
+    gid = 'egOcean'
+    A._DEFS[gid] = ('<linearGradient id="egOcean" x1="0" y1="0" x2="0" y2="1">'
+                    f'<stop offset="0" stop-color="#9fd3f2"/><stop offset=".3" stop-color="#7fc0e8"/><stop offset="1" stop-color="#4f8fc4"/></linearGradient>')
+    s += f'<clipPath id="egClip"><circle cx="{cx}" cy="{cy}" r="{R}"/></clipPath><g clip-path="url(#egClip)">'
+    s += f'<rect x="-20" y="{g - 10}" width="1120" height="{GM_H - g + 40}" fill="url(#egOcean)"/>'
+    rnd = random.Random(21)
+    for x, dy, r_ in ((70, 70, 120), (400, 95, 150), (700, 150, 105), (960, 120, 140), (250, 175, 70), (560, 200, 60)):
+        s += _land(x, surf(x) + dy, r_, rnd, 7, .55)
+    for _ in range(8):                                                       # 구름 띠
+        x = rnd.uniform(0, 1080); y = surf(x) + rnd.uniform(20, 160)
+        w_, h_ = rnd.uniform(70, 150), rnd.uniform(9, 15)
+        s += f'<ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{w_:.1f}" ry="{h_:.1f}" fill="#ffffff" opacity=".7" transform="rotate({rnd.uniform(-6, 6):.1f} {x:.1f} {y:.1f})"/>'
+    gid2 = 'egShade'
+    A._DEFS[gid2] = ('<linearGradient id="egShade" x1="0" y1="0" x2="0" y2="1">'
+                     '<stop offset="0" stop-color="#2c3a78" stop-opacity="0"/><stop offset=".55" stop-color="#2c3a78" stop-opacity="0"/>'
+                     '<stop offset="1" stop-color="#2c3a78" stop-opacity=".35"/></linearGradient>')
+    s += f'<rect x="-20" y="{g - 10}" width="1120" height="{GM_H - g + 40}" fill="url(#egShade)"/>'   # 아래로 갈수록 살짝 어둡게 (둥근 느낌)
+    s += '</g>'
+    s += C(cx, cy, R, 'none', 7)
+    s += f'<circle cx="{cx}" cy="{cy}" r="{R - 9}" fill="none" stroke="#e4f6ff" stroke-width="5" opacity=".6"/>'   # 윗면 빛 줄
+    return s
+
+
 # ------------------------------------------------------------------ 7차 수정안: 로비 (사령탑 없이 · 심플한 하늘 · 큰 지구)
 LE_W, LE_H, LE_TOP, LE_R = 1080, 760, 100, 780     # 로비 지구: 캔버스 1080 x 760 · 지구 꼭대기 y 100 · 반지름 780 (월드 7.8)
 

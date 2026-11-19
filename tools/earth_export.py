@@ -82,6 +82,8 @@ def export_tower():
         out('Bg', f'tower_{fid}', Rr(TA.tower(fid), TA.TW, TA.TH, A.WOB['ui'], .02))
         out('Icon', f'frame_{fid}', Rr(TA.frame_icon(fid), 380, 210, A.WOB['icon'], .02))
     out('Bg', 'ground_moon', Rr(TA.moon_ground(), 1080, TA.GM_H, A.WOB['bg'] * .6, .01))
+    # 8차: 전투 바닥 = 지구 윗면 + 뒤 일반 행성 (World.cs 가 Bg/ground_earth 를 씀 — ground_moon 은 예전 판으로 남김)
+    out('Bg', 'ground_earth', Rr(TA.earth_ground(), 1080, TA.GM_H, A.WOB['bg'] * .5, .008))
     # 7차 수정안: 로비 큰 지구 · 별똥별 · 전투 달
     out('Bg', 'earth_big', Rr(TA.lobby_earth(), TA.LE_W, TA.LE_H, A.WOB['bg'] * .5, .008))
     out('Bg', 'shooting_star', Rr(TA.shooting_star(), 360, 64, 0, .02))

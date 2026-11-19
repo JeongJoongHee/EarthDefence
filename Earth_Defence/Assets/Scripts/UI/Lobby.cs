@@ -189,6 +189,14 @@ namespace EarthDef
         {
             if (!startRT || UIRoot.I == null || World.I == null) return;
             var page = (RectTransform)startRT.parent;
+            if (Tables.Ci("Lobby_Btn_Bottom", 1) == 1)
+            {   // 8차 수정안 "로비에서 전투 시작과 순찰 보상도 하단에 배치": 아래 탭 바로 위 (순찰 아래 · [전투 시작] 그 위)
+                float yb = Tables.Cf("Lobby_Btn_Gap", 24f);
+                if (Mathf.Abs(patrolRT.anchoredPosition.y - yb) < 0.01f && Mathf.Abs(patrolRT.anchoredPosition.x) < 0.01f) return;
+                patrolRT.anchoredPosition = new Vector2(0, yb);
+                startRT.anchoredPosition = new Vector2(0, yb + 150 + 18);
+                return;
+            }
             // 11-18 사령탑: 돔이 없어져 사령탑 오른쪽 하늘 가운데(Lobby_Btn_X)에 — 높이는 예전 돔 꼭대기 그대로
             // 7차: 로비에서 사령탑을 빼고 큰 지구 → 가운데(Lobby_Btn_X 0) · 지구 위 대장 카피 머리 위(Dome_Top_Y)
             var sp = World.I.cam.WorldToScreenPoint(new Vector3(Tables.Cf("Lobby_Btn_X", 0f), Tables.Cf("Dome_Top_Y", -2f), 0));

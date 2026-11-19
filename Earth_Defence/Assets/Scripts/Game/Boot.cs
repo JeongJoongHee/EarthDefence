@@ -34,6 +34,7 @@ namespace EarthDef
                 es.AddComponent<StandaloneInputModule>();
             }
             UIRoot.Build(cam);
+            gameObject.AddComponent<BackKey>();     // 8차 "종료 기능": 폰 뒤로 가기
             Game.ToTitle();     // 7차 수정안: 타이틀 → [게임 시작] → 구글 연동 / 게스트 → 로비
             BootMs = sw.Elapsed.TotalMilliseconds;
         }

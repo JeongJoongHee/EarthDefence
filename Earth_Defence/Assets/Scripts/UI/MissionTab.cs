@@ -113,13 +113,51 @@ namespace EarthDef
     /// <summary>
     /// 설정 (2차): 배경음 · 효과음 · 진동 · 피해 숫자 (6차 수정안: 프레임 · 도움말 다시 보기 제거) · 구글 계정 · 클라우드 [초안].
     /// </summary>
+    /// <summary>8차 수정안 "종료 기능 추가": 게임 종료 확인 창 (설정 [게임 종료] · 로비 · 타이틀에서 폰 뒤로 가기)</summary>
+    public static class Quit
+    {
+        public static bool Requested;    // 시험용 (에디터에선 Application.Quit 이 아무 일도 안 함)
+        public static void Ask()
+        {
+            if (Popup.Open != null && Popup.Open.name.StartsWith("Popup_" + L.T("quit_title"))) return;
+            var p = Popup.Make(L.T("quit_title"), 760, 460);
+            p.Text(L.T("quit_ask"), 150, 40, Art.Ink, 80);
+            p.Btn("btn_cream", L.T("cancel"), -170, 60, 300, p.Close);
+            var ok = p.Btn("btn_red", L.T("quit_btn"), 170, 60, 300, Now); ok.name = "QuitOk";
+        }
+        public static void Now()
+        {
+            Requested = true;
+            SaveData.Cur?.Save();
+#if UNITY_EDITOR
+            Debug.Log("[Quit] 게임 종료 (에디터에선 끄지 않음)");
+#else
+            Application.Quit();
+#endif
+        }
+    }
+
+    /// <summary>폰 뒤로 가기 (= Escape): 창이 있으면 닫기(닫기 단추가 있는 창만) · 전투 중이면 일시정지 · 로비는 다른 탭이면 전투 탭으로 · 그 밖엔 종료 확인</summary>
+    public class BackKey : MonoBehaviour
+    {
+        public static void Press()
+        {
+            var op = Popup.Open;
+            if (op != null) { if (op.CanClose) op.Close(); return; }
+            if (Game.BattleUI != null) { if (Battle.I != null && Battle.I.st == Battle.St.Play) Game.BattleUI.ShowPause(); return; }
+            if (Game.Lobby != null && Game.Lobby.tab != 0) { Game.Lobby.SetTab(0); return; }
+            Quit.Ask();
+        }
+        void Update() { if (Input.GetKeyDown(KeyCode.Escape)) Press(); }
+    }
+
     public static class Settings
     {
         static SaveData S => SaveData.Cur;
         public static void Open()
         {
             // 6차 수정안: "프레임 60" · "도움말 다시 보기" 제거 → 창 높이를 줄임 (프레임은 늘 60)
-            var p = Popup.Make(L.T("settings"), 900, Cheat.Enabled ? 1080 : 960, () => S.Save());
+            var p = Popup.Make(L.T("settings"), 900, Cheat.Enabled ? 1190 : 1070, () => S.Save());      // 8차: [게임 종료] 한 줄 더
             float y = 140;
             Volume(p, ref y, L.T("set_bgm"), "music", () => S.bgm, v => S.bgm = v);
             Volume(p, ref y, L.T("set_sfx"), "sound", () => S.sfx, v => S.sfx = v);
@@ -141,10 +179,13 @@ namespace EarthDef
             ((RectTransform)ld.transform).TL(460, y, 380, 96);
             y += 110;
             p.Text(L.T("cloud_draft"), y, 24, Art.Soft);
+            // 8차 수정안 "종료 기능 추가": [게임 종료] → 확인 창 (폰 뒤로 가기로도 — BackKey)
+            var qb = UIKit.Btn(p.win, "btn_red", L.T("quit_btn"), 32, () => { p.Close(); Quit.Ask(); }, "Quit");
+            ((RectTransform)qb.transform).TL(60, y + 70, 780, 96);
             if (Cheat.Enabled)
             {   // 11-17 치트 (시험용 — 에디터 · 개발용 빌드 · Config Cheat_On 1 일 때만)
                 var ch = UIKit.Btn(p.win, "btn_gray", L.T("cheat_btn"), 30, () => { p.Close(); Cheat.Open(); }, "Cheat");
-                ((RectTransform)ch.transform).TL(60, y + 80, 780, 90);
+                ((RectTransform)ch.transform).TL(60, y + 186, 780, 90);
             }
         }
 

@@ -538,10 +538,21 @@ namespace EarthDef
         public float Face => face;
         void Start() { rt = (RectTransform)transform; p0 = rt.anchoredPosition; Next(); }
         void Next() { target = new Vector2(Random.Range(-Range.x, Range.x), Random.Range(-Range.y, Range.y)); wait = Random.Range(2.2f, 3.6f); }
+        /// <summary>8차 수정안 "대장 카피가 좌우로 바뀌는 게 아니라 제자리에서 둥실둥실 뜨는 느낌" — 1 = 제자리(위아래로만 둥실 · 몸은 늘 오른쪽) · 0 = 7차처럼 떠다님</summary>
+        public static bool InPlace = true;
         void Update()
         {
             float dt = Mathf.Min(Time.unscaledDeltaTime, 0.05f);
             t += dt;
+            if (InPlace)
+            {   // 위아래 둥실(느린 큰 물결 + 빠른 작은 물결) + 아주 살짝 기울기 — 뒤집지 않음
+                pos = new Vector2(0, Mathf.Sin(t * 1.5f) * 16f + Mathf.Sin(t * 3.1f) * 3f);
+                face = 1;
+                rt.anchoredPosition = p0 + pos;
+                rt.localScale = Vector3.one;
+                rt.localEulerAngles = new Vector3(0, 0, Mathf.Sin(t * 0.9f) * 3f);
+                return;
+            }
             if ((wait -= dt) <= 0) Next();
             pos = Vector2.SmoothDamp(pos, target, ref vel, 1.4f, 90f, dt);
             if (Mathf.Abs(vel.x) > 6f) face = Mathf.MoveTowards(face, vel.x < 0 ? -1 : 1, dt * 3f);

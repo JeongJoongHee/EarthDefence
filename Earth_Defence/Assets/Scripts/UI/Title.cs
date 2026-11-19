@@ -36,8 +36,10 @@ namespace EarthDef
             var b = UIKit.Label(logo, L.T("title_line2"), 128, Art.Gold); b.rectTransform.Place(0.5f, 0.5f, new Vector2(0, -50), new Vector2(1000, 170), new Vector2(0.5f, 0.5f)); b.name = "Line2";
             var sub = UIKit.Label(logo, L.T("title_sub"), 34, Art.Sky); sub.rectTransform.Place(0.5f, 0.5f, new Vector2(0, -160), new Vector2(1000, 50), new Vector2(0.5f, 0.5f));
 
-            var start = UIKit.Btn(root, "btn_green", L.T("title_start"), 64, OnStart, "Start");
-            ((RectTransform)start.transform).Place(0.5f, 0, new Vector2(0, 0), new Vector2(640, 170), new Vector2(0.5f, 0));
+            // 8차 수정안 "게임 시작 버튼 하단에 배치 · 크기 0.7배" (Config Title_Btn_Scale · Title_Btn_Bottom)
+            float k = Tables.Cf("Title_Btn_Scale", 0.7f);
+            var start = UIKit.Btn(root, "btn_green", L.T("title_start"), Mathf.RoundToInt(64 * k), OnStart, "Start");
+            ((RectTransform)start.transform).Place(0.5f, 0, new Vector2(0, Tables.Cf("Title_Btn_Bottom", 230f)), new Vector2(640 * k, 170 * k), new Vector2(0.5f, 0));
             startRT = (RectTransform)start.transform;
             var ver = UIKit.Label(root, "v" + Application.version, 26, new Color(1, 1, 1, 0.55f), TextAnchor.LowerRight, false);
             ver.rectTransform.Place(1, 0, new Vector2(-24, 18), new Vector2(300, 40), new Vector2(1, 0));
@@ -45,10 +47,11 @@ namespace EarthDef
         }
 
         RectTransform startRT;
-        /// <summary>[게임 시작] = 지구 위 대장 카피 머리 위 (로비 [전투 시작]과 같은 자리 기준 Dome_Top_Y)</summary>
+        /// <summary>[게임 시작] = 7차: 지구 위 대장 카피 머리 위 (Dome_Top_Y) → 8차: 화면 아래 (Title_Btn_Bottom, Config Lobby_Btn_Bottom 0 이면 7차 자리)</summary>
         void PlaceStart()
         {
             if (!startRT || World.I == null) return;
+            if (Tables.Ci("Lobby_Btn_Bottom", 1) == 1) return;      // 8차: 아래 고정 (Build 에서 놓은 자리)
             var sp = World.I.cam.WorldToScreenPoint(new Vector3(0, Tables.Cf("Dome_Top_Y", -2f), 0));
             var ucam = UIRoot.I.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : UIRoot.I.canvas.worldCamera;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, sp, ucam, out var lp)) return;

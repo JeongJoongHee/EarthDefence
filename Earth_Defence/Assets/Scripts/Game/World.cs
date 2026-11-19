@@ -55,6 +55,10 @@ namespace EarthDef
         public static Vector2 FieldCenter => new((ShieldX + HalfW) * 0.5f, 1.5f);
         /// <summary>기지 효과(회복 · 얼림 · 부활)가 퍼지는 곳 = 사령실 앞</summary>
         public static Vector2 BaseCenter => new(-3.4f, GroundY + 5.2f);
+        /// <summary>8차 전투 바닥 = 큰 지구 윗면: 가운데 x EG_CX · 반지름 EG_R (그림 tools/tower_art.py earth_ground 의 EG_* 와 같게).
+        /// 사령탑(왼쪽)은 Ground_Y 그대로, 오른쪽으로 갈수록 둥글게 내려감 → 낙뢰 · 장판 아래 끝을 이 높이에</summary>
+        public const float EG_CX = -3.4f, EG_R = 32f;
+        public static float FloorY(float x) { float dx = x - EG_CX; return GroundY - (EG_R - Mathf.Sqrt(Mathf.Max(0, EG_R * EG_R - dx * dx))); }
         /// <summary>화면 안 (적을 노릴 수 있음): 위 UI 아래 · 오른쪽 끝 안쪽</summary>
         public static bool OnField(Vector2 p) => p.y < SpawnY - 0.3f && p.x < HalfW - 0.15f;
         /// <summary>7차 "떨어지는 별똥별(적)은 Lv 게이지 밑부터 Fade in": 이 높이(위 UI 아래 끝 = Lv 게이지 아래)부터 나타나기 시작</summary>
@@ -91,7 +95,9 @@ namespace EarthDef
             rabbit = Spr("MoonRabbit", Art.Get("Bg/moon_rabbit_0", 100f), Vector2.zero, -98);
             PlaceMoon();
             // 11-18: 풀밭 + 돔 → 달 바닥(지평선 위 지구) + 왼쪽 벽 사령탑. 7차: 땅 그림 1080x700 = 월드 y -9.6 ~ -2.6 (지구를 크게)
-            ground = Spr("Ground", Art.Get("Bg/ground_moon", 100f), new Vector2(0, Bottom + 3.5f), -50);
+            // 8차 "전투 화면의 바닥은 지구 형태 · 지구로 보이는 그림은 일반 행성으로 (사령탑이 지구에 있고 지구로 떨어지는 운석을 막는 느낌)"
+            //   → 바닥 = 큰 지구의 둥근 윗면(Bg/ground_earth, 왼쪽 사령탑 자리는 평평 · 오른쪽으로 갈수록 둥글게 내려감) + 뒤 하늘에 일반 행성
+            ground = Spr("Ground", Art.Get("Bg/ground_earth", 100f), new Vector2(0, Bottom + 3.5f), -50);
             towerGlow = Spr("TowerGlow", Art.Fx("glow"), new Vector2(-4.9f, GroundY + 6f), -41);
             towerGlow.transform.localScale = new Vector3(4f, 16f, 1); towerGlow.color = new Color(1, 1, 1, 0);
             tower = Spr("Tower", TowerSprite("Bg/tower"), new Vector2(-HalfW, GroundY), -40);
@@ -125,11 +131,14 @@ namespace EarthDef
             if (on) ShowSlots(false);
         }
 
-        /// <summary>달: 사령탑 위 왼쪽 위 — 위 UI(Lv 게이지) 아래, 안테나 위</summary>
+        /// <summary>달: 7차 = 사령탑 위 왼쪽 위 → 8차 "달토끼는 우측 상단 (어느 정도 운석을 가려도 괜찮음)" = 오른쪽 위 (Moon_X 4.3) — 위 UI(Lv 게이지) 아래.
+        /// 운석 · 탄보다 뒤에 그림(하늘 그림 바로 앞) → 운석이 달 앞을 지나감</summary>
         void PlaceMoon()
         {
-            float y = Mathf.Max(PlayTop - Tables.Cf("Moon_Below_Hud", 0.95f), TowerTop + 1.85f);
-            var p = new Vector2(Tables.Cf("Moon_X", -4.45f), y);
+            float mx = Tables.Cf("Moon_X", 4.3f);
+            float y = PlayTop - Tables.Cf("Moon_Below_Hud", 1.05f);
+            if (mx < SlotXPos + 1f) y = Mathf.Max(y, TowerTop + 1.85f);      // 왼쪽(사령탑 위)이면 안테나보다 위
+            var p = new Vector2(mx, y);
             moon.transform.position = p;
             rabbit.transform.position = p;      // 달토끼 그림 160x160 의 가운데 = 달 가운데
         }
@@ -147,10 +156,11 @@ namespace EarthDef
                 starT = Random.Range(Tables.Cf("Shoot_Star_Gap_Min", 1.2f), Tables.Cf("Shoot_Star_Gap_Max", 3.2f));
                 var st = stars.Find(x => !x.sr.enabled);
                 if (st == null) { st = new Star { sr = Spr("ShootStar", Art.Get("Bg/shooting_star", 100f, new Vector2(320f / 360f, 0.5f)), Vector2.zero, -90) }; stars.Add(st); }
-                float ang = Random.Range(200f, 222f) * Mathf.Deg2Rad, sp = Random.Range(9f, 13f);
+                // 8차 수정안 "떨어지는 별똥별은 조금 더 천천히" (타이틀 · 로비): 9~13 → Shoot_Star_Speed 4.5~6.5 · 보이는 시간은 그만큼 길게
+                float ang = Random.Range(200f, 222f) * Mathf.Deg2Rad, sp = Random.Range(Tables.Cf("Shoot_Star_Speed_Min", 4.5f), Tables.Cf("Shoot_Star_Speed_Max", 6.5f));
                 st.p = new Vector2(Random.Range(-3f, HalfW + 1.5f), Random.Range(EarthTop + 4f, Top - 1f));
                 st.v = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * sp;
-                st.t = 0; st.life = Random.Range(0.7f, 1.1f);
+                st.t = 0; st.life = Random.Range(Tables.Cf("Shoot_Star_Life_Min", 1.3f), Tables.Cf("Shoot_Star_Life_Max", 2.0f));
                 st.sr.enabled = true;
                 st.sr.transform.rotation = Quaternion.Euler(0, 0, ang * Mathf.Rad2Deg);
                 st.sr.transform.localScale = Vector3.one * Random.Range(0.7f, 1.1f);

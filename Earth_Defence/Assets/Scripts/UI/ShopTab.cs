@@ -308,9 +308,10 @@ namespace EarthDef
             var r = UIKit.Panel(list, "card", "S_" + k.id); r.rectTransform.TL(20, y, 960, 190);
             // 6차 수정안 "터렛 외형은 변경되는 이미지만 사용": 바뀐 그림 한 장만 (예전 = 원래 그림 + 바뀐 그림)
             var b2 = UIKit.Tile(r.transform, "slot", Color.white, Art.TurretSkinUI(t.art), 0.86f, "After"); b2.rectTransform.TL(20, 15, 160, 160);
-            UIKit.Label(r.transform, $"{k.name}  ({t.name})", 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(200, 14, 520, 50);
-            UIKit.Label(r.transform, $"{L.T("ult")}: {k.ultName} - {k.ultDesc}", 22, Art.Purple, TextAnchor.UpperLeft, false).rectTransform.TL(200, 66, 520, 60);
-            UIKit.Label(r.transform, L.F("skin_bonus", t.name, k.dmg), 20, Art.Soft, TextAnchor.UpperLeft, false).rectTransform.TL(200, 126, 520, 50);
+            // 8차 수정안 "외형에서 추가 설명을 간소화 (짧고 간결하게)": 이름 · 필살기 이름 · 보유 효과 세 줄 (필살기 긴 설명은 뺌)
+            UIKit.Label(r.transform, $"{k.name}  ({t.name})", 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(200, 20, 520, 50);
+            UIKit.Label(r.transform, L.F("skin_ult", k.ultName), 28, Art.Purple, TextAnchor.MiddleLeft, false).rectTransform.TL(200, 76, 520, 44);
+            UIKit.Label(r.transform, L.F("skin_bonus", t.name, k.dmg), 26, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(200, 124, 520, 44);
             foreach (var x in r.GetComponentsInChildren<Text>()) x.horizontalOverflow = HorizontalWrapMode.Wrap;
             bool has = S.HasSkin(k.turret), on = S.SkinOn(k.turret);
             Button btn;
@@ -337,8 +338,9 @@ namespace EarthDef
             var ic = UIKit.Tile(r.transform, "slot", Color.white, Art.FrameIcon(f), 0.9f, "Icon"); ic.rectTransform.TL(16, 16, 236, 138);   // 돔 그림은 가로로 길어서 칸도 가로로
             ic.transform.Find("Icon").GetComponent<Image>().preserveAspect = true;
             UIKit.Label(r.transform, f.name + (star > 0 && f.id != "basic" ? "  " + L.F("frame_star", star) : ""), 34, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(270, 14, 440, 50);
-            var d = UIKit.Label(r.transform, f.Desc(Mathf.Max(1, star)), 24, Art.Soft, TextAnchor.UpperLeft, false);
-            d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(270, 68, 440, 90);
+            // 8차: 설명은 짧게 한 줄 (Frame.xlsx Desc 를 줄임 — tools/fix8_tables.py)
+            var d = UIKit.Label(r.transform, f.Desc(Mathf.Max(1, star)), 28, Art.Soft, TextAnchor.UpperLeft, false);
+            d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(270, 76, 440, 80);
             if (star <= 0)
             {
                 var b = UIKit.Btn(r.transform, S.dia >= f.price ? "btn_green" : "btn_gray", null, 30, () => { if (!Store.BuyFrame(f)) { Toast.Show(L.T("no_dia")); return; } changed?.Invoke(); }, "Buy");

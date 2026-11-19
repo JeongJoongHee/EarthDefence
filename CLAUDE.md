@@ -1,5 +1,14 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-19 밤 — 8차 수정안 반영 끝)
+- 요청 = `요청 사항/8차 수정안.docx` (12줄 + 결과 창 그림). 보고 = `8차_수정안_결과.html` (키 earthdef-req8-1119, 캡처 `캡쳐본 모음/8차_수정안_캡처/`, 전 = before_*). 의견 읽기 `PYTHONUTF8=1 python tools/todo_checks.py 8차_수정안_결과.html`.
+- 시험: 기본 137 · 시험장 13 · 3차 107 · 7차 24 · **8차 28 (`PlayTest.RunR8`, Editor/PlayTest8.cs)** 오류 0. 기본 시험 "스테이지 1 보상 · 다음 스테이지 열림" 이 한 번 실패 → 다시 돌리니 통과(원인 못 찾음, 메시지에 best · stage · 골드 · 첫 클리어 값을 찍게 해 둠). **시험 도는 중 스크립트를 고치면 Unity 가 다시 읽어 시험이 깨짐 — 기다릴 땐 파일 손대지 말 것.**
+- 바뀐 것: 타이틀 [게임 시작] 아래 · 0.7배(Title_Btn_Bottom · Title_Btn_Scale) · 로비 [전투 시작] · 순찰 아래 탭 바로 위(Lobby_Btn_Bottom 1 · Lobby_Btn_Gap) · 별똥별 느리게(Shoot_Star_Speed_* 4.5~6.5 · Shoot_Star_Life_*) · 달토끼 오른쪽 위(Moon_X 4.3, 운석보다 뒤) · 전투 바닥 = 지구 윗면 Bg/ground_earth + 일반 행성(tower_art.earth_ground · planet, World.FloorY = EG_CX -3.4 · EG_R 32) · 끈끈이 장판 세로(Field_Vertical 1, Battle.CrowdX, 필살기도) · 전투 위 줄 "약점 X"(BattleUI Weak · WeakLabel) · 결과 창 RewardBox · 장비 탭 Float2D.InPlace(제자리 위아래) · 외형 설명 짧게(Frame Desc · skin_ult · skin_bonus) · 종료(설정 [게임 종료] → Quit.Ask · 폰 뒤로 가기 BackKey · Popup.CanClose).
+- 표 = tools/fix8_tables.py (Config 11 · 글자 6 · Frame 설명 7 · 드론 설명) · 보고서 = tools/report8.py <before 폴더> <숫자 5개>.
+- 해석(보고 첫머리): 달은 운석보다 뒤 · 지구 그림 → 살구색 줄무늬 행성(고리 없음) · 종료 = 설정 + 뒤로 가기 · 세로 장판 밸런스는 3차 재측정 때.
+- 상태: 커밋함 · **push 는 사용자 몫** — 재개 때 `git status -sb` 로 확인 · Unity 닫힘.
+- **재개 첫 순서**: ① 8차 결과 의견 읽기 → 반영 ② 7차 결과 의견(아직 비어 있음) ③ `비공개_테스트_준비.html` 결정(아래 11-19 메모) ④ 전투UI_제안 · 밸런스 3차 재측정.
+
 ## ▶ 재개 메모 (2026-11-19 — 비공개 테스트 준비)
 - 사용자 "지금 비공개 테스트 열고 테스트 기간에 UI · 밸런스 · 콘텐츠 해도 되나?" → 된다(구글 answer/14151465: 14일은 테스터 참여로 셈 · 업데이트 권함 · 신청서가 "바꾼 것"을 물음). 결정 문서 = `비공개_테스트_준비.html` (키 earthdef-closed-1119, 결정 10 + 직접 3).
 - 찾은 것: 폰에서도 광고 [초안] = 바로 보상(Ads.Draft true) · 구글 연동 가짜("draft-user") · 결제는 폰에서 꺼짐 · 개발용 키 · 아이콘 기본 · AAB 도구 없음 · 광고/결제/GPGS 패키지 없음.

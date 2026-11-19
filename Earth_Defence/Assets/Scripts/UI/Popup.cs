@@ -14,12 +14,14 @@ namespace EarthDef
         public static Popup Open { get { for (int i = stack.Count - 1; i >= 0; i--) { if (stack[i] && !stack[i].closed) return stack[i]; stack.RemoveAt(i); } return null; } }
         Action onClose;
         float t;
+        /// <summary>8차: 닫기(X) 단추가 있는 창 = 폰 뒤로 가기로 닫힘</summary>
+        public bool CanClose { get; private set; }
 
         public static Popup Make(string title, float w, float h, Action onClose = null, bool closeBtn = true, float y = 0.53f)
         {
             var root = UIKit.Rect(UIRoot.I.popups, "Popup_" + title).Fill();
             var p = root.gameObject.AddComponent<Popup>();
-            p.onClose = onClose;
+            p.onClose = onClose; p.CanClose = closeBtn;
             var dim = UIKit.Plain(root, new Color(0.08f, 0.07f, 0.16f, 0.6f), "Dim"); dim.rectTransform.Fill(); dim.raycastTarget = true;
             p.win = UIKit.Panel(root, "window", "Window").rectTransform;
             p.win.Place(0.5f, y, Vector2.zero, new Vector2(w, h), new Vector2(0.5f, 0.5f));

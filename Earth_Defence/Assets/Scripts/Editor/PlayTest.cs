@@ -44,6 +44,8 @@ namespace EarthDef.EditorTools
         public static void RunBal() => Start("bal");
         /// <summary>11-18 7차 수정안 시험 (Editor/PlayTest7.cs): 타이틀 · 입장 · 로비 큰 지구 · 별똥별 · 전투 배치 · 달토끼 · 적 Fade in · 장비 탭 · 자리 고르기</summary>
         public static void RunR7() => Start("r7");
+        /// <summary>11-19 8차 수정안 시험 (Editor/PlayTest8.cs): 타이틀 · 로비 단추 아래 · 별똥별 느리게 · 달토끼 오른쪽 위 · 지구 바닥 · 끈끈이 세로 · 전투 약점 · 결과 보상 칸 · 장비 탭 제자리 · 외형 설명 · 종료</summary>
+        public static void RunR8() => Start("r8");
 
         static void Start(string mode)
         {
@@ -86,8 +88,8 @@ namespace EarthDef.EditorTools
             string mode = SessionState.GetString(PlayTest.ModeKey, "");
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
             Battle.NoSlotPick = true;      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
-            if (mode != "r7" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : Steps());
+            if (mode != "r7" && mode != "r8" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -491,11 +493,12 @@ namespace EarthDef.EditorTools
                 var hv = Object.FindAnyObjectByType<Float2D>(); var hrt = hv ? (RectTransform)hv.transform : null;
                 Vector2 hvP0 = hrt ? hrt.anchoredPosition : Vector2.zero;
                 Capture("90_gear_capy_a");
-                for (int f = 0; f < 12; f++) { yield return Wait(0.3f); Capture($"90_capy_{f:00}"); }    // 보고서 GIF 용 (0.3초 간격)
+                float hvMove = 0;
+                for (int f = 0; f < 12; f++) { yield return Wait(0.3f); Capture($"90_capy_{f:00}"); if (hrt) hvMove = Mathf.Max(hvMove, (hrt.anchoredPosition - hvP0).magnitude); }    // 보고서 GIF 용 (0.3초 간격) · 8차: 제자리 위아래 둥실이라 끝 자리 대신 사이 최대 움직임
                 Capture("90_gear_capy_b");
                 var hvImg = hv ? hv.GetComponent<Image>() : null;
-                Check(hv != null && (hrt.anchoredPosition - hvP0).magnitude > 4f && hvImg.sprite.name.EndsWith("guardian_float") && Object.FindAnyObjectByType<GearTab>().GetComponentsInChildren<Mask>().Length == 0,
-                      $"장비 탭 카피바라 2D 로 둥실둥실 · 총 없는 그림 (움직임 {(hrt ? (hrt.anchoredPosition - hvP0).magnitude : 0):0} · {(hvImg ? hvImg.sprite.name : "-")})");
+                Check(hv != null && hvMove > 4f && hvImg.sprite.name.EndsWith("guardian_float") && Object.FindAnyObjectByType<GearTab>().GetComponentsInChildren<Mask>().Length == 0,
+                      $"장비 탭 카피바라 2D 로 둥실둥실 · 총 없는 그림 (움직임 {hvMove:0} · {(hvImg ? hvImg.sprite.name : "-")})");
                 // 10) 무한 모드: 레벨업 창이 덜 자주 (3분 동안 연 창 수 예전 ↔ 지금)
                 double mulNew = Tables.C("Endless_Exp_Mul", 1), gapNew = Tables.C("Endless_Pick_Gap", 0);
                 // 몇 가지 조합을 재서 로그에 남김 (마지막 = 지금 표 값). 같은 씨앗 · 스테이지 15 (시험 세이브 전력에 맞춤 — 30 은 대장 카피 혼자 겨우 잡아서 결과가 흔들림)
@@ -1013,7 +1016,7 @@ namespace EarthDef.EditorTools
             double gold0 = S.gold;
             Combat.Raw(B.boss, B.boss.hp + 1, false, g); B.Tick(Battle.StepSec);
             Check(B.st == Battle.St.End && B.won, "보스 처치 → 승리");
-            Check(S.best == 1 && S.stage == 2 && S.gold > gold0 && B.FirstClear, $"보상 골드 +{B.RewardGold} · 조각 +{B.RewardShards} · 다음 스테이지 열림");
+            Check(S.best == 1 && S.stage == 2 && S.gold > gold0 && B.FirstClear, $"보상 골드 +{B.RewardGold} · 조각 +{B.RewardShards} · 다음 스테이지 열림 (best {S.best} · stage {S.stage} · 골드 {S.gold - gold0:0} · 첫 클리어 {B.FirstClear})");
             yield return Wait(0.5f);
             Capture("08_result_win");
 

@@ -473,6 +473,23 @@ namespace EarthDef
             return World.GroundY + best + 0.5f;
         }
 
+        static readonly int[] crowdCntX = new int[12];
+        /// <summary>8차 "끈끈이 장판을 가로가 아닌 세로로": 적이 가장 많은 세로줄(1칸 폭)의 가운데 x — 방어선 오른쪽 하늘에서</summary>
+        public float CrowdX()
+        {
+            var cnt = crowdCntX; Array.Clear(cnt, 0, cnt.Length);
+            float x0 = World.ShieldX;
+            foreach (var e in enemies)
+            {
+                if (e.dead || !World.OnField(e.Pos)) continue;
+                int i = Mathf.FloorToInt(e.Pos.x - x0);
+                if (i >= 0 && i < cnt.Length) cnt[i] += e.row.IsBoss || e.row.IsElite ? 3 : 1;
+            }
+            int n = Mathf.Clamp(Mathf.FloorToInt(World.HalfW - x0), 1, cnt.Length);
+            int best = n / 2; for (int i = 0; i < n; i++) if (cnt[i] > cnt[best]) best = i;
+            return x0 + best + 0.5f;
+        }
+
         // ---------- 카드 ----------
         void OpenPick()
         {

@@ -37,7 +37,17 @@ namespace EarthDef
             string stTitle = b.mode == "stage" ? L.F("stage_n", b.stageNo) : L.T("mode_" + b.mode);
             stageT = UIKit.Label(mid.transform, stTitle, 42, b.eliteMode || b.mode != "stage" ? Art.Hex("#d9c6ff") : Color.white, TextAnchor.MiddleLeft); stageT.rectTransform.TL(54, 14, 480, 66);
             if (b.eliteMode) { var cr = UIKit.Img(mid.transform, Art.Icon("crown"), "Elite"); cr.raycastTarget = false; cr.rectTransform.TL(-6, -14, 62, 62); }
-            timeT = UIKit.Label(mid.transform, "", 34, Art.Gold, TextAnchor.MiddleRight, false); timeT.rectTransform.TL(480, 18, 246, 56);
+            // 8차 수정안 "전투 화면에서도 적의 약점을 표현 (스테이지 1 옆에 텍스트로)": "스테이지 10  약점 불" — 약점 이름은 그 속성 색
+            var stRow = b.mode == "stage" ? Tables.Stage(b.stageNo) : null;
+            if (stRow != null && !string.IsNullOrEmpty(stRow.weak))
+            {
+                float x = 54 + stageT.preferredWidth + 18;
+                var wl = UIKit.Label(mid.transform, L.T("battle_weak"), 28, Art.Cream, TextAnchor.MiddleLeft, false); wl.name = "WeakLabel";
+                wl.rectTransform.TL(x, 22, 80, 54);
+                var wv = UIKit.Label(mid.transform, Elem.Name(stRow.weak), 34, Color.Lerp(Elem.Color(stRow.weak), Color.white, 0.35f), TextAnchor.MiddleLeft); wv.name = "Weak";
+                wv.rectTransform.TL(x + wl.preferredWidth + 8, 16, 170, 62);
+            }
+            timeT = UIKit.Label(mid.transform, "", 34, Art.Gold, TextAnchor.MiddleRight, false); timeT.rectTransform.TL(480, 18, 246, 56); timeT.name = "Clock";
             Route(mid.rectTransform);
             expFill = UIKit.Bar(root, Art.Sky, "Exp"); expFill.transform.parent.GetComponent<RectTransform>().TL(150, 212, 780, 44);
             var lvB = UIKit.Panel(root, "pill", "LvBadge"); lvB.color = Art.Purple; lvB.rectTransform.TL(34, 180, 108, 108);
@@ -334,7 +344,7 @@ namespace EarthDef
         }
 
         // ---------- 일시정지 · 고른 카드 ----------
-        void ShowPause()
+        public void ShowPause()
         {
             if (b.st != Battle.St.Play) return;
             b.Pause(true);
@@ -400,13 +410,16 @@ namespace EarthDef
             var ic = UIKit.Img(p.win, Art.Icon(b.won ? "trophy" : "skull"), "Icon"); ic.rectTransform.Place(0.5f, 1, new Vector2(0, -130), new Vector2(150, 150), new Vector2(0.5f, 1));
             p.Text((b.mode == "endless" ? L.F("endless_time", Num.Clock(b.time)) : b.mode == "survival" ? L.T("mode_survival") : L.F("stage_n", b.stageNo)) + "   " + L.F("kills", b.kills) + "   " + L.F("lv", b.level), 300, 34, Art.Brown);
             if (b.FirstClear) p.Text(L.F("first_clear", Tables.Ci("First_Clear_Mul", 2)), 350, 30, Art.Green2);
+            // 8차 수정안 "종료 및 성공 팝업창에서 재화 획득 경계선 필요": 보상 줄 둘레에 테두리 판 (다이아가 있으면 한 줄 더 길게)
+            var box = UIKit.Panel(p.win, "card_white", "RewardBox"); box.raycastTarget = false;
+            box.rectTransform.Place(0.5f, 1, new Vector2(0, -400), new Vector2(620, b.rewardDia > 0 ? 344 : 244), new Vector2(0.5f, 1));
             var coin = UIKit.Img(p.win, Art.Icon("coin"), "Coin"); coin.rectTransform.Place(0.5f, 1, new Vector2(-170, -420), new Vector2(100, 100), new Vector2(0.5f, 1));
             var g = UIKit.Label(p.win, "+" + Num.F(b.RewardGold), 60, Art.Gold); g.rectTransform.Place(0.5f, 1, new Vector2(50, -420), new Vector2(360, 100), new Vector2(0.5f, 1));
             var shard = UIKit.Img(p.win, Art.Icon("shard"), "Shard"); shard.rectTransform.Place(0.5f, 1, new Vector2(-170, -540), new Vector2(90, 90), new Vector2(0.5f, 1));
             var sh = UIKit.Label(p.win, "+" + b.RewardShards, 52, Art.Sky); sh.rectTransform.Place(0.5f, 1, new Vector2(50, -540), new Vector2(360, 90), new Vector2(0.5f, 1));
             if (b.drops.Count > 0)
             {
-                float dy = b.rewardDia > 0 ? 750 : 650;
+                float dy = b.rewardDia > 0 ? 764 : 664;      // 8차: 보상 판 아래 끝(644 · 744)보다 아래
                 p.Text(L.T("drops"), dy, 32, Art.Brown);
                 var dl = p.Text(string.Join(", ", b.drops), dy + 46, 28, Art.Ink, 150);
                 dl.horizontalOverflow = HorizontalWrapMode.Wrap; dl.verticalOverflow = VerticalWrapMode.Overflow;

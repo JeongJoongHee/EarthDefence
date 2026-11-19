@@ -199,31 +199,55 @@ namespace EarthDef
         }
     }
 
-    /// <summary>끈끈이 드론 장판: 화면 폭 가로 띠. 틱마다 피해 + 둔화(쌓임). 끌어당김 · 사라질 때 폭발</summary>
+    /// <summary>끈끈이 드론 장판: 틱마다 피해 + 둔화(쌓임). 끌어당김 · 사라질 때 폭발.
+    /// 8차 수정안 "끈끈이 드랍은 가로가 아닌 세로로" (Config Field_Vertical 1): 적 무리가 있는 x 에 땅(지구 윗면) ~ 위 UI 아래까지 세로 띠
+    ///   — 적은 오른쪽 위에서 비스듬히 사령탑 쪽으로 오므로 세로 띠를 가로질러 지나감. 0 이면 예전 가로 띠(방어선 앞 하늘)</summary>
     public class Field : Attack
     {
-        float y, half, dur, t, tick, tickT;
+        float c, half, dur, t, tick, tickT, lo, hi;      // c = 띠 가운데 (세로면 x · 가로면 y) · lo~hi = 띠 길이 방향 범위
+        readonly bool vert;
         double rate;
-        readonly HashSet<Enemy> inside = new();
 
-        public Field(TurretInst tr, float y, float halfH, float duration, float tickSec, double rate)
+        public bool Vertical => vert;      // 시험용
+        public float Center => c;
+        public Rect Area => vert ? new Rect(c - half, lo, half * 2, hi - lo) : new Rect(lo, c - half, hi - lo, half * 2);
+
+        public Field(TurretInst tr, float at, float halfW, float duration, float tickSec, double rate, bool? vertical = null)
         {
-            src = tr; this.y = y; half = halfH; dur = duration; tick = tickSec; this.rate = rate;
-            // 11-18 사령탑: 장판은 방어선 앞 하늘만 (사령탑 · 터렛을 덮지 않게)
-            MakeSprite("field", Art.Fx("field", new Vector4(28, 24, 28, 24)), new Vector2((World.ShieldX + World.HalfW) * 0.5f + 0.1f, y), 8);
+            src = tr; c = at; half = halfW; dur = duration; tick = tickSec; this.rate = rate;
+            vert = vertical ?? Tables.Ci("Field_Vertical", 1) == 1;
+            Vector2 pos, size;
+            if (vert)
+            {
+                lo = World.FloorY(c) - 0.2f; hi = World.FadeTop;
+                pos = new Vector2(c, (lo + hi) * 0.5f); size = new Vector2(half * 2, hi - lo);
+            }
+            else
+            {   // 11-18 사령탑: 장판은 방어선 앞 하늘만 (사령탑 · 터렛을 덮지 않게)
+                lo = World.ShieldX - 0.3f; hi = World.HalfW + 0.1f;
+                pos = new Vector2((World.ShieldX + World.HalfW) * 0.5f + 0.1f, c); size = new Vector2(World.HalfW - World.ShieldX + 0.4f, half * 2);
+            }
+            MakeSprite("field", Art.Fx("field", new Vector4(28, 24, 28, 24)), pos, 8);
             sr.drawMode = SpriteDrawMode.Sliced;      // 장판은 보통 그리기 (빛 더하기면 겹칠 때 하얗게 탐 — 11-16 캡처로 확인)
             sr.color = Elem.Color("grav");
-            sr.size = new Vector2(World.HalfW - World.ShieldX + 0.4f, half * 2);
+            sr.size = size;
+        }
+
+        /// <summary>적이 띠 안 (가로질러 재는 거리 · 길이 방향 범위)</summary>
+        bool Inside(Enemy e, float pad)
+        {
+            float across = vert ? e.Pos.x : e.Pos.y, along = vert ? e.Pos.y : e.Pos.x;
+            return Mathf.Abs(across - c) <= half + e.radius + pad && along >= lo - e.radius && along <= hi + e.radius;
         }
 
         public override void Step(float dt)
         {
             if (dead) return;
             t += dt; tickT -= dt;
-            var c = sr.color; c.a = Mathf.Clamp01(Mathf.Min(t / 0.2f, (dur - t) / 0.4f)); sr.color = c;
+            var col = sr.color; col.a = Mathf.Clamp01(Mathf.Min(t / 0.2f, (dur - t) / 0.4f)); sr.color = col;
             var list = Battle.I.enemies;
             if (src.Has("pull"))
-                foreach (var e in list) if (!e.dead && Mathf.Abs(e.Pos.y - y) < half + e.radius + 0.6f) e.Pull(new Vector2(e.Pos.x, y), 0.9f * dt);
+                foreach (var e in list) if (!e.dead && Inside(e, 0.6f)) e.Pull(vert ? new Vector2(c, e.Pos.y) : new Vector2(e.Pos.x, c), 0.9f * dt);
             if (tickT <= 0)
             {
                 tickT += tick;
@@ -231,7 +255,7 @@ namespace EarthDef
                 for (int i = 0; i < list.Count; i++)
                 {
                     var e = list[i];
-                    if (e.dead || Mathf.Abs(e.Pos.y - y) > half + e.radius) continue;
+                    if (e.dead || !Inside(e, 0)) continue;
                     e.AddSlow(0.1f, tick + 0.2f, slowMax);
                     if (src.Has("paralyze") && Combat.R < src.S("paralyze")) e.Paralyze(Tables.Cf("Para_Time", 1f));
                     Combat.Hit(src, e, rate, true, false);
@@ -241,8 +265,9 @@ namespace EarthDef
             {
                 if (src.Has("field_explode"))
                 {
-                    for (float x = World.ShieldX + 0.6f; x <= World.HalfW - 0.3f; x += 1.5f) Fx.Burst(new Vector2(x, y), half * 1.2f, Elem.Color("grav"));
-                    foreach (var e in list) if (!e.dead && Mathf.Abs(e.Pos.y - y) <= half + e.radius) Combat.Hit(src, e, 300, false);
+                    if (vert) for (float y = lo + 0.6f; y <= hi - 0.3f; y += 1.5f) Fx.Burst(new Vector2(c, y), half * 1.2f, Elem.Color("grav"));
+                    else for (float x = World.ShieldX + 0.6f; x <= World.HalfW - 0.3f; x += 1.5f) Fx.Burst(new Vector2(x, c), half * 1.2f, Elem.Color("grav"));
+                    foreach (var e in list) if (!e.dead && Inside(e, 0)) Combat.Hit(src, e, 300, false);
                 }
                 Kill();
             }
@@ -261,7 +286,7 @@ namespace EarthDef
         {
             miniY = y;
             src = tr; this.x = x; this.width = width; dur = duration; tick = tickSec; this.rate = rate; this.mini = mini;
-            float top = mini ? 3.5f : (World.I ? World.I.Top + 0.5f : World.SpawnY + 2f), bottom = World.GroundY;   // 11-18: 달 바닥까지
+            float top = mini ? 3.5f : (World.I ? World.I.Top + 0.5f : World.SpawnY + 2f), bottom = World.FloorY(x);   // 11-18: 달 바닥까지 → 8차: 지구 윗면(오른쪽은 둥글게 낮음)
             MakeSprite("bolt", Art.Fx("bolt"), new Vector2(x, (top + bottom) / 2), 29);
             Art.Additive(sr);
             // 그림 160x600 @PPU200 = 0.8 x 3칸 (11-16 네온: 번짐 포함이라 넓어짐)

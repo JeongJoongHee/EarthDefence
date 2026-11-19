@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>8차 수정안 반영</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>8차 수정안 반영</h1>
+<p class="note">2026-11-19 · <code>요청 사항/8차 수정안.docx</code> (12줄 + 결과 창 그림) · 자동 시험 <b>기본 137줄 + 시험장 13줄 + 3차 107줄 + 7차 24줄 + 8차 28줄 통과 · 오류 0</b></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>달토끼 "어느 정도 운석을 가려도 괜찮음"</b> = 오른쪽 위는 운석이 나오는 자리라 겹쳐도 된다는 뜻으로 봤습니다. 달은 <b>운석보다 뒤</b>에 그려서 운석이 달 앞을 지나갑니다 (운석이 달 뒤로 숨으면 못 보고 맞을 수 있어서). 달이 앞에 오길 원하시면 알려 주세요.</li>
+<li><b>"지구로 보이는 그림은 일반 행성"</b> = 7차에서 키운 오른쪽 아래 지구를 <b>살구색 줄무늬 행성</b>으로 바꿨습니다. 하늘 그림에 고리 행성이 이미 있어 고리는 뺐습니다.</li>
+<li><b>"종료 기능"</b> = 설정 창의 [게임 종료] + <b>폰 뒤로 가기</b>로 넣었습니다 (지금까지 뒤로 가기를 눌러도 아무 일이 없었음). 결과 창 · 카드 고르기처럼 닫기(X)가 없는 창은 뒤로 가기로 안 닫힙니다.</li>
+<li><b>끈끈이 세로 띠</b>는 가로 띠보다 길어(높이 ~16칸 ↔ 폭 7.5칸) 한 번에 맞는 적 수가 달라질 수 있습니다. 밸런스는 밸런스 3차 재측정 때 같이 봅니다.</li>
+<li>시험: 기본 시험을 처음 돌렸을 때 <b>"스테이지 1 보상 · 다음 스테이지 열림" 1줄이 한 번 실패</b>했고, 다시 돌리니 통과했습니다(원인 못 찾음 — 다음에 또 나오면 원인을 볼 수 있게 값을 찍게 해 둠).</li>
+<li>로비 단추를 아래로 내려 7차의 "[적 정보]를 펼치면 스테이지 칸과 겹침" 걱정은 없어졌습니다.</li>
+</ul></div>
+
+<h2>1 · 2 타이틀</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_r7_01_title.jpg" alt=""><figcaption><span class=b>전</span> 단추가 가운데 · 큼</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_02_title_star.jpg" alt=""><figcaption><span class=a>뒤</span> 단추 아래 · 0.7배</figcaption></figure></div>
+<div class="pair"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_lobby.gif" alt=""><figcaption><span class=b>전</span> 별똥별 빠름 (7차 로비, 0.12초 간격)</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/title.gif" alt=""><figcaption><span class=a>뒤</span> 별똥별 천천히 (0.1초 간격)</figcaption></figure></div>
+
+<h2>3 · 4 로비</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_r7_05_lobby.jpg" alt=""><figcaption><span class=b>전</span> [전투 시작] · 순찰이 대장 카피 머리 위</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_03_lobby.jpg" alt=""><figcaption><span class=a>뒤</span> 아래 탭 바로 위</figcaption></figure></div>
+
+<h2>5 · 6 · 8 전투 화면</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_r7_07b_battle.jpg" alt=""><figcaption><span class=b>전</span> 달 바닥 · 오른쪽 아래 지구 · 달토끼 왼쪽 위</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_09_battle.jpg" alt=""><figcaption><span class=a>뒤</span> 지구 바닥 · 일반 행성 · 달토끼 오른쪽 위 · 스테이지 옆 약점</figcaption></figure></div>
+
+<h2>7 끈끈이 장판</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_10a_field_old.jpg" alt=""><figcaption><span class=b>전</span> 가로 띠 (Field_Vertical 0)</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_10_field.jpg" alt=""><figcaption><span class=a>뒤</span> 세로 띠</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/8차_수정안_캡처/field.gif" alt=""><figcaption>세로 띠 움직임 (0.12초 간격)</figcaption></figure></div>
+
+<h2>9 결과 창</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_user_result.jpg" alt=""><figcaption><span class=b>전</span> 요청 문서 그림</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_11_result_win.jpg" alt=""><figcaption><span class=a>뒤</span> 성공</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_12_result_lose.jpg" alt=""><figcaption><span class=a>뒤</span> 실패</figcaption></figure></div>
+
+<h2>10 장비 탭</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_gear.gif" alt=""><figcaption><span class=b>전</span> 떠다니며 좌우로 뒤집힘</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/gear.gif" alt=""><figcaption><span class=a>뒤</span> 제자리에서 위아래 둥실 (0.15초 간격)</figcaption></figure></div>
+
+<h2>11 외형 설명</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_87_looks_turret.jpg" alt=""><figcaption><span class=b>전</span> 터렛 외형: 긴 필살기 설명 + 보유 효과 두 줄</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_05_looks_turret.jpg" alt=""><figcaption><span class=a>뒤</span> 이름 · 필살기 · 보유 효과</figcaption></figure></div>
+<div class="pair"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_88_looks_base.jpg" alt=""><figcaption><span class=b>전</span> 기지 외형: 긴 설명</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_06_looks_base.jpg" alt=""><figcaption><span class=a>뒤</span> 짧은 한 줄</figcaption></figure></div>
+
+<h2>12 종료</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/8차_수정안_캡처/before_82_settings.jpg" alt=""><figcaption><span class=b>전</span> 설정</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_07_settings.jpg" alt=""><figcaption><span class=a>뒤</span> 설정 [게임 종료]</figcaption></figure><figure><img src="캡쳐본 모음/8차_수정안_캡처/r8_08_quit.jpg" alt=""><figcaption><span class=a>뒤</span> 종료 확인</figcaption></figure></div>
+
+<h2>바뀐 곳 (다음 작업용 메모)</h2>
+<table><tr><th>무엇</th><th>어디</th></tr>
+<tr><td>그림: 지구 바닥 + 일반 행성 (Bg/ground_earth)</td><td><code>tools/tower_art.py earth_ground · planet</code> → <code>earth_export.py tower</code></td></tr>
+<tr><td>지구 윗면 높이 (낙뢰 · 장판 아래 끝) · 달 자리 · 별똥별 빠르기</td><td><code>World.FloorY</code> (EG_CX · EG_R = 그림 EG_*) · <code>PlaceMoon</code> · <code>StarStep</code></td></tr>
+<tr><td>끈끈이 세로 띠 · 적 무리 x</td><td><code>Attacks.Field</code> · <code>Battle.CrowdX</code> · <code>TurretUnit</code> (field · drone 필살기)</td></tr>
+<tr><td>타이틀 · 로비 단추 · 약점 · 결과 창 · 장비 탭 · 외형</td><td><code>Title.Build</code> · <code>Lobby.PlaceOverDome</code> · <code>BattleUI.Build/ShowResult</code> · <code>Float2D.InPlace</code> · <code>ShopTab.SkinRow/FrameRow</code></td></tr>
+<tr><td>종료 · 뒤로 가기</td><td><code>Quit</code> · <code>BackKey</code> (UI/MissionTab.cs, Boot 에 붙음) · <code>Popup.CanClose</code></td></tr>
+<tr><td>표 (Config 11 · 글자 6 · 기지 외형 설명 7 · 드론 설명)</td><td><code>tools/fix8_tables.py</code></td></tr>
+<tr><td>시험</td><td><code>bash tools/unity_batch.sh EarthDef.EditorTools.PlayTest.RunR8 --play</code> (Editor/PlayTest8.cs)</td></tr>
+</table>
+
+<h2>확인 칸</h2>
+<ul class="todo"><li data-id="r8-1"><label><input type="checkbox"><span><span class="tag">1</span>타이틀 [게임 시작]을 아래로 · 0.7배<span class="why">640x170 → 448x119 · 화면 아래에서 230px (Config Title_Btn_Bottom · Title_Btn_Scale)</span></span></label></li><li data-id="r8-2"><label><input type="checkbox"><span><span class="tag">2</span>타이틀 배경 별똥별 천천히<span class="why">빠르기 9~13 → 4.5~6.5 칸/초 (약 절반) · 느려진 만큼 보이는 시간 0.7~1.1 → 1.3~2초 (Config Shoot_Star_Speed_* · Shoot_Star_Life_*)</span></span></label></li><li data-id="r8-3"><label><input type="checkbox"><span><span class="tag">3</span>로비 [전투 시작] · 순찰 보상을 아래로<span class="why">아래 탭 바로 위(24px 띄움)에 순찰, 그 위에 [전투 시작]. 지구 위를 걷는 대장 카피는 단추 위로 보임 (Config Lobby_Btn_Bottom 0 이면 7차 자리)</span></span></label></li><li data-id="r8-4"><label><input type="checkbox"><span><span class="tag">4</span>로비 별똥별도 천천히<span class="why">타이틀과 같은 별똥별이라 같은 값으로 같이 느려짐</span></span></label></li><li data-id="r8-5"><label><input type="checkbox"><span><span class="tag">5</span>전투 달토끼를 오른쪽 위로<span class="why">달 + 달토끼를 왼쪽 위 → 오른쪽 위(위 UI 바로 아래)로. 운석보다 뒤에 그려서 운석이 달 앞을 지나감 (Config Moon_X 4.3 · Moon_Below_Hud)</span></span></label></li><li data-id="r8-6"><label><input type="checkbox"><span><span class="tag">6</span>전투 바닥 = 지구 · 예전 지구 그림 → 일반 행성<span class="why">바닥을 큰 지구의 둥근 윗면(바다 · 대륙 · 구름 · 대기 빛)으로 — 사령탑 자리는 평평하고 오른쪽으로 갈수록 둥글게 내려감. 뒤에 떠오르던 지구는 살구색 줄무늬 행성으로 (고리는 하늘에 고리 행성이 이미 있어 뺌). 낙뢰 아래 끝도 둥근 지구 면에 맞춤</span></span></label></li><li data-id="r8-7"><label><input type="checkbox"><span><span class="tag">7</span>끈끈이 장판을 세로로<span class="why">적이 가장 많은 세로줄(x)에 땅 ~ 위 UI 아래까지 세로 띠. 적은 오른쪽 위에서 비스듬히 오므로 띠를 가로질러 지나감. 필살기(젤리 드론 3줄) · 두 번째 장판 카드도 세로 (Config Field_Vertical 0 이면 예전 가로). 터렛 설명 글도 "세로 띠"로</span></span></label></li><li data-id="r8-8"><label><input type="checkbox"><span><span class="tag">8</span>전투 위 줄에 적 약점<span class="why">"스테이지 10  약점 중력" — 약점 이름은 그 속성 색. 시계와 안 겹침 (스테이지 모드만 — 무한 · 엘리트 군단은 정해진 약점이 없음)</span></span></label></li><li data-id="r8-9"><label><input type="checkbox"><span><span class="tag">9</span>성공 · 실패 창 보상 칸 경계<span class="why">골드 · 부품(· 다이아) 줄 둘레에 흰 테두리 판. 떨어진 장비 목록은 판 아래로</span></span></label></li><li data-id="r8-10"><label><input type="checkbox"><span><span class="tag">10</span>장비 탭 대장 카피: 제자리에서 둥실둥실<span class="why">좌우로 떠다니며 뒤집히던 것 → 그 자리에서 위아래로만 둥실(느린 물결 + 작은 물결) + 아주 살짝 기울기. 몸은 늘 같은 쪽</span></span></label></li><li data-id="r8-11"><label><input type="checkbox"><span><span class="tag">11</span>외형 설명 짧게<span class="why">터렛 외형 = 이름 · "필살기: 은하 관통" · "보유 효과: 피해 +10%" 세 줄(필살기 긴 설명 뺌). 기지 외형 = "골드 +10%" · "40초마다 별똥별 비 (400%)" 처럼 한 줄 (Frame.xlsx Desc)</span></span></label></li><li data-id="r8-12"><label><input type="checkbox"><span><span class="tag">12</span>종료 기능<span class="why">설정 창 맨 아래 [게임 종료] → "게임을 종료할까요?" [취소] / [게임 종료](저장하고 끔). 폰 뒤로 가기: 창이 있으면 닫기 → 전투 중이면 일시정지 → 로비 다른 탭이면 전투 탭 → 전투 탭 · 타이틀이면 종료 확인</span></span></label></li><li data-id="r8-play"><label><input type="checkbox"><span><span class="tag">폰</span>APK 로 직접 해 본 느낌<span class="why">메뉴 지구 방위대 › APK 빌드 로 폰에서 뒤로 가기 · 종료 · 별똥별 빠르기를 보시고 의견 주세요</span></span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-req8-1119', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

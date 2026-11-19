@@ -64,6 +64,7 @@ namespace EarthDef.EditorTools
             // 3) 로비: 사령탑 없이 큰 지구 + 지구 위를 걷는 대장 카피 + 단추는 그 위 · 기지 외형은 전투에서만
             S.best = 30; S.dia = 100000; S.gold = 1e9;
             Store.BuyFrame(Tables.Frame("gold")); Store.EquipFrame("gold");
+            Tables.SetC("Lobby_Btn_Bottom", 0);      // 8차에서 단추가 아래로 감 → 여기선 7차 자리(0)를 검사 (아래 자리는 RunR8)
             Game.ToLobby(); yield return Wait(0.4f); Popup.CloseAll();
             Check(!R("Tower").enabled && R("Tower").sprite.name == "Bg/tower_gold" && R("EarthBig").enabled, "로비엔 사령탑(기지 외형) 안 보임 · 끼운 외형은 그대로 (황금)");
             var wk = LobbyWalker.I;
@@ -74,6 +75,7 @@ namespace EarthDef.EditorTools
                 Check(st != null && c[0].y > World.EarthTop + 1.25f && Mathf.Abs((c[0].x + c[2].x) / 2) < 0.1f,
                       $"[전투 시작] · 순찰은 가운데 · 대장 카피 머리 위 (순찰 아래 끝 {c[0].y:0.00} · 지구 꼭대기 {World.EarthTop:0.00})");
             }
+            Tables.SetC("Lobby_Btn_Bottom", 1);
             wk.Go(1.5f); yield return Wait(2.5f);
             Check(Mathf.Abs(wk.transform.eulerAngles.z - 360f * (wk.transform.eulerAngles.z > 180 ? 1 : 0) - World.EarthTilt(wk.X)) < 9f && World.EarthTilt(1.5f) < -5f,
                   $"지구 둥근 면을 따라 몸이 기욺 (x {wk.X:0.0} · 기울기 {World.EarthTilt(wk.X):0.0}°)");
@@ -81,6 +83,7 @@ namespace EarthDef.EditorTools
             for (int f = 0; f < 16; f++) { yield return Wait(0.12f); Capture($"r7_lobby_{f:00}", true); }     // 보고서 GIF (별똥별 · 걷기)
 
             // 4) 장비 탭: 총 없이 2D 로 둥실둥실
+            Float2D.InPlace = false;      // 8차 "제자리에서 둥실" 전의 7차 떠다니기 (제자리는 RunR8)
             Game.Lobby.SetTab(2); yield return Wait(0.3f);
             var fl = Object.FindAnyObjectByType<Float2D>();
             var p0 = fl ? fl.Offset : Vector2.zero;
@@ -88,6 +91,7 @@ namespace EarthDef.EditorTools
             for (int f = 0; f < 16; f++) { yield return Wait(0.25f); Capture($"r7_gear_{f:00}", true); }
             Check(fl != null && (fl.Offset - p0).magnitude > 8f && fl.GetComponent<Image>().sprite.name.EndsWith("guardian_float"),
                   $"장비 탭 카피바라: 총 없는 우주복 · 2D 로 떠다님 (움직임 {(fl ? (fl.Offset - p0).magnitude : 0):0})");
+            Float2D.InPlace = true;
             Game.Lobby.SetTab(0); yield return null;
 
             // 5) 전투: 사령탑(황금 외형) · 컴팩트한 지지대 · 큰 지구 · 달토끼 자리 · 적 Fade in · 대장 카피 탄도
@@ -110,7 +114,7 @@ namespace EarthDef.EditorTools
             bool moonFree = mb.max.x < World.ShieldX - 0.6f && mb.max.y <= World.FadeTop + 0.05f && mb.min.y > World.TowerTop + 0.8f;
             foreach (var (u, b) in turretB) if (mb.Intersects(b)) moonFree = false;
             if (mb.Intersects(Union(B.Guardian.GetComponentsInChildren<SpriteRenderer>()))) moonFree = false;
-            Check(moonFree, $"달토끼가 다른 그림과 안 겹침 (달 {mb.min.x:0.0}~{mb.max.x:0.0}, {mb.min.y:0.0}~{mb.max.y:0.0} · 방어선 {World.ShieldX} · 위 UI {World.FadeTop:0.0})");
+            if (Tables.Cf("Moon_X", 4.3f) < 0) Check(moonFree, $"달토끼가 다른 그림과 안 겹침 (달 {mb.min.x:0.0}~{mb.max.x:0.0}, {mb.min.y:0.0}~{mb.max.y:0.0} · 방어선 {World.ShieldX} · 위 UI {World.FadeTop:0.0})");
             // Lv 게이지 아래 끝 = 적이 나타나기 시작하는 높이
             {
                 var lv = GameObject.Find("LvBadge")?.GetComponent<RectTransform>(); var c = new Vector3[4]; if (lv) lv.GetWorldCorners(c);

@@ -112,6 +112,12 @@ namespace EarthDef
                 case "laser": for (int i = -1; i <= 1; i++) b.Add(new Beam(t, Head, ang + i * 25f, 1.5f, 0.2f, 0.4f, rate, 40f)); break;
                 case "drone":
                 {
+                    if (Tables.Ci("Field_Vertical", 1) == 1)
+                    {   // 8차: 세로 띠 3개 (적 무리 x 와 양옆)
+                        float hw = 0.9f * t.Area, x = Mathf.Clamp(b.CrowdX(), World.ShieldX + hw + 2.4f, World.HalfW - hw - 2.4f);
+                        for (int i = -1; i <= 1; i++) b.Add(new Field(t, x + i * 2.4f, hw, 4f, 0.4f, rate));
+                        break;
+                    }
                     float y = b.CrowdY();
                     for (int i = -1; i <= 1; i++) b.Add(new Field(t, Mathf.Clamp(y + i * 2.4f, World.GroundY + 1.2f, 8f), 0.9f * t.Area, 4f, 0.4f, rate));
                     break;
@@ -349,8 +355,21 @@ namespace EarthDef
                 case "field":
                 {
                     float half = t.row.radius * t.Area;
-                    float y = Mathf.Clamp(b.CrowdY(), World.GroundY + half + 0.3f, 7.5f);
                     int n = 1 + (int)t.S("count_free");
+                    if (Tables.Ci("Field_Vertical", 1) == 1)
+                    {   // 8차 "끈끈이 드랍은 세로로": 적 무리 x 에 세로 띠 (여러 개면 오른쪽 · 왼쪽으로 번갈아, 끝에 닿으면 반대쪽)
+                        float x0 = World.ShieldX + half + 0.2f, x1 = World.HalfW - half - 0.1f;
+                        float x = Mathf.Clamp(b.CrowdX(), x0, x1);
+                        for (int i = 0; i < n; i++)
+                        {
+                            float off = (i + 1) / 2 * 2.6f * (i % 2 == 1 ? 1 : -1);
+                            float xi = x + off;
+                            if (xi > x1 || xi < x0) xi = x - off;
+                            b.Add(new Field(t, Mathf.Clamp(xi, x0, x1), half, t.Duration, t.Tick, t.row.rate));
+                        }
+                        break;
+                    }
+                    float y = Mathf.Clamp(b.CrowdY(), World.GroundY + half + 0.3f, 7.5f);
                     for (int i = 0; i < n; i++)
                         b.Add(new Field(t, Mathf.Clamp(y + i * 2.6f, World.GroundY + half + 0.3f, 8.5f), half, t.Duration, t.Tick, t.row.rate));
                     break;
