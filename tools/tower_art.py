@@ -339,3 +339,24 @@ def t_rail_stand():
 def t_rail_barrel():
     return (rr(86, 34, 28, 108, 9, G(A.METAL), 5.5) + rr(80, 26, 40, 20, 7, G(A.METAL2), 5.5)
             + F('M92 50 L97 50 L97 128 L92 128 Z', '#ffffff', .5) + L('M86 70 L114 70 M86 96 L114 96', 3.2))
+
+
+# ------------------------------------------------------------------ 9차 수정안: 세로 전장 바닥 ("하단에서 상단으로 공격하는 방식으로 복구")
+# 8차 지구 윗면을 가운데(x 540 = 월드 0)로 — 돔이 지구 꼭대기에 섬. 반지름 EGV_R(월드 40 = 4000px) — 게임 World.EGV_R 과 같게
+EGV_R = 4000
+
+
+def earth_ground_v():
+    """9차 세로 전장 바닥: 큰 지구 윗면 가운데 (캔버스 1080 x 700, 땅 = y 492) — 뒤 행성은 돔 유리 뒤에 비쳐 빼고 그림"""
+    global EG_CX, EG_R
+    keep = (EG_CX, EG_R)
+    EG_CX, EG_R = 540, EGV_R
+    try:
+        s = earth_ground()
+    finally:
+        EG_CX, EG_R = keep
+    # earth_ground() 맨 앞의 행성(planet) 부분을 뺌
+    p = planet(880, GM_G - 30, 190)
+    s = s.replace(p, '', 1)
+    # 돔 안 기지 건물 (예전 풀밭 바닥 그림에 함께 있던 것 — earth_art 전체 캔버스 땅 GROUND_Y 1712 = 여기 땅 492)
+    return s + f'<g transform="translate(0,{GM_G - A.GROUND_Y})">{A.base_back()}</g>'

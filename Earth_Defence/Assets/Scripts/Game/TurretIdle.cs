@@ -168,7 +168,7 @@ namespace EarthDef
             }
         }
 
-        public void RestAim() { if (HasHead) SetAim(Tables.Cf("Head_Rest_Deg", 45f)); }
+        public void RestAim() { if (HasHead) SetAim(World.HeadRest); }
 
         SpriteRenderer Part(string name, Sprite s, int order, bool add, Transform parent = null)
         {

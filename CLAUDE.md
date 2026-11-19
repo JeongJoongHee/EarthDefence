@@ -1,5 +1,15 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-20 새벽 — 9차 수정안 반영 끝)
+- 요청 = `요청 사항/9차 수정안.docx` (9줄 + 대화창 그림). 사용자 "수정할 게 많아서 비공개 테스트는 조금 미룸". 보고 = `9차_수정안_결과.html` (키 earthdef-req9-1120, 캡처 `캡쳐본 모음/9차_수정안_캡처/`) + **`스토리_대사_검토.html`** (키 earthdef-story-1120, 101편 + 로비 말풍선 — 편마다 체크 · 의견). 의견 읽기 `PYTHONUTF8=1 python tools/todo_checks.py <문서>`.
+- 시험: 기본 137 · 시험장 13 · 3차 107 · 7차 24 · 8차 28 · **9차 52 (`PlayTest.RunR9`, Editor/PlayTest9.cs)** 오류 0. **7차 · 8차 시험은 Battle_Vertical 0(사령탑)으로 돎** = 되돌리기 스위치 확인용. 기본 시험 "스테이지 1 보상" 흔들림은 이번엔 두 번 다 통과(첫 돌림 1번 실패 — 골드 차이 0, 원인 못 찾음).
+- 바뀐 것: ① 전투 = 예전 돔 방식(아래 가운데 돔 · 터렛 4칸 땅 위 한 줄 · 적 위에서 곧게 · 머리 위 90° · 장판 가로 · 적 속도 1배) — `World.V` (Config **Battle_Vertical** 1 · 0 = 사령탑) · World.ApplyLayout (SetLobby 때 바뀌었으면 다시) · 바닥 Bg/ground_earth_v(8차 지구를 가운데로 + 기지 건물) · 외형 이름 "OO 돔" · 목록 아이콘 Icon/framed_<id> ② 스토리 `UI/Story.cs` StoryView (처음 시작 = Title.Enter · 스테이지 = Game.TryStart, 스태미나 먼저 · 스테이지는 처음 한 번 Story_Stage_Repeat) · 설정 "스토리 건너뛰기"(S.storySkip) · [건너뛰기] · 뒤로 가기 ③ 로비 말풍선 LobbyTalk (전투 탭 · 누르면 한마디) ④ 도감 `Core/Codex.cs` + `UI/CodexUI.cs` (세이브 codex) ⑤ 회로 프리셋 3개 ChipPreset (세이브 chipPresets, uid@자리).
+- 표 = `tools/fix9_tables.py` (Story.xlsx 새로: Story · Lobby_Talk 시트 — **다시 돌리면 Story 시트를 새로 씀, 대사 고치면 이 파일에 옮길 것**) · 그림 `earth_export.py groundv story9` (PowerShell) · 보고서 `tools/report9.py <숫자 6개>`.
+- 해석(보고 첫머리): 복구 = 돔 방식 + 8차 지구 바닥 · 달토끼 등 뒤 요청은 유지 · 대장 카피 고정 유지 · 스테이지 스토리 처음 한 번 · 세계관(젤리 여왕이 온천을 노림 · 달토끼 · 100에서 화해) · 도감은 이번부터 기록 · 대화창 [건너뛰기]는 요청 밖.
+- 건드리지 않은 것: `히든_타워_기획서.html · .md` (다른 작업에서 생김, 커밋 안 함) · 사용자가 옮긴 지난 보고서들(루트 → 완료 사항 모음_HTML · 요청 사항) — 커밋 안 함, 사용자 몫.
+- 상태: 커밋함 · **push 는 사용자 몫** · Unity 닫힘.
+- **재개 첫 순서**: ① 9차 결과 · 스토리 대사 의견 읽기 → 반영 (대사는 fix9_tables.py 에 넣고 다시 돌림 + 표 변환) ② 8차 · 7차 결과 의견 ③ `비공개_테스트_준비.html` 결정 ④ 밸런스 3차 재측정(세로 전장으로 돌아옴 — 적 속도 1배).
+
 ## ▶ 재개 메모 (2026-11-19 밤 — 8차 수정안 반영 끝)
 - 요청 = `요청 사항/8차 수정안.docx` (12줄 + 결과 창 그림). 보고 = `8차_수정안_결과.html` (키 earthdef-req8-1119, 캡처 `캡쳐본 모음/8차_수정안_캡처/`, 전 = before_*). 의견 읽기 `PYTHONUTF8=1 python tools/todo_checks.py 8차_수정안_결과.html`.
 - 시험: 기본 137 · 시험장 13 · 3차 107 · 7차 24 · **8차 28 (`PlayTest.RunR8`, Editor/PlayTest8.cs)** 오류 0. 기본 시험 "스테이지 1 보상 · 다음 스테이지 열림" 이 한 번 실패 → 다시 돌리니 통과(원인 못 찾음, 메시지에 best · stage · 골드 · 첫 클리어 값을 찍게 해 둠). **시험 도는 중 스크립트를 고치면 Unity 가 다시 읽어 시험이 깨짐 — 기다릴 땐 파일 손대지 말 것.**

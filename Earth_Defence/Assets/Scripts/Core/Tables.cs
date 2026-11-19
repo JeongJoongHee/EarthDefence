@@ -59,6 +59,10 @@ namespace EarthDef
     }
     public class SkinRow { public string id, turret, name, ult, ultName, ultDesc; public float hue, sat; public int ultCharge, price; public double ultRate, dmg; }
     public class ProductRow { public string id, name, productId, kind; public int dia, krw; public bool firstDouble; }
+    /// <summary>9차 스토리 한 줄 (Story.xlsx Story 시트): id = prologue · s&lt;스테이지&gt; · who = capy · rabbit · queen · planet · narr</summary>
+    public class StoryRow { public string id, who, text; public int seq; }
+    /// <summary>9차 로비 대장 카피 말풍선 (Story.xlsx Lobby_Talk 시트)</summary>
+    public class TalkRow { public string id, text; public int weight; }
     public class ShopItemRow { public string id, name, kind, desc; public int costDia, perDay; public double value; }
 
     /// <summary>
@@ -89,6 +93,9 @@ namespace EarthDef
         public static readonly List<ProductRow> Products = new();
         public static readonly List<ShopItemRow> ShopItems = new();
         public static readonly List<(int grade, double rate)> BoxRates = new();
+        public static readonly Dictionary<string, List<StoryRow>> Story = new();
+        public static readonly List<TalkRow> LobbyTalk = new();
+        public static List<StoryRow> StoryOf(string id) => Story.TryGetValue(id, out var l) ? l : null;
         public static FrameRow Frame(string id) => Frames.Find(f => f.id == id) ?? (Frames.Count > 0 ? Frames[0] : null);
         public static SkinRow SkinOf(string turret) => Skins.Find(s => s.turret == turret);
 
@@ -99,7 +106,7 @@ namespace EarthDef
             config.Clear(); Turrets.Clear(); TurretById.Clear(); TurretLv.Clear(); Cards.Clear(); CardById.Clear();
             Enemies.Clear(); Stages.Clear(); Strings.Clear();
             GearParts.Clear(); Grades.Clear(); Chips.Clear(); ChipById.Clear(); Missions.Clear(); Attend.Clear();
-            Frames.Clear(); GearNames.Clear(); Skins.Clear(); Products.Clear(); ShopItems.Clear(); BoxRates.Clear();
+            Frames.Clear(); GearNames.Clear(); Skins.Clear(); Products.Clear(); ShopItems.Clear(); BoxRates.Clear(); Story.Clear(); LobbyTalk.Clear();
 
             foreach (var r in Read("Config")) config[r.S("Key")] = r.D("Value");
             foreach (var r in Read("Turret"))
@@ -187,6 +194,15 @@ namespace EarthDef
             foreach (var r in Read("Item"))
                 ShopItems.Add(new ShopItemRow { id = r.S("Id"), name = r.S("Name"), kind = r.S("Kind"), desc = r.S("Desc"), costDia = r.I("Cost_Dia"), perDay = r.I("Per_Day"), value = r.D("Value") });
             foreach (var r in Read("Box_Rate")) BoxRates.Add((r.I("Grade"), r.D("Rate")));
+            foreach (var r in Read("Story", true))
+            {
+                var row = new StoryRow { id = r.S("Id"), seq = r.I("Seq"), who = r.S("Who"), text = r.S("Text") };
+                if (string.IsNullOrEmpty(row.text)) continue;
+                if (!Story.TryGetValue(row.id, out var l)) Story[row.id] = l = new List<StoryRow>();
+                l.Add(row);
+            }
+            foreach (var l in Story.Values) l.Sort((a, b) => a.seq.CompareTo(b.seq));
+            foreach (var r in Read("Lobby_Talk", true)) if (!string.IsNullOrEmpty(r.S("Text"))) LobbyTalk.Add(new TalkRow { id = r.S("Id"), text = r.S("Text"), weight = Mathf.Max(1, r.I("Weight")) });
         }
 
         public static double C(string key, double def = 0)
@@ -220,11 +236,11 @@ namespace EarthDef
             public int I(string k) => (int)Math.Round(D(k));
         }
 
-        static List<Row> Read(string name)
+        static List<Row> Read(string name, bool optional = false)
         {
             var list = new List<Row>();
             var ta = Resources.Load<TextAsset>("Tables/" + name);
-            if (!ta) { Debug.LogError("표 없음: Tables/" + name); return list; }
+            if (!ta) { if (!optional) Debug.LogError("표 없음: Tables/" + name); return list; }
             var lines = Csv(ta.text.TrimStart('﻿'));
             if (lines.Count == 0) return list;
             var head = lines[0];

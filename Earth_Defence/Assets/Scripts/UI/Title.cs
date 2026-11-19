@@ -113,7 +113,9 @@ namespace EarthDef
             Popup.CloseAll();
             I = null;
             Destroy(gameObject);
-            Game.ToLobby();
+            // 9차 수정안 "게임 최초 시작 시, 왜 대장 카피가 지구를 지켜야 하는지 설명하는 스토리" → 끝나면 로비
+            if (StoryView.Want("prologue")) StoryView.Play("prologue", 0, Game.ToLobby);
+            else Game.ToLobby();
         }
 
         void OnDestroy() { if (I == this) I = null; }

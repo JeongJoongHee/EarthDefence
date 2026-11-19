@@ -51,6 +51,9 @@ namespace EarthDef
         public int pityGear, chipPity;          // 6차: 장비 · 회로 상자 천장 셈 (전설이 나오면 0) — 새 칸은 옛 세이브에서 0
         public string account = "";        // [초안] 구글 계정
         public bool vib = true, nums = true, fps60 = true;
+        public bool storySkip;                  // 9차: 설정 "스토리 건너뛰기"
+        public List<string> codex = new();      // 9차 도감: 얻어 본 것 "g:부위:등급" · "c:회로 id:등급" (지금 없어도 남음)
+        public List<string> chipPresets = new();   // 9차 회로 프리셋 (칸마다 "uid@자리,uid@자리" · 빈 문자열 = 비어 있음)
 
         public static long Now => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         /// <summary>시험에서 시간을 앞당길 때</summary>
@@ -101,6 +104,9 @@ namespace EarthDef
             gear ??= new(); chips ??= new(); mProg ??= new(); mGot ??= new(); tut ??= new(); seen ??= new();
             frames ??= new(); skins ??= new(); skinOn ??= new(); dailyKeys ??= new(); dailyVals ??= new(); iapOnce ??= new();
             if (dia < 0) dia = Tables.C("Start_Dia", 100);
+            codex ??= new(); chipPresets ??= new();
+            foreach (var g in gear) Codex.Mark(this, g);      // 9차: 도감이 생기기 전에 얻은 것도 채움
+            foreach (var c in chips) Codex.Mark(this, c);
             if (string.IsNullOrEmpty(frame)) frame = "basic";
             foreach (var g in gear) if (g.uid >= nextUid) nextUid = g.uid + 1;
             foreach (var c in chips) if (c.uid >= nextUid) nextUid = c.uid + 1;

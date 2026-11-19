@@ -142,6 +142,7 @@ namespace EarthDef
     {
         public static void Press()
         {
+            if (StoryView.Cur) { StoryView.Cur.Skip(); return; }      // 9차: 스토리 중 뒤로 가기 = 건너뛰기
             var op = Popup.Open;
             if (op != null) { if (op.CanClose) op.Close(); return; }
             if (Game.BattleUI != null) { if (Battle.I != null && Battle.I.st == Battle.St.Play) Game.BattleUI.ShowPause(); return; }
@@ -157,12 +158,13 @@ namespace EarthDef
         public static void Open()
         {
             // 6차 수정안: "프레임 60" · "도움말 다시 보기" 제거 → 창 높이를 줄임 (프레임은 늘 60)
-            var p = Popup.Make(L.T("settings"), 900, Cheat.Enabled ? 1190 : 1070, () => S.Save());      // 8차: [게임 종료] 한 줄 더
+            var p = Popup.Make(L.T("settings"), 900, Cheat.Enabled ? 1300 : 1180, () => S.Save());      // 8차: [게임 종료] 한 줄 더 · 9차: 스토리 건너뛰기 한 줄
             float y = 140;
             Volume(p, ref y, L.T("set_bgm"), "music", () => S.bgm, v => S.bgm = v);
             Volume(p, ref y, L.T("set_sfx"), "sound", () => S.sfx, v => S.sfx = v);
             Toggle(p, ref y, L.T("set_vib"), () => S.vib, v => S.vib = v);
             Toggle(p, ref y, L.T("set_nums"), () => S.nums, v => S.nums = v);
+            Toggle(p, ref y, L.T("set_story_skip"), () => S.storySkip, v => S.storySkip = v);   // 9차 "설정에서 스토리 스킵 기능 추가" (켬 = 스토리 안 보임)
             // 3차 [초안] 구글 계정 · 클라우드 저장 (실제 Play 게임즈 로그인 · 저장된 게임은 출시 단계)
             var ln = UIKit.Plain(p.win, new Color(0.23f, 0.16f, 0.11f, 0.2f), "Line"); ln.rectTransform.TL(60, y + 6, 780, 3);
             y += 24;

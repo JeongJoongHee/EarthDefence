@@ -81,6 +81,9 @@ namespace EarthDef
         {
             if (elite && !Meta.EliteOpen(stage)) elite = false;
             if (!Meta.Pay(elite)) { Popup.CloseAll(); if (!Lobby) ToLobby(); EarthDef.Lobby.ShowStamina(true); return false; }
+            // 9차 수정안 "전투 시작을 누르면 이 스테이지는 어느 스테이지고 각오 · 간단한 정보 스토리 → 게임에 진입" (스태미나는 먼저 냄)
+            string sid = StoryView.StageId(stage);
+            if (StoryView.Want(sid)) { Popup.CloseAll(); StoryView.Play(sid, stage, () => StartStage(stage, 0, elite)); return true; }
             StartStage(stage, 0, elite);
             return true;
         }

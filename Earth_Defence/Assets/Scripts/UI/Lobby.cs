@@ -120,6 +120,7 @@ namespace EarthDef
         const float CardShut = 300, CardOpen = 720;   // 요청 사항_05: 적 약점 줄을 [적 정보] 안으로 옮겨 352 → 300   // 2차 수정안 476 → 416 · 4차 수정안 "스테이지 칸 조금 더 작게" → 352
         void BuildBattle(RectTransform page)
         {
+            LobbyTalk.Attach(page);      // 9차: 대장 카피 말풍선 (판 맨 뒤)
             var card = stageCard = UIKit.Panel(page, "card", "StageCard"); card.rectTransform.TL(60, 12, 960, enemiesOpen ? CardOpen : CardShut);
             stageT = UIKit.Label(card.transform, "", 26, Art.Brown, TextAnchor.MiddleCenter, false); stageT.rectTransform.TL(0, 12, 960, 34);
             stageName = UIKit.Label(card.transform, "", 50); stageName.rectTransform.TL(120, 42, 720, 62);

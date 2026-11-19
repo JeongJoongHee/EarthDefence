@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>9차 수정안 반영</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+</head><body><main>
+<h1>9차 수정안 반영</h1>
+<p class="note">2026-11-20 · <code>요청 사항/9차 수정안.docx</code> (9줄 + 대화창 그림) · 자동 시험 <b>기본 137줄 + 시험장 13줄 + 3차 107줄 + 7차 24줄 + 8차 28줄 + 9차 52줄</b></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>"하단에서 상단으로 공격하는 방식으로 복구 (이전 버전)"</b> = 11-18 사령탑 전의 <b>돔 방식</b>으로 되돌렸습니다 (돔 외형 7종 · 이름도 "OO 돔"으로). 그 뒤에 요청하신 것 중 <b>8차 지구 바닥 · 달토끼 오른쪽 위 · 적 Fade in · 자리 고르기 · 약점 표시</b>는 그대로 두었습니다 (지구 바닥은 돔이 가운데 서게 지구 꼭대기를 가운데로 옮김). 사령탑 코드는 지우지 않고 <b>Config Battle_Vertical 0</b> 하나로 되돌릴 수 있게 남겼습니다.</li>
+<li>대장 카피는 <b>가운데 고정</b>(11-18 결정) 그대로입니다. 예전처럼 끌어서 좌우로 옮기려면 Config Guardian_Fixed 0.</li>
+<li>적 빠르기는 예전 길이로 돌아가 <b>예전 값(1배)</b> — 사령탑 때 길이가 짧아 0.72배로 줄였던 것. 밸런스 3차 측정은 대부분 돔 방식 때 잰 것이라 그 값에 다시 가까워집니다(재측정은 밸런스 차례에).</li>
+<li><b>스테이지 스토리는 그 스테이지를 처음 시작할 때만</b> 나옵니다 (지면 다시 도전할 때마다 보면 번거로워서). 매번 보려면 Config Story_Stage_Repeat 1. 설정 "스토리 건너뛰기"를 켜면 둘 다 안 뜹니다.</li>
+<li><b>스토리 세계관</b>(제가 정함): 카피바라들이 온천하며 사는 지구를 <b>젤리 여왕</b>이 온천을 차지하려고 운석 · 벌레 군단으로 침공 → 달에서 방아 찧던 <b>달토끼</b>가 발견해 알려 줌 → 대장 카피가 지구 방위대 결성. 장마다 사건(벌레 · 젤리 비 · 떠돌이 행성 · 강철 군단 · 모선 · 얼음 혜성 …) → 100 스테이지에서 여왕이 "우리 별이 추워서"라고 털어놓고 같이 온천에 가자는 귀여운 결말. 얼굴 그림은 있는 것(대장 카피 · 방아 찧는 달토끼 · 젤리 여왕 보스)을 썼습니다.</li>
+<li><b>도감</b>은 이번 판부터 기록합니다. 지금 가진 장비 · 회로는 켤 때 자동으로 채우지만, 예전에 합성 · 분해해서 없어진 것은 알 수 없어 빠져 있습니다 (출시 전이라 실제 영향 없음).</li>
+<li>대화창엔 요청에 없던 <b>[건너뛰기]</b>를 같이 넣었습니다 (설정까지 가지 않아도 넘길 수 있게).</li>
+<li>폴더에 다른 작업에서 생긴 <code>히든_타워_기획서.html · .md</code> 가 있어 건드리지 않았습니다 (커밋에도 안 넣음).</li>
+</ul></div>
+
+<h2>4 전투: 아래(돔) → 위(적) 방식 복구</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/9차_수정안_캡처/before_r8_09_battle.jpg" alt=""><figcaption><span class=b>전</span> 8차: 왼쪽 벽 사령탑 · 적은 오른쪽 위에서 비스듬히</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_09_battle.jpg" alt=""><figcaption><span class=a>뒤</span> 9차: 아래 가운데 돔 · 터렛 땅 위 한 줄 · 적은 위에서 곧게</figcaption></figure></div>
+<div class="pair"><figure><img src="캡쳐본 모음/9차_수정안_캡처/before_dome_1117.jpg" alt=""><figcaption><span class=b>참고</span> 11-17 예전 돔 (풀밭 바닥)</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_10_battle_more.jpg" alt=""><figcaption><span class=a>뒤</span> 터렛 4개 · 30초 뒤</figcaption></figure></div>
+<div class="pair"><figure><img src="캡쳐본 모음/9차_수정안_캡처/before_r8_06_looks_base.jpg" alt=""><figcaption><span class=b>전</span> 기지 외형 = 사령탑 7종</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_looks_base.jpg" alt=""><figcaption><span class=a>뒤</span> 기지 외형 = 돔 7종 (이름도 OO 돔)</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/9차_수정안_캡처/battle.gif" alt=""><figcaption>9차 전투 움직임 (0.12초 간격)</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_11_battle_tower_switch.jpg" alt=""><figcaption>Battle_Vertical 0 = 사령탑 (되돌리기 스위치 확인)</figcaption></figure></div>
+
+<h2>2 처음 시작 스토리</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_01_prologue_narr.jpg" alt=""><figcaption>해설 (얼굴 없이 가운데)</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_02_prologue_rabbit.jpg" alt=""><figcaption>달토끼</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_03_prologue_queen.jpg" alt=""><figcaption>젤리 여왕</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_04_prologue_capy.jpg" alt=""><figcaption>대장 카피</figcaption></figure></div>
+
+<h2>3 · 8 스테이지 스토리</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_07_stage_story.jpg" alt=""><figcaption>[전투 시작] → 스테이지 카드 + 안내</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_08_stage_story_last.jpg" alt=""><figcaption>마지막 줄 = [전투 시작!]</figcaption></figure></div>
+
+<h2>1 설정 · 5 로비 말풍선</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/9차_수정안_캡처/before_r8_07_settings.jpg" alt=""><figcaption><span class=b>전</span> 설정</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_06_settings.jpg" alt=""><figcaption><span class=a>뒤</span> 스토리 건너뛰기</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_05_lobby_talk.jpg" alt=""><figcaption><span class=a>뒤</span> 로비 말풍선</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/talk.gif" alt=""><figcaption>말풍선 뿅 (0.12초 간격)</figcaption></figure></div>
+
+<h2>6 도감 · 7 회로 프리셋</h2>
+<div class="pair"><figure><img src="캡쳐본 모음/9차_수정안_캡처/before_r8_04_gear.jpg" alt=""><figcaption><span class=b>전</span> 장비 탭</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_12_gear_tab.jpg" alt=""><figcaption><span class=a>뒤</span> [도감] · [회로 프리셋] 단추</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_13_codex_gear.jpg" alt=""><figcaption>장비 도감</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_14_codex_gear_info.jpg" alt=""><figcaption>장비 정보</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_15_codex_chip.jpg" alt=""><figcaption>회로 도감</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_16_codex_chip_info.jpg" alt=""><figcaption>회로 등급별 값</figcaption></figure><figure><img src="캡쳐본 모음/9차_수정안_캡처/r9_17_presets.jpg" alt=""><figcaption>회로 프리셋 3개</figcaption></figure></div>
+
+<h2>바뀐 곳 (다음 작업용 메모)</h2>
+<table><tr><th>무엇</th><th>어디</th></tr>
+<tr><td>세로 전장 스위치 (돔 · 칸 · 적 나오는 곳 · 방어막 · 머리 · 장판 · 낙뢰)</td><td><code>World.V</code> (Config Battle_Vertical) · <code>World.ApplyLayout · SlotPos · GuardianPos · FieldX0 · FieldLo · BaseDir · HeadRest · FieldVert · StrikeBottom</code> · <code>Enemy.AtLine/Remain</code> · <code>Battle.SpawnPoint/BigSpawn/Swarm/AimTarget</code></td></tr>
+<tr><td>세로 바닥 · 외형 목록 돔 아이콘</td><td><code>tools/tower_art.py earth_ground_v</code> → <code>earth_export.py groundv</code> (Bg/ground_earth_v · Icon/framed_&lt;id&gt;)</td></tr>
+<tr><td>스토리 대화창 · 로비 말풍선</td><td><code>UI/Story.cs</code> (StoryView · LobbyTalk) · 그림 <code>earth_export.py story9</code> (UI/portrait · UI/bubble · Icon/book)</td></tr>
+<tr><td>도감 · 프리셋</td><td><code>Core/Codex.cs</code> (Codex · ChipPreset) · <code>UI/CodexUI.cs</code> · 세이브 codex · chipPresets · storySkip</td></tr>
+<tr><td>표 (Story.xlsx 새로 · Config 12 · 글자 31 · 외형 이름 · 드론 설명)</td><td><code>tools/fix9_tables.py</code> — 대사를 고치면 이 파일에 옮겨 둘 것 (다시 돌리면 Story 시트를 새로 씀)</td></tr>
+<tr><td>시험</td><td><code>bash tools/unity_batch.sh EarthDef.EditorTools.PlayTest.RunR9 --play</code> (Editor/PlayTest9.cs) · 7차 · 8차 시험은 Battle_Vertical 0(사령탑)으로 돎</td></tr>
+</table>
+
+<h2>확인 칸</h2>
+<ul class="todo"><li data-id="r9-1"><label><input type="checkbox"><span><span class="tag">1</span>설정에서 스토리 스킵<span class="why">설정 창에 "스토리 건너뛰기" 켬/끔 한 줄 (켬 = 처음 시작 · 스테이지 스토리 모두 안 뜸). 대화창 오른쪽 위 [건너뛰기] · 폰 뒤로 가기도 건너뛰기</span></span></label></li><li data-id="r9-2"><label><input type="checkbox"><span><span class="tag">2</span>처음 시작 스토리 (왜 대장 카피가 지구를 지키나)<span class="why">타이틀 [게임 시작] → 10줄 스토리 → 로비. 요청 그림대로 왼쪽 동그라미 얼굴 · 오른쪽 대화창 · [다음]. 글자는 한 자씩(누르면 한 번에) · 화면 아무 데나 눌러도 다음 · 한 번만</span></span></label></li><li data-id="r9-3"><label><input type="checkbox"><span><span class="tag">3</span>[전투 시작] → 스테이지 소개 스토리 → 전투<span class="why">위에 스테이지 카드(번호 · 이름 · 약점 · 보스 그림) + 달토끼 안내 · 약점 터렛 추천 · 대장 카피 각오. 마지막 단추 = "전투 시작!" (스태미나는 먼저 냄)</span></span></label></li><li data-id="r9-4"><label><input type="checkbox"><span><span class="tag">4</span>전투를 아래 → 위 방식으로 복구<span class="why">11-18 전처럼 아래 가운데 돔 + 터렛 4칸 땅 위 한 줄 + 적은 위에서 곧게 내려와 방어막에 닿음 · 터렛 머리는 위를 봄 · 끈끈이 장판 가로 띠 · 적 빠르기 예전 그대로. 바닥은 8차 지구를 가운데로 · 달토끼 오른쪽 위 그대로. Config Battle_Vertical 0 이면 사령탑으로 되돌림</span></span></label></li><li data-id="r9-5"><label><input type="checkbox"><span><span class="tag">5</span>로비 대장 카피 말풍선<span class="why">6~12초마다 머리 위 말풍선(3.4초) · 대장 카피를 누르면 바로 한마디 · 창이 떠 있으면 쉼 · "다음은 스테이지 13!" 처럼 진행에 맞춘 말. 대사 26개 = Story.xlsx Lobby_Talk 시트 (Weight = 뽑힐 비율)</span></span></label></li><li data-id="r9-6"><label><input type="checkbox"><span><span class="tag">6</span>장비 · 회로 도감<span class="why">장비 탭 [도감] → 장비(부위 6 x 등급 7 = 42칸, 못 얻은 칸은 흐리게 + 자물쇠, 누르면 능력치 Lv.1 → 최대 Lv) · 회로(68종, 얻어 본 최고 등급과 효과, 누르면 등급별 값 · 끼우는 곳). 합성 · 분해로 없어져도 도감엔 남음</span></span></label></li><li data-id="r9-7"><label><input type="checkbox"><span><span class="tag">7</span>회로 프리셋 3개<span class="why">장비 탭 [회로 프리셋] → 프리셋 1~3 마다 [저장](지금 끼운 회로 · 자리) · [불러오기](그대로 다시 끼움). 합성 · 분해로 없어진 회로는 빼고 끼우고 몇 개 빠졌는지 알림 (Config Chip_Presets 3)</span></span></label></li><li data-id="r9-8"><label><input type="checkbox"><span><span class="tag">8</span>스테이지별 스토리 (100개)<span class="why">장(10스테이지)마다 이야기 흐름 + 스테이지마다 다른 테마 안내 · 약점 터렛 추천 · 대장 카피 각오 — 대사는 <a href="스토리_대사_검토.html">스토리_대사_검토.html</a> 에서 한 편씩 보고 의견을 주세요</span></span></label></li><li data-id="r9-play"><label><input type="checkbox"><span><span class="tag">폰</span>APK 로 직접 해 본 느낌<span class="why">메뉴 지구 방위대 › APK 빌드 로 폰에서 처음 시작 스토리 · 전투 · 말풍선을 보시고 의견 주세요</span></span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-req9-1120', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

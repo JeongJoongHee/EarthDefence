@@ -13,7 +13,7 @@
 """
 import os, sys, math, random
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import earth_art as A
@@ -624,9 +624,51 @@ def export_icon():
     print('icon', len(ICON_LIST))
 
 
+# ------------------------------------------------------------------ 9차 수정안: 세로 전장 (돔 + 아래에서 위로) 바닥 · 외형 목록 돔 아이콘
+def export_groundv():
+    import tower_art as TA
+    g = out('Bg', 'ground_earth_v', Rr(TA.earth_ground_v(), 1080, TA.GM_H, A.WOB['bg'] * .5, .008))
+    # 외형 목록 아이콘 (Icon/framed_<id>): 지구 바닥 + 그 외형의 돔 (게임과 같은 자리 — 두 그림 다 아래 끝 = 월드 -9.6) → 돔 둘레 760 x 420 을 0.5배
+    gr = Image.open(g).convert('RGBA')
+    for fid in FRAME_IDS:
+        dp = os.path.join(ART, 'Bg', f'dome_{fid}.png')
+        if not os.path.exists(dp): continue
+        im = gr.copy(); dm = Image.open(dp).convert('RGBA')
+        im.alpha_composite(dm, (0, TA.GM_H - dm.height))
+        bgc = Image.new('RGBA', im.size, (46, 56, 102, 255)); bgc.alpha_composite(im)
+        y0 = TA.GM_G - 380
+        ic = bgc.crop((160, y0, 920, y0 + 420)).resize((380, 210), Image.LANCZOS)
+        m = Image.new('L', (380, 210), 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, 379, 209), 24, fill=255)
+        ic.putalpha(m)
+        out('Icon', f'framed_{fid}', ic)
+    print('groundv')
+
+
+# ------------------------------------------------------------------ 9차 수정안: 스토리 대화창 초상 동그라미 · 로비 말풍선 · 도감 아이콘
+def ic_book(w, h, f, s):
+    """도감 (펼친 책 + 별 책갈피)"""
+    return (P(f'M{w*.5} {h*.24} Q{w*.32} {h*.12} {w*.08} {h*.18} L{w*.08} {h*.82} Q{w*.32} {h*.76} {w*.5} {h*.88} Z', CREAM, s)
+            + P(f'M{w*.5} {h*.24} Q{w*.68} {h*.12} {w*.92} {h*.18} L{w*.92} {h*.82} Q{w*.68} {h*.76} {w*.5} {h*.88} Z', '#bfe6fb', s)
+            + L(f'M{w*.18} {h*.36} Q{w*.3} {h*.32} {w*.4} {h*.38} M{w*.18} {h*.52} Q{w*.3} {h*.48} {w*.4} {h*.54}', s * .7)
+            + P(f'M{w*.66} {h*.22} L{w*.8} {h*.22} L{w*.8} {h*.5} L{w*.73} {h*.43} L{w*.66} {h*.5} Z', ORANGE, s * .7))
+
+
+def export_story9():
+    # 초상 동그라미 (300x300): 크림 판 + 굵은 선 + 위 윤기 — 안에 인물 그림을 코드에서 얹음
+    por = (C(150, 150, 138, A.G(CREAM, 'v', .95, .25), 8)
+           + f'<path d="M62 92 Q150 20 238 92" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".55"/>')
+    out('UI', 'portrait', Rr(por, 300, 300, A.WOB['ui'], .03))
+    # 로비 말풍선 (240x170): 둥근 판 + 아래 가운데 꼬리 (9분할: 꼬리는 아래 가장자리 안)
+    bub = (f'<path d="M34 6 L206 6 Q234 6 234 34 L234 104 Q234 132 206 132 L140 132 L120 162 L100 132 L34 132 Q6 132 6 104 L6 34 Q6 6 34 6 Z" fill="#fffaf0" stroke="{INK}" stroke-width="5.5" stroke-linejoin="round"/>'
+           + '<path d="M30 24 L120 24" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".6"/>')
+    out('UI', 'bubble', Rr(bub, 240, 170, 0, .03))
+    out('Icon', 'book', pop3d(Rr(f'<g transform="translate(8,8)">{ic_book(96, 96, CREAM, 5)}</g>', 112, 112, A.WOB['icon'])))
+    print('story9')
+
+
 if __name__ == '__main__':
     want = set(sys.argv[1:]) or {'bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'tower'}
     if 'frames' in want: want.add('tower')       # 11-18: 외형 7종 = 사령탑 (예전 돔 export_frames 는 쓰지 않음 — 아이콘을 덮어씀)
-    for n in ('bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'tower'):
+    for n in ('bg', 'char', 'turret', 'enemy', 'fx', 'ui', 'icon', 'tower', 'groundv', 'story9'):
         if n in want:
             globals()['export_' + n]()

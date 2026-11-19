@@ -18,10 +18,26 @@ namespace EarthDef
         public static void Invalidate() => cached = false;
         static void Recache()
         {
+            v = Tables.Ci("Battle_Vertical", 1) == 1;
             groundY = Tables.Cf("Ground_Y", -7.52f); shieldY = Tables.Cf("Shield_Y", -4.6f); shieldX = Tables.Cf("Shield_X", -2.1f);
             spawnY = Mathf.Min(Tables.Cf("Spawn_Y", 10.6f), I ? I.PlayTop - Tables.Cf("Spawn_Below_Hud", 0.6f) : 99f);
             cached = I;      // 월드가 생기기 전(로딩 중)엔 매번 다시 계산
         }
+        static bool v;
+        /// <summary>9차 수정안 "전투 화면은 하단에서 상단으로 공격하는 방식으로 복구 (이전 버전)" (Config Battle_Vertical 1):
+        /// 아래 가운데 돔 + 터렛 4칸 땅 위 한 줄 · 적은 위에서 곧게 내려와 방어막(Shield_Y)에 닿음. 0 = 11-18 우주 사령탑(왼쪽 벽 · 비스듬히)</summary>
+        public static bool V { get { if (!cached) Recache(); return v; } }
+        /// <summary>적이 다니는 곳의 왼쪽 끝 · 아래 끝 (세로 = 화면 왼쪽 · 방어막 / 사령탑 = 방어선 · 땅)</summary>
+        public static float FieldX0 => V ? -HalfW + 0.3f : ShieldX;
+        public static float FieldLo => V ? ShieldY : GroundY;
+        /// <summary>적이 닿은 곳에서 기지 쪽 (세로 = 아래 · 사령탑 = 왼쪽)</summary>
+        public static Vector2 BaseDir => V ? Vector2.down : Vector2.left;
+        /// <summary>터렛 머리가 쉴 때 보는 방향 (세로 = 위 90° · 사령탑 = 45°)</summary>
+        public static float HeadRest => V ? Tables.Cf("Head_Rest_Deg_V", 90f) : Tables.Cf("Head_Rest_Deg", 45f);
+        /// <summary>끈끈이 장판 세로 띠 (8차) — 세로 전장에선 예전처럼 가로 띠</summary>
+        public static bool FieldVert => !V && Tables.Ci("Field_Vertical", 1) == 1;
+        /// <summary>낙뢰 아래 끝 (세로 = 방어막 · 사령탑 = 지구 윗면)</summary>
+        public static float StrikeBottom(float x) => V ? ShieldY - 0.2f : FloorY(x);
         public static float GroundY { get { if (!cached) Recache(); return groundY; } }
         public static float ShieldY { get { if (!cached) Recache(); return shieldY; } }
         /// <summary>적이 나오는 높이 = Spawn_Y 와 "위쪽 UI 바로 아래" 중 낮은 쪽 (11-16: 화면이 짧으면 UI 밑에 숨어 내려오던 것).
@@ -44,21 +60,29 @@ namespace EarthDef
         /// <summary>터렛 칸 1~4 (위 2 · 아래 2 — 1 = 맨 위, 4 = 달 바닥) 의 땅 위 높이 · x</summary>
         public static readonly float[] SlotUp = { 10.9f, 7.725f, 3.285f, 0f };
         public const float SlotXPos = -3.9f;      // 7차 "타워 지지대 컴팩트": 몸통 바로 옆 (예전 -3.1)
-        public static Vector2 SlotPos(int slot) => new(SlotXPos, GroundY + SlotUp[Mathf.Clamp(slot - 1, 0, 3)] - (slot == 4 ? 0.06f : 0f));
+        /// <summary>9차 세로 전장의 터렛 칸 x (예전 그대로: 안쪽부터 왼쪽 안 · 오른쪽 안 · 왼쪽 밖 · 오른쪽 밖)</summary>
+        public static readonly float[] SlotXV = { -2.72f, 2.72f, -4.3f, 4.3f };
+        public static Vector2 SlotPos(int slot) => V ? new(SlotXV[Mathf.Clamp(slot - 1, 0, 3)], FloorY(SlotXV[Mathf.Clamp(slot - 1, 0, 3)]) - 0.06f) : new(SlotXPos, GroundY + SlotUp[Mathf.Clamp(slot - 1, 0, 3)] - (slot == 4 ? 0.06f : 0f));
         /// <summary>대장 카피 자리 = 가운데 사령실 발코니 위 (11-18 "대장 카피는 가운데 고정").
         /// 7차 "중간 카피바라 탄도가 위쪽 터렛과 겹치지 않게": 터렛 줄(오른쪽 끝 -3.35)보다 오른쪽 -2.9 → 위로 쏘는 탄도 터렛을 안 지남</summary>
-        public static Vector2 GuardianPos => new(-2.9f, GroundY + 5.805f);
+        public static Vector2 GuardianPos => V ? new(0f, GroundY - 0.04f) : new(-2.9f, GroundY + 5.805f);
         public static float TowerTop => GroundY + 11.85f;
         /// <summary>방어선 x — 적은 이 선(사령탑 앞 · 터렛 오른쪽)에 닿으면 멈춰 때리거나 부딪쳐 터짐</summary>
         public static float ShieldX { get { if (!cached) Recache(); return shieldX; } }
         /// <summary>싸우는 하늘 가운데 (소용돌이 필살기 등)</summary>
-        public static Vector2 FieldCenter => new((ShieldX + HalfW) * 0.5f, 1.5f);
+        public static Vector2 FieldCenter => V ? new(0f, 1.5f) : new((ShieldX + HalfW) * 0.5f, 1.5f);
         /// <summary>기지 효과(회복 · 얼림 · 부활)가 퍼지는 곳 = 사령실 앞</summary>
-        public static Vector2 BaseCenter => new(-3.4f, GroundY + 5.2f);
+        public static Vector2 BaseCenter => V ? new(0f, ShieldY + 0.5f) : new(-3.4f, GroundY + 5.2f);
         /// <summary>8차 전투 바닥 = 큰 지구 윗면: 가운데 x EG_CX · 반지름 EG_R (그림 tools/tower_art.py earth_ground 의 EG_* 와 같게).
         /// 사령탑(왼쪽)은 Ground_Y 그대로, 오른쪽으로 갈수록 둥글게 내려감 → 낙뢰 · 장판 아래 끝을 이 높이에</summary>
         public const float EG_CX = -3.4f, EG_R = 32f;
-        public static float FloorY(float x) { float dx = x - EG_CX; return GroundY - (EG_R - Mathf.Sqrt(Mathf.Max(0, EG_R * EG_R - dx * dx))); }
+        /// <summary>9차 세로 전장 바닥 = 가운데(x 0) 지구 윗면 (그림 Bg/ground_earth_v, tools/tower_art.py earth_ground_v 의 EGV_R 과 같게)</summary>
+        public const float EGV_R = 40f;
+        public static float FloorY(float x)
+        {
+            float cx = V ? 0f : EG_CX, r = V ? EGV_R : EG_R, dx = x - cx;
+            return GroundY - (r - Mathf.Sqrt(Mathf.Max(0, r * r - dx * dx)));
+        }
         /// <summary>화면 안 (적을 노릴 수 있음): 위 UI 아래 · 오른쪽 끝 안쪽</summary>
         public static bool OnField(Vector2 p) => p.y < SpawnY - 0.3f && p.x < HalfW - 0.15f;
         /// <summary>7차 "떨어지는 별똥별(적)은 Lv 게이지 밑부터 Fade in": 이 높이(위 UI 아래 끝 = Lv 게이지 아래)부터 나타나기 시작</summary>
@@ -69,6 +93,7 @@ namespace EarthDef
         readonly SpriteRenderer[] slotMarks = new SpriteRenderer[4];
         SpriteRenderer tower, towerGlow, rabbit, moon, sky, ground, earthBig;
         float rabbitT;
+        FrameRow frameRow; bool layoutV;
         public bool RabbitDown { get; private set; }
         float glowT; Color glowCol;
         public SpriteRenderer SlotMark(int slot) => slotMarks[Mathf.Clamp(slot - 1, 0, 3)];
@@ -77,8 +102,19 @@ namespace EarthDef
         public void SetFrame(FrameRow f)
         {
             if (!tower) return;
-            var sp = f != null ? TowerSprite("Bg/tower_" + f.id) : null;
-            tower.sprite = sp ? sp : TowerSprite("Bg/tower");
+            frameRow = f;
+            if (layoutV)
+            {   // 9차 세로 전장: 6차 외형 돔 7종 (Bg/dome_<id>)
+                var ds = f != null ? Art.Get("Bg/dome_" + f.id, 100f) : null;
+                tower.sprite = ds ? ds : Art.Get("Bg/dome", 100f);
+                tower.color = ds ? Color.white : f != null ? f.tint : Color.white;
+            }
+            else
+            {
+                var sp = f != null ? TowerSprite("Bg/tower_" + f.id) : null;
+                tower.sprite = sp ? sp : TowerSprite("Bg/tower");
+                tower.color = Color.white;
+            }
             glowCol = f != null && f.id != "basic" ? f.glow : new Color(1, 1, 1, 0);
         }
         /// <summary>사령탑 그림 420x1440 (PPU 100) — 피벗 = 왼쪽 아래에서 땅 높이(아래 40px)</summary>
@@ -103,11 +139,36 @@ namespace EarthDef
             tower = Spr("Tower", TowerSprite("Bg/tower"), new Vector2(-HalfW, GroundY), -40);
             // 7차 로비: 사령탑 없이 심플한 하늘 + 아래 큰 지구 (꼭대기 = Lobby_Earth_Top) — 대장 카피가 그 위를 걸음
             earthBig = Spr("EarthBig", Art.Get("Bg/earth_big", 100f, new Vector2(0.5f, 1f)), new Vector2(0, EarthTop + 1f), -50);
-            if (SaveData.Cur != null) SetFrame(Tables.Frame(SaveData.Cur.frame));
             for (int i = 0; i < 4; i++)
                 slotMarks[i] = Spr("Slot" + i, Art.Get("Bg/slot", 100f), SlotPos(i + 1) + new Vector2(0, 0.05f), -30);
+            ApplyLayout();
+            if (SaveData.Cur != null) SetFrame(Tables.Frame(SaveData.Cur.frame));
             ShowSlots(false);
             SetLobby(false);
+        }
+
+        /// <summary>9차: 전장 모양(세로 돔 ↔ 사령탑)에 맞춰 바닥 · 기지 그림 · 빛 · 빈 칸 자리를 놓음 (Config Battle_Vertical — 전투에 들어갈 때마다 다시 봄)</summary>
+        public void ApplyLayout()
+        {
+            Invalidate();
+            bool nv = V;
+            layoutV = nv;
+            if (nv)
+            {
+                ground.sprite = Art.Get("Bg/ground_earth_v", 100f) ?? Art.Get("Bg/ground_earth", 100f);
+                tower.sprite = Art.Get("Bg/dome", 100f);
+                tower.transform.position = new Vector2(0, Bottom + 2.8f);
+                towerGlow.transform.position = new Vector2(0, Bottom + 3.1f); towerGlow.transform.localScale = new Vector3(15f, 7.5f, 1);
+            }
+            else
+            {
+                ground.sprite = Art.Get("Bg/ground_earth", 100f);
+                tower.sprite = TowerSprite("Bg/tower");
+                tower.transform.position = new Vector2(-HalfW, GroundY);
+                towerGlow.transform.position = new Vector2(-4.9f, GroundY + 6f); towerGlow.transform.localScale = new Vector3(4f, 16f, 1);
+            }
+            for (int i = 0; i < 4; i++) slotMarks[i].transform.position = SlotPos(i + 1) + new Vector2(0, 0.05f);
+            SetFrame(frameRow ?? (SaveData.Cur != null ? Tables.Frame(SaveData.Cur.frame) : null));
         }
 
         // ---------- 7차 수정안: 로비(타이틀) 배경 ----------
@@ -127,6 +188,7 @@ namespace EarthDef
             earthBig.enabled = on;
             sky.sprite = Art.Get(on ? "Bg/sky_plain" : "Bg/sky", 100f);
             starT = 0.6f;
+            if (layoutV != V) ApplyLayout();      // 9차: Config Battle_Vertical 이 바뀌었으면 (로비 · 전투 모두) 배치를 다시
             if (!on) foreach (var st in stars) st.sr.enabled = false;
             if (on) ShowSlots(false);
         }

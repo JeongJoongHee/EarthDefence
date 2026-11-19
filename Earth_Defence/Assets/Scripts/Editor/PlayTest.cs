@@ -46,6 +46,8 @@ namespace EarthDef.EditorTools
         public static void RunR7() => Start("r7");
         /// <summary>11-19 8차 수정안 시험 (Editor/PlayTest8.cs): 타이틀 · 로비 단추 아래 · 별똥별 느리게 · 달토끼 오른쪽 위 · 지구 바닥 · 끈끈이 세로 · 전투 약점 · 결과 보상 칸 · 장비 탭 제자리 · 외형 설명 · 종료</summary>
         public static void RunR8() => Start("r8");
+        /// <summary>9차 수정안 시험 (스토리 · 세로 전장 · 로비 말풍선 · 도감 · 회로 프리셋)</summary>
+        public static void RunR9() => Start("r9");
 
         static void Start(string mode)
         {
@@ -87,9 +89,9 @@ namespace EarthDef.EditorTools
         {
             string mode = SessionState.GetString(PlayTest.ModeKey, "");
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
-            Battle.NoSlotPick = true;      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
-            if (mode != "r7" && mode != "r8" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : Steps());
+            Battle.NoSlotPick = true; StoryView.Off = true;   // 9차: 스토리 대화창은 RunR9 에서 따로 시험 ·      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
+            if (mode != "r7" && mode != "r8" && mode != "r9" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -478,12 +480,13 @@ namespace EarthDef.EditorTools
                 var srow = GameObject.Find("S_sk_rail");
                 Check(srow != null && srow.transform.Find("After") != null && srow.transform.Find("Before") == null, "터렛 외형 = 바뀐 그림 한 장");
                 Capture("87_looks_turret");
-                bool domes = true; foreach (var f in Tables.Frames) if (Art.Get("Bg/tower_" + f.id, 100f) == null || Art.Icon("frame_" + f.id) == null) domes = false;   // 11-18: 돔 → 사령탑
+                string bgP = World.V ? "Bg/dome_" : "Bg/tower_", icP = World.V ? "framed_" : "frame_";      // 9차 세로 전장 = 돔 (11-18 사령탑 = Battle_Vertical 0)
+                bool domes = true; foreach (var f in Tables.Frames) if (Art.Get(bgP + f.id, 100f) == null || Art.Icon(icP + f.id) == null) domes = false;
                 Looks.sub = 1; Game.Lobby.SetTab(6); yield return Wait(0.3f);
                 Capture("88_looks_base");
                 S.dia += 2000; var gf = Tables.Frame("gold"); Store.BuyFrame(gf); Store.EquipFrame("gold");
                 var domeSr = GameObject.Find("Tower").GetComponent<SpriteRenderer>();
-                Check(domes && domeSr.sprite.name == "Bg/tower_gold" && domeSr.color == Color.white, $"기지 외형마다 다른 사령탑 그림 ({Tables.Frames.Count}종) · 끼우면 전장 사령탑도 ({domeSr.sprite.name})");
+                Check(domes && domeSr.sprite.name == bgP + "gold" && domeSr.color == Color.white, $"기지 외형마다 다른 {(World.V ? "돔" : "사령탑")} 그림 ({Tables.Frames.Count}종) · 끼우면 전장 사령탑도 ({domeSr.sprite.name})");
                 Game.Lobby.SetTab(0); yield return Wait(0.3f);
                 Capture("89_lobby_gold_dome");
                 foreach (var fid in new[] { "prism", "frost", "thorn", "bloom" }) { Store.BuyFrame(Tables.Frame(fid)); Store.EquipFrame(fid); yield return null; Capture("89_dome_" + fid); }
@@ -861,6 +864,10 @@ namespace EarthDef.EditorTools
             // 2b) 11-18 전투 배치 2판: 우주 사령탑 (전투배치_시안.html)
             {
                 var tw = GameObject.Find("Tower"); var tsr = tw ? tw.GetComponent<SpriteRenderer>() : null;
+                if (World.V)   // 9차 "하단에서 상단으로 공격하는 방식으로 복구" (Battle_Vertical 1) — 사령탑 검사는 RunR9 의 스위치 시험에서
+                    Check(tsr != null && tsr.sprite != null && tsr.sprite.name.StartsWith("Bg/dome") && Mathf.Abs(tw.transform.position.x) < 0.01f,
+                          $"9차: 아래 가운데 돔 ({tsr?.sprite?.name} · x {(tw ? tw.transform.position.x : 0):0.0})");
+                else
                 Check(tsr != null && tsr.sprite != null && tsr.sprite.name.StartsWith("Bg/tower") && tw.transform.position.x < -5f && GameObject.Find("Dome") == null,
                       $"돔 대신 왼쪽 벽 사령탑 ({tsr?.sprite?.name} · x {(tw ? tw.transform.position.x : 0):0.0})");
                 Check(Art.Get("Bg/ground_moon", 100f) != null, "바닥 = 달 + 지평선 지구");
@@ -869,19 +876,21 @@ namespace EarthDef.EditorTools
                 Check(Vector2.Distance((Vector2)B.Guardian.transform.position, World.GuardianPos) < 0.05f && Vector2.Distance(gp, World.GuardianPos) < 0.05f,
                       $"대장 카피는 가운데 사령실에 고정 (끌어도 안 움직임 · {B.Guardian.transform.position.x:0.00}, {B.Guardian.transform.position.y:0.00})");
                 var live = B.enemies.FindAll(e => !e.dead);
-                bool diag = live.Count > 0 && live.TrueForAll(e => e.Dir.x < -0.15f && e.Dir.y < 0.05f);
-                Check(diag, $"적은 모두 오른쪽 위에서 왼쪽 아래 사령탑 쪽으로 ({live.Count}마리)");
+                bool diag = live.Count > 0 && live.TrueForAll(e => World.V ? e.Dir.y < -0.99f : e.Dir.x < -0.15f && e.Dir.y < 0.05f);
+                Check(diag, World.V ? $"9차: 적은 모두 위에서 곧게 아래로 ({live.Count}마리)" : $"적은 모두 오른쪽 위에서 왼쪽 아래 사령탑 쪽으로 ({live.Count}마리)");
                 var sp = B.Spawn("fire", new Vector2(3f, 9f)); B.Tick(Battle.StepSec);
                 float rot = sp.transform.eulerAngles.z;
-                Check(sp.Dir.x < 0 && Mathf.Abs(Mathf.DeltaAngle(rot, Mathf.Atan2(sp.Dir.y, sp.Dir.x) * Mathf.Rad2Deg + 90f)) < 2f, $"꼬리 달린 운석은 날아가는 쪽으로 머리를 돌림 ({rot:0}°)");
+                Check((World.V || sp.Dir.x < 0) && Mathf.Abs(Mathf.DeltaAngle(rot, Mathf.Atan2(sp.Dir.y, sp.Dir.x) * Mathf.Rad2Deg + 90f)) < 2f, $"꼬리 달린 운석은 날아가는 쪽으로 머리를 돌림 ({rot:0}°)");
                 var p0 = sp.Pos; sp.Knock(1f);
                 Check(Vector2.Dot(sp.Pos - p0, sp.Dir) < -0.9f, $"밀어내기 = 온 길로 되돌림 ({Vector2.Distance(sp.Pos, p0):0.00}칸)");
                 int top = 0, n = 300; bool right = true; for (int i = 0; i < n; i++) { var q = B.SpawnPoint(); if (q.y > World.SpawnY - 1f) top++; else if (q.x < World.HalfW) right = false; if (q.x < -1f) right = false; }
-                Check(right && top > n * 0.5f && top < n * 0.8f, $"나오는 곳: 위 가장자리 오른쪽 {top * 100 / n}% · 오른쪽 가장자리 {100 - top * 100 / n}%");
-                var bt = B.Spawn("beetle", new Vector2(1.5f, 0f)); double hb = B.baseHp;
+                if (World.V) Check(top == n, $"9차: 나오는 곳 = 위 가장자리 {top * 100 / n}%");
+                else Check(right && top > n * 0.5f && top < n * 0.8f, $"나오는 곳: 위 가장자리 오른쪽 {top * 100 / n}% · 오른쪽 가장자리 {100 - top * 100 / n}%");
+                var bt = B.Spawn("beetle", new Vector2(1.5f, World.V ? World.ShieldY + 3f : 0f)); double hb = B.baseHp;
                 for (int i = 0; i < 60 * 20 && bt.Remain > 0; i++) bt.Step(Battle.StepSec);
                 for (int i = 0; i < 90; i++) bt.Step(Battle.StepSec);
-                Check(bt.Remain == 0 && Mathf.Abs(bt.Pos.x - bt.radius - World.ShieldX) < 0.2f && B.baseHp < hb, $"방어선(x {World.ShieldX:0.0})에 닿으면 멈춰 기지를 때림 (적 x {bt.Pos.x:0.00} · 체력 {hb:0} → {B.baseHp:0})");
+                if (World.V) Check(bt.Remain == 0 && Mathf.Abs(bt.Pos.y - bt.radius - World.ShieldY) < 0.2f && B.baseHp < hb, $"9차: 방어막(y {World.ShieldY:0.0})에 닿으면 멈춰 기지를 때림 (적 y {bt.Pos.y:0.00} · 체력 {hb:0} → {B.baseHp:0})");
+                else Check(bt.Remain == 0 && Mathf.Abs(bt.Pos.x - bt.radius - World.ShieldX) < 0.2f && B.baseHp < hb, $"방어선(x {World.ShieldX:0.0})에 닿으면 멈춰 기지를 때림 (적 x {bt.Pos.x:0.00} · 체력 {hb:0} → {B.baseHp:0})");
                 Combat.Raw(bt, bt.hp + 1, false, null); Combat.Raw(sp, sp.hp + 1, false, null); B.baseHp = hb; B.Tick(Battle.StepSec);
                 Check(Tables.Cf("Enemy_Speed_Mul", 1f) < 1f, $"오는 길이 짧아진 만큼 적 속도 x{Tables.Cf("Enemy_Speed_Mul", 1f)}");
             }

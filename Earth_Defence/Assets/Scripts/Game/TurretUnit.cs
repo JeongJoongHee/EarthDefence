@@ -37,7 +37,7 @@ namespace EarthDef
                 sr.sprite = Art.Turret(TurretIdle.BaseSprite(t.row.art));
                 idle = gameObject.AddComponent<TurretIdle>();
                 idle.Setup(this, t.row.art);
-                headDeg = Tables.Cf("Head_Rest_Deg", 45f); idle.RestAim();
+                headDeg = World.HeadRest; idle.RestAim();
             }
             RefreshTier();
         }
@@ -112,27 +112,27 @@ namespace EarthDef
                 case "laser": for (int i = -1; i <= 1; i++) b.Add(new Beam(t, Head, ang + i * 25f, 1.5f, 0.2f, 0.4f, rate, 40f)); break;
                 case "drone":
                 {
-                    if (Tables.Ci("Field_Vertical", 1) == 1)
+                    if (World.FieldVert)
                     {   // 8차: 세로 띠 3개 (적 무리 x 와 양옆)
-                        float hw = 0.9f * t.Area, x = Mathf.Clamp(b.CrowdX(), World.ShieldX + hw + 2.4f, World.HalfW - hw - 2.4f);
+                        float hw = 0.9f * t.Area, x = Mathf.Clamp(b.CrowdX(), World.FieldX0 + hw + 2.4f, World.HalfW - hw - 2.4f);
                         for (int i = -1; i <= 1; i++) b.Add(new Field(t, x + i * 2.4f, hw, 4f, 0.4f, rate));
                         break;
                     }
                     float y = b.CrowdY();
-                    for (int i = -1; i <= 1; i++) b.Add(new Field(t, Mathf.Clamp(y + i * 2.4f, World.GroundY + 1.2f, 8f), 0.9f * t.Area, 4f, 0.4f, rate));
+                    for (int i = -1; i <= 1; i++) b.Add(new Field(t, Mathf.Clamp(y + i * 2.4f, World.FieldLo + 1.2f, 8f), 0.9f * t.Area, 4f, 0.4f, rate));
                     break;
                 }
                 case "hive": for (int i = 0; i < 15; i++) b.Add(new Bee(t, Head + new Vector2(Random.Range(-0.6f, 0.6f), Random.Range(0f, 0.4f)), 5, rate)); break;
                 case "missile":
                     for (int i = 0; i < 12; i++)
                     {
-                        var from = new Vector2(Random.Range(World.ShieldX + 0.5f, World.HalfW - 0.5f), World.SpawnY - 0.2f);
+                        var from = new Vector2(Random.Range(World.FieldX0 + 0.2f, World.HalfW - 0.5f), World.SpawnY - 0.2f);
                         var m = new Projectile(t, "missile", from, Vector2.down, t.row.speed, rate, 0, 1f) { target = b.RandomEnemy(), turn = 5f, life = 5f, hitR = 0.25f };
                         m.onHit = (p, e) => { Combat.Hit(t, e, rate); Combat.Explode(t, p.pos, 1.1f, rate * 0.6, Elem.Color("fire")); };
                         b.Add(m);
                     }
                     break;
-                case "bolt": for (int i = 0; i < 7; i++) b.Add(new Strike(t, Mathf.Lerp(World.ShieldX + 0.5f, World.HalfW - 0.4f, i / 6f), 0.7f, 1.2f, 0.3f, rate)); break;
+                case "bolt": for (int i = 0; i < 7; i++) b.Add(new Strike(t, Mathf.Lerp(World.FieldX0 + 0.5f, World.HalfW - 0.4f, i / 6f), 0.7f, 1.2f, 0.3f, rate)); break;
                 case "cannon":
                 {
                     var d = (tp - Head).normalized;
@@ -265,7 +265,7 @@ namespace EarthDef
         public float HeadDeg => headDeg;
         /// <summary>머리가 보는 방향 (머리가 없는 터렛은 위)</summary>
         public Vector2 HeadDir => idle != null && idle.HasHead ? new Vector2(Mathf.Cos(headDeg * Mathf.Deg2Rad), Mathf.Sin(headDeg * Mathf.Deg2Rad)) : Vector2.up;
-        float AngleTo(Vector2 p) { var d = p - (Vector2)transform.position - Vector2.up * 0.7f; return Mathf.Clamp(Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, -35f, 115f); }
+        float AngleTo(Vector2 p) { var d = p - (Vector2)transform.position - Vector2.up * 0.7f; return World.V ? Mathf.Clamp(Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, 5f, 175f) : Mathf.Clamp(Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, -35f, 115f); }
         void HeadStep(float dt)
         {
             if (idle == null || !idle.HasHead) return;
@@ -273,7 +273,7 @@ namespace EarthDef
             {
                 headT = 0.1f;
                 var tg = Battle.I.Nearest(transform.position, t.Range);
-                headWant = tg != null ? AngleTo(tg.Pos) : Tables.Cf("Head_Rest_Deg", 45f);
+                headWant = tg != null ? AngleTo(tg.Pos) : World.HeadRest;
             }
             headDeg = Mathf.MoveTowardsAngle(headDeg, headWant, Tables.Cf("Head_Turn", 240f) * dt);
             idle.SetAim(headDeg);
@@ -356,9 +356,9 @@ namespace EarthDef
                 {
                     float half = t.row.radius * t.Area;
                     int n = 1 + (int)t.S("count_free");
-                    if (Tables.Ci("Field_Vertical", 1) == 1)
+                    if (World.FieldVert)
                     {   // 8차 "끈끈이 드랍은 세로로": 적 무리 x 에 세로 띠 (여러 개면 오른쪽 · 왼쪽으로 번갈아, 끝에 닿으면 반대쪽)
-                        float x0 = World.ShieldX + half + 0.2f, x1 = World.HalfW - half - 0.1f;
+                        float x0 = World.FieldX0 + half + 0.2f, x1 = World.HalfW - half - 0.1f;
                         float x = Mathf.Clamp(b.CrowdX(), x0, x1);
                         for (int i = 0; i < n; i++)
                         {
@@ -369,9 +369,9 @@ namespace EarthDef
                         }
                         break;
                     }
-                    float y = Mathf.Clamp(b.CrowdY(), World.GroundY + half + 0.3f, 7.5f);
+                    float y = Mathf.Clamp(b.CrowdY(), World.FieldLo + half + 0.3f, 7.5f);
                     for (int i = 0; i < n; i++)
-                        b.Add(new Field(t, Mathf.Clamp(y + i * 2.6f, World.GroundY + half + 0.3f, 8.5f), half, t.Duration, t.Tick, t.row.rate));
+                        b.Add(new Field(t, Mathf.Clamp(y + i * 2.6f, World.FieldLo + half + 0.3f, 8.5f), half, t.Duration, t.Tick, t.row.rate));
                     break;
                 }
                 case "hive":

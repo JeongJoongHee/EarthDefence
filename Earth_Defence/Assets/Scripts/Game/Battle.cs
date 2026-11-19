@@ -219,27 +219,31 @@ namespace EarthDef
         /// <summary>나오는 곳: 위 가장자리 오른쪽(Spawn_Top_Share) 또는 오른쪽 가장자리 위쪽 (사용자 "운석은 대각선 오른쪽에서 왼쪽으로 떨어지듯")</summary>
         public Vector2 SpawnPoint()
         {
+            // 9차 세로 전장: 예전처럼 위 가장자리 아무 x 에서 (나오는 줄 아래쪽으로 — UI 에 안 가리게)
+            if (World.V) return new Vector2(RandX(), World.SpawnY - 0.8f * (float)rnd.NextDouble());
             if (rnd.NextDouble() < Tables.C("Spawn_Top_Share", 0.65))
                 return new Vector2(Mathf.Lerp(Tables.Cf("Spawn_Top_X0", -0.5f), World.HalfW - 0.5f, (float)rnd.NextDouble()), World.SpawnY - 0.8f * (float)rnd.NextDouble());
             return new Vector2(World.HalfW + 0.4f, Mathf.Lerp(Tables.Cf("Spawn_Right_Y0", 0f), World.SpawnY - 0.3f, (float)rnd.NextDouble()));
         }
         /// <summary>중간 보스 · 보스: 오른쪽 위 모서리 쪽 (몸이 커서 반쯤 화면 밖)</summary>
-        Vector2 BigSpawn(float up) => new(Mathf.Min(World.HalfW - 1.6f, 2.6f + (float)rnd.NextDouble()), World.SpawnY + up);
+        Vector2 BigSpawn(float up) => World.V ? new(RandX() * 0.3f, World.SpawnY + up) : new(Mathf.Min(World.HalfW - 1.6f, 2.6f + (float)rnd.NextDouble()), World.SpawnY + up);
         void Swarm()
         {
-            var c = SpawnPoint(); c.x = Mathf.Min(c.x, World.HalfW - 1f);
+            var c = SpawnPoint(); c.x = World.V ? RandX() * 0.7f : Mathf.Min(c.x, World.HalfW - 1f);
             var tgt = AimTarget(c);
             int n = Tables.Ci("Swarm_Size", 8);
             for (int i = 0; i < n; i++)
             {
-                var p = c + new Vector2((float)(rnd.NextDouble() - 0.5) * 2.4f, i * 0.35f);
+                var p = c + new Vector2((float)(rnd.NextDouble() - 0.5) * (World.V ? 3f : 2.4f), i * 0.35f);
                 var e = Spawn(stage.swarm, p);
-                e?.Aim(tgt + new Vector2(0, (float)(rnd.NextDouble() - 0.5) * 1.2f));   // 무리는 같은 곳을 노림
+                if (!World.V) e?.Aim(tgt + new Vector2(0, (float)(rnd.NextDouble() - 0.5) * 1.2f));   // 무리는 같은 곳을 노림
             }
         }
+        float RandX() => (float)(rnd.NextDouble() * 2 - 1) * (World.HalfW - 0.6f);
         /// <summary>겨누는 곳: 방어선 위 사령탑 높이 안에서, 내려오는 각도가 Approach_Min ~ Approach_Max 도인 곳 (무작위)</summary>
         public Vector2 AimTarget(Vector2 from)
         {
+            if (World.V) return new Vector2(from.x, World.ShieldY - 1f);      // 9차 세로: 곧게 아래로
             float sx = World.ShieldX, lo = World.GroundY + 0.6f, hi = World.TowerTop - 0.4f;
             float dx = Mathf.Max(0.5f, from.x - sx);
             float a = from.y - dx * Mathf.Tan(Tables.Cf("Approach_Max", 70f) * Mathf.Deg2Rad);
@@ -300,7 +304,7 @@ namespace EarthDef
                     for (int i = enemies.Count - 1; i >= 0; i--) if (i < enemies.Count && !enemies[i].dead) Combat.Hit(g, enemies[i], frameVal, false, true);
                     for (int i = 0; i < 14; i++)
                     {
-                        var p = new Vector2(Mathf.Lerp(World.ShieldX + 0.8f, World.HalfW - 0.4f, (float)rnd.NextDouble()), Mathf.Lerp(World.GroundY + 1f, World.SpawnY - 1f, (float)rnd.NextDouble()));
+                        var p = new Vector2(Mathf.Lerp(World.FieldX0 + 0.5f, World.HalfW - 0.4f, (float)rnd.NextDouble()), Mathf.Lerp(World.FieldLo + 1f, World.SpawnY - 1f, (float)rnd.NextDouble()));
                         Fx.Glow(p, 0.5f, new Color(0.75f, 0.82f, 1f, 0.9f), 0.35f);
                         Fx.Sparks(p, new Color(0.85f, 0.9f, 1f), 3, 5f, 1f, 30f, -110f);
                     }
@@ -401,16 +405,16 @@ namespace EarthDef
         public void HurtBase(double d, Vector2 at, Enemy src = null)
         {
             if (st == St.End) return;
-            if (lab != null) { Fx.Hit(at + Vector2.left * 0.3f, 0.8f); return; }   // 시험장: 기지는 안 닳음 (11-18: 기지 = 왼쪽)
-            if (invulnT > 0) { Fx.Ring(at + Vector2.left * 0.2f, 0.6f, Art.Hex("#f3dcff")); return; }
+            if (lab != null) { Fx.Hit(at + World.BaseDir * 0.3f, 0.8f); return; }   // 시험장: 기지는 안 닳음 (11-18: 기지 = 왼쪽)
+            if (invulnT > 0) { Fx.Ring(at + World.BaseDir * 0.2f, 0.6f, Art.Hex("#f3dcff")); return; }
             // 가시 돔: 때린 적에게 반격
             if (src != null && !src.dead && frame != null && frame.effect == "thorn") { frameFired++; Combat.Hit(run.turrets[0], src, frameVal, false, true); Fx.Sparks(src.Pos, Art.Hex("#b8e08f"), 4, 4f, 0.9f); }
             // 2차 칩: 처음 N번 막음 → 받는 피해 -N(최소 1) → 보호막이 먼저 받음
-            if (immune > 0) { immune--; Fx.Ring(at + Vector2.left * 0.2f, 0.8f, Art.Sky); return; }
+            if (immune > 0) { immune--; Fx.Ring(at + World.BaseDir * 0.2f, 0.8f, Art.Sky); return; }
             d = Tables.C("Reduce_K", 0) > 0 ? Math.Max(1, d * lo.ReduceMul) : Math.Max(1, d - lo.reduce);   // 밸런스 3차: 방어력 = 비율 감소
-            if (shield > 0) { double s = Math.Min(shield, d); shield -= s; d -= s; if (d <= 0) { Fx.Ring(at + Vector2.left * 0.2f, 0.6f, Art.Sky); return; } }
+            if (shield > 0) { double s = Math.Min(shield, d); shield -= s; d -= s; if (d <= 0) { Fx.Ring(at + World.BaseDir * 0.2f, 0.6f, Art.Sky); return; } }
             baseHp = Math.Max(0, baseHp - d);
-            Fx.Hit(at + Vector2.left * 0.3f, 1.2f);
+            Fx.Hit(at + World.BaseDir * 0.3f, 1.2f);
             Audio.Play(Audio.Sfx.BaseHit);
             // 무지개 돔: 처음 무너질 때 한 번 버팀
             if (baseHp <= 0 && frame != null && frame.effect == "revive" && !revived)
@@ -466,11 +470,11 @@ namespace EarthDef
             foreach (var e in enemies)
             {
                 if (e.dead) continue;
-                int i = Mathf.FloorToInt(e.Pos.y - World.GroundY);
+                int i = Mathf.FloorToInt(e.Pos.y - World.FieldLo);
                 if (i >= 0 && i < cnt.Length) cnt[i] += e.row.IsBoss || e.row.IsElite ? 3 : 1;
             }
-            int best = 4; for (int i = 0; i < cnt.Length; i++) if (cnt[i] > cnt[best]) best = i;
-            return World.GroundY + best + 0.5f;
+            int best = World.V ? 1 : 4; for (int i = 0; i < cnt.Length; i++) if (cnt[i] > cnt[best]) best = i;
+            return World.FieldLo + best + 0.5f;
         }
 
         static readonly int[] crowdCntX = new int[12];
@@ -478,7 +482,7 @@ namespace EarthDef
         public float CrowdX()
         {
             var cnt = crowdCntX; Array.Clear(cnt, 0, cnt.Length);
-            float x0 = World.ShieldX;
+            float x0 = World.FieldX0;
             foreach (var e in enemies)
             {
                 if (e.dead || !World.OnField(e.Pos)) continue;

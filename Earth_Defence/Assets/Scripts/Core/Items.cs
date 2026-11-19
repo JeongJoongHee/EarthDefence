@@ -215,7 +215,7 @@ namespace EarthDef
             rnd ??= new System.Random(Environment.TickCount ^ S.nextUid);
             part ??= Tables.GearParts[rnd.Next(Tables.GearParts.Count)].part;
             var g = new GearItem { uid = S.nextUid++, part = part, grade = Mathf.Clamp(grade, 1, Tables.GradeMax), lv = 1 };
-            S.gear.Add(g); Trim();
+            S.gear.Add(g); Trim(); Codex.Mark(S, g);
             return g;
         }
         /// <summary>칩: 범용 + 열린 터렛 전용 칩 중에서 가중치대로</summary>
@@ -231,7 +231,7 @@ namespace EarthDef
                 foreach (var c in pool) { r -= c.weight; if (r < 0) { id = c.id; break; } }
             }
             var ch = new ChipItem { uid = S.nextUid++, id = id, q = Mathf.Clamp(q, 1, Tables.GradeMax) };
-            S.chips.Add(ch); Trim();
+            S.chips.Add(ch); Trim(); Codex.Mark(S, ch);
             return ch;
         }
         /// <summary>가방이 넘치면 끼우지 않은 가장 낮은 등급부터 부품으로</summary>

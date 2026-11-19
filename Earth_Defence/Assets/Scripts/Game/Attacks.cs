@@ -215,7 +215,7 @@ namespace EarthDef
         public Field(TurretInst tr, float at, float halfW, float duration, float tickSec, double rate, bool? vertical = null)
         {
             src = tr; c = at; half = halfW; dur = duration; tick = tickSec; this.rate = rate;
-            vert = vertical ?? Tables.Ci("Field_Vertical", 1) == 1;
+            vert = vertical ?? World.FieldVert;
             Vector2 pos, size;
             if (vert)
             {
@@ -224,8 +224,8 @@ namespace EarthDef
             }
             else
             {   // 11-18 사령탑: 장판은 방어선 앞 하늘만 (사령탑 · 터렛을 덮지 않게)
-                lo = World.ShieldX - 0.3f; hi = World.HalfW + 0.1f;
-                pos = new Vector2((World.ShieldX + World.HalfW) * 0.5f + 0.1f, c); size = new Vector2(World.HalfW - World.ShieldX + 0.4f, half * 2);
+                lo = World.V ? -World.HalfW - 0.2f : World.ShieldX - 0.3f; hi = World.HalfW + 0.1f;     // 9차 세로 전장 = 예전처럼 화면 폭 가득
+                pos = new Vector2((lo + hi) * 0.5f, c); size = new Vector2(hi - lo + 0.1f, half * 2);
             }
             MakeSprite("field", Art.Fx("field", new Vector4(28, 24, 28, 24)), pos, 8);
             sr.drawMode = SpriteDrawMode.Sliced;      // 장판은 보통 그리기 (빛 더하기면 겹칠 때 하얗게 탐 — 11-16 캡처로 확인)
@@ -266,7 +266,7 @@ namespace EarthDef
                 if (src.Has("field_explode"))
                 {
                     if (vert) for (float y = lo + 0.6f; y <= hi - 0.3f; y += 1.5f) Fx.Burst(new Vector2(c, y), half * 1.2f, Elem.Color("grav"));
-                    else for (float x = World.ShieldX + 0.6f; x <= World.HalfW - 0.3f; x += 1.5f) Fx.Burst(new Vector2(x, c), half * 1.2f, Elem.Color("grav"));
+                    else for (float x = World.FieldX0 + 0.6f; x <= World.HalfW - 0.3f; x += 1.5f) Fx.Burst(new Vector2(x, c), half * 1.2f, Elem.Color("grav"));
                     foreach (var e in list) if (!e.dead && Inside(e, 0)) Combat.Hit(src, e, 300, false);
                 }
                 Kill();
@@ -286,7 +286,7 @@ namespace EarthDef
         {
             miniY = y;
             src = tr; this.x = x; this.width = width; dur = duration; tick = tickSec; this.rate = rate; this.mini = mini;
-            float top = mini ? 3.5f : (World.I ? World.I.Top + 0.5f : World.SpawnY + 2f), bottom = World.FloorY(x);   // 11-18: 달 바닥까지 → 8차: 지구 윗면(오른쪽은 둥글게 낮음)
+            float top = mini ? 3.5f : (World.I ? World.I.Top + 0.5f : World.SpawnY + 2f), bottom = World.StrikeBottom(x);   // 11-18: 달 바닥까지 → 8차: 지구 윗면(오른쪽은 둥글게 낮음)
             MakeSprite("bolt", Art.Fx("bolt"), new Vector2(x, (top + bottom) / 2), 29);
             Art.Additive(sr);
             // 그림 160x600 @PPU200 = 0.8 x 3칸 (11-16 네온: 번짐 포함이라 넓어짐)
@@ -363,7 +363,7 @@ namespace EarthDef
             else vel = Vector2.Lerp(vel, new Vector2(Mathf.Sin(life * 3) * 2, 0.5f), 2f * dt);
             pos += vel * dt;
             pos.x = Mathf.Clamp(pos.x, -World.HalfW, World.HalfW);
-            pos.y = Mathf.Clamp(pos.y, World.GroundY + 0.2f, World.SpawnY);
+            pos.y = Mathf.Clamp(pos.y, World.V ? World.ShieldY - 1.5f : World.GroundY + 0.2f, World.SpawnY);
             go.transform.position = pos;
             sr.flipX = vel.x < 0;
             if (life <= 0) End();

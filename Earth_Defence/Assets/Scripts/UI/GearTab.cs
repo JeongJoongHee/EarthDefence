@@ -68,6 +68,13 @@ namespace EarthDef
             me.rectTransform.Place(0.5f, 1, new Vector2(0, -300), new Vector2(380, 410), new Vector2(0.5f, 0.5f));
             me.gameObject.AddComponent<Float2D>();
             for (int i = 0; i < 3; i++) { Slot(top.transform, Left[i], 34, 22 + i * 192); Slot(top.transform, Right[i], 856, 22 + i * 192); }
+            // 9차 수정안: 도감(장비 · 회로) · 회로 프리셋 3개 — 대장 카피 아래 빈 곳
+            var cx = UIKit.Btn(top.transform, "btn_sky", L.T("codex"), 30, CodexUI.Open, "Codex"); ((RectTransform)cx.transform).TL(224, 512, 286, 84);
+            var ci = UIKit.Img(cx.transform, Art.Icon("book"), "Icon"); ci.raycastTarget = false; ci.rectTransform.Place(0, 0.5f, new Vector2(10, 4), new Vector2(64, 64), new Vector2(0, 0.5f));
+            UIKit.LabelOf(cx).rectTransform.offsetMin = new Vector2(60, UIKit.LabelOf(cx).rectTransform.offsetMin.y);
+            var pr = UIKit.Btn(top.transform, "btn_purple", L.T("preset_title"), 30, () => CodexUI.Presets(() => { Refresh(); lobby.Refresh(); }), "Preset"); ((RectTransform)pr.transform).TL(530, 512, 286, 84);
+            var pi0 = UIKit.Img(pr.transform, Art.Icon("chip"), "Icon"); pi0.raycastTarget = false; pi0.rectTransform.Place(0, 0.5f, new Vector2(10, 4), new Vector2(60, 60), new Vector2(0, 0.5f));
+            UIKit.LabelOf(pr).rectTransform.offsetMin = new Vector2(60, UIKit.LabelOf(pr).rectTransform.offsetMin.y);
             // 2차 수정안: 능력치를 네모 칸으로 (3 x 2 + 칩 수)
             string[] keys = { "st_atk", "st_hp", "st_reduce_total", "st_crit", "st_crit_dmg", "st_cd" };
             for (int i = 0; i < keys.Length; i++)

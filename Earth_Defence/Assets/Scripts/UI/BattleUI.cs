@@ -163,7 +163,7 @@ namespace EarthDef
             double hp = System.Math.Ceiling(b.baseHp), sh = System.Math.Ceiling(b.shield);
             if (hp != lastHp) { lastHp = hp; hpT.text = Num.Comma(b.baseHp); UIKit.SetBar(hpFill, (float)(b.baseHp / System.Math.Max(1, b.baseMax))); }
             if (sh != lastShield) { lastShield = sh; shieldT.text = b.shield > 0 ? "+" + Num.Comma(b.shield) : ""; UIKit.SetBar(shieldFill, b.shieldMax > 0 ? (float)(b.shield / b.shieldMax) * 0.35f : 0f); }
-            hpBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(Tables.Cf("Hp_Plate_X", -3.6f), World.GroundY - 1.0f));
+            hpBox.anchoredPosition = UIRoot.I.WorldToUI(World.V ? new Vector2(0f, World.GroundY - 1.25f) : new Vector2(Tables.Cf("Hp_Plate_X", -3.6f), World.GroundY - 1.0f));
             var g = b.Guardian;
             bool showCharge = g != null && g.t.Has("charge");
             if ((showCharge ? 1 : 0) != lastCharge) { lastCharge = showCharge ? 1 : 0; chargeBox.gameObject.SetActive(showCharge); }

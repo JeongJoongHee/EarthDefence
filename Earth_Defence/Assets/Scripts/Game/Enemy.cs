@@ -36,7 +36,10 @@ namespace EarthDef
         }
         Quaternion baseRot = Quaternion.identity;
         /// <summary>방어선까지 남은 거리 (날아가는 방향으로)</summary>
-        public float Remain => atShield ? 0f : dir.x < -0.05f ? Mathf.Max(0f, (pos.x - radius - World.ShieldX) / -dir.x) : Mathf.Max(0f, pos.x - radius - World.ShieldX) + 3f;
+        public float Remain => atShield ? 0f : World.V ? Mathf.Max(0f, pos.y - radius - World.ShieldY)
+            : dir.x < -0.05f ? Mathf.Max(0f, (pos.x - radius - World.ShieldX) / -dir.x) : Mathf.Max(0f, pos.x - radius - World.ShieldX) + 3f;
+        /// <summary>방어선에 닿았는지 (9차 세로 = 방어막 높이 Shield_Y · 사령탑 = 방어선 x)</summary>
+        bool AtLine(Vector2 p, float pad = 0f) => World.V ? p.y - radius <= World.ShieldY + pad : p.x - radius <= World.ShieldX + pad;
         /// <summary>예전 세로 전장의 높이로 바꾼 값 (= Shield_Y + 남은 거리) — Pos_Near_Y · Pos_Far_Y 같은 예전 기준을 그대로 쓰려고</summary>
         public float VY => World.ShieldY + Remain;
 
@@ -150,7 +153,8 @@ namespace EarthDef
             if (Paralyzed || hold) return;
 
             // 11-18: 사령탑까지 오는 길이 예전(화면 높이)보다 짧아 Enemy_Speed_Mul 로 맞춤 (밸런스 3차 측정에서 다시)
-            float spd = row.speed * Tables.Cf("Enemy_Speed_Mul", 1f) * (1 - slow) * (rageT > 0 ? Tables.Cf("Boss_Rage_Speed", 2.5f) : 1f);
+            // 9차 "하단에서 상단으로 공격하는 방식으로 복구": 세로 전장은 길이 예전 그대로 → Enemy_Speed_Mul_V (1 = 예전 빠르기)
+            float spd = row.speed * (World.V ? Tables.Cf("Enemy_Speed_Mul_V", 1f) : Tables.Cf("Enemy_Speed_Mul", 1f)) * (1 - slow) * (rageT > 0 ? Tables.Cf("Boss_Rage_Speed", 2.5f) : 1f);
             basePos += dir * spd * dt;
             switch (row.move)
             {
@@ -160,11 +164,12 @@ namespace EarthDef
                 default: sway = 0; break;
             }
             // 달 바닥에 닿으면 바닥을 따라 사령탑 쪽으로 (낮게 오는 적)
-            if (basePos.y < World.GroundY + radius * 0.6f) { basePos.y = World.GroundY + radius * 0.6f; if (dir.y < 0) { dir = Vector2.left; perp = Vector2.down; } }
+            if (!World.V && basePos.y < World.GroundY + radius * 0.6f) { basePos.y = World.GroundY + radius * 0.6f; if (dir.y < 0) { dir = Vector2.left; perp = Vector2.down; } }
             var p = basePos + perp * sway;
-            p.y = Mathf.Max(p.y, World.GroundY + radius * 0.4f);
+            if (World.V) p.x = Mathf.Clamp(p.x, -World.HalfW + radius, World.HalfW - radius);
+            else p.y = Mathf.Max(p.y, World.GroundY + radius * 0.4f);
             pos = p; transform.position = p;
-            if (p.x - radius <= World.ShieldX)
+            if (AtLine(p))
             {
                 if (row.crash) { Battle.I?.HurtBase(atk * Tables.C("Crash_Mul", 3), Pos, this); Fx.Burst(Pos, 0.6f * size); dead = true; return; }
                 atShield = true; hitT = 0.3f;
@@ -212,7 +217,7 @@ namespace EarthDef
             var b = basePos - dir * d;
             b.y = Mathf.Min(b.y, World.SpawnY - 0.3f); b.x = Mathf.Min(b.x, World.HalfW - 0.3f);
             basePos = b; pos = b + perp * sway; transform.position = pos;
-            if (atShield && pos.x - radius > World.ShieldX + 0.05f) atShield = false;
+            if (atShield && !AtLine(pos, 0.05f)) atShield = false;
         }
 
         /// <summary>끌어당김 (장판 · 소용돌이)</summary>

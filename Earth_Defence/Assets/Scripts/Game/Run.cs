@@ -103,7 +103,7 @@ namespace EarthDef
         {
             get
             {
-                int src = Tables.Ci("Slot_Order", 2314);
+                int src = World.V ? Tables.Ci("Slot_Order_V", 1234) : Tables.Ci("Slot_Order", 2314);   // 9차 세로 = 예전처럼 안쪽부터
                 if (slotOrder != null && src == slotOrderSrc) return slotOrder;
                 slotOrderSrc = src;
                 var l = new List<int>();

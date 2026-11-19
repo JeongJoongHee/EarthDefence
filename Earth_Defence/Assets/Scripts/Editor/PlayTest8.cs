@@ -15,6 +15,7 @@ namespace EarthDef.EditorTools
         IEnumerator R8Steps()
         {
             yield return null;
+            Tables.SetC("Battle_Vertical", 0);      // 9차: 이 시험은 11-18 사령탑 배치 기준 → 되돌리기 스위치(0)가 그대로 맞는지 확인하는 시험으로
             Directory.CreateDirectory(OutDir);
             SetupCapture();
             Lobby.NoIntro = true;

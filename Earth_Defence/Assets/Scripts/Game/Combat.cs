@@ -97,7 +97,7 @@ namespace EarthDef
             {
                 // 11-16: 맞은 자리에서 아무 방향으로 나가던 작은 레이저 → 레이저 포에서 그 적을 향해 (사용자 "타워에서 나갈 수 있도록")
                 var lu = Battle.I?.run.Get("laser")?.unit;
-                Vector2 o = lu ? lu.Head : (t.unit ? t.unit.Head : at + Vector2.left * 2f);
+                Vector2 o = lu ? lu.Head : (t.unit ? t.unit.Head : at + World.BaseDir * 2f);
                 var dv = at - o;
                 Battle.I?.Add(new Beam(t, o, Mathf.Atan2(dv.y, dv.x) * Mathf.Rad2Deg, 0.28f, 0.28f, 0.2f, Tables.C("Mini_Laser_Rate", 80), mini: true, len: dv.magnitude + 0.6f));
             }
