@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전투 배치 시안</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red:#b5432f;--red-bg:#fbe6e0;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1180px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:21px;margin:40px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)} .tip.orange{background:var(--orange-bg)}
+  .tip ul,.tip ol{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:12px 0}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:12px 0;align-items:start}
+  .row4 figure,.cc figure,.row2 figure{margin:0} .row4 img,.cc img,.row2 img{width:100%;border:4px solid #3b281c;border-radius:22px;display:block}
+  figcaption{font-size:14px;margin-top:6px;text-align:center;font-weight:bold}
+  .cc{display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:22px;align-items:start;margin:10px 0}
+  .cc table,table.cmp{border-collapse:collapse;width:100%;background:#fff;font-size:14.5px} .cc th,.cc td,table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top} .cc th{background:#f1e8d8;width:92px;white-space:nowrap} table.cmp th{background:#f1e8d8}
+  .pill{display:inline-block;border-radius:6px;padding:0 8px;font-size:13px;font-weight:bold} .p-g{background:var(--green-bg);color:var(--green)} .p-o{background:var(--orange-bg);color:var(--orange)} .p-r{background:var(--red-bg);color:var(--red)}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:64px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  ul.todo > li.checked{border-color:#9cc48f;background:#f6fbf2}
+  #stat{font-size:14px;color:var(--soft)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:30px 0 0} summary{cursor:pointer;font-weight:bold}
+  @media(max-width:800px){.row4,.row2{grid-template-columns:1fr 1fr}.cc{grid-template-columns:1fr}}
+</style></head><body><main>
+
+<h1>전투 배치 시안 · 2판 <small style="font-size:15px;color:var(--soft);font-weight:normal">2026-11-18 (수) · ③ 우주 사령탑</small></h1>
+<p class="note">1판 의견대로 ③을 <b>우주 사령탑</b>으로 다시 그렸습니다. 위 줄 UI는 ②의 항로 막대를 가져왔습니다. 적 · 터렛 · 대장 카피 · 효과는 지금 게임 그림 그대로이고, 사령탑 · 달 바닥 · 지구는 같은 낙서풍으로 새로 그렸습니다. 아직 게임에 넣지는 않았습니다.</p>
+
+<div class="tip orange"><b>의견을 이렇게 읽었습니다 (다르면 의견 칸에 적어 주세요)</b>
+<ol>
+<li><b>"45도 정도로 변형"</b>: 방법이 두 가지라서 둘 다 그려 봤습니다(아래 비교 그림). <b>A</b>는 터렛을 통째로 기울이는 방법이고, <b>B</b>는 받침은 그대로 두고 쏘는 머리만 기울이는 방법입니다. A는 받침이 접시처럼 누워서 어색해 보여, <b>시안은 B로 그렸습니다</b>.</li>
+<li><b>운석이 오른쪽 위 → 왼쪽 아래</b>: 모두 똑같은 방향으로만 떨어지면 아래쪽 적은 사령탑에 닿기 전에 바닥에 떨어집니다. 그래서 오른쪽 위에서 비스듬히 떨어지되 <b>사령탑의 여러 높이를 겨누게</b> 했습니다. 꼬리는 모두 오른쪽 위를 향합니다.</li>
+<li><b>"우주 사령탑"</b>: 등대 줄무늬 대신 금속 탑으로 그렸습니다. 꼭대기에는 유리 관제실과 레이더를 달았고, 레이더는 적이 오는 오른쪽 위를 향합니다. 바닥은 바다 대신 <b>달</b>이고, 지평선 위로 <b>지구</b>가 떠 있습니다. 게임 이름의 "지키는 것"이 화면에 보이게 하려는 뜻입니다.</li>
+<li><b>기지 체력</b>: 위 줄을 ② 방식으로 바꾸면서 체력도 ②처럼 기지에 붙은 이름판에 두었습니다(사령탑 아래). 1판의 왼쪽 세로 막대는 뺐습니다.</li>
+</ol></div>
+
+<h2>우주 사령탑 — 대장 카피 가운데, 위 2칸 · 아래 2칸</h2>
+<div class="tip green"><b>사령탑 크기 (11-18 의견 두 번)</b>: "절반으로" 다음에 "1.5배만 키우고 벽에 최대한 붙여서 공간을 줄여줘"라고 하셔서, 처음 크기의 <b>0.75배</b>로 맞추고 <b>왼쪽 벽에 바짝</b> 붙였습니다(왼쪽 발 날개는 화면 밖). 터렛 · 대장 카피 · 적은 게임 속 크기 그대로입니다. 탑이 다시 높아져 터렛 4칸을 위아래로 쌓을 자리가 생겼습니다. 그래서 절반 판의 "&gt;" 모양을 풀고 <b>탑 바로 옆 한 줄</b>로 모았습니다. 탑 · 터렛이 차지하는 폭은 화면 왼쪽 약 30%이고, 나머지 70%가 싸우는 하늘입니다.</div>
+<div class="row4">
+<figure><a href="../캡쳐본 모음/전투배치_시안/command_full.png"><img src="../캡쳐본 모음/전투배치_시안/command_full.png"></a><figcaption>처음 2판 (1배)</figcaption></figure>
+<figure><a href="../캡쳐본 모음/전투배치_시안/command_half.png"><img src="../캡쳐본 모음/전투배치_시안/command_half.png"></a><figcaption>절반 (0.5배)</figcaption></figure>
+<figure><a href="../캡쳐본 모음/전투배치_시안/command.png"><img src="../캡쳐본 모음/전투배치_시안/command.png"></a><figcaption>지금: 0.75배 · 벽에 붙임</figcaption></figure>
+</div>
+<div class="cc"><figure><a href="../캡쳐본 모음/전투배치_시안/command.png"><img src="../캡쳐본 모음/전투배치_시안/command.png"></a><figcaption>지금 시안 (그림을 누르면 원래 크기)</figcaption></figure>
+<table>
+<tr><th>기지</th><td>왼쪽 벽에 붙어 선 금속 사령탑입니다(화면 높이의 약 반). 꼭대기에는 유리 관제실 · 레이더 · 깜빡이 안테나를 달았고, 가운데에는 <b>주황 사령실</b>(유리창 띠)이 튀어나와 있습니다. 발 날개 둘로 달 바닥에 섭니다. 크기는 값 하나(K)로 바꿀 수 있습니다.</td></tr>
+<tr><th>대장 카피</th><td><b>가운데 사령실 난간 위</b>에 섭니다. 총만 적 쪽으로 돕니다(지금과 같음).</td></tr>
+<tr><th>터렛 배치</th><td><b>위 2칸 · 아래 2칸</b>(지금처럼 4칸)을 탑 바로 옆에 한 줄로 놓습니다. 위 칸은 위에서 당기는 버팀대(대장 카피를 안 가리게), 아래 칸은 밑에서 받치는 버팀대이고, 맨 아래 칸은 달 바닥 위입니다. 방향이 있는 터렛(대포 · 미사일 · 레이저 등)은 <b>머리가 45° 오른쪽 위</b>를 봅니다.</td></tr>
+<tr><th>적</th><td>위 가장자리 오른쪽과 오른쪽 가장자리 위쪽에서 나옵니다. 사령탑을 향해 <b>비스듬히 떨어지고</b>, 배경의 빛줄도 같은 방향으로 흐릅니다. 보스는 오른쪽 위 모서리에 반쯤 걸쳐 나옵니다.</td></tr>
+<tr><th>위 줄 UI</th><td>② 방주의 것을 그대로 씁니다. 일시정지 · <b>항로 막대</b>(웨이브 점 → 지금 위치 → 보스 행성) · 시간 · 카드 단추, 그 아래에 레벨 배지 · 경험치 · 배속이 있습니다.</td></tr>
+<tr><th>체력</th><td>사령탑 앞 달 바닥의 이름판(하트 · 숫자 · 막대, 파란 앞부분 = 방패)에 있습니다. 탑이 작아져 탑 위에서 바닥으로 옮겼습니다.</td></tr>
+<tr><th>코드 일</th><td><span class="pill p-r">큼 · 2~3일</span> 적이 나오는 자리와 이동 방향, 터렛 칸 좌표 4개, 머리 조각 돌리기, 사령탑 · 달 바닥 그림, 위 줄 UI를 바꿉니다. 피해 공식 · 카드 · 터렛 공격은 그대로입니다(표적은 거리로 고르므로).</td></tr>
+<tr><th>밸런스</th><td><span class="pill p-o">한 번 다시 잼</span> 적이 사령탑까지 오는 거리는 약 1,100~1,700으로, 지금(화면 높이 약 1,500)과 비슷하게 맞출 수 있습니다. 나오는 자리를 그렇게 고른 뒤 밸런스 3차 측정을 한 번 다시 돌립니다.</td></tr>
+</table></div>
+
+<h2>45° 만드는 방법 — A 통째로 / B 머리만</h2>
+<div class="row2">
+<figure><a href="../캡쳐본 모음/전투배치_시안/tilt.png"><img src="../캡쳐본 모음/전투배치_시안/tilt.png"></a><figcaption>대포 · 미사일 · 레이저 포로 비교</figcaption></figure>
+<table class="cmp">
+<tr><th></th><th>A 통째로 45°</th><th>B 머리만 45° <span class="pill p-g">추천</span></th></tr>
+<tr><td>보기</td><td>받침까지 누워서 벽에 매단 접시처럼 보입니다</td><td>받침은 발판에 똑바로 서고, 포신만 오른쪽 위를 겨눕니다</td></tr>
+<tr><td>쏠 때</td><td>늘 같은 각도</td><td>쉴 때는 45°, 쏠 때는 <b>머리가 실제 적 쪽으로 돕니다</b>(대장 카피 총처럼). 살아 있는 느낌이 납니다</td></tr>
+<tr><td>그림 일</td><td>없음 (돌리기만)</td><td>대포 · 미사일 · 레이저는 대기 효과용 <b>머리 조각이 이미 있습니다</b>. 나머지 방향 있는 터렛은 머리 조각을 나눠 그립니다</td></tr>
+<tr><td>방향 없는 터렛</td><td colspan="2">벌집 · 찌릿 코일 · 벼락탑 · 드론 · 불바퀴처럼 둥근 터렛은 기울일 까닭이 없어 <b>그대로</b> 둡니다(시안의 찌릿 코일)</td></tr>
+<tr><td>외형(스킨)</td><td>그대로</td><td>스킨 그림도 머리를 나눠야 합니다(같은 도구로)</td></tr>
+</table></div>
+
+<h2>정해 주실 것 <span id="stat"></span></h2>
+<ul class="todo">
+<li data-id="l2-ok"><label><input type="checkbox"><span><span class="tag">확인</span>이 사령탑 시안을 게임에 옮겨도 될까요?<span class="why">바꾸고 싶은 곳(탑 색 · 사령실 모양 · 지구 크기 · 발판 길이 등)을 의견 칸에 적어 주시면 한 번 더 다듬고, 괜찮으면 바로 게임에 옮깁니다.</span></span></label></li>
+<li data-id="l2-tilt"><label><input type="checkbox"><span><span class="tag">결정</span>45° 방법: <b>B 머리만</b> (추천) / A 통째로<span class="why">추천은 B입니다. 쉴 때는 45°로 있다가 쏠 때는 적 쪽으로 머리가 돕니다. 방향 없는 둥근 터렛은 그대로 둡니다.</span></span></label></li>
+<li data-id="l2-move"><label><input type="checkbox"><span><span class="tag">결정</span>대장 카피 이동: <b>가운데 고정</b> (추천) / 위아래 끌기<span class="why">추천은 <b>가운데 고정 + 총만 돌아 조준</b>입니다. 지금의 좌우 끌기는 없어집니다. 적이 모두 사령탑 쪽으로 모여서 자리를 옮길 까닭이 적고, 밸런스 측정도 이미 "안 만지면 제자리"로 재고 있어 바뀌는 게 적습니다. 위아래 끌기로 발판 사이를 오르내리게 할 수도 있지만, 그러면 위 · 아래 칸 터렛이 가려질 수 있습니다.</span></span></label></li>
+<li data-id="l2-look"><label><input type="checkbox"><span><span class="tag">확인</span>로비 그림 · 기지 외형 7종도 사령탑으로<span class="why">로비 가운데 돔 그림 → 사령탑으로 바꿉니다. 기지 외형 7종(돔 7가지)은 사령탑의 색 · 지붕 · 안테나 · 사령실 무늬 7가지로 다시 그립니다. 효과(부활 · 별똥별 등)는 그대로입니다. 전투 화면을 옮긴 다음에 하겠습니다.</span></span></label></li>
+</ul>
+<div class="tip gray"><b>다음 순서 (1판에서 "추천대로"라고 하신 대로)</b>: ① 이 배치를 게임에 옮김 → 자동 시험 · 캡처 → ② 전투 UI 제안(전투UI_제안.html, 아직 체크 0개) → ③ 밸런스 3차를 새 배치로 다시 측정.</div>
+<p class="note">시안 다시 만들기: PowerShell 에서 <code>$env:PYTHONUTF8='1'; python tools/layout_mock.py command tilt</code> → <code>캡쳐본 모음/전투배치_시안/</code></p>
+
+<details><summary>지난 판 — 1판 시안 3가지와 받은 의견</summary>
+<div class="row4">
+<figure><a href="../캡쳐본 모음/전투UI_제안/now_full.jpg"><img src="../캡쳐본 모음/전투UI_제안/now_full.jpg"></a><figcaption>지금 (원작과 같은 배치)</figcaption></figure>
+<figure><a href="../캡쳐본 모음/전투배치_시안/orbit.png"><img src="../캡쳐본 모음/전투배치_시안/orbit.png"></a><figcaption>① 꼬마 지구 360°</figcaption></figure>
+<figure><a href="../캡쳐본 모음/전투배치_시안/ark.png"><img src="../캡쳐본 모음/전투배치_시안/ark.png"></a><figcaption>② 카피 방주 (위 줄 UI 고름)</figcaption></figure>
+<figure><a href="../캡쳐본 모음/전투배치_시안/tower.png"><img src="../캡쳐본 모음/전투배치_시안/tower.png"></a><figcaption>③ 카피 등대 (배치 고름)</figcaption></figure>
+</div>
+<table class="cmp">
+<tr><th style="width:170px">항목</th><th>받은 의견 (11-18)</th></tr>
+<tr><td>어느 배치</td><td>3번으로 진행</td></tr>
+<tr><td>위 줄 UI</td><td>방주 UI 줄 사용</td></tr>
+<tr><td>바꾸고 싶은 것</td><td>등대가 아닌 우주 사령탑 같은 느낌으로 · 대장 카피는 가운데, 위 2군데 아래 2군데 · 지금 탑은 아래에서 위로 쏘는 느낌이라 45도 정도로 변형 · 운석은 대각선 오른쪽에서 대각선 왼쪽으로 떨어지듯</td></tr>
+<tr><td>순서</td><td>추천대로 (배치 → 전투 UI 제안 → 밸런스 3차)</td></tr>
+</table>
+<p class="note">1판 문서 전체는 git 이전 판(커밋 cc16f3d)에 있습니다.</p>
+</details>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-layout2-1118', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){ var c=0,n=0; items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; }); document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n; }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row'; li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견'; row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='의견을 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open'); li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+})();
+</script>
+</body></html>
