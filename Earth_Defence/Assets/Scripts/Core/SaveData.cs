@@ -53,7 +53,10 @@ namespace EarthDef
         public bool vib = true, nums = true, fps60 = true;
         public bool storySkip;                  // 9차: 설정 "스토리 건너뛰기"
         public List<string> codex = new();      // 9차 도감: 얻어 본 것 "g:부위:등급" · "c:회로 id:등급" (지금 없어도 남음)
-        public List<string> chipPresets = new();   // 9차 회로 프리셋 (칸마다 "uid@자리,uid@자리" · 빈 문자열 = 비어 있음)
+        public List<string> chipPresets = new();
+        // ---------- 11-20 코스튬 · 탈것 (외형 탭) — 새 칸은 옛 세이브에서 기본값 ----------
+        public string costume = "basic", mount = "none";      // 착용 중
+        public List<string> costumes = new(), mounts = new(); // 가진 것 (basic · none 은 늘 가짐)   // 9차 회로 프리셋 (칸마다 "uid@자리,uid@자리" · 빈 문자열 = 비어 있음)
 
         public static long Now => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         /// <summary>시험에서 시간을 앞당길 때</summary>
@@ -104,7 +107,9 @@ namespace EarthDef
             gear ??= new(); chips ??= new(); mProg ??= new(); mGot ??= new(); tut ??= new(); seen ??= new();
             frames ??= new(); skins ??= new(); skinOn ??= new(); dailyKeys ??= new(); dailyVals ??= new(); iapOnce ??= new();
             if (dia < 0) dia = Tables.C("Start_Dia", 100);
-            codex ??= new(); chipPresets ??= new();
+            codex ??= new(); chipPresets ??= new(); costumes ??= new(); mounts ??= new();
+            if (string.IsNullOrEmpty(costume) || Tables.Costume(costume) == null) costume = "basic";
+            if (string.IsNullOrEmpty(mount) || Tables.Mount(mount) == null) mount = "none";
             foreach (var g in gear) Codex.Mark(this, g);      // 9차: 도감이 생기기 전에 얻은 것도 채움
             foreach (var c in chips) Codex.Mark(this, c);
             if (string.IsNullOrEmpty(frame)) frame = "basic";
@@ -125,6 +130,8 @@ namespace EarthDef
         // ---------- 기지 외형 · 스킨 ----------
         public int FrameStar(string id) { if (id == "basic") return 1; foreach (var f in frames) { var p = f.Split(':'); if (p[0] == id) return p.Length > 1 ? int.Parse(p[1]) : 1; } return 0; }
         public void SetFrameStar(string id, int star) { frames.RemoveAll(f => f.Split(':')[0] == id); frames.Add(id + ":" + star); }
+        public bool HasCostume(string id) => id == "basic" || costumes.Contains(id);
+        public bool HasMount(string id) => id == "none" || mounts.Contains(id);
         public bool HasSkin(string turret) => skins.Contains(turret);
         public bool SkinOn(string turret) => skinOn.Contains(turret) && skins.Contains(turret);
 

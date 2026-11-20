@@ -1,0 +1,22 @@
+{
+ "costume_pivot": [
+  0.525,
+  0.0442
+ ],
+ "mount_pivot": [
+  0.5,
+  0.4848
+ ],
+ "lift": {
+  "surf": 0.38,
+  "carpet": 0.35,
+  "plane": 0.525,
+  "ladybug": 0.76,
+  "star": 1.115,
+  "seahorse": 1.015,
+  "unicorn": 0.98,
+  "hoverbike": 0.52,
+  "trex": 0.93,
+  "broom": 0.665
+ }
+}

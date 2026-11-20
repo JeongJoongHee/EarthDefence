@@ -48,6 +48,8 @@ namespace EarthDef.EditorTools
         public static void RunR8() => Start("r8");
         /// <summary>9차 수정안 시험 (스토리 · 세로 전장 · 로비 말풍선 · 도감 · 회로 프리셋)</summary>
         public static void RunR9() => Start("r9");
+        /// <summary>11-20 코스튬 · 탈것 (Editor/PlayTest10.cs)</summary>
+        public static void RunR10() => Start("r10");
 
         static void Start(string mode)
         {
@@ -91,7 +93,7 @@ namespace EarthDef.EditorTools
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
             Battle.NoSlotPick = true; StoryView.Off = true;   // 9차: 스토리 대화창은 RunR9 에서 따로 시험 ·      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
             if (mode != "r7" && mode != "r8" && mode != "r9" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -499,8 +501,8 @@ namespace EarthDef.EditorTools
                 float hvMove = 0;
                 for (int f = 0; f < 12; f++) { yield return Wait(0.3f); Capture($"90_capy_{f:00}"); if (hrt) hvMove = Mathf.Max(hvMove, (hrt.anchoredPosition - hvP0).magnitude); }    // 보고서 GIF 용 (0.3초 간격) · 8차: 제자리 위아래 둥실이라 끝 자리 대신 사이 최대 움직임
                 Capture("90_gear_capy_b");
-                var hvImg = hv ? hv.GetComponent<Image>() : null;
-                Check(hv != null && hvMove > 4f && hvImg.sprite.name.EndsWith("guardian_float") && Object.FindAnyObjectByType<GearTab>().GetComponentsInChildren<Mask>().Length == 0,
+                var hvImg = hv ? hv.transform.Find("Body")?.GetComponent<Image>() : null;   // 11-20: 코스튬 + 탈것을 겹친 LookView (몸 = Body)
+                Check(hv != null && hvMove > 4f && hvImg && hvImg.sprite.name.EndsWith("_float") && Object.FindAnyObjectByType<GearTab>().GetComponentsInChildren<Mask>().Length == 0,
                       $"장비 탭 카피바라 2D 로 둥실둥실 · 총 없는 그림 (움직임 {hvMove:0} · {(hvImg ? hvImg.sprite.name : "-")})");
                 // 10) 무한 모드: 레벨업 창이 덜 자주 (3분 동안 연 창 수 예전 ↔ 지금)
                 double mulNew = Tables.C("Endless_Exp_Mul", 1), gapNew = Tables.C("Endless_Pick_Gap", 0);

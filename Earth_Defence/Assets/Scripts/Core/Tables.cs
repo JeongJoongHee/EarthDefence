@@ -63,6 +63,12 @@ namespace EarthDef
     public class StoryRow { public string id, who, text; public int seq; }
     /// <summary>9차 로비 대장 카피 말풍선 (Story.xlsx Lobby_Talk 시트)</summary>
     public class TalkRow { public string id, text; public int weight; }
+    /// <summary>11-20 코스튬 · 탈것 (Look.xlsx 시트 Costume · Mount). 능력치 Stat1/Val1 · Stat2/Val2 = 장비와 같은 키 (비우면 없음 — 아직 미정)</summary>
+    public class LookRow
+    {
+        public string id, name, desc, stat1, stat2; public double val1, val2; public int price; public bool bob; public float lift, scale = 1f;
+        public bool HasStat => (!string.IsNullOrEmpty(stat1) && val1 != 0) || (!string.IsNullOrEmpty(stat2) && val2 != 0);
+    }
     public class ShopItemRow { public string id, name, kind, desc; public int costDia, perDay; public double value; }
 
     /// <summary>
@@ -88,6 +94,7 @@ namespace EarthDef
         public static readonly List<MissionRow> Missions = new();
         public static readonly List<AttendRow> Attend = new();
         public static readonly List<FrameRow> Frames = new();
+        public static readonly List<LookRow> Costumes = new(), Mounts = new();    // 11-20 코스튬 · 탈것
         public static readonly Dictionary<string, string> GearNames = new();   // "부위_등급" → 등급별 장비 이름 (3차 수정안)
         public static readonly List<SkinRow> Skins = new();
         public static readonly List<ProductRow> Products = new();
@@ -96,6 +103,8 @@ namespace EarthDef
         public static readonly Dictionary<string, List<StoryRow>> Story = new();
         public static readonly List<TalkRow> LobbyTalk = new();
         public static List<StoryRow> StoryOf(string id) => Story.TryGetValue(id, out var l) ? l : null;
+        public static LookRow Costume(string id) => Costumes.Find(c => c.id == id);
+        public static LookRow Mount(string id) => Mounts.Find(c => c.id == id);
         public static FrameRow Frame(string id) => Frames.Find(f => f.id == id) ?? (Frames.Count > 0 ? Frames[0] : null);
         public static SkinRow SkinOf(string turret) => Skins.Find(s => s.turret == turret);
 
@@ -106,7 +115,7 @@ namespace EarthDef
             config.Clear(); Turrets.Clear(); TurretById.Clear(); TurretLv.Clear(); Cards.Clear(); CardById.Clear();
             Enemies.Clear(); Stages.Clear(); Strings.Clear();
             GearParts.Clear(); Grades.Clear(); Chips.Clear(); ChipById.Clear(); Missions.Clear(); Attend.Clear();
-            Frames.Clear(); GearNames.Clear(); Skins.Clear(); Products.Clear(); ShopItems.Clear(); BoxRates.Clear(); Story.Clear(); LobbyTalk.Clear();
+            Frames.Clear(); GearNames.Clear(); Skins.Clear(); Products.Clear(); ShopItems.Clear(); BoxRates.Clear(); Story.Clear(); LobbyTalk.Clear(); Costumes.Clear(); Mounts.Clear();
 
             foreach (var r in Read("Config")) config[r.S("Key")] = r.D("Value");
             foreach (var r in Read("Turret"))
@@ -202,6 +211,13 @@ namespace EarthDef
                 l.Add(row);
             }
             foreach (var l in Story.Values) l.Sort((a, b) => a.seq.CompareTo(b.seq));
+            foreach (var (sheet, list) in new[] { ("Costume", Costumes), ("Mount", Mounts) })
+                foreach (var r in Read(sheet, true))
+                    list.Add(new LookRow
+                    {
+                        id = r.S("Id"), name = r.S("Name"), desc = r.S("Desc"), price = r.I("Price_Dia"), stat1 = r.S("Stat1"), val1 = r.D("Val1"), stat2 = r.S("Stat2"), val2 = r.D("Val2"),
+                        bob = r.I("Bob") == 1, lift = r.F("Lift"), scale = r.F("Scale") > 0 ? r.F("Scale") : 1f,
+                    });
             foreach (var r in Read("Lobby_Talk", true)) if (!string.IsNullOrEmpty(r.S("Text"))) LobbyTalk.Add(new TalkRow { id = r.S("Id"), text = r.S("Text"), weight = Mathf.Max(1, r.I("Weight")) });
         }
 

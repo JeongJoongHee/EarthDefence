@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>코스튬 · 탈것</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+<style>figure.wide img{max-width:100%}</style></head><body><main>
+<h1>코스튬 · 탈것</h1>
+<p class="note">2026-11-20 · 요청: 외형 메뉴에 코스튬 · 탈것 (착용하면 능력치 — 무엇인지는 미정) · 탈것은 전투 · 장비 화면에 · 코스튬 외형 + 탈것 외형 = 최종 모습 · 참고 <code>요청 사항/코스튬.png · 탈것.png</code> · 자동 시험 <b>코스튬 · 탈것 31줄 + 기본 137줄 + 7차 24줄 + 9차 52줄</b></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>코스튬 = 대장 카피 몸 그림을 통째로 바꿈</b> (기본 = 지금 우주복 "우주 대원"). <b>탈것 = 발밑에 까는 그림</b> — 게임이 코스튬 몸 위에 겹쳐 그려서 어떤 코스튬이든 어떤 탈것에나 탈 수 있습니다 (19 x 11 = 209가지 조합). 비행기 · 해마 · 유니콘 · 호버바이크 · 티라노는 몸 앞에 한 층(동체 · 안장)을 더 그려 "올라탄" 느낌.</li>
+<li>참고 그림 1장(코스튬)의 첫 번째 우주인은 지금 기본 모습이라 <b>코스튬 18종 + 기본</b>, 탈것 그림 10종 + <b>"탈것 없음"</b>. 탈것 그림 속 캐릭터 의상(터번 · 비행 모자 · 잎 옷 …)은 탈것에 넣지 않았습니다 — 의상은 코스튬이 맡아서.</li>
+<li><b>능력치는 표에 칸만 만들고 비워 둠</b> → 화면엔 "능력치 준비 중". 정해지면 표에 값만 넣으면 바로 적용됩니다 (시험에서 공격력 % · 체력 · 치명을 넣어 더해지는 것까지 확인).</li>
+<li><b>얻는 법은 요청에 없어</b> 기지 · 터렛 외형처럼 다이아로 사게 했습니다 (가격 임시, 사면 바로 착용). 외형 탭에서 목록을 누르면 사기 전에 <b>미리 보기</b> (위 칸에 지금 코스튬 x 그 탈것).</li>
+<li>요청엔 전투 · 장비 화면이었지만 <b>로비에서 걸어 다니는 대장 카피 · 터렛 탭 대장 카피 카드 · 스토리 얼굴</b>도 같은 모습으로 바꿨습니다 (화면마다 모습이 다르면 어색해서). 로비 탈것은 0.8배.</li>
+<li>세이브에 칸 4개(착용 코스튬 · 탈것 · 가진 것 목록)를 더했고 옛 세이브는 기본 모습으로 열립니다.</li>
+</ul></div>
+
+<h2>외형 탭: [코스튬] · [탈것]</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_01_looks_costume.jpg" alt=""><figcaption>코스튬 칸 · 위 = 지금 모습 (시험용으로 능력치를 넣은 상태)</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_02_looks_preview.jpg" alt=""><figcaption>목록을 누르면 미리 보기 (해적)</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_03_looks_mount.jpg" alt=""><figcaption>탈것 칸 · 목록 그림 = 지금 코스튬을 태운 모습</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_04_looks_mount_nostat.jpg" alt=""><figcaption>지금 표 (능력치 비어 있음 = 준비 중)</figcaption></figure></div>
+
+<h2>장비 탭</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_06_gear_basic.jpg" alt=""><figcaption>기본 (탈것 없음)</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_05_gear.jpg" alt=""><figcaption>별빛 마법사 + 숲속 유니콘</figcaption></figure></div>
+
+<h2>전투 화면 (대장 카피 둘레 확대)</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_10_battle_wizard_unicorn.jpg" alt=""><figcaption>별빛 마법사 + 숲속 유니콘</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_11_battle_dino_trex.jpg" alt=""><figcaption>공룡 잠옷 + 아기 티라노</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_12_battle_knight_plane.jpg" alt=""><figcaption>은빛 기사 + 빨간 비행기</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_13_battle_ninja_hoverbike.jpg" alt=""><figcaption>닌자 + 호버바이크</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_14_battle_bee_broom.jpg" alt=""><figcaption>꿀벌 잠옷 + 마법 빗자루</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_15_battle_shark_seahorse.jpg" alt=""><figcaption>상어 잠옷 + 무지개 해마</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_16_battle_basic_star.jpg" alt=""><figcaption>우주 대원 + 별똥별</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_17_battle_chef_ladybug.jpg" alt=""><figcaption>꼬마 요리사 + 무당벌레</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_18_battle_wizard_carpet.jpg" alt=""><figcaption>별빛 마법사 + 하늘 양탄자</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_19_battle_basic_surf.jpg" alt=""><figcaption>우주 대원 + 은빛 서프보드</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_10_battle_wizard_unicorn.jpg" alt=""><figcaption>전체 화면: 마법사 + 유니콘</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_30_lobby.jpg" alt=""><figcaption>로비: 공룡 잠옷 + 아기 티라노</figcaption></figure></div>
+
+<h2>그림 모음 (참고 그림 → 게임 화풍)</h2>
+<p>코스튬 18: 별빛 마법사 · 노란 우비 · 숲 요정 · 해적 선장 · 사자 잠옷 · 공룡 잠옷 · 꼬마 요리사 · 꿀벌 잠옷 · 은빛 기사 · 명탐정 · 슈퍼 카피 · 토끼 잠옷 · 닌자 · 상어 잠옷 · 농부 · 호박 유령 · 카우보이 · 겨울 니트<br>탈것 10: 은빛 서프보드 · 하늘 양탄자 · 빨간 비행기 · 무당벌레 · 별똥별 · 무지개 해마 · 숲속 유니콘 · 호버바이크 · 아기 티라노 · 마법 빗자루</p>
+<div class="shots"><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/ref_costume.jpg" alt=""><figcaption>참고: 코스튬.png</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/ref_mount.jpg" alt=""><figcaption>참고: 탈것.png</figcaption></figure></div>
+<figure class="wide"><img src="캡쳐본 모음/코스튬_탈것_캡처/look_sheet.jpg" alt=""><figcaption>게임 그림 전부 + 조합 예시 (tools/look_art.py sheet)</figcaption></figure>
+
+<h2>바뀐 곳 (다음 작업용 메모)</h2>
+<table><tr><th>무엇</th><th>어디</th></tr>
+<tr><td>표 (Look.xlsx 새로: Costume · Mount 시트 · Config 5 · 글자 9)</td><td><code>tools/fix10_tables.py</code> — 다시 돌려도 손으로 넣은 이름 · 가격 · 능력치는 그대로 (없는 줄만 더하고 Lift 만 새로)</td></tr>
+<tr><td>그림 (코스튬 몸 · 둥실 · 총 · 카드 / 탈것 뒤 · 앞 층)</td><td><code>tools/look_art.py export</code> (PowerShell) → Resources/Art/Char/costume · Char/mount + <code>tools/look_pivots.json</code>(탈것 높이) → fix10_tables.py</td></tr>
+<tr><td>전투 · 로비 겹치기</td><td><code>Game/LookRig.cs</code> MountRig (뒤 층 &lt; 몸 &lt; 앞 층 &lt; 총 · 몸을 젖혀도 탈것은 수평 · 둥실) · <code>TurretUnit.MakeMount</code> · <code>LobbyWalker</code></td></tr>
+<tr><td>UI 겹치기 (장비 탭 · 외형 탭)</td><td><code>LookView.Build</code> (발 = 탈것 자리를 같은 점에 두고 상자에 맞춤)</td></tr>
+<tr><td>외형 탭 · 능력치 · 사기</td><td><code>UI/ShopTab.cs Looks</code> (sub 2 · 3 · 미리 보기) · <code>Loadout.Build</code> (착용 중 능력치) · <code>Store.BuyLook / WearLook</code> · 세이브 costume · mount · costumes · mounts</td></tr>
+<tr><td>시험</td><td><code>bash tools/unity_batch.sh EarthDef.EditorTools.PlayTest.RunR10 --play</code> (Editor/PlayTest10.cs)</td></tr>
+</table>
+
+<h2>확인 칸</h2>
+<ul class="todo"><li data-id="l-look"><label><input type="checkbox"><span><span class="tag">그림</span>코스튬 18종 · 탈것 10종 그림<span class="why">참고 그림을 그대로 넣지 않고 게임 화풍(낙서풍 · 옆모습 · 총을 드는 자세)으로 새로 그렸습니다. 고칠 것은 이름과 함께 의견 칸에 (예: "닌자 복면 더 크게")</span></span></label></li><li data-id="l-props"><label><input type="checkbox"><span><span class="tag">그림</span>손에 드는 소품은 뺌 (지팡이 · 우산 · 거품기 · 돋보기 · 기타 · 삽 · 밧줄 · 칼)<span class="why">대장 카피는 두 손으로 총을 들고 돌려 겨눠서 소품을 같이 들 자리가 없음 → 옷 · 모자 · 꼬리 · 날개로 알아보게. 소품이 꼭 필요하면 등에 메는 식으로 넣을 수 있어요</span></span></label></li><li data-id="l-stat"><label><input type="checkbox"><span><span class="tag">능력치</span>능력치 칸 = 비워 둠 (미정)<span class="why">Look.xlsx 의 Stat1/Val1 · Stat2/Val2 에 키 · 값만 넣으면 착용 중일 때 더해집니다 (장비와 같은 키: atk · atk_pct · hp · base_atk · base_hp · shield_pct · reduce · crit · crit_dmg · cd). 정해 주시면 넣어 드려요</span></span></label></li><li data-id="l-price"><label><input type="checkbox"><span><span class="tag">얻는 법</span>얻는 법 = 다이아로 사기 (코스튬 300 · 탈것 500 — 임시)<span class="why">기지 · 터렛 외형과 같은 방식. 사면 바로 착용. 상자 · 패키지 · 이벤트 보상으로 줄지, 등급(일반~전설)을 둘지 정해 주세요</span></span></label></li><li data-id="l-battle"><label><input type="checkbox"><span><span class="tag">전투</span>전투 화면: 탈것 높이만큼 대장 카피가 올라탐<span class="why">떠다니는 탈것(서프보드 · 양탄자 · 비행기 · 별똥별 · 해마 · 호버바이크 · 빗자루)은 위아래 둥실. 크기는 Config Mount_Battle_Scale (지금 1) 로 줄일 수 있어요</span></span></label></li><li data-id="l-gear"><label><input type="checkbox"><span><span class="tag">장비</span>장비 탭: 코스튬 + 탈것을 겹친 모습이 둥실<span class="why">탈것이 크면 칸 사이 빈 곳에 맞춰 조금 작아짐</span></span></label></li><li data-id="l-stats-plan"><label><input type="checkbox"><span><span class="tag">결정</span>능력치 정할 때 제안 (추천)<span class="why">코스튬 = 공격 쪽(공격력 % · 치명) · 탈것 = 버티기 쪽(기지 체력 % · 방어력)으로 나누고, 가진 것만으로도 조금(보유 효과) + 착용하면 더 — 터렛 외형의 "보유 효과"와 같은 방식. 원하시면 의견 칸에 적어 주세요</span></span></label></li>
+<li data-id="l-play"><label><input type="checkbox"><span><span class="tag">폰</span>APK 로 직접 해 본 느낌<span class="why">탈것 크기 · 높이가 전투에서 거슬리지 않는지</span></span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-look-1120', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

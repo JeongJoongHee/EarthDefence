@@ -64,8 +64,9 @@ namespace EarthDef
             var top = UIKit.Panel(root, "card", "Top"); top.rectTransform.TL(20, 4, 1040, 610);
             // 7차 수정안 "장비 탭 카피바라는 2D 로 그냥 둥실둥실 다니는 느낌 · 총은 없고 우주복": 총 없는 그림(Char/guardian_float) 이
             //   장비 칸 사이 빈 곳을 천천히 떠다님 (Float2D — 6차의 3D 몸 돌림 · 빛 · 그늘 · 발밑 그림자는 뺌)
-            var me = UIKit.Img(top.transform, Art.Get("Char/guardian_float", 100f), "Guardian"); me.raycastTarget = false; me.preserveAspect = true;
-            me.rectTransform.Place(0.5f, 1, new Vector2(0, -300), new Vector2(380, 410), new Vector2(0.5f, 0.5f));
+            // 11-20 코스튬 · 탈것: 코스튬 몸(총 없이) + 탈것을 겹친 모습 (LookView) — 탈것이 크면 상자에 맞춰 줄어듦
+            var me = LookView.Build(top.transform, S.costume, S.mount, new Vector2(600, 470), 1.03f, "Guardian");
+            me.anchorMin = me.anchorMax = new Vector2(0.5f, 1); me.pivot = new Vector2(0.5f, 0.5f); me.anchoredPosition = new Vector2(0, -272);
             me.gameObject.AddComponent<Float2D>();
             for (int i = 0; i < 3; i++) { Slot(top.transform, Left[i], 34, 22 + i * 192); Slot(top.transform, Right[i], 856, 22 + i * 192); }
             // 9차 수정안: 도감(장비 · 회로) · 회로 프리셋 3개 — 대장 카피 아래 빈 곳

@@ -17,6 +17,9 @@ namespace EarthDef
         public static readonly Vector2 GuardianHand = new(0.414f, 0.5085f);
         public static readonly Vector2 GunPivot = new(0.2361f, 0.3333f);
         public static readonly Vector2 GunMuzzle = new(0.9f, 0.09f);
+        /// <summary>11-20 코스튬 몸 그림 피벗(발) · 탈것 피벗(자리 = 발이 닿는 곳) — tools/look_art.py 가 찍는 값 (look_pivots.json)</summary>
+        public static readonly Vector2 CostumeFoot = new(0.525f, 0.0442f);
+        public static readonly Vector2 MountSeat = new(0.5f, 0.4848f);
         // 네온 탄 그림은 꼬리가 들어 있어 머리 = 피벗 (tools/earth_export.py SHOT_HEAD 와 같은 값)
         public static Vector2 ShotPivot(string name) => name switch
         {
@@ -127,7 +130,35 @@ namespace EarthDef
         public static Sprite Shot(string name) => Get("Fx/" + name, PPU, ShotPivot(name));
         public static Sprite Turret(string art) => Get("Turret/" + art, PPU, TurretFoot);
         /// <summary>터렛 그림을 UI 에 쓸 때 (가운데 피벗)</summary>
-        public static Sprite TurretUI(string art) => art == "guardian" ? Get("Char/guardian_ui", 100f) : Get("Turret/" + art, 100f);
+        public static Sprite TurretUI(string art) => art == "guardian" ? GuardianUI : Get("Turret/" + art, 100f);
+        // ---------- 11-20 코스튬 · 탈것 (기본 우주복 = 예전 그림 그대로) ----------
+        static string CurCostume => SaveData.Cur?.costume ?? "basic";
+        static bool Basic(string id) => string.IsNullOrEmpty(id) || id == "basic";
+        /// <summary>대장 카피 카드 · 스토리 얼굴 = 지금 코스튬 (총 든 한 장)</summary>
+        public static Sprite GuardianUI => Basic(CurCostume) ? Get("Char/guardian_ui", 100f) : Get("Char/costume/" + CurCostume + "_ui", 100f) ?? Get("Char/guardian_ui", 100f);
+        public static Sprite CostumeBody(string id) => Basic(id) ? Guardian : Get("Char/costume/" + id, PPU, CostumeFoot) ?? Guardian;
+        public static Sprite CostumeGun(string id) => Basic(id) ? GuardianGun : Get("Char/costume/" + id + "_gun", PPU, GunPivot) ?? GuardianGun;
+        /// <summary>총 없이 두 손 (장비 탭 · 외형 목록)</summary>
+        public static Sprite CostumeFloat(string id) => Get("Char/costume/" + (Basic(id) ? "basic" : id) + "_float", PPU, CostumeFoot);
+        /// <summary>탈것 뒤 층 · 앞 층(대장 카피 몸 앞 — 없으면 null)</summary>
+        public static Sprite Mount(string id) => string.IsNullOrEmpty(id) || id == "none" ? null : Get("Char/mount/" + id, PPU, MountSeat);
+        static Dictionary<string, Rect> lookBounds;
+        /// <summary>코스튬 · 탈것 그림의 실제로 그려진 범위(px, 왼쪽 아래 기준 — tools/look_art.py bounds). 없으면 그림 전체</summary>
+        public static Rect DrawnRect(Sprite s)
+        {
+            if (lookBounds == null)
+            {
+                lookBounds = new Dictionary<string, Rect>();
+                var ta = Resources.Load<TextAsset>("Art/Char/look_bounds");
+                if (ta) foreach (var ln in ta.text.Split('\n'))
+                    {
+                        var p = ln.Trim().Split(' ');
+                        if (p.Length == 5) lookBounds[p[0]] = Rect.MinMaxRect(float.Parse(p[1]), float.Parse(p[2]), float.Parse(p[3]), float.Parse(p[4]));
+                    }
+            }
+            return s != null && lookBounds.TryGetValue(s.name, out var r) ? r : s != null ? new Rect(0, 0, s.rect.width, s.rect.height) : Rect.zero;
+        }
+        public static Sprite MountFront(string id) => string.IsNullOrEmpty(id) || id == "none" || Resources.Load<Texture2D>("Art/Char/mount/" + id + "_f") == null ? null : Get("Char/mount/" + id + "_f", PPU, MountSeat);
         public static Sprite Guardian => Get("Char/guardian", PPU, GuardianFoot);
         public static Sprite GuardianGun => Get("Char/guardian_gun", PPU, GunPivot);
         public static Sprite Enemy(EnemyRow e, bool white = false) => Get("Enemy/" + e.art + (white ? "_w" : ""), PPU, new Vector2(0.5f, e.pivotY));

@@ -26,10 +26,10 @@ namespace EarthDef
             t = inst; inst.unit = this;
             transform.position = pos; baseY = pos.y; targetX = pos.x;
             sr = gameObject.AddComponent<SpriteRenderer>();
-            sr.sprite = IsGuardian ? Art.Guardian : Art.Turret(t.row.art);
+            sr.sprite = IsGuardian ? Art.CostumeBody(Look) : Art.Turret(t.row.art);    // 11-20 코스튬
             sr.sortingOrder = IsGuardian ? 5 : 3;
             cd = IsGuardian ? 0.3f : 0.6f + t.slot * 0.35f;
-            if (IsGuardian) MakeGun();
+            if (IsGuardian) { MakeGun(); MakeMount(); }
             else SpawnFx();
             // 11-16 밤 대기 효과 — 받침 그림 + 움직이는 조각 (터렛 6종 모두)
             if (!IsGuardian && TurretIdle.Has(t.row.art) && Tables.Cf("Idle_Fx", 1f) > 0)
@@ -198,6 +198,17 @@ namespace EarthDef
         public bool FaceLeft => faceLeft;
         public float GunAngle => gunAng;
 
+        // ---------- 11-20 코스튬 · 탈것: 탈것을 발밑에 깔고 그만큼 몸을 올림 ----------
+        static string Look => SaveData.Cur?.costume ?? "basic";
+        MountRig mount;
+        public MountRig Mount => mount;
+        void MakeMount()
+        {
+            mount = MountRig.Attach(transform, SaveData.Cur?.mount, 5, Tables.Cf("Mount_Battle_Scale", 1f));
+            if (mount == null) return;
+            transform.position += Vector3.up * mount.lift; baseY += mount.lift;
+        }
+
         void MakeGun()
         {
             gunRoot = new GameObject("GunRoot").transform;
@@ -205,7 +216,7 @@ namespace EarthDef
             gunT = new GameObject("Gun").transform;
             gunT.SetParent(gunRoot, false);
             var gs = gunT.gameObject.AddComponent<SpriteRenderer>();
-            gs.sprite = Art.GuardianGun; gs.sortingOrder = 6;
+            gs.sprite = Art.CostumeGun(Look); gs.sortingOrder = 7;   // 11-20: 탈것 앞 층(6) 위
             PoseGun();
         }
 
@@ -237,6 +248,7 @@ namespace EarthDef
             // 몸 방향: 겨눌 각이 90°를 넘으면 왼쪽 (흔들리지 않게 ±12° 여유)
             if (!faceLeft && aimAng > 102f) { faceLeft = true; sr.flipX = true; gunAng = 180f - gunAng; }
             else if (faceLeft && aimAng < 78f) { faceLeft = false; sr.flipX = false; gunAng = 180f - gunAng; }
+            if (mount) { mount.Flip(faceLeft); float dy = mount.Step(dt); if (dy != 0) { transform.position += Vector3.up * dy; baseY += dy; } }
             // 높이 겨눌수록 몸을 뒤로 젖힘(최대 14°) · 총은 몸에 대해 62°까지만 듦 → 수직으로 겨눠도 총이 얼굴(주둥이)을 안 가림
             float elevWant = faceLeft ? 180f - aimAng : aimAng;
             backLean = Mathf.MoveTowards(backLean, Mathf.Clamp((elevWant - 45f) * 0.4f, 0f, 14f), 60f * dt);

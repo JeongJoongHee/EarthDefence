@@ -1,0 +1,12 @@
+﻿Id,Name,Desc,Price_Dia,Stat1,Val1,Stat2,Val2,Bob,Lift,Scale,,"메모: 착용 중인 코스튬 · 탈것의 Stat1/Val1 · Stat2/Val2 가 능력치로 더해짐 (비우면 없음 = ""능력치 준비 중""). 키 = atk · atk_pct · hp · base_atk · base_hp · shield_pct · reduce · crit · crit_dmg · cd (장비와 같음). Price_Dia 는 임시 값"
+none,탈것 없음,,0,,,,,0,0,1,,
+surf,은빛 서프보드,,500,,,,,1,0.38,1,,
+carpet,하늘 양탄자,,500,,,,,1,0.35,1,,
+plane,빨간 비행기,,500,,,,,1,0.525,1,,
+ladybug,무당벌레,,500,,,,,0,0.76,1,,
+star,별똥별,,500,,,,,1,1.115,1,,
+seahorse,무지개 해마,,500,,,,,1,1.015,1,,
+unicorn,숲속 유니콘,,500,,,,,0,0.98,1,,
+hoverbike,호버바이크,,500,,,,,1,0.52,1,,
+trex,아기 티라노,,500,,,,,0,0.93,1,,
+broom,마법 빗자루,,500,,,,,1,0.665,1,,

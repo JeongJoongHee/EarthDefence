@@ -90,7 +90,7 @@ namespace EarthDef.EditorTools
             var p0 = fl ? fl.Offset : Vector2.zero;
             Capture("r7_06_gear");
             for (int f = 0; f < 16; f++) { yield return Wait(0.25f); Capture($"r7_gear_{f:00}", true); }
-            Check(fl != null && (fl.Offset - p0).magnitude > 8f && fl.GetComponent<Image>().sprite.name.EndsWith("guardian_float"),
+            Check(fl != null && (fl.Offset - p0).magnitude > 8f && fl.transform.Find("Body").GetComponent<Image>().sprite.name.EndsWith("_float"),
                   $"장비 탭 카피바라: 총 없는 우주복 · 2D 로 떠다님 (움직임 {(fl ? (fl.Offset - p0).magnitude : 0):0})");
             Float2D.InPlace = true;
             Game.Lobby.SetTab(0); yield return null;

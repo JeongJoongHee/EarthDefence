@@ -133,9 +133,9 @@ namespace EarthDef
         {
             switch (who)
             {
-                case "capy": return Art.Get("Char/guardian_ui", 100f);
+                case "capy": return Art.GuardianUI;
                 case "rabbit": return Art.Get("Bg/moon_rabbit_" + (alt ? 1 : 0), 100f);
-                default: return Tables.Enemies.TryGetValue(who, out var e) ? Art.Enemy(e) : Art.Get("Char/guardian_ui", 100f);
+                default: return Tables.Enemies.TryGetValue(who, out var e) ? Art.Enemy(e) : Art.GuardianUI;
             }
         }
 

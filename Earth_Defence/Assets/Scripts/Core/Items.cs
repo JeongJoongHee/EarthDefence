@@ -343,6 +343,13 @@ namespace EarthDef
                 lo.Stat(g.Row.stat1, g.V1);
                 lo.Stat(g.Row.stat2, g.V2);
             }
+            // 11-20 코스튬 · 탈것: 착용 중인 것의 능력치 (표 Stat1/Val1 · Stat2/Val2 — 비어 있으면 없음)
+            foreach (var lr in new[] { Tables.Costume(s.costume), Tables.Mount(s.mount) })
+            {
+                if (lr == null) continue;
+                if (!string.IsNullOrEmpty(lr.stat1)) lo.Stat(lr.stat1, lr.val1);
+                if (!string.IsNullOrEmpty(lr.stat2)) lo.Stat(lr.stat2, lr.val2);
+            }
             foreach (var c in s.chips)
             {
                 if (c.at < 0 || c.Row == null) continue;

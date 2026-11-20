@@ -1,5 +1,16 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-20 밤 — 코스튬 · 탈것 끝)
+- 요청 = 대화로 "외형 메뉴에 코스튬 · 탈것 (착용하면 능력치 — 미정) · 탈것은 전투 · 장비 화면에 · 코스튬 + 탈것 = 최종 모습" + 참고 `요청 사항/코스튬.png · 탈것.png`. 보고 = `코스튬_탈것_결과.html` (키 earthdef-look-1120, 캡처 `캡쳐본 모음/코스튬_탈것_캡처/`).
+- 시험: 기본 137 · 7차 24 · 9차 52 · **코스튬 31 (`PlayTest.RunR10`, Editor/PlayTest10.cs)** 오류 0. 기본 · 7차 시험의 장비 탭 검사는 LookView(자식 Body) 기준으로 고침.
+- 구조: 코스튬 = 몸 그림 통째 (Char/costume/<id> · _float · _gun · _ui, 피벗 Art.CostumeFoot) · 탈것 = 뒤 층 + 앞 층(Char/mount/<id> · _f, 피벗 = 자리 Art.MountSeat) → `Game/LookRig.cs` MountRig(전투 TurretUnit.MakeMount · 로비 LobbyWalker — 뒤 4 < 몸 5 < 앞 6 < 총 7, 몸이 젖혀도 탈것 수평, Bob 둥실) · LookView(UI 겹치기, Art.DrawnRect = look_bounds.txt 로 여백 빼고 맞춤). 외형 탭 sub 2 · 3 + 미리 보기(Looks.previewCostume/Mount). 능력치 = Loadout.Build 에서 착용 중 Stat1/Val1 · Stat2/Val2. 세이브 costume · mount · costumes · mounts. Store.BuyLook(사면 바로 착용) · WearLook.
+- 표 = `Earth_Defence/Table/Look.xlsx` (Costume · Mount, **능력치 칸 비움 = "능력치 준비 중"**, 가격 300/500 임시) · `tools/fix10_tables.py` (다시 돌려도 손으로 넣은 값 유지, Lift 만 새로) · Config Mount_Battle_Scale · Mount_Lobby_Scale 0.8 · Mount_Lift_Mul · Mount_Bob · Mount_Bob_Amp.
+- 그림 = `tools/look_art.py` (PowerShell: `export [id…]` → 그림 + look_pivots.json(Lift) + look_bounds.txt · `sheet` → tools/_preview/look_sheet.png). 그림을 바꾸면 export → fix10_tables.py → 표 변환. 손 소품(지팡이 · 우산 · 칼 …)은 총을 들어서 뺌.
+- 해석(보고 첫머리): 기본 우주복 = 코스튬 "우주 대원" · 탈것 그림 속 의상은 코스튬이 맡음 · 얻는 법 = 다이아(요청 밖) · 로비 · 터렛 카드 · 스토리 얼굴도 같은 모습.
+- 손대지 않은 것: **`요청 사항/10차 수정안.docx`** (작업 중에 새로 들어옴 — 다음 요청일 것) · `회로_전체_정리.html` · `타워_전체_정리.html` · `히든_타워_기획서.*` (다른 작업).
+- 상태: 커밋함 · push 는 사용자 몫 · Unity 닫힘.
+- **재개 첫 순서**: ① 코스튬_탈것_결과 의견 (능력치 · 얻는 법 결정) ② 10차 수정안.docx 읽기 ③ 9차 결과 · 스토리 대사 의견 (아래 메모).
+
 ## ▶ 재개 메모 (2026-11-20 새벽 — 9차 수정안 반영 끝)
 - 요청 = `요청 사항/9차 수정안.docx` (9줄 + 대화창 그림). 사용자 "수정할 게 많아서 비공개 테스트는 조금 미룸". 보고 = `9차_수정안_결과.html` (키 earthdef-req9-1120, 캡처 `캡쳐본 모음/9차_수정안_캡처/`) + **`스토리_대사_검토.html`** (키 earthdef-story-1120, 101편 + 로비 말풍선 — 편마다 체크 · 의견). 의견 읽기 `PYTHONUTF8=1 python tools/todo_checks.py <문서>`.
 - 시험: 기본 137 · 시험장 13 · 3차 107 · 7차 24 · 8차 28 · **9차 52 (`PlayTest.RunR9`, Editor/PlayTest9.cs)** 오류 0. **7차 · 8차 시험은 Battle_Vertical 0(사령탑)으로 돎** = 되돌리기 스위치 확인용. 기본 시험 "스테이지 1 보상" 흔들림은 이번엔 두 번 다 통과(첫 돌림 1번 실패 — 골드 차이 0, 원인 못 찾음).

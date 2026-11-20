@@ -21,6 +21,11 @@ namespace EarthDef
         /// <summary>시험용: 바로 tx 로 걷기 시작</summary>
         public void Go(float tx) { wait = 0; target = tx; left = tx < x; }
 
+        MountRig mount;
+        public MountRig Mount => mount;
+        /// <summary>11-20: 외형 탭에서 코스튬 · 탈것을 바꾸면 다시 만듦</summary>
+        public static void Refresh() { if (!I) return; Destroy(I.gameObject); I = null; Show(true); }
+
         public static void Show(bool on)
         {
             if (!on) { if (I) Destroy(I.gameObject); I = null; return; }
@@ -36,10 +41,12 @@ namespace EarthDef
             baseY = World.EarthSurf(x) - 0.06f;
             transform.position = new Vector3(x, baseY, 0);
             body = gameObject.AddComponent<SpriteRenderer>();
-            body.sprite = Art.Guardian; body.sortingOrder = 5;
+            string cos = SaveData.Cur?.costume ?? "basic";
+            body.sprite = Art.CostumeBody(cos); body.sortingOrder = 5;       // 11-20 코스튬 · 탈것
+            mount = MountRig.Attach(transform, SaveData.Cur?.mount, 5, Tables.Cf("Mount_Lobby_Scale", 0.8f));
             gunRoot = new GameObject("GunRoot").transform; gunRoot.SetParent(transform, false);
             var g = new GameObject("Gun"); g.transform.SetParent(gunRoot, false);
-            var gs = g.AddComponent<SpriteRenderer>(); gs.sprite = Art.GuardianGun; gs.sortingOrder = 6;
+            var gs = g.AddComponent<SpriteRenderer>(); gs.sprite = Art.CostumeGun(cos); gs.sortingOrder = 7;
             Pose();
         }
 
@@ -47,6 +54,7 @@ namespace EarthDef
         {
             float m = left ? -1 : 1;
             body.flipX = left;
+            if (mount) mount.Flip(left);
             gunRoot.localPosition = new Vector3(Art.GuardianHand.x * m, Art.GuardianHand.y, 0);
             gunRoot.localScale = new Vector3(m, 1, 1);
             float rest = 32f + look * 18f + Mathf.Sin(walkPh * 2f) * 3f;      // 비스듬히 메고 걷기 · 하늘 볼 땐 조금 듦
@@ -77,6 +85,7 @@ namespace EarthDef
             float breathe = sp < 0.05f ? Mathf.Sin(t * 2.2f) * 0.008f : 0f;
             baseY = World.EarthSurf(x) - 0.06f;
             float tilt = World.EarthTilt(x);
+            if (mount) { mount.Step(dt, false); bob = mount.lift + mount.bobY; }   // 탈것: 걸음 뒤뚱 대신 탈것 높이 + 둥실
             transform.position = new Vector3(x, baseY + bob, 0);
             transform.localScale = new Vector3(1, 1 + breathe, 1);
             lean = Mathf.Lerp(lean, Mathf.Clamp(-vel * 9f, -6f, 6f) + (wait > 0 ? look * (left ? -6f : 6f) : 0f), Mathf.Min(1, 6f * dt));

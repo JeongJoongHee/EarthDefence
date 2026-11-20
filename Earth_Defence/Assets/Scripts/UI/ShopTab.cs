@@ -398,15 +398,19 @@ namespace EarthDef
         }
     }
 
-    /// <summary>외형 (3차 수정안 "스킨 창은 따로 — 기지와 터렛 묶음 · 외형") → 4차 수정안 "외형은 아래 탭(전투 · 터렛 · 장비 …)으로": 탭 화면</summary>
+    /// <summary>외형 (3차 수정안 "스킨 창은 따로 — 기지와 터렛 묶음 · 외형") → 4차 수정안 "외형은 아래 탭(전투 · 터렛 · 장비 …)으로": 탭 화면
+    /// 11-20: 코스튬 · 탈것 칸 추가 — 위에 "코스튬 x 탈것" 미리 보기 (목록 줄을 누르면 그 모습으로 미리 보기 · 착용은 단추)</summary>
     public static class Looks
     {
-        public static int sub;    // 0 = 터렛 외형 · 1 = 기지 외형
+        public static int sub;    // 0 = 터렛 외형 · 1 = 기지 외형 · 2 = 코스튬 · 3 = 탈것
         static float scroll = 1f;
-        /// <summary>외형 탭 열기 (tab: 0 터렛 · 1 기지 · -1 그대로)</summary>
+        public static string previewCostume, previewMount;    // 미리 보기 (null = 착용 중인 것)
+        static SaveData S => SaveData.Cur;
+        static readonly string[] SubKeys = { "looks_turret", "looks_base", "looks_costume", "looks_mount" };
+        /// <summary>외형 탭 열기 (tab: 0 터렛 · 1 기지 · 2 코스튬 · 3 탈것 · -1 그대로)</summary>
         public static void Open(int tab = -1)
         {
-            if (tab >= 0) { sub = tab; scroll = 1f; }
+            if (tab >= 0) { sub = tab; scroll = 1f; previewCostume = previewMount = null; }
             Popup.CloseAll();
             Game.Lobby?.SetTab(6);
         }
@@ -415,19 +419,99 @@ namespace EarthDef
             var bg = UIKit.Panel(page, "card_white", "Looks"); bg.rectTransform.Fill(20, 6, 20, 6);
             ScrollRect sr = null;
             void Re() { scroll = sr ? sr.verticalNormalizedPosition : 1f; Game.Lobby?.Refresh(); Game.Lobby?.SetTab(6); }
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < SubKeys.Length; i++)
             {
                 int k = i;
-                var b = UIKit.Btn(bg.transform, i == sub ? "btn_orange" : "btn_cream", L.T(i == 0 ? "looks_turret" : "looks_base"), 34, () => { if (sub != k) { sub = k; scroll = 1f; Game.Lobby?.SetTab(6); } }, "Sub" + i);
-                ((RectTransform)b.transform).TL(24 + i * 500, 20, 480, 96);
+                var b = UIKit.Btn(bg.transform, i == sub ? "btn_orange" : "btn_cream", L.T(SubKeys[i]), 30, () => { if (sub != k) { sub = k; scroll = 1f; previewCostume = previewMount = null; Game.Lobby?.SetTab(6); } }, "Sub" + i);
+                ((RectTransform)b.transform).TL(20 + i * 248, 20, 236, 96);
             }
-            var area = UIKit.Rect(bg.transform, "Area"); area.Fill(10, 14, 10, 130);
+            float top = 130;
+            if (sub >= 2) top = Preview(bg.transform, top);
+            var area = UIKit.Rect(bg.transform, "Area"); area.Fill(10, 14, 10, top);
             var c = UIKit.Scroll(area, "Scroll"); c.parent.GetComponent<RectTransform>().Fill();
             float y = 6;
             if (sub == 0) foreach (var k in Tables.Skins) y = ShopTab.SkinRow(c, k, y, Re);
-            else foreach (var f in Tables.Frames) y = ShopTab.FrameRow(c, f, y, Re);
+            else if (sub == 1) foreach (var f in Tables.Frames) y = ShopTab.FrameRow(c, f, y, Re);
+            else foreach (var r in sub == 3 ? Tables.Mounts : Tables.Costumes) y = LookRow(c, r, sub == 3, y, Re);
             UIKit.SetScrollH(c, y + 10);
             sr = c.parent.GetComponent<ScrollRect>(); Canvas.ForceUpdateCanvases(); sr.verticalNormalizedPosition = scroll;
+        }
+
+        /// <summary>능력치 한 줄 ("공격력 +5  체력 +3" · 표가 비어 있으면 "능력치 준비 중")</summary>
+        public static string StatLine(LookRow r)
+        {
+            if (r == null || !r.HasStat) return L.T("look_stat_none");
+            var parts = new System.Collections.Generic.List<string>();
+            if (!string.IsNullOrEmpty(r.stat1) && r.val1 != 0) parts.Add(Stat(r.stat1, r.val1));
+            if (!string.IsNullOrEmpty(r.stat2) && r.val2 != 0) parts.Add(Stat(r.stat2, r.val2));
+            return string.Join("   ", parts);
+        }
+        /// <summary>% 로 더하는 키(공격력 % · 기지 공격력 % · 기지 체력 % · 보호막 %)는 장비 이름표에 없어서 따로</summary>
+        static string Stat(string k, double v) => k is "atk_pct" or "base_atk" or "base_hp" or "shield_pct"
+            ? L.T("st_" + k) + " +" + v.ToString("0.#") + "%" : Gear.StatName(k) + " " + Gear.StatVal(k, v);
+
+        /// <summary>위 미리 보기: 코스튬 x 탈것 (둥실) + 이름 · 능력치</summary>
+        static float Preview(Transform bg, float top)
+        {
+            string pc = previewCostume ?? S.costume, pm = previewMount ?? S.mount;
+            bool trying = (previewCostume != null && previewCostume != S.costume) || (previewMount != null && previewMount != S.mount);
+            var box = UIKit.Panel(bg, "card", "Preview"); box.rectTransform.TL(20, top, 980, 330);
+            var sky = UIKit.Img(box.transform, Art.UI("white"), "Sky"); sky.type = Image.Type.Sliced; sky.color = Art.Hex("#e4efff"); sky.raycastTarget = false; sky.rectTransform.TL(14, 14, 470, 296);
+            var lv = LookView.Build(sky.transform, pc, pm, new Vector2(430, 270), 0.9f, "Look");
+            lv.anchorMin = lv.anchorMax = new Vector2(0.5f, 0.5f); lv.anchoredPosition = Vector2.zero;
+            lv.gameObject.AddComponent<Float2D>();
+            var cr = Tables.Costume(pc); var mr = Tables.Mount(pm);
+            UIKit.Label(box.transform, L.T(trying ? "look_preview" : "look_now"), 30, trying ? Art.Purple : Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(504, 18, 460, 46);
+            UIKit.Label(box.transform, L.T("looks_costume") + " : " + (cr?.name ?? "-"), 28, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(504, 76, 460, 42);
+            UIKit.Label(box.transform, StatLine(cr), 24, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(524, 118, 440, 38);
+            UIKit.Label(box.transform, L.T("looks_mount") + " : " + (mr?.name ?? "-"), 28, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(504, 166, 460, 42);
+            UIKit.Label(box.transform, mr != null && mr.id != "none" ? StatLine(mr) : "", 24, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(524, 208, 440, 38);
+            if (trying)
+            {
+                var back = UIKit.Btn(box.transform, "btn_cream", L.T("look_back_now"), 26, () => { previewCostume = previewMount = null; Game.Lobby?.SetTab(6); }, "BackNow");
+                ((RectTransform)back.transform).TL(504, 252, 260, 62);
+            }
+            else UIKit.Label(box.transform, L.T("look_tap_tip"), 22, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(504, 262, 460, 40);
+            return top + 344;
+        }
+
+        /// <summary>코스튬 · 탈것 한 줄: 그림 (탈것은 지금 코스튬을 태운 모습) · 이름 · 능력치 · 사기/착용 — 줄을 누르면 미리 보기</summary>
+        static float LookRow(Transform list, LookRow r, bool mount, float y, System.Action changed)
+        {
+            bool has = Store.Owns(r, mount), on = Store.Wearing(r, mount);
+            bool pv = mount ? (previewMount ?? S.mount) == r.id : (previewCostume ?? S.costume) == r.id;
+            var card = UIKit.Panel(list, pv ? "card_white" : "card", (mount ? "M_" : "C_") + r.id); card.rectTransform.TL(20, y, 960, 170);
+            var hit = card.gameObject.AddComponent<Button>(); hit.transition = Selectable.Transition.None;
+            hit.onClick.AddListener(() => { if (mount) previewMount = r.id; else previewCostume = r.id; Game.Lobby?.SetTab(6); });
+            var tile = UIKit.Tile(card.transform, "slot", Color.white, null, 0.9f, "Icon"); tile.rectTransform.TL(16, 16, 236, 138);
+            var icon = tile.transform.Find("Icon"); if (icon) icon.gameObject.SetActive(false);
+            var lv = LookView.Build(tile.transform, mount ? S.costume : r.id, mount ? r.id : "none", new Vector2(216, 122), 0.6f, "Look");
+            lv.anchorMin = lv.anchorMax = new Vector2(0.5f, 0.5f); lv.anchoredPosition = Vector2.zero;
+            UIKit.Label(card.transform, r.name, 34, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(270, 14, 440, 50);
+            string line = mount && r.id == "none" ? L.T("look_no_mount") : StatLine(r);
+            var d = UIKit.Label(card.transform, line, 26, Art.Soft, TextAnchor.UpperLeft, false);
+            d.horizontalOverflow = HorizontalWrapMode.Wrap; d.rectTransform.TL(270, 76, 440, 80);
+            Button btn;
+            if (!has)
+            {
+                btn = UIKit.Btn(card.transform, S.dia >= r.price ? "btn_green" : "btn_gray", null, 30, () =>
+                {
+                    if (!Store.BuyLook(r, mount)) { Toast.Show(L.T("no_dia")); return; }
+                    if (mount) previewMount = null; else previewCostume = null;
+                    Toast.Show(L.F("look_got", r.name));
+                    changed?.Invoke();
+                }, "Buy");
+                var di = UIKit.Img(btn.transform, Art.Icon("diamond"), "Dia"); di.raycastTarget = false; di.rectTransform.Place(0, 0.5f, new Vector2(18, 6), new Vector2(52, 52), new Vector2(0, 0.5f));
+                UIKit.Label(btn.transform, Num.Comma(r.price), 32).rectTransform.Fill(70, 14, 8, 4);
+            }
+            else btn = UIKit.Btn(card.transform, on ? "btn_purple" : "btn_cream", on ? L.T("equipped") : L.T("equip"), 30, () =>
+            {
+                Store.WearLook(r, mount);
+                if (mount) previewMount = null; else previewCostume = null;
+                changed?.Invoke();
+            }, "Equip");
+            ((RectTransform)btn.transform).TL(720, 40, 220, 92);
+            return y + 182;
         }
     }
 }

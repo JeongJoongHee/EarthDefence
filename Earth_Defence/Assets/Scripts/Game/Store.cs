@@ -161,6 +161,24 @@ namespace EarthDef
         }
         public static void EquipFrame(string id) { if (S.FrameStar(id) <= 0) return; S.frame = id; S.Save(); World.I?.SetFrame(Tables.Frame(id)); }
 
+        // ---------- 11-20 코스튬 · 탈것 (산 것은 바로 착용) ----------
+        public static bool Owns(LookRow r, bool mount) => mount ? S.HasMount(r.id) : S.HasCostume(r.id);
+        public static bool Wearing(LookRow r, bool mount) => (mount ? S.mount : S.costume) == r.id;
+        public static bool BuyLook(LookRow r, bool mount)
+        {
+            if (Owns(r, mount) || !Pay(r.price)) return false;
+            (mount ? S.mounts : S.costumes).Add(r.id);
+            WearLook(r, mount);
+            Audio.Play(Audio.Sfx.Merge); return true;
+        }
+        public static void WearLook(LookRow r, bool mount)
+        {
+            if (!Owns(r, mount)) return;
+            if (mount) S.mount = r.id; else S.costume = r.id;
+            S.Save();
+            LobbyWalker.Refresh();
+        }
+
         // ---------- 터렛 스킨 ----------
         public static bool BuySkin(SkinRow k)
         {

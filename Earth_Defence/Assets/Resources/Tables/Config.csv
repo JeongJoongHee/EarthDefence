@@ -248,3 +248,8 @@ Lobby_Talk_Gap_Min,6,9차: 로비 말풍선 사이 최소 (초)
 Lobby_Talk_Gap_Max,12,9차: 로비 말풍선 사이 최대 (초)
 Lobby_Talk_Life,3.4,9차: 로비 말풍선 보이는 시간 (초)
 Chip_Presets,3,9차: 장비 탭 회로 프리셋 개수
+Mount_Battle_Scale,1,11-20: 전투에서 탈것 크기 x (대장 카피 몸은 그대로)
+Mount_Lobby_Scale,0.8,11-20: 로비에서 탈것 크기 x
+Mount_Lift_Mul,1,11-20: 탈것에 탈 때 대장 카피를 올리는 높이 x (Look 표 Lift x 이 값)
+Mount_Bob,1,11-20: 1 = 떠다니는 탈것(Look 표 Bob 1)은 위아래 둥실 · 0 = 끔
+Mount_Bob_Amp,0.06,11-20: 둥실 높이 (월드 칸)
