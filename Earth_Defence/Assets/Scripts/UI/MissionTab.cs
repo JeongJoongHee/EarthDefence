@@ -158,7 +158,8 @@ namespace EarthDef
         public static void Open()
         {
             // 6차 수정안: "프레임 60" · "도움말 다시 보기" 제거 → 창 높이를 줄임 (프레임은 늘 60)
-            var p = Popup.Make(L.T("settings"), 900, Cheat.Enabled ? 1300 : 1180, () => S.Save());      // 8차: [게임 종료] 한 줄 더 · 9차: 스토리 건너뛰기 한 줄
+            bool acct = Store.AccountOn;   // 11-21 폰(구글 로그인 전) = 계정 · 클라우드 줄 숨김 (줄 높이 244 → 16, -228)
+            var p = Popup.Make(L.T("settings"), 900, (Cheat.Enabled ? 1300 : 1180) - (acct ? 0 : 228), () => S.Save());      // 8차: [게임 종료] 한 줄 더 · 9차: 스토리 건너뛰기 한 줄
             float y = 140;
             Volume(p, ref y, L.T("set_bgm"), "music", () => S.bgm, v => S.bgm = v);
             Volume(p, ref y, L.T("set_sfx"), "sound", () => S.sfx, v => S.sfx = v);
@@ -166,6 +167,7 @@ namespace EarthDef
             Toggle(p, ref y, L.T("set_nums"), () => S.nums, v => S.nums = v);
             Toggle(p, ref y, L.T("set_story_skip"), () => S.storySkip, v => S.storySkip = v);   // 9차 "설정에서 스토리 스킵 기능 추가" (켬 = 스토리 안 보임)
             // 3차 [초안] 구글 계정 · 클라우드 저장 (실제 Play 게임즈 로그인 · 저장된 게임은 출시 단계)
+            if (acct) {
             var ln = UIKit.Plain(p.win, new Color(0.23f, 0.16f, 0.11f, 0.2f), "Line"); ln.rectTransform.TL(60, y + 6, 780, 3);
             y += 24;
             UIKit.Label(p.win, L.T("account"), 36, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(150, y, 360, 88);
@@ -181,6 +183,7 @@ namespace EarthDef
             ((RectTransform)ld.transform).TL(460, y, 380, 96);
             y += 110;
             p.Text(L.T("cloud_draft"), y, 24, Art.Soft);
+            } else y += 16;
             // 8차 수정안 "종료 기능 추가": [게임 종료] → 확인 창 (폰 뒤로 가기로도 — BackKey)
             var qb = UIKit.Btn(p.win, "btn_red", L.T("quit_btn"), 32, () => { p.Close(); Quit.Ask(); }, "Quit");
             ((RectTransform)qb.transform).TL(60, y + 70, 780, 96);

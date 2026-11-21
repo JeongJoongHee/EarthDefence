@@ -1,5 +1,14 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-21 오후 — 비공개 테스트 준비 · 광고 · 결제 · AAB 도구)
+- 요청 = "비공개 테스트 진행할 수 있게 준비 — AdMob 붙이는 법부터 모두 상세하게" + "UI 다듬기 · 밸런스 · 상품 추가 · 타워 시스템 개선을 비공개 테스트 때 업데이트로 해도 되나" → 된다(구글 answer/14151465 · 9845334 11-21 다시 읽음, 문서 맨 위 "질문 답").
+- 문서 = `비공개_테스트_준비.html` 11-21 판 (키 **earthdef-closed-1121**, 옛 판 = 세션 스크래치 비공개_테스트_준비_before_1121.html). 확인 칸: h-cheat · h-name(빌드 때만 느낌표 빼기 추천 — 체크되면 BuildAab/BuildApk Setup 에서 productName 바꾸고 되돌리기) · h-login · h-list · h-real · A-1 ~ D-2.
+- 코드: `Core/AdService.cs`(Ads · AdIds · MainThread · AdMob — 카치건 것, 에디터 Draft) · `Core/Iap.cs`(Unity IAP 5.4.4, Store.Grant 로 지급, 주문 번호 iapOnce "order:…", 광고 제거 되살림) · Store.AccountOn(폰 = 가짜 로그인 · 클라우드 숨김, SimulateDevice) · Iap.SimulateNoStore · 패키지 com.google.ads.mobile 11.5.0(OpenUPM) · com.unity.purchasing 5.4.4 · Plugins/Android gradle 템플릿 · GoogleMobileAds/Resources 설정 · `UnityPurchasing/generated/GooglePlayTangle.cs` = 자리만(키 없음).
+- 도구: Editor/BuildAab.cs(메뉴 지구 방위대 › AAB 빌드, 배치 `EarthDef.EditorTools.BuildAab.Build`) · IapTools.cs(결제 키 넣기 · `CompileAndroidBatch` · 점검) · AppIconSetup.cs · BuildApk 는 늘 EARTH_TEST_ADS(시험 광고) · `tools/aab_check.py [--prod]` · `tools/set_admob.py 앱ID 단위ID` · `tools/app_icon.py`(PowerShell) · `tools/closed1_tables.py`(String 11 · Config Cheat_On 1).
+- 업로드 키 = `키 보관/upload.keystore` + `비번.txt`(git 밖, 출력 금지) · 별칭 earthdefence · SHA-1 99:DA:70:F9:F1:4D:AE:DC:83:6E:29:B9:02:38:D8:0D:46:FA:F0:E9 — 사용자 백업 필요.
+- 시험: 새 `PlayTest.RunClosed`(Editor/PlayTestClosed.cs) 17줄 · 기본 137(첫 돌림 "스테이지 1 보상" 1번 실패 → 다시 통과) · 7차 24 오류 0 · 안드로이드 컴파일(실제 · 시험 광고) 통과.
+- **재개 첫 순서**: ① A-1 AdMob 번호 받으면 `set_admob.py` → `BuildAab.Build`(버전 1.0.1 · 코드 1) → `aab_check` 모두 통과 ② 확인 칸 읽기(h-name 체크면 빌드 이름 처리) ③ 스토어 글 · 스크린샷 · 그래픽 이미지 · 앱 콘텐츠 답안 · 출시 노트([복사] HTML, `스토어 등록/`) · 방침 파일(배포는 허락 뒤) ④ 코스튬 추가 결과 · 10차 수정안(아래 메모).
+
 ## ▶ 재개 메모 (2026-11-21 — 코스튬 · 탈것 추가)
 - 요청 = 대화 "이미지를 수정하고 몇 개 추가 — 요청 사항에 넣음" = `요청 사항/costume_zoom · mount_zoom · bonus_costumes · bonus_mounts.png` (look_art.py 의 시안 그림). 고친 그림은 이미 내보내져 있었음(다시 내보내도 같음). 시안 코스튬 8 · 탈것 6 을 look_art.py 에서 COSTUMES · MOUNTS 에 합침 → 코스튬 27 · 탈것 16 + 없음.
 - 보고 = `코스튬_탈것_추가_결과.html` (키 earthdef-look2-1121). 시험 코스튬 33 · 기본 137 오류 0 (기본 "스테이지 1 보상"은 첫 돌림 1번 실패 → 다시 통과). 둥실 검사는 6번 재서 폭으로 고침.

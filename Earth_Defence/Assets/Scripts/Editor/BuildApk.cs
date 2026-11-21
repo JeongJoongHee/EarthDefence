@@ -15,12 +15,12 @@ namespace EarthDef.EditorTools
     /// 메뉴 지구 방위대 > APK 빌드 (폰에 바로 설치)... = 창 — [APK 빌드] · [폰에 설치 (USB)] · [폴더 열기].
     /// 배치: bash tools/unity_batch.sh EarthDef.EditorTools.BuildApk.Build      (일반)
     ///       bash tools/unity_batch.sh EarthDef.EditorTools.BuildApk.BuildDev   (개발용 빌드 — 치트 · 오류 표시)
-    /// 서명 = Unity 개발용 키 (비밀번호 필요 없음). 스토어용 AAB · 업로드 키는 출시 준비 때 따로.
+    /// 서명 = Unity 개발용 키 (비밀번호 필요 없음) · 광고 = 늘 구글 시험 광고(EARTH_TEST_ADS). 스토어용 AAB · 업로드 키는 BuildAab.cs.
     /// 결과 = Earth_Defence/Builds/earthdefence-{버전}[-dev].apk (git 제외).
     /// </summary>
     public static class BuildApk
     {
-        /// <summary>임시 패키지 이름 — APK 는 스토어에 안 올라가서 나중에 바꿔도 됨. 첫 AAB 를 올리기 전에 사용자 결정으로 확정할 것 (그 뒤엔 못 바꿈).</summary>
+        /// <summary>패키지 이름 — 11-19 사용자 결정 "이대로" (첫 AAB 를 올리면 영영 못 바꿈)</summary>
         public const string PackageName = "com.zkfpf.earthdefence";
         const string FilePrefix = "earthdefence";
 
@@ -60,6 +60,7 @@ namespace EarthDef.EditorTools
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.allowedAutorotateToLandscapeLeft = false;
             PlayerSettings.allowedAutorotateToLandscapeRight = false;
+            AppIconSetup.Apply();   // 11-21 앱 아이콘 (tools/app_icon.py)
             AssetDatabase.SaveAssets();
             Debug.Log($"[BuildApk] 설정 — {PackageName} · 버전 {PlayerSettings.bundleVersion} ({PlayerSettings.Android.bundleVersionCode}) · API 24~36 · IL2CPP ARM64 · 세로");
         }
@@ -84,6 +85,7 @@ namespace EarthDef.EditorTools
         static bool Make(bool dev)
         {
             Setup();
+            if (!BuildAab.PrepareAndroidDependencies()) return false;   // 11-21 광고 · 결제 라이브러리 (gradle 줄)
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
             {
                 Debug.Log("[BuildApk] 빌드 대상을 Android 로 바꿈 (처음 한 번은 오래 걸림)");
@@ -110,6 +112,7 @@ namespace EarthDef.EditorTools
                     target = BuildTarget.Android,
                     targetGroup = BuildTargetGroup.Android,
                     options = dev ? BuildOptions.Development : BuildOptions.None,
+                    extraScriptingDefines = new[] { "EARTH_TEST_ADS" },   // 11-21 개발용 키 APK = 늘 구글 시험 광고 (눌러도 됨)
                 });
             }
             finally

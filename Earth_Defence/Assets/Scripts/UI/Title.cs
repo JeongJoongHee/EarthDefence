@@ -71,6 +71,7 @@ namespace EarthDef
         {
             if (Popup.Open != null) return;
             if (Store.Linked) { Enter(); return; }
+            if (!Store.AccountOn) { Enter(); return; }   // 11-21 폰: 구글 로그인 붙기 전엔 고르기 창 없이 바로 (이 폰에 저장)
             Choose();
         }
 

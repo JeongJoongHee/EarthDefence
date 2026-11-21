@@ -124,7 +124,7 @@ namespace EarthDef
         {
             // ---- 다이아 (결제 [초안])
             Head(ref y, L.T("shop_dia"));
-            var note = UIKit.Label(list, Store.IapReady ? L.T("iap_draft") : L.T("iap_off"), 22, Art.Soft, TextAnchor.MiddleRight, false); note.rectTransform.TL(380, y - 72, 620, 40);
+            var note = UIKit.Label(list, Iap.Note, 22, Art.Soft, TextAnchor.MiddleRight, false); note.rectTransform.TL(380, y - 72, 620, 40);
             // 월 1회 패키지는 맨 위에 넓은 띠로 (참고영상.txt 메모 "월 1회 구매 9,900원 다이아 폭탄 패키지 10,000")
             foreach (var mp in Tables.Products) if (mp.kind == "monthly") y = MonthlyCard(mp, y);
             foreach (var bp in Tables.Products) if (bp.kind == "boost") y = BoostCard(bp, y);
@@ -150,12 +150,10 @@ namespace EarthDef
                     UIKit.Label(card.transform, Num.Comma(p.dia), 44, Art.Sky).rectTransform.TL(0, 116, 316, 56);
                     UIKit.Label(card.transform, p.name, 24, Art.Soft, TextAnchor.MiddleCenter, false).rectTransform.TL(0, 166, 316, 32);
                 }
-                var b = UIKit.Btn(card.transform, done ? "btn_gray" : Store.IapReady ? "btn_green" : "btn_gray", done ? L.T("noads_done") : Num.Comma(p.krw) + "원", 32, () =>
+                var b = UIKit.Btn(card.transform, done ? "btn_gray" : Iap.CanSell(p) ? "btn_green" : "btn_gray", done ? L.T("noads_done") : Iap.PriceText(p), 32, () =>
                 {
                     if (done) return;
-                    if (!Store.IapReady) { Toast.Show(L.T("iap_off")); return; }
-                    int n = Store.Purchase(pp); if (n > 0) Toast.Show(noads ? $"{L.T("noads_name")} {L.T("noads_done")}" : $"{L.T("dia")} +{Num.Comma(n)}");
-                    lobby.Refresh();
+                    Iap.Buy(pp, n => { if (n > 0) Toast.Show(noads ? $"{L.T("noads_name")} {L.T("noads_done")}" : $"{L.T("dia")} +{Num.Comma(n)}"); lobby.Refresh(); });
                 }, "Buy");
                 ((RectTransform)b.transform).TL(28, 200, 260, 74);
                 if (Store.FirstDouble(p))
@@ -184,11 +182,9 @@ namespace EarthDef
                 UIKit.Label(tag.transform, L.F("boost_left", Store.GoldBoostDaysLeft), 26, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
             }
             var pp = p;
-            var b = UIKit.Btn(card.transform, Store.IapReady ? "btn_green" : "btn_gray", Num.Comma(p.krw) + "원", 38, () =>
+            var b = UIKit.Btn(card.transform, Iap.CanSell(p) ? "btn_green" : "btn_gray", Iap.PriceText(p), 38, () =>
             {
-                if (!Store.IapReady) { Toast.Show(L.T("iap_off")); return; }
-                if (Store.Purchase(pp) > 0) Toast.Show(L.F("boost_left", Store.GoldBoostDaysLeft));
-                lobby.Refresh();
+                Iap.Buy(pp, n => { if (n > 0) Toast.Show(L.F("boost_left", Store.GoldBoostDaysLeft)); lobby.Refresh(); });
             }, "Buy");
             ((RectTransform)b.transform).TL(700, 52, 250, 100);
             return y + 216;
@@ -206,12 +202,10 @@ namespace EarthDef
             var tag = UIKit.Panel(card.transform, "pill", "Month"); tag.color = Art.Red; tag.rectTransform.TL(250, 166, 170, 46);
             UIKit.Label(tag.transform, L.T("month_limit"), 26).rectTransform.Fill(0, 4, 0, 0);
             var pp = p;
-            var b = UIKit.Btn(card.transform, done ? "btn_gray" : Store.IapReady ? "btn_green" : "btn_gray", done ? L.T("month_done") : Num.Comma(p.krw) + "원", done ? 26 : 38, () =>
+            var b = UIKit.Btn(card.transform, done ? "btn_gray" : Iap.CanSell(p) ? "btn_green" : "btn_gray", done ? L.T("month_done") : Iap.PriceText(p), done ? 26 : 38, () =>
             {
                 if (Store.MonthDone(pp)) return;
-                if (!Store.IapReady) { Toast.Show(L.T("iap_off")); return; }
-                int n = Store.Purchase(pp); if (n > 0) Toast.Show($"{L.T("dia")} +{Num.Comma(n)}");
-                lobby.Refresh();
+                Iap.Buy(pp, n => { if (n > 0) Toast.Show($"{L.T("dia")} +{Num.Comma(n)}"); lobby.Refresh(); });
             }, "Buy");
             ((RectTransform)b.transform).TL(700, 66, 250, 100);
             return y + 246;

@@ -103,7 +103,7 @@ namespace EarthDef
         public static bool MonthDone(ProductRow p) => p.kind == "monthly" && S.iapOnce.Contains(MonthKey(p));
 
         // ---------- 결제 [초안] ----------
-        /// <summary>폰에서는 결제 연동(라이선스 키 · 상품)이 갖춰지기 전까지 꺼 둠 (카치건 방식). 에디터는 가짜 결제로 바로 지급</summary>
+        /// <summary>에디터 가짜 결제가 되는지 (폰은 Iap.CanSell — 라이선스 키 · 상품이 갖춰져야 켜짐)</summary>
         public static bool IapReady => Application.isEditor;
         public static bool FirstDouble(ProductRow p) => p.firstDouble && !S.iapOnce.Contains("first2x:" + p.id);
         /// <summary>광고 제거 (요청 사항_05) — 세이브 판 번호를 안 올리려고 iapOnce 목록에 "noads" 로 기록</summary>
@@ -117,9 +117,12 @@ namespace EarthDef
         public static bool GoldBoostOn => SaveData.Clock < GoldBoostUntil;
         public static int GoldBoostDaysLeft => (int)Math.Ceiling(Math.Max(0, GoldBoostUntil - SaveData.Clock) / 86400.0);
 
-        public static int Purchase(ProductRow p)
+        /// <summary>에디터 가짜 결제 (예전 시험이 부름) — 실제 결제는 Iap.Buy → Grant</summary>
+        public static int Purchase(ProductRow p) => IapReady ? Grant(p) : 0;
+
+        /// <summary>11-21 결제한 상품 주기 (Iap 가 서명 확인 뒤 부름 · 에디터 가짜 결제도). 받은 다이아 수 (광고 제거 · 부스터는 1, 이미 가진 광고 제거면 0)</summary>
+        public static int Grant(ProductRow p, bool restore = false)
         {
-            if (!IapReady) return 0;
             if (p.kind == "boost")
             {   // 남은 기간이 있으면 이어 붙임
                 long until = Math.Max(SaveData.Clock, GoldBoostUntil) + (long)Tables.Ci("Gold_Boost_Days", 30) * 86400;
@@ -132,9 +135,8 @@ namespace EarthDef
                 S.iapOnce.Add("noads"); Audio.Play(Audio.Sfx.Coin); S.Save(); return 1;
             }
             if (p.kind == "monthly")
-            {
-                if (MonthDone(p)) return 0;
-                S.iapOnce.Add(MonthKey(p));
+            {   // 한 달 한 번 — 결제가 이미 끝났으면(돈을 냈으면) 횟수가 넘어도 줌
+                if (!S.iapOnce.Contains(MonthKey(p))) S.iapOnce.Add(MonthKey(p));
             }
             int n = p.dia * (FirstDouble(p) ? 2 : 1);
             if (FirstDouble(p)) S.iapOnce.Add("first2x:" + p.id);
@@ -199,6 +201,10 @@ namespace EarthDef
 
         // ---------- 구글 계정 · 클라우드 [초안] ----------
         const string CloudKey = "EarthDef.Cloud.Draft";
+        /// <summary>11-21 비공개 테스트 1번 빌드: 실제 구글 로그인(Play 게임즈) 전이라 가짜 연동 · 클라우드는 에디터에서만.
+        /// 폰 = 타이틀 [게임 시작] → 바로 입장(이 폰에 저장) · 설정의 계정 · 클라우드 줄 숨김. SimulateDevice = 시험에서 폰처럼</summary>
+        public static bool SimulateDevice;
+        public static bool AccountOn => Application.isEditor && !SimulateDevice;
         public static bool Linked => !string.IsNullOrEmpty(S.account);
         public static void Link() { S.account = "draft-user"; S.Save(); }
         public static void Unlink() { S.account = ""; S.Save(); }

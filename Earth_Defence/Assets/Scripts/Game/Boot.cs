@@ -164,11 +164,5 @@ namespace EarthDef
         }
     }
 
-    /// <summary>[초안] 보상형 광고 — 광고 SDK 를 붙이기 전엔 바로 성공으로 처리 (출시 단계에서 실제 광고)</summary>
-    public static class Ads
-    {
-        public static bool Draft => true;
-        /// <summary>[초안] 지금은 바로 성공. 광고 제거를 샀으면 실제 광고 연동 뒤에도 광고 없이 바로 보상 (Store.NoAds)</summary>
-        public static void Show(Action<bool> done) => done?.Invoke(true);
-    }
+    // 11-21 보상형 광고(Ads)는 Core/AdService.cs 로 옮김 (실제 AdMob)
 }

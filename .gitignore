@@ -17,3 +17,6 @@ tools/_preview/
 ~$*
 2차_캡처/idle/*.gif
 Earth_Defence/.utmp/
+
+# 서명 키 · 비밀번호 · 결제 키 (git 에 올리지 않음 — USB · 클라우드에 따로 백업)
+키 보관/
