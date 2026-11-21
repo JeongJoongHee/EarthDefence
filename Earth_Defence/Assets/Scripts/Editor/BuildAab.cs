@@ -25,6 +25,8 @@ namespace EarthDef.EditorTools
         public const string KeystorePath = "D:/00 Earth_Defence/키 보관/upload.keystore";
         public const string KeyAlias = "earthdefence";
         const string FilePrefix = "earthdefence";
+        /// <summary>폰 홈 화면 이름 (11-19 결정 "카피바라 지구를 지켜라" — 느낌표 없이)</summary>
+        public const string AppName = "카피바라 지구를 지켜라";
 
         [MenuItem("지구 방위대/AAB 빌드 (플레이 스토어)...", priority = 29)]
         public static void BuildMenu() => AabBuildWindow.Open(false);
@@ -252,8 +254,12 @@ namespace EarthDef.EditorTools
             Debug.Log($"[BuildAab] {kind} 시작 — {PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android)} · 버전 {ver} ({vc}) · 씬 {string.Join(", ", scenes)} · 키 {ks}");
 
             BuildReport report;
+            string keepName = PlayerSettings.productName;
             try
             {
+                // 11-21 폰 홈 화면 이름 = 사용자가 정한 "카피바라 지구를 지켜라" (느낌표 없이). Unity 제품 이름을 그냥 바꾸면
+                // 에디터 세이브(PlayerPrefs — 제품 이름에 묶임)가 안 보이게 돼서 빌드할 때만 바꾸고 되돌림
+                PlayerSettings.productName = AppName;
                 report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
                 {
                     scenes = scenes,
@@ -264,7 +270,7 @@ namespace EarthDef.EditorTools
                     extraScriptingDefines = testAds ? new[] { "EARTH_TEST_ADS" } : null,
                 });
             }
-            finally { EditorUserBuildSettings.buildAppBundle = true; }   // 평소(스토어용)는 AAB 그대로
+            finally { EditorUserBuildSettings.buildAppBundle = true; PlayerSettings.productName = keepName; }   // 평소(스토어용)는 AAB 그대로
 
             var s = report.summary;
             if (s.result != BuildResult.Succeeded)

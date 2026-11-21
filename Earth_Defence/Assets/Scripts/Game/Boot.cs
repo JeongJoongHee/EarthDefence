@@ -74,6 +74,8 @@ namespace EarthDef
             World.I.ShowSlots(0, false);
             LobbyWalker.Show(true);       // 11-16 저녁: 기지 앞을 대장 카피가 어슬렁어슬렁
             Audio.Music("lobby");
+            // 11-21 스토리 개편안: 마지막 스테이지(100)를 깨고 로비로 오면 엔딩 대화 한 번 (설정 "스토리 건너뛰기"면 안 나옴)
+            if (SaveData.Cur != null && SaveData.Cur.best >= Tables.Stages.Count && StoryView.Want("epilogue")) StoryView.Play("epilogue", 0, null);
         }
 
         /// <summary>로비 · 결과 창에서: 스태미나를 내고 시작 (모자라면 스태미나 창)</summary>

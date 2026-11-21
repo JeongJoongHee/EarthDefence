@@ -25,7 +25,7 @@ namespace EarthDef
             if (Off || S == null || S.storySkip || Tables.Ci("Story_On", 1) != 1) return false;
             var l = Tables.StoryOf(id);
             if (l == null || l.Count == 0) return false;
-            bool once = id == "prologue" || Tables.Ci("Story_Stage_Repeat", 0) == 0;
+            bool once = id == "prologue" || id == "epilogue" || Tables.Ci("Story_Stage_Repeat", 0) == 0;     // 11-21 엔딩도 한 번만
             return !once || !S.seen.Contains("story:" + id);
         }
         public static string StageId(int stage) => "s" + stage;

@@ -2,7 +2,7 @@
 """11-20 9차 수정안 (요청 사항/9차 수정안.docx) 표 고치기 — 여러 번 돌려도 같은 결과.
 - Story.xlsx (새 표, 시트 Story · Lobby_Talk): 처음 시작 스토리(prologue) · 스테이지 1~100 진입 스토리 · 로비 대장 카피 혼잣말
     Story 칸: Id (prologue / s<스테이지>) · Seq (순서) · Who (capy 대장 카피 · rabbit 달토끼 · queen 젤리 여왕 · planet 떠돌이 행성 · narr 해설) · Text
-    → 표에서 바로 고쳐도 됨. 단 이 도구를 다시 돌리면 Story 시트를 아래 내용으로 다시 씀 (고친 대사는 이 파일에 옮길 것)
+    → 11-21 스토리 개편안 적용 뒤로는 스토리_개편안/generate_story_data.py 가 원본 (이 도구는 --old-story 때만 옛 대사를 씀)
 - Config: 세로 전장 복구(Battle_Vertical) · 스토리 · 로비 말풍선 · 회로 프리셋
 - String: 스토리 · 도감 · 프리셋 · 설정 글자
 - Frame: 외형 이름 "OO 사령탑" → "OO 돔" (세로 전장 = 돔)
@@ -213,7 +213,9 @@ STRINGS = [
 
 
 if __name__ == '__main__':
-    write_story()
+    # 11-21: 스토리 원본은 스토리_개편안/generate_story_data.py (102편 · 새 보스 4종 · 엔딩) → Story.xlsx 에 넣어 둠.
+    #        이 도구의 옛 대사로 덮어쓰지 않게 --old-story 를 줄 때만 다시 씀
+    if '--old-story' in sys.argv: write_story()
     p = os.path.join(TB, 'Config.xlsx'); wb = load_workbook(p); ws = wb.active
     print('Config', upsert(ws, 'Key', [dict(Key=k, Value=v, Note=n) for k, v, n in CONFIG])); wb.save(p)
     p = os.path.join(TB, 'String.xlsx'); wb = load_workbook(p); ws = wb['String']

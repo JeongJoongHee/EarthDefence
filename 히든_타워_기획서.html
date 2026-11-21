@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>히든 타워 기획서 — 카피바라 지구를 지켜라!</title>
+<style>
+  :root{
+    --bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;
+    --orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;
+    --red:#b5432f;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;
+    --purple:#7a3f8f;--purple-bg:#f3e8f8;--gold:#a87209;--gold-bg:#fff5d6;--gray-bg:#efeae2;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;margin:0;padding:24px 16px 64px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:26px;margin:0 0 4px}
+  h2{font-size:20px;margin:36px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--line)}
+  h3{font-size:16.5px;margin:20px 0 6px;color:var(--ink)}
+  p.note{color:var(--soft);margin:4px 0 12px;font-size:15px}
+  .tip{border-radius:10px;padding:13px 16px;margin:12px 0;font-size:14.8px;border:1px solid rgba(59,40,28,.08)}
+  .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)}
+  .tip.gray{background:var(--gray-bg)} .tip.red{background:var(--red-bg)} .tip.gold{background:var(--gold-bg)}
+  .tip ul,.tip ol{margin:6px 0 0;padding-left:22px} .tip li{margin:4px 0}
+  .bar{position:sticky;top:0;background:var(--bg);padding:9px 0;display:flex;gap:10px;align-items:center;z-index:5;border-bottom:1px solid var(--line);flex-wrap:wrap;font-size:14px}
+  .bar button{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:3px 11px;cursor:pointer;font-size:13px;font-weight:bold}
+  .bar button:hover{background:#fae2bd}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:9px 0}
+  ul.todo > li.checked{border-color:#9cc48f;background:#f6fbf2}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:11px 13px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer}
+  ul.todo input{margin-top:5px;transform:scale(1.25);flex-shrink:0}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:1px 7px;margin-right:6px;font-weight:bold;background:var(--purple-bg);color:var(--purple);vertical-align:middle}
+  .tag.star{background:var(--gold-bg);color:var(--gold);border:1px solid #e7c96d}
+  .tag.s{background:var(--green-bg);color:var(--green)}
+  .tag.m{background:var(--blue-bg);color:var(--blue)}
+  .tag.l{background:var(--red-bg);color:var(--red)}
+  .tag.warn{background:var(--red);color:#fff}
+  .elem{display:inline-block;font-size:11.5px;border-radius:999px;padding:1px 8px;font-weight:bold;margin-right:4px;color:#fff;vertical-align:middle}
+  .e-phys{background:#7e8794} .e-light{background:#d49b24} .e-grav{background:#7d55b8} .e-fire{background:#d9543e} .e-bolt{background:#3482c4}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:5px}
+  .why b{color:var(--ink)}
+  .spec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-top:8px;padding:9px 11px;background:#faf6ee;border-radius:8px;border:1px solid #ece3d2;font-size:13.5px;color:var(--ink)}
+  .spec-grid div b{color:var(--orange)}
+  .hint-line{margin-top:6px;font-size:13.3px;color:var(--purple);background:var(--purple-bg);display:inline-block;padding:2px 9px;border-radius:6px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:3px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px}
+  li.open .notebox{display:block}
+  .notebox textarea{width:100%;min-height:66px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:14.5px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:12.5px;margin:4px 0 0}
+  table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:10px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:#f1e8d8;font-weight:bold}
+  tr:last-child td{border-bottom:none}
+  code{background:#efe8da;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px;color:#5a371f}
+  .mock-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:14px 0}
+  .mock-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .mock-card svg{width:100%;height:auto;border-radius:10px;border:2px solid #3b281c;display:block;background:#232c57}
+  .mock-card .cap{font-size:13px;color:var(--soft);margin-top:6px;display:block}
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:12px 0}
+  .kpi .box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .kpi .num{font-size:20px;font-weight:bold;color:var(--orange)}
+  .kpi .lbl{font-size:13px;color:var(--soft)}
+  svg text{font-family:"Malgun Gothic",sans-serif}
+</style></head><body><main>
+
+<h1>히든 타워(조합 진화) 기획서 <small style="font-size:15px;color:var(--soft);font-weight:normal">2026-11-20 · 카피바라 지구를 지켜라! (Earth_Defence)</small></h1>
+<p class="note">실제 게임 데이터(<code>Turret.csv</code> 11종 · <code>Card.csv</code> 191줄 · <code>Config.csv</code> · <code>Chip.csv</code> · <code>Run.cs</code> · <code>Battle.cs</code> · <code>Combat.cs</code>)를 바탕으로, 특정 터렛 2기의 조합·육성에 따라 노출되는 <b>히든 타워 시스템</b>을 설계했습니다. 체크와 ✎ 의견은 이 브라우저에 저장되며 <code>tools/todo_checks.py</code>로 바로 읽을 수 있습니다.</p>
+
+<div class="bar">
+  <span id="stat">체크 0 / 0 · 의견 0</span>
+  <button type="button" id="onlyStar">★ 핵심 결정만</button>
+  <button type="button" id="showAll">전부 보기</button>
+  <span style="color:var(--soft)">체크 = 이대로 승인 · ✎ 의견 = 바꿀 점이나 선호안 메모</span>
+</div>
+
+<!-- ================= 1. 개요 ================= -->
+<h2>1. 기획 배경 · 현재 데이터 기준점</h2>
+<div class="kpi">
+  <div class="box"><div class="num">11종 + 대장 카피</div><div class="lbl">배치 터렛 (기본 6 + 해금 5) · 5속성</div></div>
+  <div class="box"><div class="num">4칸 사령탑</div><div class="lbl"><code>Turret_Slots = 4</code> (위 2 · 아래 2)</div></div>
+  <div class="box"><div class="num">4분 / Lv.20</div><div class="lbl">스테이지 한 판 카드 약 20~21장 (무한 Lv.30)</div></div>
+  <div class="box"><div class="num">8종 히든 타워</div><div class="lbl">11종 전원 참여 · 초반 3종 + 중후반 5종</div></div>
+</div>
+
+<div class="tip blue">
+  <b>왜 히든 타워가 필요한가?</b>
+  <ul>
+    <li><b>기존 콤보 카드(33종)의 한계</b>: "파트너 보유 시 확률 부가 효과 1줄" 수준이라 조합 완성 시의 시각적·전투적 대박 쾌감이 약함.</li>
+    <li><b>4칸 슬롯의 고착화 해소</b>: 터렛 4기를 채우면 판 끝까지 배치가 고정됨 → 2기 합체로 <b>빈 칸 1개를 다시 열어</b> 후반 빌드 전환의 재미를 부여.</li>
+    <li><b>스테이지 25 이후 목표 &amp; 도감 수집</b>: 모든 기본 터렛 해금 뒤에도 숨겨진 레시피를 발견하고 실험하는 로그라이크 동기를 제공.</li>
+  </ul>
+</div>
+
+<!-- ================= 2. 핵심 결정 ================= -->
+<h2>2. 핵심 규칙 결정 (확정 필요)</h2>
+<p class="note">아래 4가지 방향이 정해지면 바로 <code>Hidden.xlsx</code>와 1단계 프로토타입(초반 3종) 구현으로 들어갈 수 있습니다.</p>
+
+<ul class="todo">
+  <li data-id="hd-slot"><label><input type="checkbox"><span><span class="tag star">★ 결정 1</span>배치 방식: <b>안 A — 2기 합체 + 빈 칸 1개 해방</b> (추천)<span class="why">
+    재료 A + B가 1기의 히든 타워로 합체하고, 남는 슬롯 1칸이 빈 칸으로 열려 새 터렛을 1기 더 영입할 수 있습니다(최대 실질 5기 체감).<br>
+    <b>카드 손실 방지</b>: 합체 전 A·B에 투자한 카드 1장당 <b>피해 +15% · 공속 +3%</b>를 계승합니다.<br>
+    <b>비교 대안</b>: 안 B(사령탑 꼭대기 5번 특수 슬롯 추가 — 화력 인플레·HUD 겹침 우려) / 안 C(주 재료 A만 승격, B 유지 — 합체·슬롯 해방 쾌감 약함). 다른 안을 원하시면 ✎ 의견에 적어 주세요.
+  </span></span></label></li>
+
+  <li data-id="hd-cond"><label><input type="checkbox"><span><span class="tag star">★ 결정 2</span>노출 조건: <b>재료 2기 보유 + 최소 1기 Lv.2 돌파 + 누적 카드 6장 이상</b> (추천)<span class="why">
+    한 판(240초 · 20~21장)에서 1기를 Lv.2까지 키우는 데 5장(배치1+강화3+돌파1)이 듭니다. 파트너 배치(1장)를 더해 <b>6장 시점(약 1분 30초~2분, 중간 보스 전후)</b>에 자연스럽게 히든 카드가 노출됩니다.<br>
+    <b>등장 규칙</b>: 가중치 <code>Hidden_Weight_Mul = 6</code>(돌파 4보다 높음, 보스 보상 x3) · 조건 충족 후 2회 연속 미출현 시 <b>3회차 확정 천장</b>(<code>Hidden_Pity = 2</code>) · 한 판 최대 1기(무한 모드 2기).
+  </span></span></label></li>
+
+  <li data-id="hd-guard"><label><input type="checkbox"><span><span class="tag star">★ 결정 3</span>조합 범위: <b>배치 터렛 11종 간 조합(8종)</b>으로 통일 (대장 카피 제외)<span class="why">
+    대장 카피(<code>guardian</code>)는 슬롯 0 고정 캐릭터라 합체/슬롯 해방 규칙에 예외가 생깁니다. 1차는 <b>배치 터렛 11종 전원 참여(8종)</b>로 깔끔하게 만들고, 대장 카피 각성은 추후 확장으로 분리합니다.
+  </span></span></label></li>
+
+  <li data-id="hd-when"><label><input type="checkbox"><span><span class="tag star">★ 결정 4</span>도입 시점 · 단계적 투입 (1단계 초반 3종 → 2단계 8종+도감 → 3단계 밸런스 검증)<span class="why">
+    비공개 테스트 기간 중 업데이트로 넣을지, 정식 출시 후 1차 대형 업데이트로 아껴 둘지 ✎ 의견에 적어 주세요. <code>Config.Hidden_On</code> 스위치로 언제든 켜고 끌 수 있게 설계합니다.
+  </span></span></label></li>
+</ul>
+
+<!-- ================= 3. 시각 시안 ================= -->
+<h2>3. 화면 · 흐름 시안 (사령탑 배치 &amp; Jua 폰트 규칙 준수)</h2>
+<p class="note">Jua 폰트에 없는 특수문자(<code>· × → ◀ ▶ ∞</code>)는 게임 화면 글자에 쓰지 않고 <code>+</code>, <code>&gt;</code>, <code>,</code>만 사용합니다.</p>
+
+<div class="mock-wrap">
+  <div class="mock-card">
+    <svg viewBox="0 0 340 240" xmlns="http://www.w3.org/2000/svg">
+      <!-- 배경 -->
+      <rect width="340" height="240" fill="#1e2752"/>
+      <!-- 사령탑 왼쪽 -->
+      <rect x="12" y="16" width="54" height="206" rx="8" fill="#5e6b99" stroke="#3b281c" stroke-width="2.5"/>
+      <!-- 슬롯 1~4 (전) -->
+      <text x="82" y="24" font-size="11" font-weight="bold" fill="#fde39a">합체 전 (4칸 가득)</text>
+      <rect x="68" y="34" width="38" height="32" rx="6" fill="#7e8794" stroke="#f5b942" stroke-width="2.5"/>
+      <text x="87" y="54" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">관통포</text>
+      <rect x="68" y="74" width="38" height="32" rx="6" fill="#d9543e" stroke="#3b281c" stroke-width="2"/>
+      <text x="87" y="94" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">미사일</text>
+      <circle cx="88" cy="126" r="14" fill="#c7925e" stroke="#3b281c" stroke-width="2"/>
+      <text x="88" y="130" font-size="9" font-weight="bold" fill="#fff" text-anchor="middle">카피</text>
+      <rect x="68" y="148" width="38" height="32" rx="6" fill="#3482c4" stroke="#f5b942" stroke-width="2.5"/>
+      <text x="87" y="168" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">벼락탑</text>
+      <rect x="68" y="186" width="38" height="32" rx="6" fill="#7d55b8" stroke="#3b281c" stroke-width="2"/>
+      <text x="87" y="206" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">드론</text>
+
+      <!-- 화살표 -->
+      <path d="M126 120 L166 120 M158 112 L168 120 L158 128" stroke="#f5b942" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <text x="147" y="106" font-size="10.5" font-weight="bold" fill="#f5b942" text-anchor="middle">합체!</text>
+
+      <!-- 사령탑 오른쪽 (후) -->
+      <rect x="184" y="16" width="54" height="206" rx="8" fill="#5e6b99" stroke="#3b281c" stroke-width="2.5"/>
+      <text x="244" y="24" font-size="11" font-weight="bold" fill="#9be38a">합체 후 (빈 칸 1개!)</text>
+      <rect x="240" y="34" width="66" height="32" rx="7" fill="#f5b942" stroke="#fff6cf" stroke-width="2.5"/>
+      <text x="273" y="54" font-size="10" font-weight="bold" fill="#3b281c" text-anchor="middle">번개 작살포</text>
+      <rect x="240" y="74" width="38" height="32" rx="6" fill="#d9543e" stroke="#3b281c" stroke-width="2"/>
+      <text x="259" y="94" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">미사일</text>
+      <circle cx="260" cy="126" r="14" fill="#c7925e" stroke="#3b281c" stroke-width="2"/>
+      <text x="260" y="130" font-size="9" font-weight="bold" fill="#fff" text-anchor="middle">카피</text>
+      <!-- 해방된 빈 칸 -->
+      <rect x="240" y="148" width="66" height="32" rx="6" fill="none" stroke="#9be38a" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="273" y="168" font-size="10" font-weight="bold" fill="#9be38a" text-anchor="middle">+ 빈 칸 열림</text>
+      <rect x="240" y="186" width="38" height="32" rx="6" fill="#7d55b8" stroke="#3b281c" stroke-width="2"/>
+      <text x="259" y="206" font-size="10" font-weight="bold" fill="#fff" text-anchor="middle">드론</text>
+    </svg>
+    <span class="cap">시안 1: 4칸 사령탑에서 관통포 + 벼락탑 합체 → 번개 작살포 등장 + 3번 칸 빈 칸 해방</span>
+  </div>
+
+  <div class="mock-card">
+    <svg viewBox="0 0 340 240" xmlns="http://www.w3.org/2000/svg">
+      <rect width="340" height="240" fill="#232c57"/>
+      <!-- 황금 광채 -->
+      <rect x="74" y="12" width="192" height="216" rx="16" fill="#f5b942" opacity="0.28"/>
+      <!-- 카드 본체 -->
+      <rect x="82" y="18" width="176" height="204" rx="12" fill="#fffaf0" stroke="#e5a01d" stroke-width="3"/>
+      <!-- 상단 띠 -->
+      <defs><linearGradient id="dual" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7e8794"/><stop offset="100%" stop-color="#3482c4"/></linearGradient></defs>
+      <rect x="85" y="21" width="170" height="34" rx="9" fill="url(#dual)"/>
+      <text x="170" y="43" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">번개 작살포</text>
+      <!-- 히든 태그 -->
+      <rect x="136" y="7" width="68" height="20" rx="10" fill="#e5a01d" stroke="#3b281c" stroke-width="1.5"/>
+      <text x="170" y="21" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">히든</text>
+      <!-- 아이콘 박스 -->
+      <rect x="98" y="62" width="144" height="64" rx="8" fill="#efe6d5" stroke="#c8b99e" stroke-width="1.5"/>
+      <path d="M126 102 L208 76" stroke="#3482c4" stroke-width="6" stroke-linecap="round"/>
+      <path d="M134 102 L212 78" stroke="#fff6cf" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M156 68 L148 84 L158 84 L150 100" stroke="#f5b942" stroke-width="2.5" fill="none"/>
+      <path d="M188 66 L180 82 L190 82 L182 98" stroke="#f5b942" stroke-width="2.5" fill="none"/>
+      <!-- 속성 -->
+      <text x="170" y="141" font-size="11" fill="#7a6a5c" text-anchor="middle">물리 + 번개</text>
+      <!-- 설명 -->
+      <text x="170" y="159" font-size="11.5" fill="#3b281c" text-anchor="middle">화면 끝까지 꿰뚫고 궤적에 낙뢰</text>
+      <text x="170" y="174" font-size="11.5" fill="#3b281c" text-anchor="middle">적 장갑 50% 무시</text>
+      <!-- 하단 재료 안내 -->
+      <rect x="96" y="184" width="148" height="28" rx="6" fill="#fff3cc" stroke="#e5a01d" stroke-width="1.2"/>
+      <text x="170" y="197" font-size="10" font-weight="bold" fill="#a87209" text-anchor="middle">관통포 + 벼락탑 합체</text>
+      <text x="170" y="208" font-size="9.5" fill="#3f7a3a" text-anchor="middle">빈 칸 1개 열림</text>
+    </svg>
+    <span class="cap">시안 2: 레벨업 창 [히든] 카드 (이중 속성 띠 · 황금 GlowPulse · 합체 및 빈 칸 안내)</span>
+  </div>
+
+  <div class="mock-card">
+    <svg viewBox="0 0 340 240" xmlns="http://www.w3.org/2000/svg">
+      <rect width="340" height="240" fill="#fbf7ef"/>
+      <rect x="10" y="10" width="320" height="32" rx="8" fill="#efe6d5" stroke="#c8b99e"/>
+      <rect x="14" y="14" width="148" height="24" rx="6" fill="#fff"/>
+      <text x="88" y="30" font-size="11.5" fill="#7a6a5c" text-anchor="middle">일반 터렛 (11)</text>
+      <rect x="174" y="14" width="152" height="24" rx="6" fill="#e5a01d"/>
+      <text x="250" y="30" font-size="11.5" font-weight="bold" fill="#fff" text-anchor="middle">히든 도감 (3/8)</text>
+
+      <!-- 발견 완료 카드 -->
+      <rect x="12" y="52" width="316" height="82" rx="10" fill="#fff" stroke="#e5a01d" stroke-width="2"/>
+      <rect x="22" y="62" width="60" height="60" rx="8" fill="#fff3cc" stroke="#e5a01d"/>
+      <path d="M32 104 L72 74" stroke="#3482c4" stroke-width="4" stroke-linecap="round"/>
+      <text x="94" y="76" font-size="13" font-weight="bold" fill="#3b281c">번개 작살포</text>
+      <text x="94" y="94" font-size="11" fill="#a87209">조합: 관통포 + 벼락탑</text>
+      <text x="94" y="112" font-size="11" fill="#7a6a5c">물리 + 번개, 장갑 50% 무시</text>
+      <rect x="242" y="76" width="76" height="32" rx="8" fill="#63b859" stroke="#3b281c" stroke-width="1.5"/>
+      <text x="280" y="96" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">다이아 +50</text>
+
+      <!-- 미발견 카드 -->
+      <rect x="12" y="144" width="316" height="82" rx="10" fill="#f2ece1" stroke="#cfc4b0" stroke-width="1.5"/>
+      <rect x="22" y="154" width="60" height="60" rx="8" fill="#d9d0c1"/>
+      <text x="52" y="191" font-size="22" font-weight="bold" fill="#7a6a5c" text-anchor="middle">?</text>
+      <text x="94" y="170" font-size="13" font-weight="bold" fill="#7a6a5c">???</text>
+      <text x="94" y="190" font-size="11" fill="#7a6a5c">"뜨거운 빛줄기가 겨눈 자리에</text>
+      <text x="94" y="206" font-size="11" fill="#7a6a5c">불꽃 미사일이 쏟아지면..."</text>
+    </svg>
+    <span class="cap">시안 3: 로비 [터렛] 탭 상단 [히든 도감] — 발견 시 보상 수령, 미발견은 실루엣 + 힌트</span>
+  </div>
+</div>
+
+<!-- ================= 4. 조합 매트릭스 ================= -->
+<h2>4. 히든 타워 8종 조합표 (배치 터렛 11종 전원 참여)</h2>
+<p class="note">이중 속성 판정: <code>Stage.Weak</code> 또는 적 <code>Weak</code>가 주/보조 속성 중 <b>하나라도 일치</b>하면 <code>Weak_Mul (2.0배)</code> 적용(중복 곱 없음). 적 <code>Resist</code>는 <b>두 속성 모두 저항</b>일 때만 0.6배.</p>
+
+<table>
+  <tr>
+    <th>ID</th><th>이름</th><th>재료 조합 (A + B)</th><th>해금</th><th>속성</th><th>핵심 역할 · 카운터</th>
+  </tr>
+  <tr>
+    <td><code>h_emrail</code></td><td><b>번개 작살포</b></td><td>관통포 + 벼락탑</td><td>스테이지 1</td>
+    <td><span class="elem e-phys">물리</span><span class="elem e-bolt">번개</span></td>
+    <td>직선 무한 관통 + 궤적 낙뢰 3줄 · <b>장갑 50% 무시</b></td>
+  </tr>
+  <tr>
+    <td><code>h_solar</code></td><td><b>태양열 미사일포</b></td><td>레이저 포 + 유도 미사일</td><td>스테이지 1</td>
+    <td><span class="elem e-light">빛</span><span class="elem e-fire">불</span></td>
+    <td>취약·화상 표식 레이저 후 유도 태양탄 4발 일제 폭격</td>
+  </tr>
+  <tr>
+    <td><code>h_carrier</code></td><td><b>꿀벌 중력 모선</b></td><td>끈끈이 드론 + 벌집</td><td>스테이지 1</td>
+    <td><span class="elem e-grav">중력</span></td>
+    <td>세로 정지 띠(<code>CrowdX</code>) + 중력 벌 6기 출격 · 둔화 적 추뎀</td>
+  </tr>
+  <tr>
+    <td><code>h_vulcan</code></td><td><b>용암 폭죽포</b></td><td>쾅쾅 대포 + 유도 미사일</td><td>스테이지 5</td>
+    <td><span class="elem e-phys">물리</span><span class="elem e-fire">불</span></td>
+    <td>밀어내기 용암 포탄 + 유도 불꽃 자탄 4발 + 화상</td>
+  </tr>
+  <tr>
+    <td><code>h_nova</code></td><td><b>별빛 과열 빔</b></td><td>집중 빔 + 레이저 포</td><td>스테이지 10</td>
+    <td><span class="elem e-light">빛</span></td>
+    <td>보스 고정 과열 빔(최대 +250%) + 매초 3갈래 반사 레이저</td>
+  </tr>
+  <tr>
+    <td><code>h_quake</code></td><td><b>행성 쾅쾅포</b></td><td>쾅쾅 대포 + 소용돌이포</td><td>스테이지 15</td>
+    <td><span class="elem e-phys">물리</span><span class="elem e-grav">중력</span></td>
+    <td>2.5초 소용돌이 집결 후 초대형 폭발 + 강력 밀어내기</td>
+  </tr>
+  <tr>
+    <td><code>h_plasma</code></td><td><b>번개 불바퀴</b></td><td>불바퀴 + 찌릿 코일</td><td>스테이지 25</td>
+    <td><span class="elem e-fire">불</span><span class="elem e-bolt">번개</span></td>
+    <td>초대형 플라즈마 바퀴 2개 + 접촉 시 화상 · 3연쇄 번개</td>
+  </tr>
+  <tr>
+    <td><code>h_storm</code></td><td><b>뇌우 블랙홀 탑</b></td><td>소용돌이포 + 찌릿 코일</td><td>스테이지 25</td>
+    <td><span class="elem e-grav">중력</span><span class="elem e-bolt">번개</span></td>
+    <td>4초 뇌우 블랙홀 + 0.5초마다 4연쇄 마비 번개 난사</td>
+  </tr>
+</table>
+
+<!-- ================= 5. 8종 상세 검토 ================= -->
+<h2>5. 히든 타워 8종 상세 스펙 (개별 검토)</h2>
+<p class="note">마음에 드는 타워는 체크, 이름·컨셉·수치를 바꾸고 싶은 타워는 ✎ 의견에 적어 주세요. 기준 화력은 <b>재료 2기 합산 기본 DPS의 약 1.25~1.35배</b>입니다.</p>
+
+<ul class="todo">
+  <li data-id="ht-emrail"><label><input type="checkbox"><span><span class="tag s">초반 · 스테이지 1</span><b>1. 번개 작살포</b> (<code>h_emrail</code>) — 관통포 + 벼락탑 <span class="elem e-phys">물리</span><span class="elem e-bolt">번개</span><span class="why">
+    초고속 전자기 작살이 화면 끝까지 관통(<code>Pierce 99</code>)하고, 지나간 궤적을 따라 0.25초 간격으로 소형 낙뢰 3줄 낙하(20% 마비). <b>적 장갑(Armor) 50% 무시</b>로 쇠 운석·딱정벌레·떠돌이 행성 카운터.
+    <div class="spec-grid">
+      <div><b>기본 스탯</b>: Rate 520 / 낙뢰 165x3 · CD 3.4s · Range 18</div>
+      <div><b>전용 카드</b>: 고압 코일(피해+60% x2) · 초전도 장전(공속+25% x2)</div>
+      <div><b>궁극 각성</b>: 쌍극 작살 — 작살 +1발(감소 없음), 마비 적 피해 +120%</div>
+    </div>
+    <span class="hint-line">도감 힌트: "적을 꿰뚫는 포탄과 하늘의 벼락이 하나로 모이면..."</span>
+  </span></span></label></li>
+
+  <li data-id="ht-solar"><label><input type="checkbox"><span><span class="tag s">초반 · 스테이지 1</span><b>2. 태양열 미사일포</b> (<code>h_solar</code>) — 레이저 포 + 유도 미사일 <span class="elem e-light">빛</span><span class="elem e-fire">불</span><span class="why">
+    1.2초간 일직선 태양 레이저로 적에게 <b>취약(+20%) + 화상</b> 표식을 남긴 뒤, 유도 태양 미사일 4발을 동시 발사해 표식 대상 우선 폭격. 젤리·얼음 혜성·나방·젤리 여왕 카운터.
+    <div class="spec-grid">
+      <div><b>기본 스탯</b>: 레이저 75(0.2s 틱) / 태양탄 340x4 · CD 5.0s · Range 14</div>
+      <div><b>전용 카드</b>: 태양핵 증폭(피해+60% x2) · 광열 순환(공속+25%, 범위+25% x2)</div>
+      <div><b>궁극 각성</b>: 일식 폭격 — 태양탄 +3발, 폭발 자리에 4초 불바다</div>
+    </div>
+    <span class="hint-line">도감 힌트: "뜨거운 빛줄기가 겨눈 자리에 불꽃 미사일이 쏟아지면..."</span>
+  </span></span></label></li>
+
+  <li data-id="ht-carrier"><label><input type="checkbox"><span><span class="tag s">초반 · 스테이지 1</span><b>3. 꿀벌 중력 모선</b> (<code>h_carrier</code>) — 끈끈이 드론 + 벌집 <span class="elem e-grav">중력</span><span class="why">
+    적이 가장 많이 모인 세로줄(<code>CrowdX</code>)에 8초 세로 중력 정지 띠를 깔고, 띠 내부에서 <b>중력 벌 6기(각 8타)</b>가 출격. 둔화된 적에게 최대 +100% 추가 피해(<code>dmg_by_slow</code> 내장).
+    <div class="spec-grid">
+      <div><b>기본 스탯</b>: 장판 28(0.4s 틱, 8s) / 벌 135(6기x8타) · CD 9.0s</div>
+      <div><b>전용 카드</b>: 고밀도 꿀벌(피해+60% x2) · 모선 증편(벌+3, 두께+30% x2)</div>
+      <div><b>궁극 각성</b>: 여왕벌 사령부 — 중력 띠 2줄 설치, 벌 마지막 타격 시 펄스 폭발</div>
+    </div>
+    <span class="hint-line">도감 힌트: "끈적한 세로 장판 속에 부지런한 꼬마 벌들이 둥지를 틀면..."</span>
+  </span></span></label></li>
+
+  <li data-id="ht-vulcan"><label><input type="checkbox"><span><span class="tag m">중반 · 스테이지 5</span><b>4. 용암 폭죽포</b> (<code>h_vulcan</code>) — 쾅쾅 대포 + 유도 미사일 <span class="elem e-phys">물리</span><span class="elem e-fire">불</span><span class="why">
+    육중한 용암 포탄이 적을 밀어내며 폭발(<code>Knock 1.2</code>)하고, 착탄 지점에서 유도 불꽃 자탄 4발이 튀어나가 주변 적을 추격 폭격 + 화상.
+    <div class="spec-grid">
+      <div><b>기본 스탯</b>: 주 폭발 820(반경 1.4) / 자탄 280x4 · CD 4.2s · Range 12</div>
+      <div><b>전용 카드</b>: 마그마 장약(피해+60% x2) · 화산 분출(범위+40%, 공속+20% x2)</div>
+      <div><b>궁극 각성</b>: 대폭죽 축제 — 자탄 +4발, 착탄 지점에 5초 용암 지대</div>
+    </div>
+    <span class="hint-line">도감 힌트: "적을 밀어내는 큰 대포에 따라가는 미사일을 채워 넣으면..."</span>
+  </span></span></label></li>
+
+  <li data-id="ht-nova"><label><input type="checkbox"><span><span class="tag m">중반 · 스테이지 10</span><b>5. 별빛 과열 빔</b> (<code>h_nova</code>) — 집중 빔 + 레이저 포 <span class="elem e-light">빛</span><span class="why">
+    보스/엘리트 우선으로 4초간 과열 빔을 고정 조사(오래 붙을수록 피해 최대 +250%). 매 1초마다 대상에게서 <b>3갈래 반사 레이저</b>가 사방으로 뻗어 잡몹까지 정리.
+    <div class="spec-grid">
+      <div><b>기본 스탯</b>: 주 빔 82(0.2s 틱, 4s) / 반사 145x3줄 · CD 7.5s · Range 15</div>
+      <div><b>전용 카드</b>: 성광 증폭(피해+60% x2) · 과열 유지(지속+35%, 틱-25% x2)</div>
+      <div><b>궁극 각성</b>: 초신성 굴절 — 대상 변경 시 누적 유지, 반사 +3줄 및 취약 +25%</div>
+    </div>
+    <span class="hint-line">도감 힌트: "한 놈만 노리는 집중 빔이 모든 것을 뚫는 레이저와 겹치면..."</span>
+  </span></span></label></li>
+
+  <li data-id="ht-quake"><label><input type="checkbox"><span><span class="tag m">중반 · 스테이지 15</span><b>6. 행성 쾅쾅포</b> (<code>h_quake</code>) — 쾅쾅 대포 + 소용돌이포 <span class="elem e-phys">물리</span><span class="elem e-grav">중력</span><span class="why">
+    착탄 지점에 2.5초간 소용돌이로 반경 2.2 안의 적을 끌어모은 뒤, 마지막에 <b>초대형 쾅쾅 폭발 + 강력 밀어내기(<code>Knock 1.8</code>)</b>로 화면 오른쪽으로 날려 버림.
+    <div class="spec-grid">
+      <div><b>기본 스탯</b>: 소용돌이 160(0.2s 틱) / 최종 폭발 1150(반경 1.8) · CD 4.6s</div>
+      <div><b>전용 카드</b>: 초중력 탄두(피해+60% x2) · 중력권 확장(범위+40% x2)</div>
+      <div><b>궁극 각성</b>: 이중 지진파 — 최종 폭발 2연타 + 부유 기뢰 4개 살포</div>
+    </div>
+    <span class="hint-line">도감 힌트: "적을 한데 모으는 소용돌이 한가운데에 큰 포탄을 터뜨리면..."</span>
+  </span></span></label></li>
+
+  <li data-id="ht-plasma"><label><input type="checkbox"><span><span class="tag l">후반 · 스테이지 25</span><b>7. 번개 불바퀴</b> (<code>h_plasma</code>) — 불바퀴 + 찌릿 코일 <span class="elem e-fire">불</span><span class="elem e-bolt">번개</span><span class="why">
+    벽과 방어선을 튕기며 굴러다니는 초대형 플라즈마 바퀴 2개를 발사(최대 100타). 스칠 때마다 화상 + 주변 3마리 연쇄 번개, 벽에 5번 튕길 때마다 전기 폭발.
+    <div class="spec-grid">
+      <div><b>기본 스탯</b>: 바퀴 125x2(0.2s 틱) / 연쇄 번개 165x3 · CD 8.0s · Speed 5.5</div>
+      <div><b>전용 카드</b>: 플라즈마 과열(피해+60% x2) · 초고속 회전(속도+40%, 크기+25% x2)</div>
+      <div><b>궁극 각성</b>: 번개 궤적 — 바퀴 +1개, 지나간 자리에 2초 전기 불길(둔화+화상)</div>
+    </div>
+    <span class="hint-line">도감 힌트: "쉬지 않고 구르는 불바퀴에 찌릿한 코일 번개를 감으면..."</span>
+  </span></span></label></li>
+
+  <li data-id="ht-storm"><label><input type="checkbox"><span><span class="tag l">후반 · 스테이지 25</span><b>8. 뇌우 블랙홀 탑</b> (<code>h_storm</code>) — 소용돌이포 + 찌릿 코일 <span class="elem e-grav">중력</span><span class="elem e-bolt">번개</span><span class="why">
+    전장 밀집 지점에 4초 뇌우 블랙홀을 전개해 적을 모으고, 0.5초마다 내부 적에게 <b>4연쇄 마비 번개(마비 20%)</b>를 난사. 마비된 적에게 피해 +60%.
+    <div class="spec-grid">
+      <div><b>기본 스탯</b>: 블랙홀 180(0.25s 틱) / 번개 240(0.5s마다 4연쇄) · CD 6.2s</div>
+      <div><b>전용 카드</b>: 초고압 폭풍(피해+60% x2) · 폭풍 연장(지속+40%, 당김+50% x2)</div>
+      <div><b>궁극 각성</b>: 천둥의 눈 — 종료 시 중심에 거대 낙뢰 5줄 + 1.5초 확정 마비</div>
+    </div>
+    <span class="hint-line">도감 힌트: "소용돌이 구름 속에서 번개 코일이 끝없이 튀어 오르면..."</span>
+  </span></span></label></li>
+</ul>
+
+<!-- ================= 6. 계승 · 밸런스 ================= -->
+<h2>6. 기존 성장 계승 · 밸런스 3차 연동</h2>
+<table>
+  <tr><th style="width:200px">성장 요소</th><th>계승 규칙</th><th>의도</th></tr>
+  <tr><td><b>로비 터렛 레벨</b> (<code>metaLv</code>)</td><td><code>Round(0.7 × Max(lvA, lvB) + 0.3 × Min(lvA, lvB))</code></td><td>한쪽만 높게 키워도 실전 투입 가능 + 둘 다 키우면 최고 효율</td></tr>
+  <tr><td><b>터렛 외형</b> (<code>Skin.Dmg</code>)</td><td>재료 A, B 보유 스킨의 후반 피해(+10%) <b>합산 계승(최대 +20%)</b></td><td>다이아 외형 구매 가치 유지 및 상승</td></tr>
+  <tr><td><b>투자 카드 보너스</b></td><td>합체 전 A+B에 투자한 카드 <code>N</code>장 × <b>피해 +15% · 공속 +3%</b></td><td>합체 직전까지 투자한 경험치가 헛되지 않도록 보호</td></tr>
+  <tr><td><b>장비 · 회로</b> (<code>Chip</code>)</td><td>공통·조건 100% / 속성 회로는 <b>이중 속성 중 큰 값 1개</b> / 전용 피해 회로는 <b>A·B 각 50% 합산</b></td><td>속성 회로 중복 인플레 차단 + 세팅 역전 방지</td></tr>
+  <tr><td><b>밸런스 3차 검증</b></td><td><code>PlayTestBal.cs</code>에 <code>hidden=1</code> 전략 추가, 씨앗 3개로 360일 곡선 오차 ±10% 이내 맞춤</td><td>무과금 100 스테이지 ≈ 360일 기준선 유지</td></tr>
+</table>
+
+<!-- ================= 7. UI · 도감 · 코드 ================= -->
+<h2>7. UI/UX · 데이터 테이블 · 코드 수정 범위</h2>
+<ul class="todo">
+  <li data-id="hd-ux"><label><input type="checkbox"><span><span class="tag m">UI · UX</span>전투 힌트 배지 + 합체 연출 + 로비 [히든 도감] + 터렛 시험장 연동<span class="why">
+    <b>전투 중</b>: 이미 발견한 레시피의 재료 A를 보유 중일 때 재료 B의 <code>new</code> 카드에 <code>히든 조합 가능</code> 배지 표시(미발견은 숨겨서 발견 재미 유지). 합체 시 0.6초 빛줄기 수렴 연출 + 상단 배너 + 전용 효과음.<br>
+    <b>로비 도감</b>: <code>[터렛]</code> 탭 내 <code>[히든 도감]</code> 서브 토글 — 미발견 실루엣+힌트, 최초 발견 시 <b>다이아 +50</b> 보상, 3/6/8종 마일스톤 보상.<br>
+    <b>시험장</b>: <code>TurretLab.unity</code>에 히든 8종 추가해 손맛·DPS 즉시 측정.
+  </span></span></label></li>
+
+  <li data-id="hd-code"><label><input type="checkbox"><span><span class="tag m">데이터 · 코드</span><code>Table/Hidden.xlsx</code> 신설 + 기존 <code>Config</code> / C# 확장<span class="why">
+    <b>신규 표</b>: <code>Hidden.xlsx</code> (<code>Id</code>, <code>MatA</code>, <code>MatB</code>, <code>Elem2</code>, <code>Min_Cards</code>, <code>Need_Break</code>, <code>Armor_Ignore</code>, <code>Hint</code>, <code>Reward_Dia</code>) · <code>Card.xlsx</code>에 소환 8장(<code>Kind=hidden</code>) + 강화 24장 추가.<br>
+    <b>Config 키</b>: <code>Hidden_On</code>, <code>Hidden_Min_Cards</code>, <code>Hidden_Need_Break</code>, <code>Hidden_Weight_Mul</code>, <code>Hidden_Pity</code>, <code>Hidden_Max_Run</code>, <code>Hidden_Endless_Max</code>, <code>Hidden_Inherit_Dmg</code>, <code>Hidden_Inherit_Cd</code>.<br>
+    <b>수정 파일</b>: <code>Tables.cs</code>, <code>SaveData.cs</code>(도감 저장), <code>Run.cs</code>(조건·천장·합체·슬롯 해방), <code>Battle.cs</code>(연출·교체), <code>Combat.cs</code>(이중 속성·장갑 무시), <code>AttacksHidden.cs</code>(신규), <code>BattleUI.cs</code>, <code>Lobby.cs</code>, <code>tools/earth_art.py</code>, <code>PlayTest.cs</code>/<code>PlayTestBal.cs</code>.
+  </span></span></label></li>
+</ul>
+
+<div class="tip green">
+  <b>다음 진행 추천 순서</b>
+  <ol>
+    <li>위 <b>★ 핵심 결정 4개</b>(배치 방식 · 노출 조건 · 대장 카피 범위 · 도입 시점)와 <b>8종 스펙</b>을 체크/메모해 주세요.</li>
+    <li>확정되면 <b>1단계 프로토타입(초반 3종: 번개 작살포 · 태양열 미사일포 · 꿀벌 중력 모선)</b>부터 구현하고 <code>TurretLab</code> + 자동 시험 캡처로 먼저 보여 드리겠습니다.</li>
+  </ol>
+</div>
+
+</main>
+<script>
+(function(){
+  var KEY='earthdef-hidden-1120', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='바꾸고 싶은 점이나 다른 안이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  document.getElementById('onlyStar').onclick=function(){ items.forEach(function(li){ li.style.display=li.querySelector('.tag.star')?'':'none'; }); };
+  document.getElementById('showAll').onclick=function(){ items.forEach(function(li){ li.style.display=''; }); };
+  stat();
+})();
+</script>
+</body></html>

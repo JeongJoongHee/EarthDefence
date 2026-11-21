@@ -1,5 +1,12 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-21 오후 4 — AdMob 확인 · 1번 AAB · 스토리 개편안 · 문서 정리)
+- **남은 일은 `남은_작업.html` 하나** (키 earthdef-todo-1121) — 비공개 테스트 A-4 · B · C · D 상세 + 결정 대기 12 + 다음 개발 순서. 끝난 문서는 모두 `완료 사항 모음_HTML/` (스토리_개편안 폴더 · 소리_검토 폴더 포함, 링크 ../ 고침 · 깨진 링크 0). 맨 위엔 남은_작업 · 히든_타워_기획서(아직 적용 안 함)만.
+- AdMob(크롬 확인): 앱 ca-app-pub-5299482082775448~4098932532 · 보상형 reward_main …/1611780664 · 테스트 기기 "테스트 계정". 상태 "검토 필요 · 스토어 추가 필요"는 출시 전이라 정상 → 출시 뒤 [스토어 추가]. set_admob.py 로 넣음.
+- **1번 AAB** = `Earth_Defence/Builds/earthdefence-1.0.1-1.aab` (코드 1, 아직 안 올림) — aab_check 모두 통과 · 홈 화면 이름은 빌드 때만 "카피바라 지구를 지켜라"(BuildAab.AppName, 에디터 제품 이름은 "!" 그대로 — 에디터 세이브 때문).
+- 스토리 개편안 적용: Story.xlsx = `완료 사항 모음_HTML/스토리_개편안/Story_New.xlsx` (String_Add 시트 뺌) · who_ 보스 이름 4 · 엔딩(로비, best ≥ 100, 한 번) · **스토리 원본 = 완료 사항 모음_HTML/스토리_개편안/generate_story_data.py** (fix9_tables.py 는 --old-story 때만 옛 대사). 시험 RunExpand 에 스토리 4줄.
+- **재개 첫 순서**: ① `python tools/todo_checks.py 남은_작업.html` ② 스토어 등록 자료 · 앱 콘텐츠 답안([복사] HTML) · 방침 파일(배포는 허락 뒤) ③ 사용자 A-4 · B 단계 (Chrome 으로 확인) ④ 10차 수정안.
+
 ## ▶ 재개 메모 (2026-11-21 오후 3 — 전투 요청 3개)
 - 요청(대화) = ① 대장 카피 좌우 이동 ② 대장 카피 · 돔 특수 능력 단추 ③ 속도 x0.5 · x2. 보고 = `전투_요청_결과.html` (키 earthdef-battle11-1121, 캡처 `캡쳐본 모음/전투_요청_1121/`).
 - ① Config Guardian_Fixed 0 (±Guardian_X_Max 1.5) ② `Game/BattleSkills.cs` (Battle 은 이제 partial): 버닝(UseBurn · BurnCdMul → TurretUnit · BurnDmgMul → Combat.Calc) · 얼음 파동(UseDome: Paralyze · 보스는 AddSlow · Combat.Raw %) · BattleUI SkillButton(왼쪽 · 오른쪽, 바깥 터렛 위 Skill_Btn_X/Y) · 아이콘 `tools/skill_icons.py` ③ BattleUI.ToggleSpeed 0.5/1/1.5/2 · Battle.LastSpeed. 표 = `tools/fix11_tables.py`.

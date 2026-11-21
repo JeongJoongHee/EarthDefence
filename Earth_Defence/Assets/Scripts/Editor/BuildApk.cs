@@ -99,9 +99,11 @@ namespace EarthDef.EditorTools
 
             bool wasAab = EditorUserBuildSettings.buildAppBundle;
             bool wasCustom = PlayerSettings.Android.useCustomKeystore;
+            string keepName = PlayerSettings.productName;
             BuildReport report;
             try
             {
+                PlayerSettings.productName = BuildAab.AppName;      // 11-21 홈 화면 이름 (빌드 때만 — BuildAab 설명)
                 EditorUserBuildSettings.buildAppBundle = false;
                 PlayerSettings.Android.useCustomKeystore = false;   // 개발용 키 (비밀번호 없음)
                 Debug.Log($"[BuildApk] APK 시작 — {PackageName} · 버전 {PlayerSettings.bundleVersion} · {(dev ? "개발용 빌드" : "일반")} · 씬 {string.Join(", ", scenes)} · 서명 개발용 키");
@@ -119,6 +121,7 @@ namespace EarthDef.EditorTools
             {
                 EditorUserBuildSettings.buildAppBundle = wasAab;
                 PlayerSettings.Android.useCustomKeystore = wasCustom;
+                PlayerSettings.productName = keepName;
             }
 
             var s = report.summary;

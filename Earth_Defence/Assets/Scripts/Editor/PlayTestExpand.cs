@@ -115,6 +115,49 @@ namespace EarthDef.EditorTools
             if (sr) { Canvas.ForceUpdateCanvases(); sr.verticalNormalizedPosition = 0f; }
             yield return Wait(0.3f);
             Capture("ex_6_turret_soon");
+
+            // ---------- 5) 11-21 스토리 개편안 (102편 · 새 보스 4종이 말함 · 엔딩) ----------
+            {
+                bool allStory = Tables.StoryOf("prologue") != null && Tables.StoryOf("epilogue") != null;
+                for (int s = 1; s <= 100; s++) if (Tables.StoryOf("s" + s) == null) allStory = false;
+                Check(allStory && Tables.LobbyTalk.Count >= 30, $"스토리: 처음 · 스테이지 1~100 · 엔딩 모두 있음 · 로비 말풍선 {Tables.LobbyTalk.Count}개");
+                bool names = true; var bad = new HashSet<char>();
+                foreach (var w in ExBoss) { var n = L.T("who_" + w); if (string.IsNullOrEmpty(n) || n == "who_" + w) names = false; }
+                foreach (var k in new[] { "prologue", "epilogue", "s21", "s41", "s61", "s81", "s100" })
+                    foreach (var r in Tables.StoryOf(k)) foreach (char ch in r.text) if (ch > ' ' && font != null && !font.HasCharacter(ch)) bad.Add(ch);
+                Check(names && bad.Count == 0, $"새 보스 4종 이름표 · 대사 글자가 글꼴에 있음{(bad.Count > 0 ? " — 없음: " + string.Join(" ", bad) : "")}");
+                // 새 보스가 말하는 장면 (챕터 첫 스테이지 중 보스 대사가 있는 편)
+                string sid = null, bossWho = null;
+                foreach (var k in new[] { "s21", "s30", "s40", "s41", "s60" })
+                {
+                    var l = Tables.StoryOf(k); if (l == null) continue;
+                    var hit = l.Find(r => System.Array.IndexOf(ExBoss, r.who) >= 0);
+                    if (hit != null) { sid = k; bossWho = hit.who; break; }
+                }
+                Popup.CloseAll(); Game.ToLobby(); yield return Wait(0.2f);
+                bool spoke = false;
+                if (sid != null)
+                {
+                    var v = StoryView.Play(sid, int.Parse(sid.Substring(1)), null); yield return Wait(0.2f);
+                    for (int i = 0; i < 40 && v && v.CurWho != bossWho; i++) { v.Next(); if (v && v.Typing) v.Next(); yield return null; }
+                    spoke = v && v.CurWho == bossWho;
+                    yield return Wait(0.6f);
+                    Capture("ex_7_story_boss");
+                    if (StoryView.Cur) Object.Destroy(StoryView.Cur.gameObject);
+                }
+                Check(spoke, $"새 보스가 스토리에서 말함 ({sid} · {bossWho})");
+                // 엔딩: 마지막 스테이지를 깨고 로비로 오면 한 번
+                StoryView.Off = false;      // 시험은 평소 스토리를 끔 (PlayTest.cs) — 엔딩 검사만 켬
+                S.best = 100; S.storySkip = false; S.seen.Remove("story:epilogue");
+                Popup.CloseAll(); Game.ToLobby(); yield return Wait(0.5f);
+                bool ep = StoryView.Cur && StoryView.Cur.name == "Story_epilogue";
+                Capture("ex_8_epilogue");
+                if (StoryView.Cur) Object.Destroy(StoryView.Cur.gameObject);
+                Popup.CloseAll(); Game.ToLobby(); yield return Wait(0.3f);
+                Check(ep && !StoryView.Cur, "스테이지 100 을 깨고 로비 = 엔딩 대화 (다음엔 안 나옴)");
+                if (StoryView.Cur) Object.Destroy(StoryView.Cur.gameObject);
+                StoryView.Off = true;
+            }
             running = false;
         }
     }

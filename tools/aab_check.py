@@ -55,6 +55,9 @@ def main():
     pre = 'lib/' if apk else 'base/lib/'
     libs = sorted({n[len(pre):].split('/')[0] for n in names if n.startswith(pre)})
     line('64비트 라이브러리만 (arm64-v8a)', libs == ['arm64-v8a'], ', '.join(libs))
+    res = z.read('resources.arsc' if apk else 'base/resources.pb')
+    name = '카피바라 지구를 지켜라'
+    line('홈 화면 이름 "' + name + '" (느낌표 없이)', name.encode('utf-8') in res and (name + '!').encode('utf-8') not in res)
     c = cheat_on()
     line('치트 (Cheat_On)', not (prod and c), ('켜짐 — 비공개 테스트용' if c else '꺼짐') + (' · --prod 점검이라 꺼야 통과' if prod and c else ''))
     r = subprocess.run([os.path.join(JDK, 'jarsigner.exe'), '-verify', '-verbose:summary', '-certs', p], capture_output=True, encoding='cp949', errors='replace')

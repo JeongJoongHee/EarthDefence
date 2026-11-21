@@ -18,8 +18,8 @@ namespace EarthDef
     /// </summary>
     public static class AdIds
     {
-        public const string AppId = "ca-app-pub-3940256099942544~3347511713";
-        public const string Rewarded = "ca-app-pub-3940256099942544/5224354917";
+        public const string AppId = "ca-app-pub-5299482082775448~4098932532";
+        public const string Rewarded = "ca-app-pub-5299482082775448/1611780664";
         /// <summary>구글이 공개한 안드로이드 시험용 앱 ID · 보상형 단위 (누구나 써도 됨)</summary>
         public const string TestAppId = "ca-app-pub-3940256099942544~3347511713";
         public const string TestRewarded = "ca-app-pub-3940256099942544/5224354917";
