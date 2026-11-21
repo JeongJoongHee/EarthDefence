@@ -55,6 +55,7 @@ def main():
     pre = 'lib/' if apk else 'base/lib/'
     libs = sorted({n[len(pre):].split('/')[0] for n in names if n.startswith(pre)})
     line('64비트 라이브러리만 (arm64-v8a)', libs == ['arm64-v8a'], ', '.join(libs))
+    line('세로 화면 = 선택사항 (screen.portrait)', has('android.hardware.screen.portrait'), '— Play Console "필수 하드웨어 기능" 경고 막기 (11-21)')
     res = z.read('resources.arsc' if apk else 'base/resources.pb')
     name = '카피바라 지구를 지켜라'
     line('홈 화면 이름 "' + name + '" (느낌표 없이)', name.encode('utf-8') in res and (name + '!').encode('utf-8') not in res)
