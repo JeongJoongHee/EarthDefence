@@ -6,6 +6,7 @@ namespace EarthDef
     /// <summary>
     /// 치트 창 (11-17 사용자 "장비 · 조각 · 강화 조각을 추가할 수 있는 치트"): 설정 창 맨 아래 [치트] 단추.
     /// 장비(등급 · 부위 골라 +1 / +10) · 회로(등급 골라 +1 / +10) · 터렛 조각(모든 열린 터렛 +10 / +100) · 강화 부품(+100 / +1000 / +10000).
+    /// 11-21: 맨 아래 [처음부터 다시 (초기화)] → 확인 창 → 세이브를 지우고 타이틀부터 (ResetNow).
     /// 보이는 곳: 에디터 · 개발용 빌드 · Config Cheat_On = 1 일 때만 → 스토어 빌드 전엔 Cheat_On 0 확인.
     /// </summary>
     public static class Cheat
@@ -18,7 +19,7 @@ namespace EarthDef
         public static void Open()
         {
             if (!Enabled) return;
-            var p = Popup.Make(L.T("cheat"), 980, 1240, () => { S.Save(); Game.Lobby?.Refresh(); });
+            var p = Popup.Make(L.T("cheat"), 980, 1380, () => { S.Save(); Game.Lobby?.Refresh(); });
             float y = 116;
             // ---- 등급
             Head(p, ref y, L.T("cheat_grade"));
@@ -62,6 +63,45 @@ namespace EarthDef
             });
             Row(p, ref y, L.T("r_parts"), "parts", new[] { 100, 1000, 10000 }, n => { S.parts += n; return $"{L.T("r_parts")} +{Num.Comma(n)}"; });
             p.Text(L.T("cheat_note"), y + 10, 24, Art.Soft, 70).horizontalOverflow = HorizontalWrapMode.Wrap;
+            // ---- 11-21 사용자 "처음부터 시작하는 초기화 치트": 세이브를 지우고 타이틀부터 (확인 창 한 번)
+            p.Btn("btn_red", L.T("cheat_reset"), 0, 40, 620, ResetAsk, 110).name = "CheatReset";
+        }
+
+        /// <summary>초기화 확인 창: [취소] / [초기화]</summary>
+        public static void ResetAsk()
+        {
+            var p = Popup.Make(L.T("cheat_reset"), 800, 560);
+            p.Text(L.T("cheat_reset_ask"), 130, 34, Art.Ink, 230).horizontalOverflow = HorizontalWrapMode.Wrap;
+            p.Btn("btn_cream", L.T("cancel"), -180, 50, 320, p.Close);
+            p.Btn("btn_red", L.T("cheat_reset_go"), 180, 50, 320, ResetNow).name = "CheatResetOk";
+        }
+
+        /// <summary>처음 설치한 것처럼: 세이브 · 백업을 지우고 화면 · 화면용 기억(탭 · 미리 보기 · 속도 등)을 처음으로 → 타이틀부터.
+        /// 남기는 것: 에디터 클라우드 [초안] 칸(= 서버 쪽이라 폰 초기화로 안 지워지는 것과 같게) · 표(Config) 값.</summary>
+        public static void ResetNow()
+        {
+            Popup.CloseAll();
+            Tutorial.CloseCur();
+            if (StoryView.Cur) { Object.Destroy(StoryView.Cur.gameObject); StoryView.Cur = null; }
+            if (Game.BattleUI) { Object.Destroy(Game.BattleUI.gameObject); Game.BattleUI = null; }
+            Battle.I?.Close();
+            if (Game.Lobby) { Object.Destroy(Game.Lobby.gameObject); Game.Lobby = null; }
+            if (Title.I) { Object.Destroy(Title.I.gameObject); Title.I = null; }
+            Time.timeScale = 1;
+            // 세이브 지우고 새로
+            SaveData.ResetAll();
+            SaveData.Load();
+            Settings.Apply();
+            // 화면용 기억 (세이브 밖에 있는 것)
+            Lobby.lastTab = 0; Lobby.enemiesOpen = false;
+            Battle.LastSpeed = 1f;
+            Looks.sub = 0; Looks.previewCostume = null; Looks.previewMount = null;
+            GearTab.showChips = false; ShopTab.sub = 0; ShopTab.scrollY = 0; CodexUI.view = 0;
+            Title.Guest = false;
+            LobbyWalker.Refresh();      // 코스튬 · 탈것이 기본으로
+            Debug.Log("[Cheat] 초기화 — 처음부터");
+            Game.ToTitle();
+            Toast.Show(L.T("cheat_reset_done"));
         }
 
         static void Head(Popup p, ref float y, string s)

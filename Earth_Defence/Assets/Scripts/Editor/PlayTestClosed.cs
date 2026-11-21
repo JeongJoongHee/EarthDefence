@@ -100,6 +100,38 @@ namespace EarthDef.EditorTools
                 bool files = File.Exists("Assets/Art/AppIcon/app_icon.png") && File.Exists("Assets/Art/AppIcon/app_icon_fg.png") && File.Exists("Assets/Art/AppIcon/app_icon_bg.png") && File.Exists("Assets/Art/AppIcon/app_icon_round.png");
                 Check(files, "앱 아이콘 4장 (tools/app_icon.py)");
             }
+
+            // ---------- 5) 11-21 치트 "처음부터 초기화" ----------
+            {
+                Popup.CloseAll(); Lobby.NoIntro = true; Game.ToLobby(); yield return Wait(0.2f);
+                Cheat.Open(); yield return Wait(0.3f);
+                Check(GameObject.Find("CheatReset") != null, "치트 창 맨 아래 [처음부터 다시 (초기화)] 단추");
+                Capture("cl_04_cheat_reset");
+                Cheat.ResetAsk(); yield return Wait(0.3f);
+                Check(GameObject.Find("CheatResetOk") != null, "누르면 확인 창 ([취소] / [초기화])");
+                Capture("cl_05_cheat_reset_ask");
+                Popup.CloseAll();
+                // 진행을 쌓고 전투 중에 초기화
+                S = SaveData.Cur;
+                S.best = 30; S.stage = 31; S.gold = 9999999; S.dia = 77777; S.baseLv = 20; S.parts = 5000; S.tLv[0] = 10;
+                S.costumes.Add("x"); S.tut.Add("x"); S.storySkip = true; Store.Link(); S.Save();
+                Lobby.lastTab = 3; Battle.LastSpeed = 2f;
+                Game.StartStage(1); yield return Wait(0.5f);
+                Time.timeScale = 2f;
+                Cheat.ResetNow(); yield return Wait(0.5f);
+                var N = SaveData.Cur;
+                bool fresh = N != S && N.best == 0 && N.stage == 1 && N.gold == Tables.C("Start_Gold") && N.baseLv == 1 && N.parts == 0 && N.tLv[0] == 1
+                             && N.costumes.Count == 0 && N.tut.Count == 0 && !N.storySkip && !Store.Linked && N.costume == "basic";
+                Check(fresh, $"초기화 → 새 세이브 (최고 {N.best} · 스테이지 {N.stage} · 골드 {N.gold} · 기지 Lv {N.baseLv} · 부품 {N.parts} · 연동 {Store.Linked})");
+                bool titleOn = Tables.Ci("Title_On", 1) == 1;
+                Check(Game.BattleUI == null && Battle.I == null, "전투 화면 닫힘");
+                Check(titleOn ? Title.I != null && Game.Lobby == null : Game.Lobby != null, "타이틀부터 다시 (Title_On 0 이면 로비)");
+                Check(Time.timeScale == 1f && Battle.LastSpeed == 1f && Lobby.lastTab == 0, "속도 x1 · 탭 기억도 처음으로");
+                Check(!PlayerPrefs.HasKey(SaveData.BackupKey) || JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveData.BackupKey)).best == 0, "옛 세이브 백업도 지워짐 (깨진 세이브 되살리기로 옛 판이 돌아오지 않게)");
+                Capture("cl_06_after_reset");
+                if (Title.I) { Title.I.OnStart(); yield return Wait(0.3f); }
+                Popup.CloseAll();
+            }
             running = false;
         }
     }

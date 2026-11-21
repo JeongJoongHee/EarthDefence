@@ -361,3 +361,8 @@ who_mecha_crab,집게 요새 게,,,
 who_ring_wyrm,토성 고리룡,,,
 who_jelly_king,대왕 젤리 황제,,,
 ad_box_btn,광고 보고 받기,,,
+cheat_reset,처음부터 다시 (초기화),,,
+cheat_reset_ask,"모든 진행(스테이지, 장비, 재화, 외형, 설정)을 지우고 타이틀부터 다시 시작해요.
+되돌릴 수 없어요.",,,
+cheat_reset_go,초기화,,,
+cheat_reset_done,처음부터 다시 시작해요,,,
