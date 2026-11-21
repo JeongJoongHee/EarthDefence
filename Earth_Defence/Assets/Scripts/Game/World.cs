@@ -193,6 +193,21 @@ namespace EarthDef
             if (on) ShowSlots(false);
         }
 
+        // ---------- 11-21 콘텐츠 확장: 챕터(Chapter_Len 스테이지)마다 하늘 색 · 하늘 행성 (바닥은 늘 지구 — 제안서 의견) ----------
+        public int Chapter { get; private set; } = 1;
+        public static int ChapterOf(int stage) => Mathf.Clamp((Mathf.Max(1, stage) - 1) / Mathf.Max(1, Tables.Ci("Chapter_Len", 20)) + 1, 1, 5);
+        /// <summary>전투에 들어갈 때 (Game.StartStage): Ch.1 = 예전 하늘 + 달토끼 · Ch.2 = 보라 하늘 + 달토끼 · Ch.3~5 = 하늘 색 + 행성(달토끼 없음). Config Chapter_Bg 0 = 예전 하나</summary>
+        public void SetChapter(int stage)
+        {
+            Chapter = Tables.Ci("Chapter_Bg", 1) == 1 ? ChapterOf(stage) : 1;
+            if (Lobby) return;
+            sky.sprite = (Chapter > 1 ? Art.Get("Bg/sky_ch" + Chapter, 100f) : null) ?? Art.Get("Bg/sky", 100f);
+            var planet = Chapter >= 3 ? Art.Get("Bg/planet_ch" + Chapter, 100f) : null;
+            moon.sprite = planet ?? Art.Get("Bg/moon", 100f);
+            rabbit.enabled = planet == null;
+            PlaceMoon();
+        }
+
         /// <summary>달: 7차 = 사령탑 위 왼쪽 위 → 8차 "달토끼는 우측 상단 (어느 정도 운석을 가려도 괜찮음)" = 오른쪽 위 (Moon_X 4.3) — 위 UI(Lv 게이지) 아래.
         /// 운석 · 탄보다 뒤에 그림(하늘 그림 바로 앞) → 운석이 달 앞을 지나감</summary>
         void PlaceMoon()
@@ -200,6 +215,7 @@ namespace EarthDef
             float mx = Tables.Cf("Moon_X", 4.3f);
             float y = PlayTop - Tables.Cf("Moon_Below_Hud", 1.05f);
             if (mx < SlotXPos + 1f) y = Mathf.Max(y, TowerTop + 1.85f);      // 왼쪽(사령탑 위)이면 안테나보다 위
+            if (moon.sprite && moon.sprite.bounds.extents.x > 1.5f) mx = Mathf.Min(mx, HalfW - moon.sprite.bounds.extents.x + 0.4f);   // 11-21 고리 행성(360px)은 오른쪽 끝에 잘리지 않게
             var p = new Vector2(mx, y);
             moon.transform.position = p;
             rabbit.transform.position = p;      // 달토끼 그림 160x160 의 가운데 = 달 가운데

@@ -336,6 +336,25 @@ namespace EarthDef
                 rows.Add((t.id, lv, sh, bar, btn, CostLabel(btn.transform)));
                 y += h + 8;
             }
+            // 11-21 콘텐츠 확장 제안서 "타워는 일단 이미지만 추가": 곧 열리는 터렛 (그림 · 해금 예정 스테이지만, 누르면 설명 토스트 · Config Turret_Soon_Show)
+            if (Tables.Ci("Turret_Soon_Show", 1) == 1 && Tables.TurretSoon.Count > 0)
+            {
+                var head = UIKit.Label(c, L.T("turret_soon_head"), 32, Art.Purple, TextAnchor.MiddleLeft, false); head.rectTransform.TL(20, y + 6, 600, 52);
+                head.name = "SoonHead";
+                y += 64;
+                foreach (var t in Tables.TurretSoon)
+                {
+                    var r = UIKit.Rect(c, "Soon_" + t.id); r.TL(10, y, 1000, h);
+                    var tile = UIKit.Tile(r, "slot", new Color(0.75f, 0.72f, 0.68f), Art.TurretUI(t.id), 0.86f, "Icon"); tile.rectTransform.TL(0, 4, 108, 108);
+                    var tt = t; UIKit.Clickable(tile, () => Toast.Show(tt.desc, 2.6f));
+                    var lk = UIKit.Img(tile.transform, Art.Icon("lock"), "Lock"); lk.raycastTarget = false; lk.rectTransform.Place(1, 0, new Vector2(4, -4), new Vector2(52, 52), new Vector2(1, 0));
+                    var name = UIKit.Label(r, t.name, 34, Art.Soft, TextAnchor.MiddleLeft, false); name.rectTransform.TL(126, 4, 330, 50);
+                    UIKit.ElemTag(r, t.elem, 126 + Mathf.Min(330, name.preferredWidth + 14), 10, 104, 42, 22);
+                    UIKit.Label(r, L.F("turret_soon_at", t.unlock), 28, Art.Brown, TextAnchor.MiddleLeft, false).rectTransform.TL(126, 60, 700, 44);
+                    Divider(c, y + h + 3);
+                    y += h + 8;
+                }
+            }
             UIKit.SetScrollH(c, y + 10);
         }
 

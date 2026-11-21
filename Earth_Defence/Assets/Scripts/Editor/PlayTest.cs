@@ -52,6 +52,8 @@ namespace EarthDef.EditorTools
         public static void RunR10() => Start("r10");
         /// <summary>11-21 비공개 테스트 1번 빌드 준비 — 광고 · 결제 · [초안] 숨김 (Editor/PlayTestClosed.cs)</summary>
         public static void RunClosed() => Start("closed");
+        /// <summary>11-21 콘텐츠 확장 — 새 적 16 · 챕터 하늘 · 곧 열리는 터렛 (Editor/PlayTestExpand.cs)</summary>
+        public static void RunExpand() => Start("expand");
 
         static void Start(string mode)
         {
@@ -95,7 +97,7 @@ namespace EarthDef.EditorTools
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
             Battle.NoSlotPick = true; StoryView.Off = true;   // 9차: 스토리 대화창은 RunR9 에서 따로 시험 ·      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
             if (mode != "r7" && mode != "r8" && mode != "r9" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");

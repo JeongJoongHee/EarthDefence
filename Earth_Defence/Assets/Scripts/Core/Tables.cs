@@ -80,6 +80,9 @@ namespace EarthDef
         static bool loaded;
         static readonly Dictionary<string, double> config = new();
         public static readonly List<TurretRow> Turrets = new();
+        /// <summary>11-21 콘텐츠 확장: 곧 열리는 터렛 (Turret 표 Turret_Soon 시트 — 그림만, 전투에 안 나옴 · 터렛 탭 맨 아래)</summary>
+        public class SoonRow { public string id, name, elem, desc; public int unlock; }
+        public static readonly List<SoonRow> TurretSoon = new();
         public static readonly Dictionary<string, TurretRow> TurretById = new();
         public static readonly List<TurretLvRow> TurretLv = new();
         public static readonly List<CardRow> Cards = new();
@@ -112,7 +115,7 @@ namespace EarthDef
         {
             if (loaded && !force) return;
             loaded = true;
-            config.Clear(); Turrets.Clear(); TurretById.Clear(); TurretLv.Clear(); Cards.Clear(); CardById.Clear();
+            config.Clear(); Turrets.Clear(); TurretSoon.Clear(); TurretById.Clear(); TurretLv.Clear(); Cards.Clear(); CardById.Clear();
             Enemies.Clear(); Stages.Clear(); Strings.Clear();
             GearParts.Clear(); Grades.Clear(); Chips.Clear(); ChipById.Clear(); Missions.Clear(); Attend.Clear();
             Frames.Clear(); GearNames.Clear(); Skins.Clear(); Products.Clear(); ShopItems.Clear(); BoxRates.Clear(); Story.Clear(); LobbyTalk.Clear(); Costumes.Clear(); Mounts.Clear();
@@ -129,6 +132,8 @@ namespace EarthDef
                 };
                 Turrets.Add(t); TurretById[t.id] = t;
             }
+            foreach (var r in Read("Turret_Soon", true))
+                TurretSoon.Add(new SoonRow { id = r.S("Id"), name = r.S("Name"), elem = r.S("Elem"), unlock = r.I("Unlock"), desc = r.S("Desc") });
             foreach (var r in Read("Turret_Level"))
                 TurretLv.Add(new TurretLvRow { lv = r.I("Lv"), dmgBonus = r.D("Dmg_Bonus"), cdMul = r.D("Cd_Mul"), shards = r.I("Shards"), gold = r.D("Gold") });
             foreach (var r in Read("Card"))

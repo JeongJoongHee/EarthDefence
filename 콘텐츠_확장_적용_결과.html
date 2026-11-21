@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>콘텐츠 확장 적용</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+<style>figure.wide img{max-width:100%}</style></head><body><main>
+<h1>콘텐츠 확장 적용 — 몬스터 · 보스 · 하늘 · 타워 그림</h1>
+<p class="note">2026-11-21 · 요청: 대화 "콘텐츠 확장 제언서를 보고 타워 몬스터 배경을 이미지를 추가해서 배치해줘" + <code>콘텐츠_확장_제안서.html</code> 의 체크 · 의견 (몬스터 · 보스 "일단 이미지만 추가하여 스테이지에 배치" · 하늘 "이대로 진행" · 행성 "모든 하단 표면은 지구로만 유지" · 타워 "일단 이미지만 추가")</p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>"이미지만"</b> = 제안서의 새 기믹(원거리 사격 · 보호막 · 회복 · 터렛 동결 · 순간이동 · 광폭화 …)은 <b>아직 넣지 않았습니다</b>. 새 적은 비슷한 기존 적처럼 움직이고, 지금 게임에 있는 규칙(약점 · 장갑 · 분열 · 소환)만 씁니다 — 예: 용암 거석은 큰 소행성처럼 깨지며 폭탄 운석 4개, 포자 모체는 왕나방처럼 거미를 낳음.</li>
+<li><b>배치</b>: 스테이지 1~20(Ch.1)은 그대로. 21~100 은 챕터마다 ① 새 일반 적 1종을 더함(스테이지 약점과 같은 약점 먼저 · 이미 6종이면 마지막 1종과 바꿈) ② 짝수 스테이지 엘리트 = 그 챕터의 새 엘리트 ③ <b>보스 = 챕터 전용 보스</b>(Ch.2 서리 수정왕 · Ch.3 집게 요새 게 · Ch.4 토성 고리룡 · Ch.5 대왕 젤리 황제 — 제안서 표 그대로). 떠돌이 행성 · 젤리 여왕은 이제 Ch.1 에서만 마지막 보스.</li>
+<li><b>하늘의 행성</b>: 바닥이 늘 지구라 Ch.2 의 "하늘에 떠오른 지구"는 지구가 둘이 되어 빼고 <b>Ch.1 · 2 는 달 + 달토끼 그대로</b>, Ch.3 살구 가스 행성 · Ch.4 고리 토성 · Ch.5 분홍 · 하늘 쌍둥이 행성 (달토끼는 Ch.3 부터 안 보임).</li>
+<li><b>타워 6종</b>은 전투 규칙이 없어 전투 · 카드 · 조각에는 넣지 않고, <b>터렛 탭 맨 아래 "곧 열리는 터렛"</b> 칸에 그림 · 속성 · 해금 예정 스테이지(30~80)만 보입니다. 누르면 한 줄 설명.</li>
+<li>무한 모드 · 엘리트 군단(도전 탭)의 보스 · 엘리트 목록은 그대로(예전 것). 원하시면 새 적을 섞겠습니다.</li>
+</ul></div>
+
+<h2>전투 화면 (챕터마다 하늘 · 행성 — 새 적을 일부러 불러 찍음)</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/콘텐츠_확장_적용/ex_1_ch1_stage5.jpg" alt=""><figcaption>Ch.1 스테이지 5 — 예전 그대로</figcaption></figure><figure><img src="캡쳐본 모음/콘텐츠_확장_적용/ex_2_ch2_stage25.jpg" alt=""><figcaption>Ch.2 보라 하늘 · 달토끼 · 서리 수정왕 + 정찰선 · 위성 · 회복 젤리 · 진드기</figcaption></figure><figure><img src="캡쳐본 모음/콘텐츠_확장_적용/ex_3_ch3_stage45.jpg" alt=""><figcaption>Ch.3 화성 석양 · 가스 행성 · 집게 요새 게 + 포자 모체</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/콘텐츠_확장_적용/ex_4_ch4_stage65.jpg" alt=""><figcaption>Ch.4 청록 오로라 · 토성 · 토성 고리룡 + 빙하 골렘 · 용암 거석</figcaption></figure><figure><img src="캡쳐본 모음/콘텐츠_확장_적용/ex_5_ch5_stage85.jpg" alt=""><figcaption>Ch.5 젤리 은하 · 쌍둥이 행성 · 대왕 젤리 황제 + 거울 코어</figcaption></figure><figure><img src="캡쳐본 모음/콘텐츠_확장_적용/ex_6_turret_soon.jpg" alt=""><figcaption>터렛 탭 맨 아래 — 곧 열리는 터렛 6종</figcaption></figure></div>
+<p class="note">보스가 크게 보이는 건 지금 보스 크기 설정(Config Boss_Size_Mul 3.5 · 2차 수정안 "매우매우 크게")을 그대로 따라서입니다 — 예전 보스와 비슷한 크기.</p>
+
+<h2>게임에 들어간 그림 (23장)</h2>
+<img class="wide" src="캡쳐본 모음/콘텐츠_확장_적용/game_art_sheet.png" alt="">
+<p class="note">일반 8 · 엘리트 4 · 보스 4 (맞을 때 하얗게 번쩍이는 그림도 같이) · 타워 6 · 하늘 행성 3 + 챕터 하늘 4장. 그림은 제안서 시안 도구 그대로(<code>tools/expansion_art.py</code>) → <code>tools/expansion_export.py</code> 가 게임 크기로 내보냄.</p>
+
+<h2>표 · 스위치</h2>
+<table>
+<tr><th>Enemy 표</th><td>새 16줄 (능력치는 비슷한 기존 적을 따라감 — 표에서 바로 고칠 수 있음)</td></tr>
+<tr><th>Stage 표</th><td>21~100 의 Enemies · Elite · Boss. 원래 값은 <code>Enemies_Pre · Elite_Pre · Boss_Pre</code> 칸에 남김 → <code>python tools/expansion_tables.py --revert</code> 로 한 번에 되돌림</td></tr>
+<tr><th>Turret 표</th><td>새 시트 <code>Turret_Soon</code> (6줄 · 이름 · 속성 · 해금 예정 · 설명)</td></tr>
+<tr><th>Config</th><td><code>Chapter_Len</code> 20 (한 챕터 스테이지 수) · <code>Chapter_Bg</code> 1 (0 = 예전 하늘 하나) · <code>Turret_Soon_Show</code> 1 (0 = 곧 열리는 터렛 숨김)</td></tr>
+</table>
+
+<h2>시험</h2>
+<p>새 시험 <code>PlayTest.RunExpand</code> 18줄 · 기본 시험 137줄 <b>오류 0</b>.</p>
+<ul><li>새 적 16 표 · 그림 · 이름 글꼴 · 등급 / 1~20 은 예전 보스 · 21~100 챕터 보스 / 새 일반 8 · 엘리트 4 가 모두 어느 스테이지엔가 나옴 / 챕터 5개 하늘 · 행성 · 달토끼 / 새 적을 전투에 불러도 오류 없음 / Chapter_Bg 0 되돌리기 · 로비 하늘 그대로 / 터렛 탭 곧 열리는 터렛 6 (전투 터렛 수 12 그대로).</li></ul>
+
+<h2>확인해 주실 것</h2>
+<ul class="todo">
+<li data-id="x-look"><label><input type="checkbox"><span><span class="tag">그림</span>전투 화면에서 새 적 · 하늘 · 행성이 괜찮은지<span class="why">크기 · 색 · 하늘 밝기(탄 · 숫자가 잘 보이는지). 고칠 것은 이름과 함께 의견 칸에</span></span></label></li>
+<li data-id="x-boss"><label><input type="checkbox"><span><span class="tag">배치</span>21~100 보스를 챕터 전용 보스 하나로 (추천 — 제안서 그대로)<span class="why">다르게 원하시면: 예) "챕터 보스와 예전 보스를 번갈아"</span></span></label></li>
+<li data-id="x-ch2"><label><input type="checkbox"><span><span class="tag">행성</span>Ch.2 하늘 = 달 + 달토끼 그대로 (바닥이 지구라 떠오른 지구는 뺌)<span class="why">다른 행성을 원하시면 의견에</span></span></label></li>
+<li data-id="x-story"><label><input type="checkbox"><span><span class="tag">스토리</span>스테이지 스토리 중 새 보스와 어긋나는 대사 2줄 고치기 (추천)<span class="why">스테이지 31 젤리 여왕 "이번엔 내 떠돌이 행성을 지구로 굴려 보낼 거야!" · 40 "떠돌이 행성이 막혔다고? 그럼 내가 직접 굴러간다!" — 실제 보스는 서리 수정왕. 젤리 여왕이 부하(수정왕 · 게 · 고리룡)를 보내는 말로 바꾸는 안을 스토리_대사_검토 때 같이 드릴게요. 젤리 여왕이 명령하는 다른 대사 7줄은 그대로 맞음</span></span></label></li>
+<li data-id="x-gimmick"><label><input type="checkbox"><span><span class="tag">다음</span>새 적 기믹 · 새 타워 전투 규칙은 언제 (추천: 비공개 테스트 중 업데이트로)<span class="why">보호막 · 회복 · 동결 같은 기믹과 타워 6종 규칙은 밸런스를 건드려서 하나씩 시험하며 넣는 게 안전합니다</span></span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-expand2-1121', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

@@ -253,3 +253,6 @@ Mount_Lobby_Scale,0.8,11-20: 로비에서 탈것 크기 x
 Mount_Lift_Mul,1,11-20: 탈것에 탈 때 대장 카피를 올리는 높이 x (Look 표 Lift x 이 값)
 Mount_Bob,1,11-20: 1 = 떠다니는 탈것(Look 표 Bob 1)은 위아래 둥실 · 0 = 끔
 Mount_Bob_Amp,0.06,11-20: 둥실 높이 (월드 칸)
+Chapter_Len,20,11-21 콘텐츠 확장: 한 챕터 = 스테이지 몇 개 (하늘 · 하늘 행성이 바뀌는 단위)
+Chapter_Bg,1,11-21 1 = 챕터마다 하늘 색(Bg/sky_ch2~5) · 하늘 행성(Ch.3~5 Bg/planet_ch*)이 바뀜 · 0 = 예전 하늘 하나
+Turret_Soon_Show,1,"11-21 1 = 터렛 탭 맨 아래 ""곧 열리는 터렛"" 6종(Turret_Soon 시트) 보임 · 0 = 숨김"

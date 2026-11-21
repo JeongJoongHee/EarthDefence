@@ -108,6 +108,7 @@ namespace EarthDef
             LobbyWalker.Show(false);
             if (Title.I) UnityEngine.Object.Destroy(Title.I.gameObject);
             World.I.SetLobby(false);
+            World.I.SetChapter(stage);      // 11-21 챕터 하늘 · 행성
             var b = Battle.Begin(stage, seed, elite, mode);
             Audio.Music("battle");
             BattleUI = UIKit.Rect(UIRoot.I.pages, "BattleUI").Fill().gameObject.AddComponent<BattleUI>();
