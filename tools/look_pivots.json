@@ -8,15 +8,21 @@
   0.4848
  ],
  "lift": {
-  "surf": 0.38,
-  "carpet": 0.35,
-  "plane": 0.525,
-  "ladybug": 0.76,
-  "star": 1.115,
-  "seahorse": 1.015,
-  "unicorn": 0.98,
-  "hoverbike": 0.52,
-  "trex": 0.93,
-  "broom": 0.665
+  "surf": 0.41,
+  "carpet": 0.42,
+  "plane": 0.56,
+  "ladybug": 0.715,
+  "star": 1.055,
+  "seahorse": 0.99,
+  "unicorn": 0.945,
+  "hoverbike": 0.545,
+  "trex": 0.88,
+  "broom": 0.63,
+  "tub": 0.71,
+  "cloud": 0.645,
+  "ufo": 0.83,
+  "duckboat": 0.73,
+  "whale": 0.7,
+  "corgi": 0.805
  }
 }

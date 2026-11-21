@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>코스튬 · 탈것 추가</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+<style>figure.wide img{max-width:100%}</style></head><body><main>
+<h1>코스튬 · 탈것 추가</h1>
+<p class="note">2026-11-21 · 요청: 대화 "코스튬 · 탈것 이미지를 좀 수정하고 몇 개 추가했어 — 요청 사항 문서에 넣었으니 확인 후 반영" · 자료 <code>요청 사항/costume_zoom.png · mount_zoom.png · bonus_costumes.png · bonus_mounts.png</code></p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>"요청 사항 문서" = 요청 사항 폴더의 그림 4장</b>으로 읽었습니다. 같은 폴더의 <code>10차 수정안.docx</code>(프리셋 이름 · 치트 · 돔 안 온천 카피바라)는 코스튬 이야기가 아니라 <b>이번엔 손대지 않았어요</b> — 다음 요청이 맞는지 알려 주세요.</li>
+<li><b>고친 그림(코스튬 18 · 탈것 10)</b>은 이미 게임 폴더에 내보내져 있었고 <b>그대로 두었습니다</b> (다시 내보내도 한 장도 안 바뀜 = 지금 도구와 같은 그림).</li>
+<li><b>새 코스튬 8종 · 탈것 6종</b>은 도구에 "게임 반영 전 시안"으로만 있어서 게임 목록에 합쳤습니다 → <b>코스튬 27종 · 탈것 16종 + 없음</b>. 목록 맨 아래에 붙습니다.</li>
+<li>새 탈것 시안에 같이 그려진 코스튬(욕조 = 온천 유자, 구름 = 아기 천사 …)은 <b>미리 보기용 짝</b>일 뿐, 게임에선 지금처럼 어떤 코스튬이든 어떤 탈것에나 탑니다.</li>
+<li>가격 · 능력치는 지난번과 같은 규칙: <b>코스튬 300 · 탈것 500 다이아(임시)</b>, 능력치 칸은 비워 둠("능력치 준비 중").</li>
+</ul></div>
+
+<h2>새로 들어간 것</h2>
+<table><tr><th>코스튬 8</th><td>온천 유자 · 아기 오리 잠옷 · 개구리 잠옷 · 판다 잠옷 · 딸기 생크림 · 별밤 파자마 · 아기 천사 · 카피 대왕</td></tr>
+<tr><th>탈것 6</th><td>온천 나무 욕조 · 무지개 솜구름 · 미니 UFO · 오리 보트 · 하늘 아기 고래 · 통통 웰시코기(걷는 탈것) — 6종 모두 앞 층(몸 앞을 가리는 욕조 벽 · 구름 쿠션 · 안장)이 있음</td></tr></table>
+
+<h2>외형 탭 (목록 맨 아래)</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_01b_looks_costume_end.jpg" alt=""><figcaption>코스튬 목록 끝 = 새 8종</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/r10_03b_looks_mount_end.jpg" alt=""><figcaption>탈것 목록 끝 = 새 6종 (목록 그림은 지금 코스튬을 태운 모습)</figcaption></figure></div>
+
+<h2>전투 화면 (대장 카피 둘레 확대)</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_20_battle_onsen_tub.jpg" alt=""><figcaption>온천 유자 + 온천 나무 욕조</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_21_battle_angel_cloud.jpg" alt=""><figcaption>아기 천사 + 무지개 솜구름</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_22_battle_basic_ufo.jpg" alt=""><figcaption>우주 대원 + 미니 UFO</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_23_battle_duck_duckboat.jpg" alt=""><figcaption>아기 오리 잠옷 + 오리 보트</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_24_battle_shark_whale.jpg" alt=""><figcaption>상어 잠옷 + 하늘 아기 고래</figcaption></figure><figure><img src="캡쳐본 모음/코스튬_탈것_캡처/zoom_r10_25_battle_winter_corgi.jpg" alt=""><figcaption>겨울 니트 + 통통 웰시코기</figcaption></figure></div>
+
+<h2>그림 모음 (요청 사항 폴더의 그림)</h2>
+<div class="shots"><figure><img src="요청 사항/bonus_costumes.png" alt=""><figcaption>새 코스튬 8종</figcaption></figure><figure><img src="요청 사항/bonus_mounts.png" alt=""><figcaption>새 탈것 6종</figcaption></figure></div>
+<div class="shots"><figure><img src="요청 사항/costume_zoom.png" alt=""><figcaption>고친 코스튬 18 + 기본</figcaption></figure><figure><img src="요청 사항/mount_zoom.png" alt=""><figcaption>고친 탈것 10</figcaption></figure></div>
+
+<h2>시험</h2>
+<p>코스튬 · 탈것 시험 33줄 · 기본 시험 137줄 <b>오류 0</b>.</p>
+<ul><li>더한 검사: 개수 27 · 17 · 새 탈것 6종 앞 층 · 새 조합 6개 전투 · 목록 맨 아래 캡처.</li>
+<li>시험 고침: "떠다니는 탈것 둥실" 검사가 0.5초 간격 두 순간만 비교해서, 캡처가 늘어 시간이 밀리자 우연히 같은 높이가 나와 3개가 실패 → 0.2초마다 6번 재서 위아래 폭으로 봄 (게임 코드는 그대로).</li>
+<li>기본 시험 "스테이지 1 보상" 검사가 첫 돌림에서 1번 실패 → 다시 돌리니 통과 (지난번부터 가끔 흔들리는 줄, 이번 작업과 무관).</li></ul>
+
+<h2>확인해 주실 것</h2>
+<ul class="todo">
+<li data-id="a-art"><label><input type="checkbox"><span><span class="tag">그림</span>새 코스튬 8 · 탈것 6 게임 화면에서 괜찮은지<span class="why">크기 · 높이 · 앞 층(욕조 벽 · 구름 쿠션)이 몸을 가리는 정도. 고칠 것은 이름과 함께 의견 칸에</span></span></label></li>
+<li data-id="a-10th"><label><input type="checkbox"><span><span class="tag">다음</span>10차 수정안.docx 진행할까요? (프리셋 이름 바꾸기 · 프리셋 회로 보기 · 초기화 · 스테이지 넘기기 치트 · 돔 안 온천 카피바라)<span class="why">추천: 지금 바로 이어서 — 4개 모두 작은 작업</span></span></label></li>
+<li data-id="a-stat"><label><input type="checkbox"><span><span class="tag">결정</span>능력치 · 얻는 법 (지난 문서 코스튬_탈것_결과 l-stat · l-price — 아직 비어 있음)<span class="why">추천: 코스튬 = 공격 쪽 · 탈것 = 버티기 쪽, 가진 것만으로도 조금 + 착용하면 더</span></span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-look2-1121', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

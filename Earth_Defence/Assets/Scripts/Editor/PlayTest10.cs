@@ -21,11 +21,11 @@ namespace EarthDef.EditorTools
             yield return Wait(0.4f);
             Popup.CloseAll();
             var font = Object.FindAnyObjectByType<Text>()?.font;
-            string[] fronts = { "plane", "seahorse", "unicorn", "hoverbike", "trex" };
+            string[] fronts = { "plane", "seahorse", "unicorn", "hoverbike", "trex", "tub", "cloud", "ufo", "duckboat", "whale", "corgi" };
 
             // ---------- 1) 표 · 그림 ----------
-            Check(Tables.Costumes.Count == 19 && Tables.Costumes[0].id == "basic", $"코스튬 {Tables.Costumes.Count}종 (첫 줄 = 기본 우주 대원)");
-            Check(Tables.Mounts.Count == 11 && Tables.Mounts[0].id == "none", $"탈것 {Tables.Mounts.Count}종 + 없음 (첫 줄 = 탈것 없음)");
+            Check(Tables.Costumes.Count == 27 && Tables.Costumes[0].id == "basic", $"코스튬 {Tables.Costumes.Count}종 (첫 줄 = 기본 우주 대원)");
+            Check(Tables.Mounts.Count == 17 && Tables.Mounts[0].id == "none", $"탈것 {Tables.Mounts.Count}종 + 없음 (첫 줄 = 탈것 없음)");
             {
                 var miss = new List<string>();
                 foreach (var c in Tables.Costumes)
@@ -98,6 +98,7 @@ namespace EarthDef.EditorTools
                 }
             }
             Capture("r10_01_looks_costume");
+            yield return ScrollLooksEnd("r10_01b_looks_costume_end");
             Looks.previewCostume = "pirate"; Game.Lobby.SetTab(6); yield return Wait(0.4f);
             var pb = GameObject.Find("Preview/Sky/Look/Body")?.GetComponent<Image>();
             Check(pb && pb.sprite.name.EndsWith("pirate_float") && GameObject.Find("BackNow") && S.costume == "wizard", "목록을 누르면 미리 보기만 (착용은 그대로) · [지금 모습으로]");
@@ -107,6 +108,7 @@ namespace EarthDef.EditorTools
             var rowIcon = GameObject.Find("M_trex/Icon/Look/Body")?.GetComponent<Image>();
             Check(mRows == Tables.Mounts.Count && rowIcon && rowIcon.sprite.name.EndsWith("wizard_float"), $"탈것 {mRows}줄 · 목록 그림 = 지금 코스튬을 태운 모습");
             Capture("r10_03_looks_mount");
+            yield return ScrollLooksEnd("r10_03b_looks_mount_end");
             wiz.stat1 = ""; wiz.val1 = 0; uni.stat1 = ""; uni.val1 = 0; uni.stat2 = ""; uni.val2 = 0;
             Game.Lobby.SetTab(6); yield return Wait(0.3f);
             Capture("r10_04_looks_mount_nostat");
@@ -142,8 +144,8 @@ namespace EarthDef.EditorTools
             var g0 = B.run.turrets[0].unit; float y0 = g0 ? g0.transform.position.y : 0;
             Check(g0 && g0.GetComponent<SpriteRenderer>().sprite.name == "Char/guardian" && g0.Mount == null, "기본 = 예전 우주복 그림 · 탈것 없음");
             Popup.CloseAll(); Game.ToLobby(); yield return Wait(0.3f);
-            foreach (var id in new[] { "dino", "knight", "ninja", "bee", "shark", "chef" }) { if (!S.costumes.Contains(id)) S.costumes.Add(id); }
-            foreach (var id in new[] { "trex", "plane", "hoverbike", "broom", "seahorse", "star", "carpet", "ladybug", "surf" }) { if (!S.mounts.Contains(id)) S.mounts.Add(id); }
+            foreach (var id in new[] { "dino", "knight", "ninja", "bee", "shark", "chef", "onsen", "angel", "duck", "winter" }) { if (!S.costumes.Contains(id)) S.costumes.Add(id); }
+            foreach (var id in new[] { "trex", "plane", "hoverbike", "broom", "seahorse", "star", "carpet", "ladybug", "surf", "tub", "cloud", "ufo", "duckboat", "whale", "corgi" }) { if (!S.mounts.Contains(id)) S.mounts.Add(id); }
             Store.WearLook(wiz, false); Store.WearLook(uni, true);
             Game.StartStage(10, 7); yield return Wait(0.5f);
             {
@@ -158,7 +160,8 @@ namespace EarthDef.EditorTools
                 Check(u.Mount.back.flipX == sr.flipX && Mathf.Abs(Mathf.DeltaAngle(u.Mount.transform.eulerAngles.z, 0)) < 0.5f, "몸 방향을 따라 탈것도 뒤집힘 · 몸을 젖혀도 탈것은 수평");
                 Capture("r10_10_battle_wizard_unicorn");
             }
-            var combos = new[] { ("dino", "trex"), ("knight", "plane"), ("ninja", "hoverbike"), ("bee", "broom"), ("shark", "seahorse"), ("basic", "star"), ("chef", "ladybug"), ("wizard", "carpet"), ("basic", "surf") };
+            var combos = new[] { ("dino", "trex"), ("knight", "plane"), ("ninja", "hoverbike"), ("bee", "broom"), ("shark", "seahorse"), ("basic", "star"), ("chef", "ladybug"), ("wizard", "carpet"), ("basic", "surf"),
+                ("onsen", "tub"), ("angel", "cloud"), ("basic", "ufo"), ("duck", "duckboat"), ("shark", "whale"), ("winter", "corgi") };
             int ci = 11;
             foreach (var (c, m) in combos)
             {
@@ -170,8 +173,10 @@ namespace EarthDef.EditorTools
                 if (!ok) Check(false, $"전투 조합 {c} + {m}");
                 if (Tables.Mount(m).bob)
                 {
-                    float a = u.transform.position.y; yield return Wait(0.5f);
-                    if (Mathf.Abs(u.transform.position.y - a) < 0.005f) Check(false, $"떠다니는 탈것 둥실 ({m})");
+                    // 11-21: 두 순간만 비교하면 사인 곡선에서 우연히 같은 높이가 나옴 → 0.2초마다 6번 재서 위아래 폭으로
+                    float lo = 99f, hi = -99f;
+                    for (int k = 0; k < 6; k++) { float yy = u.transform.position.y; lo = Mathf.Min(lo, yy); hi = Mathf.Max(hi, yy); yield return Wait(0.2f); }
+                    if (hi - lo < 0.01f) Check(false, $"떠다니는 탈것 둥실 ({m}, 폭 {hi - lo:0.000})");
                 }
                 Capture($"r10_{ci++}_battle_{c}_{m}");
             }
@@ -192,6 +197,17 @@ namespace EarthDef.EditorTools
             Check(Art.TurretUI("guardian").name == "Char/guardian_ui", "기본이면 예전 그림");
 
             running = false;
+        }
+
+        /// <summary>11-21: 외형 목록을 맨 아래로 내려 찍고 다시 위로 (새 코스튬 · 탈것은 목록 끝)</summary>
+        IEnumerator ScrollLooksEnd(string shot)
+        {
+            var sr = GameObject.Find("Looks")?.GetComponentInChildren<ScrollRect>();
+            Check(sr, "외형 목록 스크롤");
+            if (!sr) yield break;
+            Canvas.ForceUpdateCanvases(); sr.verticalNormalizedPosition = 0f; yield return Wait(0.3f);
+            Capture(shot);
+            sr.verticalNormalizedPosition = 1f; yield return Wait(0.1f);
         }
     }
 }
