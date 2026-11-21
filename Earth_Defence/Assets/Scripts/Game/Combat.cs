@@ -51,6 +51,7 @@ namespace EarthDef
             double pos = y < Tables.Cf("Pos_Near_Y") ? Tables.C("Pos_Near", 1.1) : y > Tables.Cf("Pos_Far_Y") ? Tables.C("Pos_Far", 0.9) : 1;
             double d = Atk * ratePct / 100.0 * (1 + ordinary) * (1 + late) * critMul * weak * pos * t.Penalty * (1 + e.vuln) * (1 - e.row.armor);
             // 칩 "치명 때 적 최대 체력 N% 더" (상한 = 원래 피해 x Crit_Hp_Cap)
+            if (t.row.id == "guardian" && Battle.I != null) d *= Battle.I.BurnDmgMul;   // 11-21 대장 카피 버닝
             double ch = Battle.I?.lo?.B("crit_hp") ?? 0;
             if (crit && ch > 0) d += Math.Min(e.maxHp * ch / 100.0, d * (Tables.C("Crit_Hp_Cap", 4) - 1));
             return d;

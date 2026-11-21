@@ -303,7 +303,7 @@ namespace EarthDef
             var b = Battle.I;
             var target = b.Nearest(IsGuardian ? HandPos : Head, t.Range);
             if (target == null) { cd = 0.1f; return; }
-            cd = t.Cooldown;
+            cd = t.Cooldown * (IsGuardian ? b.BurnCdMul : 1f);      // 11-21 버닝 = 공격 속도 x Burn_Rate_Mul
             if (idle) { idle.OnFire(); if (idle.HasHead) { headDeg = headWant = AngleTo(target.Pos); idle.SetAim(headDeg); } }   // 쏠 때는 머리가 적을 봄
             Fire(target);
             fired++;

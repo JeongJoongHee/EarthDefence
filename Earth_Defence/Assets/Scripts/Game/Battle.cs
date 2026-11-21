@@ -9,7 +9,7 @@ namespace EarthDef
     /// → 3분 30초 마지막 보스 → 보스를 잡으면 승리 · 기지 체력 0 이면 패배.
     /// 전투는 고정 간격(1/60초)으로 돌림 — 화면 주사율과 상관없이 같은 결과 (기획서 19-2).
     /// </summary>
-    public class Battle : MonoBehaviour
+    public partial class Battle : MonoBehaviour
     {
         public static Battle I;
         public const float StepSec = 1f / 60f;
@@ -26,7 +26,9 @@ namespace EarthDef
         public long kills;
         public double goldGot;
         public bool won;
-        public float speed = 1f;
+        /// <summary>11-21 고른 배속 (x0.5 · 1 · 1.5 · 2) — 앱을 끌 때까지 다음 전투에도</summary>
+        public static float LastSpeed = 1f;
+        public float speed = LastSpeed;
         // 2차: 엘리트 난이도 · 장비/칩 · 보호막 · 첫 피격 면역
         public bool eliteMode;
         public Loadout lo;
@@ -79,6 +81,7 @@ namespace EarthDef
             I = this;
             stageNo = no; stage = Tables.Stage(no); eliteMode = elite && IsStage;
             frame = Store.Frame; frameVal = frame != null ? frame.Val(Store.FrameStar) : 0; frameT = frame != null ? (float)frame.cd : 0;
+            SkillStart();      // 11-21 특수 능력 (BattleSkills.cs)
             nextBoss = Tables.Cf("Endless_Boss_Gap", 150); nextElite = mode == "survival" ? 8f : nextBoss * 0.5f;
             rnd = new System.Random(seed);
             Combat.Seed(seed + 1);
@@ -157,6 +160,7 @@ namespace EarthDef
             time += dt;
             if (lab != null) lab.Spawn(this, dt); else if (mode == "stage") Spawning(dt); else ModeSpawning(dt);
             FrameStep(dt);
+            SkillStep(dt);      // 11-21 버닝 · 쿨타임
             foreach (var u in units) u.Step(dt);
             foreach (var a in attacks) if (!a.dead) a.Step(dt);
             foreach (var e in enemies) if (!e.dead) e.Step(dt);

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전투 요청 3개</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:260px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  img.wide{width:100%;border:4px solid #3b281c;border-radius:16px;display:block}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style>
+<style>.shots figure{min-width:200px;max-width:260px} table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f1e8d8} h3 small{color:var(--soft);font-weight:normal}</style>
+<style>.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0} .pair figure{margin:0} .pair img{width:100%;border:3px solid #3b281c;border-radius:14px;display:block;background:#2e3866} .pair figcaption{font-size:14px;color:var(--soft);margin-top:4px} .b{color:#a0522d;font-weight:bold} .a{color:#3f7a3a;font-weight:bold} @media(max-width:700px){.pair{grid-template-columns:1fr}}</style>
+<style>figure.wide img{max-width:100%}</style></head><body><main>
+<h1>전투 요청 3개 — 좌우 이동 · 특수 능력 · 속도</h1>
+<p class="note">2026-11-21 · 요청(대화): ① 대장 카피의 좌우 이동 ② 대장 카피의 특수 능력 // 돔 특수 능력을 발동시킬 수 있는 버튼 (예: 대장 카피 버닝 // 돔의 적 전체 얼림 // 적 전체 감소 등등) ③ 속도 0.5배 / 2배까지 추가</p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석)</b><ul>
+<li><b>좌우 이동</b>: 코드는 있었고 11-18(사령탑 배치) 때 "대장 카피 가운데 고정"으로 꺼 둔 것을 다시 켰습니다(Config <code>Guardian_Fixed</code> 0). 화면 아무 곳이나 누르거나 끌면 그쪽으로 묵직하게 걸어감 · 범위는 돔 안 ±1.5칸(옆 터렛 칸 ±2.72 와 안 겹침). 첫 전투에 "끌어서 이동" 안내가 다시 나옵니다.</li>
+<li><b>특수 능력 단추 2개</b> — 예시 3개를 이렇게 나눴습니다: <b>왼쪽 = 대장 카피 버닝</b>(8초 동안 공격 속도 2배 · 피해 1.5배, 쿨타임 45초) · <b>오른쪽 = 돔 얼음 파동</b>(화면의 적 모두 3초 얼림 + 체력 10% 감소, 엘리트 · 보스는 3%, 쿨타임 60초). "적 전체 얼림"과 "적 전체 감소"를 한 단추에 합쳤습니다.</li>
+<li><b>보스는 얼지 않음</b> — 게임 규칙(기획서 6-2 "보스는 마비 안 됨")을 지켜 보스는 대신 3초 동안 50% 느려집니다.</li>
+<li>전투 시작 10초 뒤부터 쓸 수 있음 · 쓸 수 있을 땐 단추가 금빛으로 숨쉬고, 쿨타임은 어두운 원 + 남은 초. 값은 모두 Config 에서 바꿀 수 있고 <code>Skill_On</code> 0 이면 단추가 없어집니다. (밸런스는 처음 값)</li>
+<li><b>속도</b>: 누를 때마다 x1 → x1.5 → x2 → x0.5 → x1. 고른 속도는 앱을 끌 때까지 다음 전투에도 그대로.</li>
+</ul></div>
+
+<h2>화면</h2>
+<div class="shots"><figure><img src="캡쳐본 모음/전투_요청_1121/r11_1_move.jpg" alt=""><figcaption>끌어서 오른쪽으로 · 단추 2개(아직 쿨타임 8초)</figcaption></figure><figure><img src="캡쳐본 모음/전투_요청_1121/r11_2_skills.jpg" alt=""><figcaption>버닝(주황 빛) + 얼음 파동 — 적 얼림 · 보스 체력 -3%</figcaption></figure><figure><img src="캡쳐본 모음/전투_요청_1121/r11_3_cooldown.jpg" alt=""><figcaption>쓴 뒤 쿨타임 (어두운 원 + 남은 초)</figcaption></figure></div>
+<div class="shots"><figure><img src="캡쳐본 모음/전투_요청_1121/zoom_r11_2_skills.jpg" alt=""><figcaption>아래 확대 — 단추는 바깥 터렛 칸 위 · 돔 밖 (처음엔 바깥 터렛을 가려서 옮김)</figcaption></figure></div>
+
+<h2>바꿀 수 있는 값 (Config)</h2>
+<table>
+<tr><th>좌우 이동</th><td><code>Guardian_Fixed</code> 0 (1 = 예전 고정) · <code>Guardian_X_Max</code> 1.5 · <code>Guardian_Smooth</code> 0.22 (묵직함)</td></tr>
+<tr><th>버닝</th><td><code>Burn_Time</code> 8 · <code>Burn_Cd</code> 45 · <code>Burn_Rate_Mul</code> 2 · <code>Burn_Dmg_Mul</code> 1.5</td></tr>
+<tr><th>얼음 파동</th><td><code>Dome_Skill_Cd</code> 60 · <code>Dome_Freeze_Time</code> 3 · <code>Dome_Dmg_Pct</code> 10 · <code>Dome_Dmg_Boss_Pct</code> 3 · <code>Dome_Boss_Slow</code> 0.5</td></tr>
+<tr><th>공통</th><td><code>Skill_On</code> 1 · <code>Skill_First_Wait</code> 10 · 단추 자리 <code>Skill_Btn_X</code> 4.4 · <code>Skill_Btn_Y</code> 2.7</td></tr>
+</table>
+
+<h2>시험</h2>
+<p>새 시험 <code>PlayTest.RunR11</code> 14줄 · 기본 137줄(두 번) · 9차 · 코스튬 · 콘텐츠 확장 시험 <b>오류 0</b>.</p>
+<ul>
+<li>기본 시험의 "대장 카피 가운데 고정" 검사는 이번 요청으로 규칙이 바뀌어 설정(<code>Guardian_Fixed</code>)에 따라 보게 고쳤습니다.</li>
+<li><b>그동안 가끔 실패하던 "스테이지 1 보상" 검사의 원인을 찾았습니다</b> — 시험이 보스를 빨리 감기(4초)한 뒤에 골드를 재서, 그사이 터렛이 보스를 잡으면(치명 운) 보상이 이미 들어간 뒤라 "골드 0"으로 보였음. 게임 문제가 아니라 시험 순서 문제 → 보스가 나오기 전에 재게 고침 (두 번 다 통과, 한 번은 실제로 보스가 먼저 죽은 경우).</li>
+</ul>
+
+<h2>확인해 주실 것</h2>
+<ul class="todo">
+<li data-id="b-feel"><label><input type="checkbox"><span><span class="tag">손맛</span>APK 로 직접 해 본 느낌 — 이동 속도 · 버닝 · 얼음 파동 세기 · 쿨타임<span class="why">값은 의견 칸에 숫자로 주시면 바로 바꿉니다 (예: "버닝 쿨 30초")</span></span></label></li>
+<li data-id="b-skills"><label><input type="checkbox"><span><span class="tag">능력</span>특수 능력 종류: 지금 2개(버닝 · 얼음 파동)로 충분한지<span class="why">"등등"이라 하셔서 더 넣을 수 있어요 — 예) 별똥별 비(돔) · 보호막 · 대장 카피 난사. 기지 외형마다 다른 돔 능력으로 바꾸는 것도 가능</span></span></label></li>
+<li data-id="b-boss"><label><input type="checkbox"><span><span class="tag">규칙</span>보스는 얼지 않고 느려짐 (게임 규칙 유지 — 추천)<span class="why">보스도 얼리고 싶으면 의견에 "보스도 얼림"</span></span></label></li>
+<li data-id="b-pos"><label><input type="checkbox"><span><span class="tag">자리</span>단추 자리 (바깥 터렛 위 · 돔 밖 양옆)<span class="why">적이 그 뒤로 지나갈 때 살짝 가려짐. 다른 자리(예: 아래 체력판 양옆 — 대신 바깥 터렛 칸을 가림)를 원하시면 의견에</span></span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-battle11-1121', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

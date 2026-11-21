@@ -17,6 +17,8 @@ namespace EarthDef
         Image expFill, chargeFill, hpFill, shieldFill;
         RectTransform routeShip, routeDone; float routeX0, routeW;
         RectTransform hpBox, chargeBox, bannerBox;
+        // 11-21 특수 능력 단추 (왼쪽 아래 = 대장 카피 버닝 · 오른쪽 아래 = 돔 얼음 파동)
+        RectTransform burnBox, domeBox; Image burnCdImg, domeCdImg, burnFace, domeFace; Text burnCdT, domeCdT; int lastBurnSec = -9, lastDomeSec = -9;
         CanvasGroup bannerGroup;
         float bannerT;
         public Popup pick;
@@ -53,7 +55,12 @@ namespace EarthDef
             var lvB = UIKit.Panel(root, "pill", "LvBadge"); lvB.color = Art.Purple; lvB.rectTransform.TL(34, 180, 108, 108);
             lvT = UIKit.Label(lvB.transform, "", 34); lvT.rectTransform.Fill(0, 6, 0, 0);
             var sp = UIKit.Btn(root, "btn_cream", null, 34, ToggleSpeed, "Speed"); ((RectTransform)sp.transform).TL(948, 192, 104, 84);
-            speedT = UIKit.Label(sp.transform, "x1", 34, Art.Ink, TextAnchor.MiddleCenter, false); speedT.rectTransform.Fill(0, 8, 0, 0);
+            speedT = UIKit.Label(sp.transform, SpeedText(b.speed), 30, Art.Ink, TextAnchor.MiddleCenter, false); speedT.rectTransform.Fill(0, 8, 0, 0);
+            if (Battle.SkillOn && b.lab == null)
+            {
+                burnBox = SkillButton("SkillBurn", "skill_burn", L.T("skill_burn"), () => { if (b.UseBurn()) Toast.Show(L.T("skill_burn_on"), 1.2f); }, out burnFace, out burnCdImg, out burnCdT);
+                domeBox = SkillButton("SkillDome", "skill_frost", L.T("skill_dome"), () => { if (b.UseDome()) Toast.Show(L.T("skill_dome_on"), 1.2f); }, out domeFace, out domeCdImg, out domeCdT);
+            }
 
             // 기지 체력: 사령탑 앞 달 바닥의 이름판 (② 방주처럼 기지에 붙은 판 — 11-18)
             hpBox = UIKit.Rect(root, "BaseHp"); hpBox.sizeDelta = new Vector2(290, 92); hpBox.anchorMin = hpBox.anchorMax = new Vector2(0.5f, 0.5f);
@@ -124,10 +131,52 @@ namespace EarthDef
             b.Guardian.targetX = World.I.ScreenToWorld(screen).x;
         }
 
-        void ToggleSpeed()
+        // 11-21 요청 "속도 0.5배 / 2배까지 추가": 누를 때마다 x1 → x1.5 → x2 → x0.5 → x1 (고른 속도는 앱을 끌 때까지 다음 전투에도)
+        static readonly float[] Speeds = { 0.5f, 1f, 1.5f, 2f };
+        static string SpeedText(float v) => "x" + v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        public void ToggleSpeed()
         {
-            b.speed = b.speed > 1.01f ? 1f : 1.5f;
-            speedT.text = b.speed > 1.01f ? "x1.5" : "x1";
+            int i = System.Array.FindIndex(Speeds, v => Mathf.Abs(v - b.speed) < 0.01f);
+            b.speed = Speeds[(i + 1) % Speeds.Length];
+            Battle.LastSpeed = b.speed;
+            speedT.text = SpeedText(b.speed);
+        }
+
+        /// <summary>특수 능력 단추: 둥근 판 + 아이콘 + 이름 + 쿨타임(위에서 시계 방향으로 줄어드는 어두운 원 + 남은 초)</summary>
+        RectTransform SkillButton(string name, string icon, string label, System.Action use, out Image face, out Image cdImg, out Text cdT)
+        {
+            var box = UIKit.Rect(root, name); box.sizeDelta = new Vector2(150, 186); box.anchorMin = box.anchorMax = new Vector2(0.5f, 0.5f);
+            var ring = UIKit.Img(box, Art.Fx("dot"), "Ring"); ring.color = Art.Ink; ring.rectTransform.TL(3, 3, 144, 144);
+            face = UIKit.Img(box, Art.Fx("dot"), "Face"); face.color = Art.Cream; face.rectTransform.TL(9, 9, 132, 132);
+            var ic = UIKit.Img(box, Art.Icon(icon), "Icon"); ic.raycastTarget = false; ic.rectTransform.TL(17, 15, 116, 116);
+            cdImg = UIKit.Img(box, Art.Fx("dot"), "Cd"); cdImg.raycastTarget = false; cdImg.color = new Color(0.1f, 0.08f, 0.15f, 0.62f);
+            cdImg.type = Image.Type.Filled; cdImg.fillMethod = Image.FillMethod.Radial360; cdImg.fillOrigin = (int)Image.Origin360.Top; cdImg.fillClockwise = false;
+            cdImg.rectTransform.TL(9, 9, 132, 132);
+            cdT = UIKit.Label(box, "", 44, Color.white); cdT.rectTransform.TL(0, 40, 150, 70); cdT.raycastTarget = false;
+            var nm = UIKit.Label(box, label, 26, Color.white); nm.rectTransform.TL(-20, 146, 190, 40); nm.raycastTarget = false;
+            UIKit.Clickable(face, use);
+            return box;
+        }
+
+        void SkillRefresh()
+        {
+            if (burnBox == null) return;
+            float x = Tables.Cf("Skill_Btn_X", 4.4f), y = World.GroundY + Tables.Cf("Skill_Btn_Y", 2.7f);
+            burnBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(-x, y));
+            domeBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(x, y));
+            OneSkill(burnBox, burnFace, burnCdImg, burnCdT, b.skillCdG, b.BurnCdMax, b.CanBurn, b.Burning, ref lastBurnSec);
+            OneSkill(domeBox, domeFace, domeCdImg, domeCdT, b.skillCdD, b.DomeCdMax, b.CanDome, false, ref lastDomeSec);
+        }
+
+        void OneSkill(RectTransform box, Image face, Image cdImg, Text cdT, float left, float max, bool ready, bool active, ref int lastSec)
+        {
+            cdImg.fillAmount = left > 0 ? Mathf.Clamp01(left / Mathf.Max(1f, max)) : 0f;
+            int sec = left > 0 ? Mathf.CeilToInt(left) : 0;
+            if (sec != lastSec) { lastSec = sec; cdT.text = sec > 0 ? sec.ToString() : ""; }
+            // 쓸 수 있으면 금빛으로 숨쉬듯 · 쓰는 중(버닝)이면 주황
+            float k = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 5f);
+            face.color = active ? Color.Lerp(Art.Hex("#ffb347"), Art.Hex("#ffe08a"), k) : ready ? Color.Lerp(Art.Cream, Art.Gold, 0.35f * k) : Art.Cream;
+            box.localScale = Vector3.one * (ready ? 1f + 0.04f * k : 1f);
         }
 
         void Update()
@@ -164,6 +213,7 @@ namespace EarthDef
             if (hp != lastHp) { lastHp = hp; hpT.text = Num.Comma(b.baseHp); UIKit.SetBar(hpFill, (float)(b.baseHp / System.Math.Max(1, b.baseMax))); }
             if (sh != lastShield) { lastShield = sh; shieldT.text = b.shield > 0 ? "+" + Num.Comma(b.shield) : ""; UIKit.SetBar(shieldFill, b.shieldMax > 0 ? (float)(b.shield / b.shieldMax) * 0.35f : 0f); }
             hpBox.anchoredPosition = UIRoot.I.WorldToUI(World.V ? new Vector2(0f, World.GroundY - 1.25f) : new Vector2(Tables.Cf("Hp_Plate_X", -3.6f), World.GroundY - 1.0f));
+            SkillRefresh();
             var g = b.Guardian;
             bool showCharge = g != null && g.t.Has("charge");
             if ((showCharge ? 1 : 0) != lastCharge) { lastCharge = showCharge ? 1 : 0; chargeBox.gameObject.SetActive(showCharge); }

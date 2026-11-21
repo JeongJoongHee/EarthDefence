@@ -54,6 +54,8 @@ namespace EarthDef.EditorTools
         public static void RunClosed() => Start("closed");
         /// <summary>11-21 콘텐츠 확장 — 새 적 16 · 챕터 하늘 · 곧 열리는 터렛 (Editor/PlayTestExpand.cs)</summary>
         public static void RunExpand() => Start("expand");
+        /// <summary>11-21 전투 요청 3개 — 좌우 이동 · 특수 능력 · 속도 (Editor/PlayTest11.cs)</summary>
+        public static void RunR11() => Start("r11");
 
         static void Start(string mode)
         {
@@ -97,7 +99,7 @@ namespace EarthDef.EditorTools
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
             Battle.NoSlotPick = true; StoryView.Off = true;   // 9차: 스토리 대화창은 RunR9 에서 따로 시험 ·      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
             if (mode != "r7" && mode != "r8" && mode != "r9" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : mode == "r11" ? R11Steps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -879,8 +881,13 @@ namespace EarthDef.EditorTools
                 Check(Art.Get("Bg/ground_moon", 100f) != null, "바닥 = 달 + 지평선 지구");
                 var gp = (Vector2)B.Guardian.transform.position;
                 B.Guardian.targetX = 3f; for (int i = 0; i < 60; i++) B.Guardian.Step(Battle.StepSec);
+                if (Tables.Ci("Guardian_Fixed", 1) == 1)
                 Check(Vector2.Distance((Vector2)B.Guardian.transform.position, World.GuardianPos) < 0.05f && Vector2.Distance(gp, World.GuardianPos) < 0.05f,
                       $"대장 카피는 가운데 사령실에 고정 (끌어도 안 움직임 · {B.Guardian.transform.position.x:0.00}, {B.Guardian.transform.position.y:0.00})");
+                else      // 11-21 요청 "대장 카피의 좌우 이동" → Guardian_Fixed 0: 가운데에서 시작 · 끌면 ±Guardian_X_Max 까지
+                Check(Vector2.Distance(gp, World.GuardianPos) < 0.05f && Mathf.Abs(B.Guardian.transform.position.x - Tables.Cf("Guardian_X_Max", 1.5f)) < 0.05f,
+                      $"대장 카피는 가운데에서 시작 · 끌면 좌우로 (오른쪽 끝 {B.Guardian.transform.position.x:0.00})");
+                B.Guardian.targetX = 0f; for (int i = 0; i < 60; i++) B.Guardian.Step(Battle.StepSec);
                 var live = B.enemies.FindAll(e => !e.dead);
                 bool diag = live.Count > 0 && live.TrueForAll(e => World.V ? e.Dir.y < -0.99f : e.Dir.x < -0.15f && e.Dir.y < 0.05f);
                 Check(diag, World.V ? $"9차: 적은 모두 위에서 곧게 아래로 ({live.Count}마리)" : $"적은 모두 오른쪽 위에서 왼쪽 아래 사령탑 쪽으로 ({live.Count}마리)");
@@ -1023,13 +1030,14 @@ namespace EarthDef.EditorTools
             B.Choose(0);
 
             // 9) 마지막 보스 → 승리
+            // 11-21: 보상 전 골드는 보스가 나오기 전에 잼 — 예전엔 FF(4f) 뒤에 재서, 그사이 터렛이 보스를 잡으면(치명 운) 보상이 이미 들어간 뒤라 "골드 0" 으로 가끔 실패했음
+            double gold0 = S.gold;
             B.time = Tables.Cf("Boss_Time") - 0.1f; FF(3f);
             Check(B.boss != null && !B.boss.dead, $"3분 30초: 보스 {B.boss?.row.name}");
             FF(4f);
             yield return Wait(0.3f);
             Capture("07_boss");
-            double gold0 = S.gold;
-            Combat.Raw(B.boss, B.boss.hp + 1, false, g); B.Tick(Battle.StepSec);
+            if (B.boss != null && !B.boss.dead) Combat.Raw(B.boss, B.boss.hp + 1, false, g); B.Tick(Battle.StepSec);
             Check(B.st == Battle.St.End && B.won, "보스 처치 → 승리");
             Check(S.best == 1 && S.stage == 2 && S.gold > gold0 && B.FirstClear, $"보상 골드 +{B.RewardGold} · 조각 +{B.RewardShards} · 다음 스테이지 열림 (best {S.best} · stage {S.stage} · 골드 {S.gold - gold0:0} · 첫 클리어 {B.FirstClear})");
             yield return Wait(0.5f);

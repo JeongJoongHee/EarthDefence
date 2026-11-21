@@ -1,5 +1,10 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-21 오후 3 — 전투 요청 3개)
+- 요청(대화) = ① 대장 카피 좌우 이동 ② 대장 카피 · 돔 특수 능력 단추 ③ 속도 x0.5 · x2. 보고 = `전투_요청_결과.html` (키 earthdef-battle11-1121, 캡처 `캡쳐본 모음/전투_요청_1121/`).
+- ① Config Guardian_Fixed 0 (±Guardian_X_Max 1.5) ② `Game/BattleSkills.cs` (Battle 은 이제 partial): 버닝(UseBurn · BurnCdMul → TurretUnit · BurnDmgMul → Combat.Calc) · 얼음 파동(UseDome: Paralyze · 보스는 AddSlow · Combat.Raw %) · BattleUI SkillButton(왼쪽 · 오른쪽, 바깥 터렛 위 Skill_Btn_X/Y) · 아이콘 `tools/skill_icons.py` ③ BattleUI.ToggleSpeed 0.5/1/1.5/2 · Battle.LastSpeed. 표 = `tools/fix11_tables.py`.
+- 시험: `PlayTest.RunR11`(Editor/PlayTest11.cs) 14 · 기본 137 x2 · 9차 · 10 · 확장 오류 0. 기본 시험 "스테이지 1 보상" 가끔 실패 원인 = 골드를 보스 빨리 감기 뒤에 재서 → 앞에서 재게 고침.
+
 ## ▶ 재개 메모 (2026-11-21 오후 2 — 콘텐츠 확장 그림 적용)
 - 요청 = "콘텐츠 확장 제언서 보고 타워 몬스터 배경 이미지 추가해서 배치" + `콘텐츠_확장_제안서.html` 의견(몬스터 · 보스 이미지만 배치 · 하늘 그대로 · 바닥은 지구만 · 타워 이미지만). 보고 = `콘텐츠_확장_적용_결과.html` (키 earthdef-expand2-1121, 캡처 `캡쳐본 모음/콘텐츠_확장_적용/`).
 - 새 적 16(기믹 없음, 비슷한 기존 적 능력치) · 스테이지 21~100 배치(원래 값 Stage *_Pre 칸, `tools/expansion_tables.py --revert`) · 챕터 하늘 Bg/sky_ch2~5 · 하늘 행성 Bg/planet_ch3~5 (World.SetChapter, Config Chapter_Bg · Chapter_Len) · 타워 6 = Turret_Soon 시트 → 터렛 탭 맨 아래만 (Turret_Soon_Show). 그림 = `tools/expansion_export.py`(PowerShell, 시안 도구 expansion_art.py 함수 씀).
