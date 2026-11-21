@@ -56,6 +56,8 @@ namespace EarthDef.EditorTools
         public static void RunExpand() => Start("expand");
         /// <summary>11-21 전투 요청 3개 — 좌우 이동 · 특수 능력 · 속도 (Editor/PlayTest11.cs)</summary>
         public static void RunR11() => Start("r11");
+        /// <summary>11-21 스토어 스크린샷 촬영 (Editor/PlayTestStore.cs → tools/store_graphics.py)</summary>
+        public static void RunStore() => Start("store");
 
         static void Start(string mode)
         {
@@ -99,7 +101,7 @@ namespace EarthDef.EditorTools
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
             Battle.NoSlotPick = true; StoryView.Off = true;   // 9차: 스토리 대화창은 RunR9 에서 따로 시험 ·      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
             if (mode != "r7" && mode != "r8" && mode != "r9" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : mode == "r11" ? R11Steps() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : mode == "r11" ? R11Steps() : mode == "store" ? StoreSteps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");

@@ -238,7 +238,7 @@ namespace EarthDef
                 var di = UIKit.Img(b.transform, Art.Icon("diamond"), "Dia"); di.raycastTarget = false; di.rectTransform.Place(0, 0.5f, new Vector2(18, 6), new Vector2(52, 52), new Vector2(0, 0.5f));
                 UIKit.Label(b.transform, Num.Comma(it.costDia), 32).rectTransform.Fill(70, 14, 8, 4);
             }
-            else UIKit.Label(b.transform, it.kind == "ad_box" ? L.T("refresh_draft").Replace("[초안] ", "") : L.T("claim"), it.kind == "ad_box" ? 22 : 32).rectTransform.Fill(8, 14, 8, 4);
+            else UIKit.Label(b.transform, it.kind == "ad_box" ? (Ads.DraftNote || Store.NoAds ? L.T("refresh_draft").Replace("[초안] ", "") : L.T("ad_box_btn")) : L.T("claim"), it.kind == "ad_box" ? 22 : 32).rectTransform.Fill(8, 14, 8, 4);
             return y + 152;
         }
 

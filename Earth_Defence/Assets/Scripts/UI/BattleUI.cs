@@ -310,7 +310,7 @@ namespace EarthDef
             var ad = UIKit.Img(rb.transform, Art.Icon("ad"), "Ad"); ad.rectTransform.Place(0, 0.5f, new Vector2(30, 6), new Vector2(76, 76), new Vector2(0, 0.5f));
             var rl = UIKit.Label(rb.transform, L.T("refresh"), 44); rl.rectTransform.Fill(90, 14, 10, 4);
             int max = Tables.Ci("Refresh_Ad", 1) + Tables.Ci("Refresh_Free", 0);
-            var note = UIKit.Label(w, L.F("refresh_ad", b.run.refreshAd + b.run.refreshFree, max) + (Ads.Draft ? "  " + L.T("refresh_draft") : ""), 26, Art.Soft, TextAnchor.MiddleCenter, false);
+            var note = UIKit.Label(w, L.F("refresh_ad", b.run.refreshAd + b.run.refreshFree, max) + (Ads.DraftNote ? "  " + L.T("refresh_draft") : ""), 26, Art.Soft, TextAnchor.MiddleCenter, false);
             note.rectTransform.Place(0.5f, 0, new Vector2(0, 50), new Vector2(940, 40), new Vector2(0.5f, 0.5f));
         }
 
@@ -487,7 +487,7 @@ namespace EarthDef
                 Ads.Show(ok => { if (ok && b.AdDouble()) { Toast.Show(L.T("got_double")); ShowResult(); } });
             }, 100);
             var adI = UIKit.Img(ab.transform, Art.Icon("ad"), "Ad"); adI.rectTransform.Place(0, 0.5f, new Vector2(26, 6), new Vector2(66, 66), new Vector2(0, 0.5f));
-            UIKit.Label(ab.transform, b.adDoubled ? L.T("got_double") : L.F("ad_double", Tables.Ci("Ad_Reward_Mul", 2)) + (Ads.Draft ? " [초안]" : ""), 32).rectTransform.Fill(100, 14, 10, 4);
+            UIKit.Label(ab.transform, b.adDoubled ? L.T("got_double") : L.F("ad_double", Tables.Ci("Ad_Reward_Mul", 2)) + (Ads.DraftNote ? " [초안]" : ""), 32).rectTransform.Fill(100, 14, 10, 4);
             p.Btn("btn_orange", L.T("to_lobby"), -200, 70, 340, Game.ToLobby);
             int stage = b.stageNo; bool elite = b.eliteMode;
             if (b.mode != "stage")

@@ -598,7 +598,7 @@ namespace EarthDef
             }, 120);
             var ad = UIKit.Img(b.transform, Art.Icon("ad"), "Ad"); ad.rectTransform.Place(0, 0.5f, new Vector2(26, 6), new Vector2(76, 76), new Vector2(0, 0.5f));
             UIKit.Label(b.transform, L.F("stamina_ad", Tables.Ci("Stamina_Ad", 20)), 40).rectTransform.Fill(100, 14, 10, 4);
-            p.Text(L.F("stamina_ad_left", left, Tables.Ci("Stamina_Ad_Per_Day", 3)) + (Ads.Draft ? "  " + L.T("refresh_draft") : ""), 548, 26, Art.Soft);
+            p.Text(L.F("stamina_ad_left", left, Tables.Ci("Stamina_Ad_Per_Day", 3)) + (Ads.DraftNote ? "  " + L.T("refresh_draft") : ""), 548, 26, Art.Soft);
         }
 
         // ---------- 들어올 때 한 번씩: 출석 → 새 터렛 → 도움말 ----------

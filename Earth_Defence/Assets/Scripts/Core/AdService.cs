@@ -48,6 +48,11 @@ namespace EarthDef
         public static bool Draft => true;
 #endif
 
+        /// <summary>11-21 스토어 촬영(RunStore) 때 에디터의 "[초안] 광고 없이 바로" 글자를 숨김</summary>
+        public static bool HideDraftNote;
+        /// <summary>화면에 "[초안]" 안내를 붙일지 (에디터에서만 · 촬영 땐 숨김)</summary>
+        public static bool DraftNote => Draft && !HideDraftNote;
+
         public static void Show(Action<bool> done)
         {
             if (Store.NoAds) { done?.Invoke(true); return; }

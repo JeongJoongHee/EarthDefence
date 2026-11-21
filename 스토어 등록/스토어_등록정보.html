@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>카피바라 지구를 지켜라 스토어 등록정보</title>
+<style>
+  :root { --bg:#faf7f2; --card:#fff; --ink:#2b2118; --soft:#6b5c4e; --line:#e6ddd2; --accent:#c9822b; --ok:#2f8a4a; --warn:#b5462b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.65 "Malgun Gothic","Apple SD Gothic Neo",sans-serif; }
+  main { max-width:980px; margin:0 auto; padding:28px 16px 80px; }
+  h1 { font-size:26px; margin:0 0 6px; }
+  h2 { font-size:20px; margin:36px 0 10px; padding-bottom:6px; border-bottom:2px solid var(--accent); }
+  .lead { color:var(--soft); margin:0 0 18px; }
+  .path { background:#fff3e8; border:1px solid #f3cfb2; border-radius:10px; padding:12px 14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin:12px 0; }
+  .row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+  .row b { font-size:17px; }
+  .count { font-size:13px; color:var(--soft); }
+  .count.over { color:var(--warn); font-weight:bold; }
+  button { margin-left:auto; border:0; background:var(--accent); color:#fff; border-radius:8px; padding:7px 14px; font:inherit; font-size:14px; cursor:pointer; }
+  button.done { background:var(--ok); }
+  textarea { width:100%; border:1px solid var(--line); border-radius:8px; padding:10px; font:inherit; font-size:15px; background:#fffdfa; resize:vertical; }
+  .hint { font-size:14px; color:var(--soft); margin:6px 0 0; }
+  .shots { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
+  .shots figure { margin:0; text-align:center; font-size:13px; color:var(--soft); }
+  .shots img { width:100%; border-radius:8px; border:1px solid var(--line); display:block; }
+  .wide img { width:100%; max-width:640px; border-radius:8px; border:1px solid var(--line); }
+  .icon img { width:128px; border-radius:24px; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; font-size:15px; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#f3ece3; width:30%; }
+  ol li, ul li { margin:4px 0; }
+  code { background:#f1e9df; padding:1px 5px; border-radius:4px; font-size:14px; }
+  .warn { color:var(--warn); font-weight:bold; }
+</style>
+</head>
+<body>
+<main>
+<h1>카피바라 지구를 지켜라 — 스토어 등록정보</h1>
+<p class="lead">2026-11-21 · B-2 에서 칸마다 [복사] → 붙여넣기. 그림은 이 폴더(<code>스토어 등록/</code>)의 파일을 끌어다 놓으면 됩니다. 글자 수는 칸 옆에 자동으로 셉니다(구글 기준과 같음).</p>
+<div class="path"><b>들어가는 곳</b>: Play Console(Cachisi) › 카피바라 지구를 지켜라 › <b>사용자 늘리기 › 스토어 등재 › 기본 스토어 등록정보</b> (못 찾으면 맨 위 검색창에 "스토어 등록정보")</div>
+
+<h2>1. 앱 세부정보</h2>
+<div class="card"><div class="row"><b>앱 이름</b><span class="count" data-for="name" data-max="30"></span><button data-copy="name">복사</button></div><textarea id="name" rows="1">카피바라 지구를 지켜라</textarea></div>
+<div class="card"><div class="row"><b>간단한 설명</b><span class="count" data-for="short" data-max="80"></span><button data-copy="short">복사</button></div><textarea id="short" rows="2">쏟아지는 운석과 외계 벌레! 대장 카피와 터렛으로 지구를 지키는 우주 타워 디펜스</textarea></div>
+<div class="card"><div class="row"><b>자세한 설명</b><span class="count" data-for="long" data-max="4000"></span><button data-copy="long">복사</button></div><textarea id="long" rows="22">따끈한 유자 온천에서 느긋하게 살던 카피바라들의 별, 지구.
+어느 밤 우주 저편에서 운석과 외계 벌레, 젤리 바이러스가 쏟아지기 시작했어요!
+대장 카피와 함께 돔 기지를 지키고, 우주를 꽁꽁 얼리는 수상한 침략자의 정체를 밝혀 주세요.
+
+■ 카드로 만드는 나만의 터렛 조합
+- 레벨업마다 카드 3장 중 1장! 같은 터렛을 모을수록 별이 쌓이고 돌파하면 완전히 새로운 공격으로 바뀌어요
+- 관통포, 레이저 포, 벼락탑, 소용돌이포, 불바퀴 등 12종 터렛
+- 스테이지마다 약점 속성이 달라요. 어떤 터렛을 챙길지가 공략의 열쇠!
+
+■ 직접 움직이고 특수 능력을 터뜨리세요
+- 화면을 끌면 대장 카피가 좌우로 이동
+- 대장 카피 버닝: 잠깐 동안 공격 속도와 피해가 크게 올라요
+- 돔 얼음 파동: 화면의 적을 한꺼번에 얼리고 체력을 깎아요
+
+■ 5개 행성, 100 스테이지
+- 챕터마다 바뀌는 하늘과 행성, 그리고 말을 거는 거대 보스
+- 서리 수정왕, 집게 요새 게, 토성 고리룡, 대왕 젤리 황제
+- 달토끼와 함께하는 스토리 102편
+
+■ 쉬어도 강해지는 방치 성장
+- 장비 6부위와 회로로 대장 카피 강화
+- 순찰 보상, 출석, 일일 미션
+- 무한 모드와 엘리트 군단 도전
+
+■ 귀여운 꾸미기
+- 코스튬 27종, 탈것 16종으로 대장 카피를 내 마음대로
+
+※ 이 게임에는 게임 안에서 유료 재화(다이아)로 살 수 있는 확률형 아이템(장비 상자 등)이 포함되어 있습니다. 아이템별 확률은 게임 안 상점의 [확률]에서 확인할 수 있습니다.
+※ 보상형 광고는 원할 때만 직접 눌러서 봅니다.
+
+문의: jjhfibe@gmail.com</textarea><p class="hint">확률형 아이템 표시 · 보상형 광고 안내를 맨 아래에 넣었습니다 (게임산업법 확률 표시 — 카치건 때와 같은 방식).</p></div>
+
+<h2>2. 그래픽</h2>
+<div class="card"><div class="row"><b>앱 아이콘</b> <span class="count">512 x 512 PNG</span></div><div class="icon"><img src="앱아이콘_512.png" alt=""></div><p class="hint"><code>앱아이콘_512.png</code></p></div>
+<div class="card"><div class="row"><b>그래픽 이미지</b> <span class="count">1024 x 500</span></div><div class="wide"><img src="그래픽이미지_1024x500.png" alt=""></div><p class="hint"><code>그래픽이미지_1024x500.png</code></p></div>
+<div class="card"><div class="row"><b>휴대전화 스크린샷</b> <span class="count">8장 · 1080 x 1920 (순서대로)</span></div><div class="shots"><figure><img src="스크린샷_01.png" alt=""><figcaption>01 전투</figcaption></figure><figure><img src="스크린샷_02.png" alt=""><figcaption>02 보스</figcaption></figure><figure><img src="스크린샷_03.png" alt=""><figcaption>03 카드</figcaption></figure><figure><img src="스크린샷_04.png" alt=""><figcaption>04 특수 능력</figcaption></figure><figure><img src="스크린샷_05.png" alt=""><figcaption>05 장비</figcaption></figure><figure><img src="스크린샷_06.png" alt=""><figcaption>06 코스튬 · 탈것</figcaption></figure><figure><img src="스크린샷_07.png" alt=""><figcaption>07 터렛</figcaption></figure><figure><img src="스크린샷_08.png" alt=""><figcaption>08 스토리</figcaption></figure></div>
+<p class="hint">파일 <code>스크린샷_01.png ~ 08.png</code> · 7인치 · 10인치 태블릿 칸은 비워도 됩니다(선택). 동영상(YouTube) 칸도 선택.</p></div>
+<p>모두 넣었으면 오른쪽 아래 <b>[저장]</b>.</p>
+
+<h2>3. 스토어 설정</h2>
+<div class="path"><b>들어가는 곳</b>: <b>사용자 늘리기 › 스토어 등재 › 스토어 설정</b></div>
+<div class="card"><table>
+<tr><th>앱 또는 게임 / 카테고리</th><td>게임 · <b>전략</b> (타워 디펜스가 들어가는 칸 — 다른 안: 캐주얼)</td></tr>
+<tr><th>태그 (최대 5개)</th><td>[태그 관리]에서 목록 검색: <b>타워 디펜스</b> · <b>전략</b> · <b>캐주얼</b> · <b>싱글 플레이어</b> · <b>오프라인</b> (목록에 없는 말은 비슷한 것으로)</td></tr>
+<tr><th>이메일</th><td><code>jjhfibe@gmail.com</code></td></tr>
+<tr><th>전화번호</th><td>비워 둠 (선택)</td></tr>
+<tr><th>웹사이트</th><td><code>https://jeongjoonghee.github.io</code> — AdMob 이 이 주소의 <code>/app-ads.txt</code> 를 봄 (같은 AdMob 계정이라 이미 있음)</td></tr>
+<tr><th>외부 마케팅</th><td>기본 그대로(켜짐)</td></tr>
+</table></div>
+<div class="card"><div class="row"><b>이메일 (복사용)</b><button data-copy="mail">복사</button></div><textarea id="mail" rows="1">jjhfibe@gmail.com</textarea></div>
+<div class="card"><div class="row"><b>웹사이트 (복사용)</b><button data-copy="web">복사</button></div><textarea id="web" rows="1">https://jeongjoonghee.github.io</textarea></div>
+<p>[저장]. ✔ 끝난 표시: 두 화면 모두 빨간 "필수" 표시 없음.</p>
+
+<h2>4. 출시 노트 (B-3 · B-5 버전 만들 때)</h2>
+<div class="card"><div class="row"><b>출시 노트 (1번 · 1.0.1)</b><span class="count" data-for="notes" data-max="500"></span><button data-copy="notes">복사</button></div><textarea id="notes" rows="8">&lt;ko-KR&gt;
+첫 비공개 테스트 버전입니다.
+- 5개 행성 100 스테이지 · 챕터 보스 6종
+- 터렛 12종 · 레벨업 카드 · 돌파
+- 대장 카피 좌우 이동 · 버닝 · 돔 얼음 파동 · 속도 x0.5~x2
+- 장비 · 회로 · 코스튬 27종 · 탈것 16종 · 스토리 102편
+&lt;/ko-KR&gt;</textarea><p class="hint"><code>&lt;ko-KR&gt;</code> 줄까지 통째로 붙여 넣습니다.</p></div>
+
+</main>
+<script>
+document.querySelectorAll('.count[data-for]').forEach(function (el) {
+  var ta = document.getElementById(el.dataset.for), max = +el.dataset.max;
+  function upd() { var n = ta.value.length; el.textContent = n + ' / ' + max + '자'; el.classList.toggle('over', n > max); }
+  ta.addEventListener('input', upd); upd();
+});
+document.querySelectorAll('button[data-copy]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var ta = document.getElementById(b.dataset.copy);
+    var done = function () { b.textContent = '복사됨'; b.classList.add('done'); setTimeout(function () { b.textContent = '복사'; b.classList.remove('done'); }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+    else { ta.select(); document.execCommand('copy'); done(); }
+  });
+});
+</script>
+</body>
+</html>
