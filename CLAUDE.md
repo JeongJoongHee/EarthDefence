@@ -1,5 +1,10 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-21 오후 2 — 콘텐츠 확장 그림 적용)
+- 요청 = "콘텐츠 확장 제언서 보고 타워 몬스터 배경 이미지 추가해서 배치" + `콘텐츠_확장_제안서.html` 의견(몬스터 · 보스 이미지만 배치 · 하늘 그대로 · 바닥은 지구만 · 타워 이미지만). 보고 = `콘텐츠_확장_적용_결과.html` (키 earthdef-expand2-1121, 캡처 `캡쳐본 모음/콘텐츠_확장_적용/`).
+- 새 적 16(기믹 없음, 비슷한 기존 적 능력치) · 스테이지 21~100 배치(원래 값 Stage *_Pre 칸, `tools/expansion_tables.py --revert`) · 챕터 하늘 Bg/sky_ch2~5 · 하늘 행성 Bg/planet_ch3~5 (World.SetChapter, Config Chapter_Bg · Chapter_Len) · 타워 6 = Turret_Soon 시트 → 터렛 탭 맨 아래만 (Turret_Soon_Show). 그림 = `tools/expansion_export.py`(PowerShell, 시안 도구 expansion_art.py 함수 씀).
+- 시험 RunExpand 18 · 기본 137 오류 0. 커밋 d096a1a. 남은 확인: 스토리 s31 · s40 대사가 새 보스와 어긋남(x-story) · 도전 탭 무한 · 엘리트 군단은 예전 적 그대로.
+
 ## ▶ 재개 메모 (2026-11-21 오후 — 비공개 테스트 준비 · 광고 · 결제 · AAB 도구)
 - 요청 = "비공개 테스트 진행할 수 있게 준비 — AdMob 붙이는 법부터 모두 상세하게" + "UI 다듬기 · 밸런스 · 상품 추가 · 타워 시스템 개선을 비공개 테스트 때 업데이트로 해도 되나" → 된다(구글 answer/14151465 · 9845334 11-21 다시 읽음, 문서 맨 위 "질문 답").
 - 문서 = `비공개_테스트_준비.html` 11-21 판 (키 **earthdef-closed-1121**, 옛 판 = 세션 스크래치 비공개_테스트_준비_before_1121.html). 확인 칸: h-cheat · h-name(빌드 때만 느낌표 빼기 추천 — 체크되면 BuildAab/BuildApk Setup 에서 productName 바꾸고 되돌리기) · h-login · h-list · h-real · A-1 ~ D-2.
