@@ -56,6 +56,7 @@ namespace EarthDef.EditorTools
         public static void RunExpand() => Start("expand");
         /// <summary>11-21 전투 요청 3개 — 좌우 이동 · 특수 능력 · 속도 (Editor/PlayTest11.cs)</summary>
         public static void RunR11() => Start("r11");
+        public static void RunOpen() => Start("open");
         public static void RunR12() => Start("r12");
         /// <summary>11-21 스토어 스크린샷 촬영 (Editor/PlayTestStore.cs → tools/store_graphics.py)</summary>
         public static void RunStore() => Start("store");
@@ -102,7 +103,7 @@ namespace EarthDef.EditorTools
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
             Battle.NoSlotPick = true; StoryView.Off = true;   // 9차: 스토리 대화창은 RunR9 에서 따로 시험 ·      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
             if (mode != "r7" && mode != "r8" && mode != "r9" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : mode == "r11" ? R11Steps() : mode == "r12" ? R12Steps() : mode == "store" ? StoreSteps() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : mode == "r11" ? R11Steps() : mode == "r12" ? R12Steps() : mode == "store" ? StoreSteps() : mode == "open" ? OpenSteps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -254,11 +255,13 @@ namespace EarthDef.EditorTools
                     Check(vault != null && Store.Buy(vault) != null && System.Math.Abs(S.gold - gv - System.Math.Floor(vault.value * S.PatrolGoldHour)) < 1, $"골드 금고 = 순찰 {vault?.value:0}시간치 (+{Num.F(S.gold - gv)})");
                     // 회로 %: 기지 공격력 +% · 기지 체력 +% · 보호막 = 체력의 %
                     foreach (var c in S.chips) c.at = -1;
+                    Tables.SetC("Chip_Grade_Top", 7);     // 11-22: 예전 값(궁극 칩)으로 잼
                     var ca = Gear.NewChip(7, "ch_atk"); var ch = Gear.NewChip(7, "ch_hp"); var cs = Gear.NewChip(7, "ch_shield");
                     foreach (var c in new[] { ca, ch, cs }) { var (pp, ss) = Gear.FreeSlotFor(c); Gear.PutChip(c, pp, ss); }
                     var lo3b = Loadout.Build(S);
                     Check(System.Math.Abs(lo3b.baseAtkPct - ca.Val) < 0.01 && System.Math.Abs(lo3b.baseHpPct - ch.Val) < 0.01 && lo3b.ShieldOf(S) > lo3b.HpOf(S) * 0.2,
                           $"회로 %: 기지 공격력 +{lo3b.baseAtkPct}% · 체력 +{lo3b.baseHpPct}% · 보호막 {Num.F(lo3b.ShieldOf(S))}");
+                    Tables.SetC("Chip_Grade_Top", 5);
                     lo3b.reduce = Tables.C("Reduce_K", 240);
                     Check(System.Math.Abs(lo3b.ReduceMul - 0.5) < 0.001, $"방어력 = K 이면 받는 피해 절반 ({lo3b.ReduceMul:0.00})");
                     // 엘리트 난이도 = Elite_Mode_Offset 스테이지 뒤의 적
@@ -452,7 +455,7 @@ namespace EarthDef.EditorTools
                 Capture("83_shop_dia");
                 GameObject.Find("ShopSub1").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);
                 bool pGear = GameObject.Find("I_i_gear") != null && GameObject.Find("I_i_free") != null && GameObject.Find("Rates") != null && GameObject.Find("P_p_dia1") == null && GameObject.Find("I_i_stamina") == null;
-                bool pityT = false; foreach (var tx in Game.Lobby.shopTab.GetComponentsInChildren<UnityEngine.UI.Text>()) if (tx.text == L.F("pity_left", Store.PityLeft("gear_box"))) pityT = true;
+                bool pityT = false; foreach (var tx in Game.Lobby.shopTab.GetComponentsInChildren<UnityEngine.UI.Text>()) if (tx.text == Store.PityText("gear_box")) pityT = true;
                 Capture("84_shop_gear");
                 GameObject.Find("ShopSub2").GetComponent<UnityEngine.UI.Button>().onClick.Invoke(); yield return Wait(0.3f);
                 bool pRes = GameObject.Find("I_i_stamina") != null && GameObject.Find("I_i_parts") != null && GameObject.Find("I_i_gear") == null;
@@ -1146,6 +1149,7 @@ namespace EarthDef.EditorTools
             double pr0 = S.parts; var sc = Gear.NewGear(1, "helmet"); Gear.Scrap(sc);
             Check(S.parts > pr0, $"분해 → 부품 +{S.parts - pr0}");
             int core = Tables.PartIdx("core"), shield = Tables.PartIdx("shield"), suit = Tables.PartIdx("suit"), weapon = Tables.PartIdx("weapon");
+            Tables.SetC("Chip_Grade_Top", 7);     // 11-22 오픈 스펙은 회로 전설(5)까지 — 이 칩 시험은 예전 값(궁극 칩)으로 잼, 아래 "레이저 별 칩" 뒤에 되돌림
             var cd = Gear.NewChip(7, "ch_dmg");
             Check(!Gear.CanPut(cd, weapon, 0) && Gear.PutChip(cd, core, 0), "피해 칩: 무기엔 못 끼고 코어엔 낌");
             Check(Gear.SlotOpen(4) && !Gear.SlotOpen(5) == (S.best < Gear.SlotNeed(5)), $"칩 칸 6 = 스테이지 {Gear.SlotNeed(5)}");
@@ -1183,6 +1187,7 @@ namespace EarthDef.EditorTools
             Capture("16_four_cards");
             B.offer[0] = Tables.CardById["new_laser"]; B.Choose(0);
             Check(B.run.Get("laser")?.stars == 3, $"레이저 별 칩 → 놓자마자 별 {B.run.Get("laser")?.stars}");
+            Tables.SetC("Chip_Grade_Top", 5);
             {
                 var g = B.run.turrets[0];
                 var el = B.Spawn("big", new Vector2(0, 3)); var nm = B.Spawn("moth", new Vector2(1, 3)); B.Tick(Battle.StepSec);

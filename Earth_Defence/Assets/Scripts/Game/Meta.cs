@@ -189,7 +189,7 @@ namespace EarthDef
             {
                 case "gold": return Math.Floor(v * S.PatrolGoldHour / Math.Max(1, Tables.C("Patrol_Gold_Hour")));
                 case "shards": case "parts": return Math.Floor(v * (1 + Math.Max(0, S.best - 1) / Math.Max(1.0, Tables.C("Reward_Res_Step", 25))));
-                case "chip": case "gear": return Math.Min(Tables.GradeMax, Math.Max(v, 1 + Math.Max(0, S.best - 1) / Mathf.Max(1, Tables.Ci("Drop_Grade_Step", 12))));
+                case "chip": case "gear": return Math.Min(Store.BoxMaxFor(kind == "gear"), Math.Max(v, 1 + Math.Max(0, S.best - 1) / Mathf.Max(1, Tables.Ci("Drop_Grade_Step", 12))));
             }
             return v;
         }

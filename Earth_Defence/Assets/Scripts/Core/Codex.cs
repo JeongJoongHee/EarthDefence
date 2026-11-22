@@ -20,8 +20,8 @@ namespace EarthDef
             for (int q = Tables.GradeMax; q >= 1; q--) if (s.codex.Contains("c:" + id + ":" + q)) return q;
             return 0;
         }
-        public static int GearGot { get { int n = 0; foreach (var p in Tables.GearParts) for (int g = 1; g <= Tables.GradeMax; g++) if (HasGear(p.part, g)) n++; return n; } }
-        public static int GearAll => Tables.GearParts.Count * Tables.GradeMax;
+        public static int GearGot { get { int n = 0; foreach (var p in Tables.GearParts) for (int g = 1; g <= Tables.GearTop; g++) if (HasGear(p.part, g)) n++; return n; } }
+        public static int GearAll => Tables.GearParts.Count * Tables.GearTop;     // 11-22 오픈 스펙: 보이는 등급까지
         public static int ChipGot { get { int n = 0; foreach (var c in Tables.Chips) if (ChipBest(c.id) > 0) n++; return n; } }
         public static int ChipAll => Tables.Chips.Count;
     }

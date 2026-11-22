@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -85,7 +86,7 @@ namespace EarthDef.EditorTools
             Game.ToLobby(); yield return Wait(0.3f); Popup.CloseAll();
             Looks.Open(2); yield return Wait(0.5f);
             int cRows = 0; foreach (var c in Tables.Costumes) if (GameObject.Find("C_" + c.id)) cRows++;
-            Check(GameObject.Find("Sub3") && cRows == Tables.Costumes.Count && GameObject.Find("Preview"), $"외형 탭: [터렛 · 기지 · 코스튬 · 탈것] · 코스튬 {cRows}줄 · 위 미리 보기");
+            Check(GameObject.Find("Sub3") && cRows == Tables.Costumes.Count(r => Store.ShowLook(r, false)) && GameObject.Find("Preview"), $"외형 탭: [터렛 · 기지 · 코스튬 · 탈것] · 코스튬 {cRows}줄(숨김 빼고 · 가진 것은 보임) · 위 미리 보기");
             {
                 var body = GameObject.Find("Preview/Sky/Look/Body")?.GetComponent<Image>(); var mb = GameObject.Find("Preview/Sky/Look/MountBack")?.GetComponent<Image>();
                 var mf = GameObject.Find("Preview/Sky/Look/MountFront")?.GetComponent<Image>();
@@ -105,8 +106,8 @@ namespace EarthDef.EditorTools
             Capture("r10_02_looks_preview");
             Looks.Open(3); yield return Wait(0.5f);
             int mRows = 0; foreach (var m in Tables.Mounts) if (GameObject.Find("M_" + m.id)) mRows++;
-            var rowIcon = GameObject.Find("M_trex/Icon/Look/Body")?.GetComponent<Image>();
-            Check(mRows == Tables.Mounts.Count && rowIcon && rowIcon.sprite.name.EndsWith("wizard_float"), $"탈것 {mRows}줄 · 목록 그림 = 지금 코스튬을 태운 모습");
+            var rowIcon = GameObject.Find("M_surf/Icon/Look/Body")?.GetComponent<Image>();
+            Check(mRows == Tables.Mounts.Count(r => Store.ShowLook(r, true)) && rowIcon && rowIcon.sprite.name.EndsWith("wizard_float"), $"탈것 {mRows}줄 · 목록 그림 = 지금 코스튬을 태운 모습");
             Capture("r10_03_looks_mount");
             yield return ScrollLooksEnd("r10_03b_looks_mount_end");
             wiz.stat1 = ""; wiz.val1 = 0; uni.stat1 = ""; uni.val1 = 0; uni.stat2 = ""; uni.val2 = 0;

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>오픈 스펙 숨김 결과</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  h3{font-size:17px;margin:20px 0 6px}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)} .tip.red{background:var(--red-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:200px;max-width:270px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption,.wide figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  figure.wide{margin:10px 0} figure.wide img{width:100%;max-width:900px;border:4px solid #3b281c;border-radius:16px;display:block}
+  table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0}
+  th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f6efe2;white-space:nowrap}
+  .new{display:inline-block;font-size:11px;border-radius:5px;padding:0 5px;background:#e4eef8;color:#2f5f8a;font-weight:bold;margin-left:4px}
+  .chg{display:inline-block;font-size:11px;border-radius:5px;padding:0 5px;background:#fdf0dc;color:#c4741f;font-weight:bold;margin-left:4px}
+  .del{display:inline-block;font-size:11px;border-radius:5px;padding:0 5px;background:#fbe6e0;color:#a33b2a;font-weight:bold;margin-left:4px}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style></head><body><main>
+<h1>오픈 스펙 — 나머지 숨김 반영</h1>
+<p class="note">2026-11-22 · 요청: "오픈_스펙_기획서.html 문서를 참고해서 나머지 데이터들은 숨김처리 해줘" (기준 = 문서 v0.2 · 오픈 스펙 정리.xlsx 반영본) · 체크·의견 키 earthdef-openhide-1122</p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석 — 모두 표 칸 하나로 바꿀 수 있어요)</b><ul>
+<li><b>기지 돔 "희귀 2번(공격력)"</b>은 문서에서 아직 미정이라 <b>가시 돔(thorn)</b>을 열어 두었습니다 (때리면 반격 = 공격 쪽). 별바다 장막 · 황금 돔은 숨김. 바꾸려면 <code>Frame.xlsx</code> Enabled 칸.</li>
+<li><b>회로 천장 55번</b>은 그대로 두고, 상자 최대가 영웅이 되어 <b>천장 = 영웅 확정</b> (결정 칸 ls2-chip-pity 비어 있음).</li>
+<li><b>"합성 전용"을 전투 드롭 · 출석 · 미션 보상에도</b> 적용: 회로는 영웅까지, 장비는 전설까지만 떨어짐 (예전엔 엘리트 후반에 장비 신화가 떨어졌음). 되돌리기 = Config <code>Box_Grade_Max</code> 6 · <code>Chip_Box_Grade_Max</code> 5.</li>
+<li><b>이미 가진 숨긴 외형은 목록에 보임</b> — 테스트 중에 산 것을 잃지 않게. 안 가진 숨긴 것은 안 보임.</li>
+</ul></div>
+
+<h2>숨긴 것 · 연 것</h2>
+<table>
+<tr><th>구분</th><th>보임 (오픈)</th><th>숨김 (업데이트 때)</th><th>바꾸는 곳</th></tr>
+<tr><td>코스튬</td><td>10 — 우주 대원 · 아기 오리 잠옷 · 별밤 파자마 · 노란 우비 · 공룡 잠옷 · 닌자 · 사자 잠옷 · 판다 잠옷 · 카피 대왕 · 온천 유자</td><td>17</td><td>Look.xlsx Costume <code>Enabled</code></td></tr>
+<tr><td>탈것</td><td>10 — 없음 · 오리 보트 · 별똥별 · 무당벌레 · 마법 빗자루 · 무지개 해마 · 통통 웰시코기 · 은빛 서프보드 · 숲속 유니콘 · 온천 나무 욕조</td><td>7</td><td>Look.xlsx Mount <code>Enabled</code></td></tr>
+<tr><td>기지 돔</td><td>기본 · 무지개 · 가시 · 꽃 · 얼음</td><td>별바다 장막 · 황금 돔</td><td>Frame.xlsx <code>Enabled</code></td></tr>
+<tr><td>회로 등급</td><td>1~5 (전설까지) · 상자 · 드롭 · 보상은 영웅까지, 전설은 합성으로만</td><td>신화 · 궁극</td><td>Config <code>Chip_Grade_Top</code> 5 · <code>Chip_Box_Grade_Max</code> 4</td></tr>
+<tr><td>장비 등급</td><td>1~6 (신화까지) · 상자 · 드롭 · 보상은 전설까지, 신화는 합성으로만</td><td>궁극</td><td>Config <code>Gear_Grade_Top</code> 6 · <code>Box_Grade_Max</code> 5</td></tr>
+<tr><td>터렛 · 스킨 · 회로 종류</td><td>18 · 17 · 86 그대로 (문서 "그대로 유지")</td><td>-</td><td>-</td></tr>
+</table>
+<p class="note">숨긴 등급은 상자 · 전투 · 보상 · 합성 · 도감 · 치트 어디서도 안 나옵니다. 확률 창은 두 상자의 최대가 달라져 <b>장비 상자 · 회로 상자 확률을 따로</b> 보여 줍니다 (회로 상자는 전설 몫을 뺀 나머지로 다시 나눈 실제 확률).</p>
+
+<h2>화면</h2>
+<div class="shots">
+<figure><img src="캡쳐본 모음/오픈_스펙_숨김/op_01_costume.png" alt="코스튬 10종"><figcaption>코스튬 10종</figcaption></figure>
+<figure><img src="캡쳐본 모음/오픈_스펙_숨김/op_02_mount.png" alt="탈것 10종"><figcaption>탈것 10종</figcaption></figure>
+<figure><img src="캡쳐본 모음/오픈_스펙_숨김/op_03_dome.png" alt="기지 돔 5개"><figcaption>기지 돔 5개</figcaption></figure>
+<figure><img src="캡쳐본 모음/오픈_스펙_숨김/op_05_shop_box.png" alt="상자 줄 — 전설 / 영웅 확정까지 55번"><figcaption>상자 줄 — 전설 / 영웅 확정까지 55번</figcaption></figure>
+<figure><img src="캡쳐본 모음/오픈_스펙_숨김/op_06_rates.png" alt="확률 창 — 장비 · 회로 상자 따로"><figcaption>확률 창 — 장비 · 회로 상자 따로</figcaption></figure>
+<figure><img src="캡쳐본 모음/오픈_스펙_숨김/op_07_codex_gear.png" alt="장비 도감 — 신화까지 36칸"><figcaption>장비 도감 — 신화까지 36칸</figcaption></figure>
+<figure><img src="캡쳐본 모음/오픈_스펙_숨김/op_08_codex_chip.png" alt="회로 도감 설명 — 전설까지"><figcaption>회로 도감 설명 — 전설까지</figcaption></figure>
+</div>
+
+<h2>시험</h2>
+<p>새 시험 <code>PlayTest.RunOpen</code> 22줄 · 기본 137 · 코스튬 · 3차 107 · 9차 52 · 12차 38 · Closed 24 — <b>오류 0</b>. 옛 시험 3곳은 "회로 궁극"으로 값을 재던 줄이라, 그 줄만 잠깐 예전 상한으로 재게 고쳤습니다 (게임 문제 아님).</p>
+
+<h2>아직 안 한 것 (문서 결정 칸 대기)</h2>
+<div class="tip gray"><ul>
+<li>가격 · 보유/착용 능력치 · 영웅/전설 액티브 스킬 — 결정 칸 ls2-price · ls2-stat-model · ls2-costume-sk · ls2-mount-sk</li>
+<li>무료 해금(7일 출석 아기 오리 · St.10 별밤 파자마 · 14일 출석 오리 보트 · St.15 별똥별) — 지금은 상점 임시 가격(300 · 500)으로 팜</li>
+<li>돔 이름 바꾸기(꽃 돔 → 회복 돔 · 얼음 돔 → 서리 돔) · 돔 효과 개편</li>
+<li>밸런스: 회로 전설 · 장비 신화 상한으로 후반(70~100) 다시 재기 필요</li>
+</ul></div>
+
+<h2>확인 칸</h2>
+<ul class="todo">
+<li data-id="o-dome"><label><input type="checkbox"><span><span class="tag">해석</span>희귀 2번 돔 = 가시 돔 (추천) — 다른 돔이면 의견에<span class="why">후보: 별바다 장막(starsea) · 가시 돔(thorn) · 황금 돔(gold)</span></span></label></li>
+<li data-id="o-pity"><label><input type="checkbox"><span><span class="tag">해석</span>회로 천장 = 55번에 영웅 확정 (추천) — 횟수를 줄이려면 의견에<span class="why">예: 30~40번 · Config <code>Box_Pity</code> 는 장비 · 회로 같이 씀 — 따로 하려면 칸을 나눔</span></span></label></li>
+<li data-id="o-drop"><label><input type="checkbox"><span><span class="tag">해석</span>전투 드롭 · 보상도 상자 최대까지 (회로 영웅 · 장비 전설)<span class="why">드롭은 예전처럼 더 높게 두고 상자만 막으려면 의견에</span></span></label></li>
+<li data-id="o-owned"><label><input type="checkbox"><span><span class="tag">해석</span>이미 가진 숨긴 외형은 보이게 둠<span class="why">완전히 숨기려면 의견에 (그땐 입고 있던 것은 기본으로 바뀜)</span></span></label></li>
+<li data-id="o-next"><label><input type="checkbox"><span><span class="tag">다음</span>문서 결정 칸 6개(돔 · 스킬 · 천장 · 스탯 구조 · 가격)를 정해 주시면 가격 · 능력치 · 무료 해금 · 스킬 반영<span class="why">오픈_스펙_기획서.html 맨 아래 결정 칸에 적어 주세요</span></span></label></li>
+</ul>
+<script>
+(function(){
+  var KEY='earthdef-openhide-1122', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</main></body></html>

@@ -37,7 +37,7 @@ namespace EarthDef
             {
                 UIKit.Label(c, part.name, 32, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(18, y, 400, 46);
                 y += 50;
-                for (int g = 1; g <= Tables.GradeMax; g++)
+                for (int g = 1; g <= Tables.GearTop; g++)     // 11-22 오픈 스펙: 보이는 등급까지
                 {
                     int grade = g; var pr = part;
                     bool has = Codex.HasGear(part.part, g);
@@ -120,7 +120,7 @@ namespace EarthDef
             pt.horizontalOverflow = HorizontalWrapMode.Wrap; pt.rectTransform.TL(214, 220, 640, 50);
             UIKit.Label(p.win, L.T("codex_range"), 30, Art.Ink, TextAnchor.MiddleLeft, false).rectTransform.TL(44, 288, 400, 48);
             float y = 342;
-            for (int q = 1; q <= Tables.GradeMax; q++)
+            for (int q = 1; q <= Tables.ChipTop; q++)
             {
                 var gr = Tables.Grade(q);
                 var bg = UIKit.Panel(p.win, q <= best ? "card_white" : "slot", "Q" + q); bg.rectTransform.TL(40, y, 820, 92);

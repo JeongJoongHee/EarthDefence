@@ -630,8 +630,9 @@ namespace EarthDef
                 for (int i = 0; i < n; i++)
                 {
                     int g = Gear.DropGrade(stageNo, eliteMode, rnd);
-                    if (rnd.NextDouble() < Tables.C("Drop_Gear_Chance", 0.4)) { var it = Gear.NewGear(g, null, rnd); drops.Add(it.Name); dropGear++; }
-                    else { var c = Gear.NewChip(g, null, rnd); drops.Add(c.Name); dropChip++; }
+                    // 11-22 오픈 스펙: 떨어지는 것도 상자 최대까지 (장비 전설 · 회로 영웅 — 그 위는 합성으로만)
+                    if (rnd.NextDouble() < Tables.C("Drop_Gear_Chance", 0.4)) { var it = Gear.NewGear(Mathf.Min(g, Store.BoxMaxFor(true)), null, rnd); drops.Add(it.Name); dropGear++; }
+                    else { var c = Gear.NewChip(Mathf.Min(g, Store.BoxMaxFor(false)), null, rnd); drops.Add(c.Name); dropChip++; }
                 }
             }
             Meta.MissionAdd("play");

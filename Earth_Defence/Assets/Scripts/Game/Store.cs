@@ -40,15 +40,15 @@ namespace EarthDef
         {
             switch (it.kind)
             {
-                case "gear_box": for (int i = 0; i < n; i++) { var g = Gear.NewGear(PityGrade(ref S.pityGear, rnd), null, rnd); got.Add(GotItem.Of(g)); } break;
-                case "chip_box": for (int i = 0; i < n; i++) { var c = Gear.NewChip(PityGrade(ref S.chipPity, rnd), null, rnd); got.Add(GotItem.Of(c)); } break;
+                case "gear_box": for (int i = 0; i < n; i++) { var g = Gear.NewGear(PityGrade(ref S.pityGear, rnd, true), null, rnd); got.Add(GotItem.Of(g)); } break;
+                case "chip_box": for (int i = 0; i < n; i++) { var c = Gear.NewChip(PityGrade(ref S.chipPity, rnd, false), null, rnd); got.Add(GotItem.Of(c)); } break;
                 case "free_box":
                 case "ad_box":
                     for (int i = 0; i < n; i++)
                     {
-                        int g = Mathf.Min(BoxMax, Gear.DropGrade(Mathf.Max(1, S.best), false, rnd));   // 6차: 무료 · 광고 상자도 전설까지
-                        if (rnd.NextDouble() < 0.5) { var x = Gear.NewGear(g, null, rnd); got.Add(GotItem.Of(x)); }
-                        else { var c = Gear.NewChip(g, null, rnd); got.Add(GotItem.Of(c)); }
+                        int g = Gear.DropGrade(Mathf.Max(1, S.best), false, rnd);   // 6차: 무료 · 광고 상자도 상자 최대까지 (11-22: 장비 · 회로 따로)
+                        if (rnd.NextDouble() < 0.5) { var x = Gear.NewGear(Mathf.Min(BoxMaxFor(true), g), null, rnd); got.Add(GotItem.Of(x)); }
+                        else { var c = Gear.NewChip(Mathf.Min(BoxMaxFor(false), g), null, rnd); got.Add(GotItem.Of(c)); }
                     }
                     break;
                 case "stamina": Meta.AddStamina((int)it.value); got.Add(GotItem.Res("energy", $"{L.T("r_stamina")} +{it.value:0}")); break;
@@ -71,9 +71,9 @@ namespace EarthDef
         }
 
         /// <summary>상자 등급 (Shop.xlsx Box_Rate 확률 그대로 — 화면 [확률] 과 같음)</summary>
-        public static int BoxGrade(System.Random rnd)
+        public static int BoxGrade(System.Random rnd, bool gear = true)
         {
-            int max = BoxMax;
+            int max = BoxMaxFor(gear);
             double sum = 0; foreach (var (g, r) in Tables.BoxRates) if (g <= max) sum += r;
             double x = rnd.NextDouble() * sum;
             foreach (var (g, r) in Tables.BoxRates) { if (g > max) continue; x -= r; if (x < 0) return g; }
@@ -81,20 +81,27 @@ namespace EarthDef
         }
 
         // 6차 수정안 "상자 뽑기는 전설까지 (신화부터는 합성으로만) · 55뽑이면 전설 100% (천장) — 못 뽑으면 쌓이고 전설을 뽑으면 처음부터"
-        /// <summary>상자에서 나오는 가장 높은 등급 (Config Box_Grade_Max 5 = 전설)</summary>
-        public static int BoxMax => Mathf.Clamp(Tables.Ci("Box_Grade_Max", 5), 1, Tables.GradeMax);
-        /// <summary>천장 등급 = 전설(5) — 상한이 더 낮으면 상한</summary>
-        public static int PityTarget => Mathf.Min(5, BoxMax);
+        /// <summary>장비 상자에서 나오는 가장 높은 등급 (Config Box_Grade_Max 5 = 전설)</summary>
+        public static int BoxMax => BoxMaxFor(true);
+        /// <summary>11-22 오픈 스펙: 상자 · 전투 드롭 · 보상 최대 등급 — 장비 Box_Grade_Max 5(전설) · 회로 Chip_Box_Grade_Max 4(영웅), 그 위 한 등급은 합성으로만. 보이는 상한(Gear/Chip_Grade_Top)을 넘지 않음</summary>
+        public static int BoxMaxFor(bool gear) => gear
+            ? Mathf.Clamp(Tables.Ci("Box_Grade_Max", 5), 1, Tables.GearTop)
+            : Mathf.Clamp(Tables.Ci("Chip_Box_Grade_Max", Tables.Ci("Box_Grade_Max", 5)), 1, Tables.ChipTop);
+        /// <summary>천장 등급 = 전설(5) — 상한이 더 낮으면 상한 (11-22: 회로 상자는 영웅)</summary>
+        public static int PityTarget => PityTargetFor(true);
+        public static int PityTargetFor(bool gear) => Mathf.Min(5, BoxMaxFor(gear));
         public static int PityN => Tables.Ci("Box_Pity", 55);
+        /// <summary>상자 줄에 보이는 "OO 확정까지 N번"</summary>
+        public static string PityText(string kind) => L.F("pity_left", PityLeft(kind), Tables.Grade(PityTargetFor(kind != "chip_box")).name);
         /// <summary>이 상자 종류로 전설 확정까지 남은 횟수 (이번 회 포함: 1 = 다음 번이 확정)</summary>
         public static int PityLeft(string kind) => Mathf.Max(1, PityN - (kind == "chip_box" ? S.chipPity : S.pityGear));
         /// <summary>한 번 뽑기: 횟수를 하나 쌓고, 천장에 닿으면 전설 · 전설 이상이 나오면 셈을 처음부터 (10+1 은 11번으로 셈)</summary>
-        public static int PityGrade(ref int cnt, System.Random rnd)
+        public static int PityGrade(ref int cnt, System.Random rnd, bool gear = true)
         {
-            int g = BoxGrade(rnd);
+            int g = BoxGrade(rnd, gear), top = PityTargetFor(gear);
             cnt++;
-            if (PityN > 0 && cnt >= PityN && g < PityTarget) g = PityTarget;
-            if (g >= PityTarget) cnt = 0;
+            if (PityN > 0 && cnt >= PityN && g < top) g = top;
+            if (g >= top) cnt = 0;
             return g;
         }
 
@@ -165,6 +172,9 @@ namespace EarthDef
 
         // ---------- 11-20 코스튬 · 탈것 (산 것은 바로 착용) ----------
         public static bool Owns(LookRow r, bool mount) => mount ? S.HasMount(r.id) : S.HasCostume(r.id);
+        /// <summary>11-22 오픈 스펙: 외형 목록에 보일지 — 숨긴 것(Enabled 0)은 안 보임, 단 이미 가진 것은 보임(산 것을 잃지 않게)</summary>
+        public static bool ShowLook(LookRow r, bool mount) => r.enabled || Owns(r, mount) || Wearing(r, mount);
+        public static bool ShowFrame(FrameRow f) => f.enabled || S.FrameStar(f.id) > 0 || S.frame == f.id;
         public static bool Wearing(LookRow r, bool mount) => (mount ? S.mount : S.costume) == r.id;
         public static bool BuyLook(LookRow r, bool mount)
         {

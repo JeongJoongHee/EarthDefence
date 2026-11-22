@@ -213,8 +213,9 @@ namespace EarthDef.EditorTools
                 for (int i = 1; i < 12; i++) Gear.NewChip(1 + i % 6, Tables.Chips[i * 3 % Tables.Chips.Count].id);
             }
             CodexUI.view = 0; CodexUI.Open(); yield return Wait(0.4f);
-            Check(GameObject.Find("G_weapon_5") != null && GameObject.Find("G_weapon_7") != null, "장비 도감: 부위 x 등급 칸");
-            Check(GameObject.Find("G_weapon_7").transform.Find("Lock") != null && GameObject.Find("G_weapon_5").transform.Find("Lock") == null, "못 얻은 칸은 흐리게 + 자물쇠");
+            string topG = "G_weapon_" + Tables.GearTop;     // 11-22 오픈 스펙: 신화(6)까지
+            Check(GameObject.Find("G_weapon_5") != null && GameObject.Find(topG) != null, "장비 도감: 부위 x 등급 칸");
+            Check(GameObject.Find(topG)?.transform.Find("Lock") != null && GameObject.Find("G_weapon_5").transform.Find("Lock") == null, "못 얻은 칸은 흐리게 + 자물쇠");
             Capture("r9_13_codex_gear");
             CodexUI.GearInfo(Tables.Part("weapon"), 5); yield return Wait(0.3f); Capture("r9_14_codex_gear_info");
             Popup.CloseAll(); CodexUI.view = 1; CodexUI.Open(); yield return Wait(0.4f);

@@ -23,7 +23,7 @@ namespace EarthDef
             float y = 116;
             // ---- 등급
             Head(p, ref y, L.T("cheat_grade"));
-            for (int g = 1; g <= Tables.GradeMax; g++)
+            for (int g = 1; g <= Tables.GearTop; g++)     // 11-22 오픈 스펙: 보이는 등급까지 (회로는 NewChip 이 전설까지로 맞춤)
             {
                 int gg = g; var gr = Tables.Grade(g);
                 var b = UIKit.Btn(p.win, "pill", null, 26, () => { grade = gg; p.Close(false); Open(); }, "G" + g);

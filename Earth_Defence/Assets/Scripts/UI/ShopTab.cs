@@ -107,7 +107,7 @@ namespace EarthDef
             {   // ---- 상자 (장비 · 회로)
                 Head(ref y, L.T("shop_box"));
                 var rb = UIKit.Btn(list, "btn_orange", L.T("rates"), 28, RatePopup, "Rates"); ((RectTransform)rb.transform).TL(840, y - 78, 160, 64);
-                var bn = UIKit.Label(list, L.T("box_max_note"), 24, Art.Purple, TextAnchor.MiddleLeft, false); bn.rectTransform.TL(28, y - 6, 960, 40);
+                var bn = UIKit.Label(list, BoxMaxNote, 24, Art.Purple, TextAnchor.MiddleLeft, false); bn.rectTransform.TL(28, y - 6, 960, 40);
                 y += 40;
                 foreach (var it in Tables.ShopItems) if (SubOf(it) == 1) y = ItemRow(it, y);
             }
@@ -220,8 +220,8 @@ namespace EarthDef
             string desc = it.desc + (it.perDay > 0 ? "   " + L.F("per_day", it.perDay - Store.Left(it), it.perDay) : "");
             UIKit.Label(r.transform, desc, 24, Art.Soft, TextAnchor.MiddleLeft, false).rectTransform.TL(144, 72, 560, 48);
             if (Store.PityN > 0 && it.kind is "gear_box" or "chip_box")
-            {   // 6차: 천장 — 전설 확정까지 남은 횟수 (장비 · 회로 상자 따로 셈, 10+1 은 같은 셈)
-                var pt = UIKit.Label(r.transform, L.F("pity_left", Store.PityLeft(it.kind)), 22, Art.Purple, TextAnchor.MiddleLeft, false);
+            {   // 6차: 천장 — 확정까지 남은 횟수 (장비 · 회로 상자 따로 셈, 10+1 은 같은 셈 · 11-22: 장비 전설 · 회로 영웅)
+                var pt = UIKit.Label(r.transform, Store.PityText(it.kind), 22, Art.Purple, TextAnchor.MiddleLeft, false);
                 pt.rectTransform.TL(390, 16, 320, 50); pt.name = "Pity";
             }
             bool can = Store.Left(it) > 0 && S.dia >= it.costDia;
@@ -276,22 +276,40 @@ namespace EarthDef
         /// <summary>상자 등급 확률 (확률형 아이템 표시 — Shop.xlsx Box_Rate 그대로)</summary>
         /// <summary>시험용</summary>
         public static void RateOpen() => RatePopup();
-        static void RatePopup()
+        /// <summary>"장비 상자는 전설까지, 회로 상자는 영웅까지 나와요 (그 위는 합성으로만)"</summary>
+        public static string BoxMaxNote => L.F("box_max_note", Tables.Grade(Store.BoxMaxFor(true)).name, Tables.Grade(Store.BoxMaxFor(false)).name);
+        /// <summary>상자 한 종류에서 그 등급이 나올 확률 % (상자 최대 위 등급은 빼고 나머지로 나눔 = Store.BoxGrade 와 같은 식)</summary>
+        public static double BoxRate(int grade, bool gear)
         {
-            int shown = 0; foreach (var (g, r) in Tables.BoxRates) if (g <= Store.BoxMax && r > 0) shown++;
-            var p = Popup.Make(L.T("rate_title"), 760, 420 + shown * 70);
-            float y = 130;
+            int max = Store.BoxMaxFor(gear); if (grade > max) return 0;
+            double sum = 0, mine = 0; foreach (var (g, r) in Tables.BoxRates) { if (g > max) continue; sum += r; if (g == grade) mine += r; }
+            return sum > 0 ? mine / sum * 100 : 0;
+        }
+        static void RatePopup()
+        {   // 11-22 오픈 스펙: 장비 상자(전설까지) · 회로 상자(영웅까지)의 최대 등급이 달라 확률도 상자마다 따로 보임
+            int top = Mathf.Max(Store.BoxMaxFor(true), Store.BoxMaxFor(false));
+            int shown = 0; foreach (var (g, r) in Tables.BoxRates) if (g <= top && r > 0) shown++;
+            var p = Popup.Make(L.T("rate_title"), 760, 520 + shown * 70);
+            float y = 128;
+            UIKit.Label(p.win, L.T("rate_gear"), 28, Art.Brown, TextAnchor.MiddleRight, false).rectTransform.TL(300, y, 190, 50);
+            UIKit.Label(p.win, L.T("rate_chip"), 28, Art.Brown, TextAnchor.MiddleRight, false).rectTransform.TL(510, y, 190, 50);
+            y += 62;
             foreach (var (g, r) in Tables.BoxRates)
             {
-                if (g > Store.BoxMax || r <= 0) continue;     // 6차: 신화 · 궁극은 상자에서 안 나옴 (합성으로만)
+                if (g > top || r <= 0) continue;     // 6차: 상자 최대 위 등급은 상자에서 안 나옴 (합성으로만)
                 var gr = Tables.Grade(g);
-                var tag = UIKit.Panel(p.win, "pill", "G"); tag.color = gr.color; tag.rectTransform.TL(140, y, 220, 56);
+                var tag = UIKit.Panel(p.win, "pill", "G"); tag.color = gr.color; tag.rectTransform.TL(60, y, 220, 56);
                 UIKit.Label(tag.transform, gr.name, 30, Art.Ink, TextAnchor.MiddleCenter, false).rectTransform.Fill(0, 4, 0, 0);
-                UIKit.Label(p.win, r.ToString("0.##") + "%", 34, Art.Ink, TextAnchor.MiddleRight, false).rectTransform.TL(380, y, 220, 56);
+                for (int k = 0; k < 2; k++)
+                {
+                    double v = BoxRate(g, k == 0);
+                    var t = UIKit.Label(p.win, v > 0 ? v.ToString("0.##") + "%" : "-", 34, v > 0 ? Art.Ink : Art.Soft, TextAnchor.MiddleRight, false);
+                    t.rectTransform.TL(300 + k * 210, y, 190, 56); t.name = (k == 0 ? "RG" : "RC") + g;
+                }
                 y += 70;
             }
-            p.Text(L.T("box_max_note"), y + 6, 26, Art.Purple, 40);
-            if (Store.PityN > 0) p.Text(L.F("pity_note", Store.PityN), y + 50, 26, Art.Purple, 40);
+            p.Text(BoxMaxNote, y + 6, 26, Art.Purple, 40);
+            if (Store.PityN > 0) p.Text(L.F("pity_note", Store.PityN, Tables.Grade(Store.PityTargetFor(true)).name, Tables.Grade(Store.PityTargetFor(false)).name), y + 50, 26, Art.Purple, 40);
             p.Btn("btn_green", L.T("ok"), 0, 40, 300, p.Close, 100);
         }
 
@@ -425,8 +443,9 @@ namespace EarthDef
             var c = UIKit.Scroll(area, "Scroll"); c.parent.GetComponent<RectTransform>().Fill();
             float y = 6;
             if (sub == 0) foreach (var k in Tables.Skins) y = ShopTab.SkinRow(c, k, y, Re);
-            else if (sub == 1) foreach (var f in Tables.Frames) y = ShopTab.FrameRow(c, f, y, Re);
-            else foreach (var r in sub == 3 ? Tables.Mounts : Tables.Costumes) y = LookRow(c, r, sub == 3, y, Re);
+            // 11-22 오픈 스펙: 숨긴 것(Enabled 0)은 목록에서 뺌 — 이미 가진 것은 보임
+            else if (sub == 1) foreach (var f in Tables.Frames) { if (Store.ShowFrame(f)) y = ShopTab.FrameRow(c, f, y, Re); }
+            else foreach (var r in sub == 3 ? Tables.Mounts : Tables.Costumes) { if (Store.ShowLook(r, sub == 3)) y = LookRow(c, r, sub == 3, y, Re); }
             UIKit.SetScrollH(c, y + 10);
             sr = c.parent.GetComponent<ScrollRect>(); Canvas.ForceUpdateCanvases(); sr.verticalNormalizedPosition = scroll;
         }

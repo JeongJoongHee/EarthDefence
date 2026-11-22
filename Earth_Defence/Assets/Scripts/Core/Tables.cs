@@ -54,6 +54,8 @@ namespace EarthDef
     public class FrameRow
     {
         public string id, name, effect, desc; public double baseV, perStar, cd; public int price; public Color tint, glow;
+        /// <summary>11-22 오픈 스펙: 0 = 숨김(업데이트 때 열 것) — 화면 목록에 안 나옴</summary>
+        public bool enabled = true;
         public double Val(int star) => baseV + perStar * (Mathf.Max(1, star) - 1);
         public string Desc(int star) { double v = Val(star); return desc.Replace("{0}", v.ToString(v == Math.Floor(v) ? "0" : "0.##")).Replace("{1}", cd.ToString("0")); }
     }
@@ -67,6 +69,8 @@ namespace EarthDef
     public class LookRow
     {
         public string id, name, desc, stat1, stat2; public double val1, val2; public int price; public bool bob; public float lift, scale = 1f;
+        /// <summary>11-22 오픈 스펙: 0 = 숨김(업데이트 때 열 것) — 외형 목록에 안 나옴</summary>
+        public bool enabled = true;
         public bool HasStat => (!string.IsNullOrEmpty(stat1) && val1 != 0) || (!string.IsNullOrEmpty(stat2) && val2 != 0);
     }
     public class ShopItemRow { public string id, name, kind, desc; public int costDia, perDay; public double value; }
@@ -108,6 +112,9 @@ namespace EarthDef
         public static List<StoryRow> StoryOf(string id) => Story.TryGetValue(id, out var l) ? l : null;
         public static LookRow Costume(string id) => Costumes.Find(c => c.id == id);
         public static LookRow Mount(string id) => Mounts.Find(c => c.id == id);
+        /// <summary>11-22 오픈 스펙: 화면에 보이는 것만 (Enabled 0 = 숨김)</summary>
+        public static List<LookRow> OpenLooks(bool mount) => (mount ? Mounts : Costumes).FindAll(r => r.enabled);
+        public static List<FrameRow> OpenFrames => Frames.FindAll(f => f.enabled);
         public static FrameRow Frame(string id) => Frames.Find(f => f.id == id) ?? (Frames.Count > 0 ? Frames[0] : null);
         public static SkinRow SkinOf(string turret) => Skins.Find(s => s.turret == turret);
 
@@ -195,7 +202,7 @@ namespace EarthDef
                 Frames.Add(new FrameRow
                 {
                     id = r.S("Id"), name = r.S("Name"), effect = r.S("Effect"), desc = r.S("Desc"), baseV = r.D("Base"), perStar = r.D("Per_Star"),
-                    cd = r.D("Cooldown"), price = r.I("Price_Dia"), tint = Art.Hex(r.S("Tint")), glow = Art.Hex(r.S("Glow")),
+                    cd = r.D("Cooldown"), price = r.I("Price_Dia"), tint = Art.Hex(r.S("Tint")), glow = Art.Hex(r.S("Glow")), enabled = r.S("Enabled") != "0",
                 });
             foreach (var r in Read("Skin"))
                 Skins.Add(new SkinRow
@@ -221,7 +228,7 @@ namespace EarthDef
                     list.Add(new LookRow
                     {
                         id = r.S("Id"), name = r.S("Name"), desc = r.S("Desc"), price = r.I("Price_Dia"), stat1 = r.S("Stat1"), val1 = r.D("Val1"), stat2 = r.S("Stat2"), val2 = r.D("Val2"),
-                        bob = r.I("Bob") == 1, lift = r.F("Lift"), scale = r.F("Scale") > 0 ? r.F("Scale") : 1f,
+                        bob = r.I("Bob") == 1, lift = r.F("Lift"), scale = r.F("Scale") > 0 ? r.F("Scale") : 1f, enabled = r.S("Enabled") != "0",
                     });
             foreach (var r in Read("Lobby_Talk", true)) if (!string.IsNullOrEmpty(r.S("Text"))) LobbyTalk.Add(new TalkRow { id = r.S("Id"), text = r.S("Text"), weight = Mathf.Max(1, r.I("Weight")) });
         }
@@ -243,6 +250,10 @@ namespace EarthDef
         public static int MaxTurretLv => TurretLv.Count;
         public static GradeRow Grade(int g) => Grades[Mathf.Clamp(g - 1, 0, Grades.Count - 1)];
         public static int GradeMax => Grades.Count;
+        // 11-22 오픈 스펙: 보이는 가장 높은 등급 — 장비 6(신화) · 회로 5(전설), 그 위는 업데이트 때 (Config Gear_Grade_Top · Chip_Grade_Top)
+        public static int GearTop => Mathf.Clamp(Ci("Gear_Grade_Top", GradeMax), 1, GradeMax);
+        public static int ChipTop => Mathf.Clamp(Ci("Chip_Grade_Top", GradeMax), 1, GradeMax);
+        public static int Top(bool gear) => gear ? GearTop : ChipTop;
         // 11-17 최적화: 장비 능력치 · 이름 · 아이콘을 읽을 때마다 불림 — 람다 찾기(부를 때마다 메모리 할당) 대신 반복문 (부위는 6개)
         public static GearPartRow Part(string p) { for (int i = 0; i < GearParts.Count; i++) if (GearParts[i].part == p) return GearParts[i]; return null; }
         public static int PartIdx(string p) { for (int i = 0; i < GearParts.Count; i++) if (GearParts[i].part == p) return i; return -1; }

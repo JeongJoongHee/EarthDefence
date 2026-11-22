@@ -90,7 +90,7 @@ namespace EarthDef
         /// <summary>합성할 수 있는 짝 (끼운 것은 빼고) — 같은 부위 · 같은 등급 MergeN 개</summary>
         public static List<GearItem> MergeSet(GearItem g)
         {
-            if (g.grade >= Tables.GradeMax) return null;
+            if (g.grade >= Tables.GearTop) return null;
             var same = S.gear.FindAll(x => !x.on && x.part == g.part && x.grade == g.grade);
             if (!g.on && !same.Contains(g)) same.Add(g);
             if (same.Count < MergeN) return null;
@@ -129,7 +129,7 @@ namespace EarthDef
         public static void ScrapChip(ChipItem c) { S.parts += Tables.Ci("Chip_Scrap_Parts", 1) * c.q; S.chips.Remove(c); S.Save(); }
         public static List<ChipItem> ChipMergeSet(ChipItem c)
         {
-            if (c.q >= Tables.GradeMax) return null;
+            if (c.q >= Tables.ChipTop) return null;
             var same = S.chips.FindAll(x => x.at < 0 && x.id == c.id && x.q == c.q);
             if (same.Count < MergeN) return null;
             return same.GetRange(0, MergeN);
@@ -166,7 +166,7 @@ namespace EarthDef
         {
             var d = Counts(gear);
             int n = MergeN;
-            foreach (var kv in d) if (kv.Key.Item2 < Tables.GradeMax) yield return kv.Value / n;
+            foreach (var kv in d) if (kv.Key.Item2 < Tables.Top(gear)) yield return kv.Value / n;
         }
         /// <summary>가방(끼우지 않은 것)에서 같은 것끼리 센 수: 장비 = (부위, 등급) · 회로 = (종류, 등급). 합성 빨간 점 · 일괄 합성 횟수가 같이 씀 (11-17: 물건마다 목록을 새로 훑던 것을 한 번에)</summary>
         public static Dictionary<(string, int), int> Counts(bool gear)
@@ -214,7 +214,7 @@ namespace EarthDef
         {
             rnd ??= new System.Random(Environment.TickCount ^ S.nextUid);
             part ??= Tables.GearParts[rnd.Next(Tables.GearParts.Count)].part;
-            var g = new GearItem { uid = S.nextUid++, part = part, grade = Mathf.Clamp(grade, 1, Tables.GradeMax), lv = 1 };
+            var g = new GearItem { uid = S.nextUid++, part = part, grade = Mathf.Clamp(grade, 1, Tables.GearTop), lv = 1 };
             S.gear.Add(g); Trim(); Codex.Mark(S, g);
             return g;
         }
@@ -230,7 +230,7 @@ namespace EarthDef
                 id = pool[pool.Count - 1].id;
                 foreach (var c in pool) { r -= c.weight; if (r < 0) { id = c.id; break; } }
             }
-            var ch = new ChipItem { uid = S.nextUid++, id = id, q = Mathf.Clamp(q, 1, Tables.GradeMax) };
+            var ch = new ChipItem { uid = S.nextUid++, id = id, q = Mathf.Clamp(q, 1, Tables.ChipTop) };
             S.chips.Add(ch); Trim(); Codex.Mark(S, ch);
             return ch;
         }
@@ -276,8 +276,8 @@ namespace EarthDef
                     for (int i = 0; i < (int)v; i++) S.shards[S.TIdx(open[rnd.Next(open.Count)].id)]++;
                     return $"{L.T("r_shards")} +{v:0}";
                 }
-                case "chip": { var c = NewChip((int)v, null, rnd); return c.Name; }
-                case "gear": { var g = NewGear((int)v, null, rnd); return g.Name; }
+                case "chip": { var c = NewChip(Mathf.Min((int)v, Store.BoxMaxFor(false)), null, rnd); return c.Name; }     // 11-22: 보상도 상자 최대까지
+                case "gear": { var g = NewGear(Mathf.Min((int)v, Store.BoxMaxFor(true)), null, rnd); return g.Name; }
             }
             return kind;
         }

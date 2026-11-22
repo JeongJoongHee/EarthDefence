@@ -1,8 +1,8 @@
-﻿Id,Name,Effect,Base,Per_Star,Cooldown,Price_Dia,Tint,Glow,Desc,,효과 값 = Base + Per_Star x (별-1) · Effect: none · revive · starfall · freeze · thorn · regen · gold · Tint = 돔 색 · Glow = 둘레 빛
-basic,기본 돔,none,0,0,0,0,#ffffff,#cfeeff,효과 없음,,
-prism,무지개 돔,revive,20,10,0,600,#f3dcff,#d9b8ff,한 번 버티기 (체력 {0}%),,
-starsea,별바다 장막,starfall,400,200,40,500,#d8e0ff,#9fb2ff,{1}초마다 별똥별 비 ({0}%),,
-frost,얼음 돔,freeze,1.5,0.5,30,500,#dff6ff,#9fe8ff,{1}초마다 적 {0}초 얼림,,
-thorn,가시 돔,thorn,150,75,0,400,#e8f4d8,#b8e08f,때린 적에게 반격 ({0}%),,
-bloom,꽃 돔,regen,0.5,0.25,5,400,#ffe4ec,#ffb3c8,{1}초마다 체력 {0}% 회복,,
-gold,황금 돔,gold,10,5,0,300,#fff2c8,#ffd34d,골드 +{0}%,,
+﻿Id,Name,Effect,Base,Per_Star,Cooldown,Price_Dia,Tint,Glow,Desc,Enabled,,효과 값 = Base + Per_Star x (별-1) · Effect: none · revive · starfall · freeze · thorn · regen · gold · Tint = 돔 색 · Glow = 둘레 빛
+basic,기본 돔,none,0,0,0,0,#ffffff,#cfeeff,효과 없음,1,,
+prism,무지개 돔,revive,20,10,0,600,#f3dcff,#d9b8ff,한 번 버티기 (체력 {0}%),1,,
+starsea,별바다 장막,starfall,400,200,40,500,#d8e0ff,#9fb2ff,{1}초마다 별똥별 비 ({0}%),0,,
+frost,얼음 돔,freeze,1.5,0.5,30,500,#dff6ff,#9fe8ff,{1}초마다 적 {0}초 얼림,1,,
+thorn,가시 돔,thorn,150,75,0,400,#e8f4d8,#b8e08f,때린 적에게 반격 ({0}%),1,,
+bloom,꽃 돔,regen,0.5,0.25,5,400,#ffe4ec,#ffb3c8,{1}초마다 체력 {0}% 회복,1,,
+gold,황금 돔,gold,10,5,0,300,#fff2c8,#ffd34d,골드 +{0}%,0,,

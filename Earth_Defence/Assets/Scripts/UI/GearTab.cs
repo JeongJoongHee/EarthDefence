@@ -171,7 +171,7 @@ namespace EarthDef
                     var gg = g; t.act = () => GearWindow(gg);
                     if (t.label.fontSize != Art.FontSize(26)) t.label.fontSize = Art.FontSize(26);
                     t.label.text = "Lv " + g.lv;
-                    t.dot.enabled = g.grade < Tables.GradeMax && cnt.TryGetValue((g.part, g.grade), out var k) && k >= need;
+                    t.dot.enabled = g.grade < Tables.GearTop && cnt.TryGetValue((g.part, g.grade), out var k) && k >= need;
                     n++;
                 }
             }
@@ -188,7 +188,7 @@ namespace EarthDef
                     var cc = c; t.act = () => ChipWindow(cc);
                     if (t.label.fontSize != Art.FontSize(22)) t.label.fontSize = Art.FontSize(22);
                     t.label.text = Short(c.Name);
-                    t.dot.enabled = c.q < Tables.GradeMax && cnt.TryGetValue((c.id, c.q), out var k) && k >= need;
+                    t.dot.enabled = c.q < Tables.ChipTop && cnt.TryGetValue((c.id, c.q), out var k) && k >= need;
                     n++;
                 }
             }
@@ -424,7 +424,7 @@ namespace EarthDef
                 p.Close(false); Toast.Show(n.Name); GearWindow(n);
             }, 110);
             p.Btn("btn_red", $"{L.T("scrap")} +{Gear.ScrapParts(g)}", 230, 240, 400, () => { Gear.Scrap(g); p.Close(); }, 110);
-            p.Text(g.grade >= Tables.GradeMax ? "" : $"{L.T("merge")}: {Tables.Grade(g.grade).name} x{Tables.Ci("Merge_N", 3)} > {Tables.Grade(g.grade + 1).name}", 790, 28, Art.Soft);
+            p.Text(g.grade >= Tables.GearTop ? "" : $"{L.T("merge")}: {Tables.Grade(g.grade).name} x{Tables.Ci("Merge_N", 3)} > {Tables.Grade(g.grade + 1).name}", 790, 28, Art.Soft);
         }
 
         // ---------- 회로 창 (4차 수정안: 능력 글자 크게 · 착용 가능 부위를 아이콘 + 이름으로 · 컴팩트) ----------
