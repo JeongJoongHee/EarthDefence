@@ -366,3 +366,6 @@ cheat_reset_ask,"모든 진행(스테이지, 장비, 재화, 외형, 설정)을 
 되돌릴 수 없어요.",,,
 cheat_reset_go,초기화,,,
 cheat_reset_done,처음부터 다시 시작해요,,,
+tinfo_stat_prism,"아군 피해 +{0}% 버프, 쿨다운 {1}초, 화면 전체",,,
+prism_buff,별빛 증폭!,,,
+dome_spent,이번 판에 이미 썼어요,,,

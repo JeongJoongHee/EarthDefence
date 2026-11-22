@@ -41,15 +41,23 @@ namespace EarthDef
             double ordinary = t.Ordinary + CondBonus(t, e);
             if (e.Paralyzed) ordinary += t.S("dmg_vs_para") / 100.0;
             if (t.Has("dmg_by_slow")) ordinary += t.S("dmg_by_slow") / 100.0 * Mathf.Clamp01(e.slow / Mathf.Max(0.01f, Tables.Cf("Slow_Max", 0.5f)));
+            if (t.Has("dmg_vs_slow") && (e.slow > 0.001f || e.Paralyzed)) ordinary += t.S("dmg_vs_slow") / 100.0;   // 11-22 서리 · 빙결 공명 · 열기 융해 · 중력 고정 날
+            var bb = Battle.I;
+            if (bb != null && bb.Buffing)
+            {   // 11-22 별빛 증폭탑: 아군 모두 일반 브래킷 + (대장 카피는 대장 집중 증폭) · 보스 · 엘리트 특공
+                double bd = bb.buffDmg * (t.row.kind == "gun" ? 1 + bb.buffGuardian : 1);
+                if (t.row.kind != "prism") ordinary += bd;
+                if (bb.buffBoss > 0 && (e.row.IsBoss || e.row.IsElite)) ordinary += bb.buffBoss;
+            }
             double late = t.late;   // 3차: 스킨 Final DMG (가지고 있으면)
             crit = R < t.CritRate;
-            double critMul = crit ? Tables.C("Crit_Dmg", 1.25) + (Battle.I?.lo?.critDmg ?? 0) / 100.0 : 1;
+            double critMul = crit ? Tables.C("Crit_Dmg", 1.25) + (Battle.I?.lo?.critDmg ?? 0) / 100.0 + t.S("crit_dmg") / 100.0 + (bb != null && bb.Buffing ? bb.buffCritDmg : 0) : 1;   // 11-22 치명 사격 · 치명 파열 · 극대화 증폭
             // 밸런스 2차: 스테이지 약점(Stage 표 Weak) — 이 스테이지 적은 모두(보스 포함) 그 속성에 약함. 적 자기 약점과 같은 값(Weak_Mul), 겹치진 않음
             var bs = Battle.I; bool stageWeak = bs != null && bs.stage != null && bs.IsStage && !string.IsNullOrEmpty(bs.stage.weak) && bs.stage.weak == t.row.elem;
             double weak = e.row.weak == t.row.elem || stageWeak ? Tables.C("Weak_Mul", 1.5) : e.row.resist == t.row.elem ? Tables.C("Resist_Mul", 0.6) : 1;
             float y = e.VY;   // 11-18 사령탑: 기지 근처 · 먼 적 = 방어선까지 남은 거리로 (예전 세로 높이와 같은 기준)
             double pos = y < Tables.Cf("Pos_Near_Y") ? Tables.C("Pos_Near", 1.1) : y > Tables.Cf("Pos_Far_Y") ? Tables.C("Pos_Far", 0.9) : 1;
-            double d = Atk * ratePct / 100.0 * (1 + ordinary) * (1 + late) * critMul * weak * pos * t.Penalty * (1 + e.vuln) * (1 - e.row.armor);
+            double d = Atk * ratePct / 100.0 * (1 + ordinary) * (1 + late) * critMul * weak * pos * t.Penalty * (1 + e.vuln) * (1 - e.row.armor * (1 - t.ArmorPen));   // 11-22 장갑 무시 (톱날 · 플라즈마 · 관통 부메랑)
             // 칩 "치명 때 적 최대 체력 N% 더" (상한 = 원래 피해 x Crit_Hp_Cap)
             if (t.row.id == "guardian" && Battle.I != null) d *= Battle.I.BurnDmgMul;   // 11-21 대장 카피 버닝
             double ch = Battle.I?.lo?.B("crit_hp") ?? 0;
@@ -91,6 +99,7 @@ namespace EarthDef
                     e.Paralyze(Tables.Cf("Para_Time", 1f) * (1 + (float)t.S("para_time") / 100f));
                 if (t.Has("burn")) e.Burn(Atk * Tables.C("Burn_Rate", 40) / 100.0 * (1 + t.Ordinary) * (1 + t.S("burn_amp") / 100.0), Tables.Cf("Burn_Time", 3f), t);
                 if (t.Has("vuln")) e.Vulnerable(t.S("vuln") / 100.0, Tables.Cf("Vuln_Time", 4f));
+                if (t.Has("freeze") && R < t.S("freeze")) Freeze(e);      // 11-22 서리 빙결 (보스는 안 얼음)
             }
             if (t.Has("explode") && R < t.S("explode"))
                 Explode(t, at, Tables.Cf("Explode_Radius", 0.9f) * (1 + (float)t.S("explode_area") / 100f), Tables.C("Explode_Rate", 60) * (1 + t.S("explode_dmg") / 100.0));
@@ -122,6 +131,35 @@ namespace EarthDef
             // 11-16 저녁: 벌도 적이 죽은 자리 대신 벌집에서 날아감 (사용자 "벌집에서 나가게")
             if (t.Has("kill_bee") && R < t.S("kill_bee")) Battle.I?.Add(new Bee(t, HiveHead(at), 3, Tables.TurretById["hive"].rate * 0.5));
             if (t.row.kind == "hive" && t.Has("echo")) Battle.I?.Add(new Bee(t, HiveHead(at), 3 + (int)t.S("echo_hits"), t.row.rate * 0.6, echo: true));
+            // 11-22 화염 폭풍: 처치 때 미사일 터렛에서 작은 미사일 (없으면 화염방사기에서)
+            if (t.Has("kill_mini") && R < t.S("kill_mini")) MiniMissile(t, at);
+        }
+
+        /// <summary>11-22 빙결 (서리 눈꽃포 · 얼음 소용돌이): 마비처럼 멈춤 + 하늘색 고리. 보스는 마비 규칙대로 안 얼음</summary>
+        public static void Freeze(Enemy e, float time = 0)
+        {
+            if (e == null || e.dead) return;
+            e.Paralyze(time > 0 ? time : Tables.Cf("Freeze_Time", 1.2f));
+            if (!e.row.IsBoss) Fx.Ring(e.Pos, Mathf.Max(0.4f, e.radius * 1.2f), Art.Hex("#9fe8ff"));
+        }
+
+        static void MiniMissile(TurretInst t, Vector2 at)
+        {
+            var b = Battle.I; if (b == null) return;
+            var mu = b.run.Get("missile")?.unit;
+            Vector2 from = mu ? mu.Head : (t.unit ? t.unit.Head : at);
+            double rate = Tables.TurretById["missile"].rate * 0.4;
+            var m = new Projectile(t, "mini_missile", from, Vector2.up, 8f, rate, 0, 1f) { turn = 6f, life = 4f, hitR = 0.18f, target = b.Nearest(at, 4f) };
+            m.onHit = (p, en) => { Hit(t, en, rate, false); Explode(t, p.pos, 0.6f, rate * 0.6, Elem.Color("fire")); };
+            b.Add(m);
+        }
+
+        /// <summary>11-22 별빛 증폭탑 약점 파동 → 표식된 적을 잡으면 별빛 폭발 (Battle.OnKill 에서 부름 — 누가 잡든)</summary>
+        public static void MarkPop(Enemy e)
+        {
+            var b = Battle.I; if (b == null || e.markUntil < b.time) return;
+            var pr = b.run.Get("prism_beacon"); if (pr == null || !pr.Has("mark_pop")) return;
+            Explode(pr, e.Pos, 1.2f, 140, Art.Hex("#d4b8ff"));
         }
 
         /// <summary>둥근 폭발 (곁가지 — 효과 없음)</summary>

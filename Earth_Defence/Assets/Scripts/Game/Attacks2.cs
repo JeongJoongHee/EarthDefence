@@ -57,6 +57,8 @@ namespace EarthDef
         public static float LastRamp;       // 시험용: 지금 누적 배율
 
         float sizzleT, flick = 1f;
+        /// <summary>11-22 필살기 · 한 발 더 등에서 피해 배율</summary>
+        public double rateMul = 1;
         Vector2 lastHit;
 
         public FocusBeam(TurretInst tr, Enemy tg, float duration, float width, Enemy avoid = null)
@@ -64,6 +66,8 @@ namespace EarthDef
             // 11-16 저녁 사용자 "너무 단순함 · 두께는 1/2 · 쏘는 동안 레이저로 지글지글 지지는 연출"
             //   → 굵기 절반 · 빛이 빠르게 깜빡 · 맞는 곳에 불꽃이 계속 튀고 빛이 일렁 · 가끔 연기
             src = tr; target = tg; dur = duration; this.width = width * 0.5f; this.avoid = avoid;
+            // 11-22 개편 "적이 죽을 때까지 오래 쏨": 쏘는 시간 = Focus_Hold_Max x (1 + 쏘는 시간 %) — 그 안에 적이 없으면 끝
+            if (Tables.Ci("Focus_Hold", 1) == 1 && tr.row.dur > 0) dur = Tables.Cf("Focus_Hold_Max", 8f) * (duration / tr.row.dur);
             MakeSprite("focus", Art.Fx("beam", new Vector4(40, 8, 40, 8)), tr.unit ? tr.unit.Head : Vector2.zero, 28);
             sr.drawMode = SpriteDrawMode.Sliced; Art.Additive(sr);
             var g = col; g.a = 0.85f; sr.color = g;
@@ -86,6 +90,9 @@ namespace EarthDef
         }
 
         float Ramp => Mathf.Clamp01(onTarget / Mathf.Max(0.1f, Tables.Cf("Focus_Ramp_Sec", 3f))) * (float)src.S("focus_ramp") / 100f;
+        /// <summary>11-22 개편 "작은 대미지에서 점점 커짐": 한 적에 붙은 시간만큼 기본 증폭 (초당 Focus_Base_Ramp, 최대 Focus_Base_Ramp_Max)</summary>
+        float BaseRamp => Tables.Ci("Focus_Hold", 1) == 1 ? Mathf.Min(Tables.Cf("Focus_Base_Ramp_Max", 1.5f), onTarget * Tables.Cf("Focus_Base_Ramp", 0.15f)) : 0f;
+        public static float LastBaseRamp;   // 시험용
 
         public override void Step(float dt)
         {
@@ -121,7 +128,8 @@ namespace EarthDef
             if (tickT <= 0)
             {
                 tickT += src.Tick > 0 ? src.Tick : 0.2f;
-                double rate = src.row.rate * (1 + Ramp);
+                double rate = src.row.rate * (1 + Ramp) * (1 + BaseRamp) * rateMul;
+                LastBaseRamp = Mathf.Max(LastBaseRamp, BaseRamp);
                 Vector2 at = target.Pos;
                 Combat.Hit(src, target, rate, true, true);
                 if (Random.value < 0.5f) Fx.Sparks(at, Color.Lerp(col, Color.white, 0.4f), 2, 3.5f, 0.8f);
@@ -390,8 +398,9 @@ namespace EarthDef
                 var e = list[i];
                 if (e.dead) continue;
                 float d = Vector2.Distance(e.Pos, at);
-                if (d <= radius + e.radius) Combat.Hit(src, e, rate, true, true);
-                else if (src.Has("shockwave") && d <= radius * 1.6f + e.radius) Combat.Hit(src, e, rate * 0.5, false, false);
+                double r0 = jumps >= 1 ? rate * Tables.C("Tesla_Bounce_Mul", 0.7) : rate;   // 11-22 튕긴 번개(2번째 타격부터) 70%
+                if (d <= radius + e.radius) Combat.Hit(src, e, r0, true, true);
+                else if (src.Has("shockwave") && d <= radius * 1.6f + e.radius) Combat.Hit(src, e, r0 * 0.5, false, false);
             }
             if (src.Has("shockwave")) Fx.Ring(at, radius * 1.6f, Art.Hex("#ffe27a"));
             if (src.Has("trap"))

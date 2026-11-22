@@ -87,7 +87,8 @@ namespace EarthDef.EditorTools
                 var hp0 = es.ConvertAll(e => e.hp);
                 b.skillCdD = 0; yield return null;
                 bd.transform.Find("Face").GetComponent<Button>().onClick.Invoke(); yield return null;
-                bool frozen = es.TrueForAll(e => e.dead || (e.row.IsBoss ? e.slow > 0.01f && !e.Paralyzed : e.Paralyzed));   // 보스는 안 얼고 느려짐
+                bool bossFreeze = Tables.Ci("Dome_Freeze_Boss", 1) == 1;   // 11-22 의견 "모두 이동 정지" → 보스도 얼림 + 받는 피해 증가
+                bool frozen = es.TrueForAll(e => e.dead || ((e.row.IsBoss && !bossFreeze ? e.slow > 0.01f && !e.Paralyzed : e.Paralyzed) && (Tables.C("Dome_Vuln", 30) <= 0 || e.vuln > 0)));
                 double pn = Tables.C("Dome_Dmg_Pct", 10) / 100.0, pb = Tables.C("Dome_Dmg_Boss_Pct", 3) / 100.0;
                 bool dmg = true; var lost = new System.Text.StringBuilder();
                 for (int i = 0; i < es.Count; i++)
@@ -97,7 +98,7 @@ namespace EarthDef.EditorTools
                     if (!e.dead && System.Math.Abs(got - want) > want * 0.05 + 1) dmg = false;
                 }
                 Check(frozen && dmg && b.domeUsed == 1 && Mathf.Abs(b.skillCdD - b.DomeCdMax) < 0.2f,
-                      $"얼음 파동: 일반 · 엘리트는 얼림 · 보스는 느려짐 · 체력 감소 ({lost.ToString().Trim()}) · 쿨타임 {b.skillCdD:0}초");
+                      $"얼음 파동: 모두 얼림(보스 포함) · 받는 피해 증가 · 체력 감소 ({lost.ToString().Trim()}) · 쿨타임 {b.skillCdD:0}초");
                 yield return Wait(0.35f);
                 Capture("r11_2_skills");
                 yield return Wait(Tables.Cf("Dome_Freeze_Time", 3f) + 0.4f);

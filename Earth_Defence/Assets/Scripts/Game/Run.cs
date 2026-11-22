@@ -39,7 +39,7 @@ namespace EarthDef
                 foreach (var (key, val) in c.stats)
                 {
                     stat[key] = S(key) + val * kv.Value;
-                    if (key == "shots" || key == "count" || key == "bounce") shotsCards += kv.Value;
+                    if (key == "shots" || key == "count") shotsCards += kv.Value;   // 11-22: 튕기기(bounce)는 발당 감소 대신 튕긴 번개 70% (Tesla_Bounce_Mul)
                 }
             }
         }
@@ -50,7 +50,23 @@ namespace EarthDef
         public double Ordinary => Lv.dmgBonus + S("dmg") / 100.0;
         /// <summary>탄 +1 카드의 발당 감소 (곱)</summary>
         public double Penalty => Math.Pow(1 - Tables.C("Multi_Penalty"), shotsCards);
-        public float Cooldown => (float)(row.cd * Lv.cdMul / (1 + S("cd") / 100.0));
+        /// <summary>쿨다운 = 표 x 터렛 레벨 / (1 + 공속%) - 회로 초 단축. 11-22: 대장 카피는 레벨 단축을 Guardian_Cd_Lv_Scale 배(0.3초 → 최대 0.15초)
+        /// · 별빛 증폭탑 버프 중이면 공속 + (초신성 과부하 · 필살기)</summary>
+        public float Cooldown
+        {
+            get
+            {
+                double lvMul = row.kind == "gun" ? 1 - (1 - Lv.cdMul) * Tables.C("Guardian_Cd_Lv_Scale", 1) : Lv.cdMul;
+                double buff = Battle.I != null && row.kind != "prism" ? Battle.I.BuffCdPct : 0;
+                double v = row.cd * lvMul / (1 + (S("cd") + buff) / 100.0) - S("cd_sec");
+                return (float)Math.Max(row.cd * 0.25, v);
+            }
+        }
+        /// <summary>11-22 "쏜 뒤 한 발 더" 카드 수 · 배율 (카드 Val2 가 있으면 그 평균 — 관통포 0.5)</summary>
+        public int Followup => (int)S("followup");
+        public double FollowMul => Followup > 0 && S("followup_mul") > 0 ? S("followup_mul") / Followup : Tables.C("Followup_Mul", 0.8);
+        /// <summary>11-22 장갑 무시 (0~1): 카드 · 회로 armor_pen % + 자기장 톱날 기본</summary>
+        public double ArmorPen => Math.Min(1, (S("armor_pen") + (row.kind == "saw" ? Tables.C("Saw_Armor_Pen", 30) : 0)) / 100.0);
         /// <summary>사거리 (표 0 = 화면 전체 — 장판)</summary>
         public float Range => (row.range > 0 ? row.range * Tables.Cf("Range_Scale", 1.3f) : 30f) * (1 + (float)S("range") / 100f);
         public float Duration => row.dur * (1 + (float)S("dur") / 100f);
@@ -58,7 +74,7 @@ namespace EarthDef
         public float Tick => row.tick / (1 + (float)S("tick") / 100f);
         public int Shots => row.count + (int)S("shots") + (int)S("shots_free") + (row.kind == "hive" || row.kind == "field" ? (int)S("count") + (int)S("count_free") : 0);
         public int Pierce => row.pierce + (int)S("pierce");
-        public double CritRate => Tables.C("Crit_Rate") + S("crit") / 100.0;
+        public double CritRate => Tables.C("Crit_Rate") + S("crit") / 100.0 + (Battle.I != null ? Battle.I.BuffCrit : 0);
     }
 
     /// <summary>

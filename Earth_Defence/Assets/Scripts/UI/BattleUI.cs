@@ -165,7 +165,8 @@ namespace EarthDef
             burnBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(-x, y));
             domeBox.anchoredPosition = UIRoot.I.WorldToUI(new Vector2(x, y));
             OneSkill(burnBox, burnFace, burnCdImg, burnCdT, b.skillCdG, b.BurnCdMax, b.CanBurn, b.Burning, ref lastBurnSec);
-            OneSkill(domeBox, domeFace, domeCdImg, domeCdT, b.skillCdD, b.DomeCdMax, b.CanDome, false, ref lastDomeSec);
+            OneSkill(domeBox, domeFace, domeCdImg, domeCdT, b.DomeSpent ? 0f : b.skillCdD, b.DomeCdMax, b.CanDome, false, ref lastDomeSec);
+            if (b.DomeSpent) domeCdImg.fillAmount = 1f;   // 11-22 1회성: 쓴 뒤엔 회색으로 덮어 둠
         }
 
         void OneSkill(RectTransform box, Image face, Image cdImg, Text cdT, float left, float max, bool ready, bool active, ref int lastSec)

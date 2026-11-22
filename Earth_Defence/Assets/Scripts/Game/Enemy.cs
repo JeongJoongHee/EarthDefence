@@ -50,6 +50,7 @@ namespace EarthDef
         // 상태이상
         public float slow, slowT, para, vulnT;
         public double vuln;
+        public float markUntil = -1f;   // 11-22 별빛 증폭탑 약점 표식 (Battle.time 기준)
         float burnT, burnTick; double burnDps; TurretInst burnSrc;
         public bool Paralyzed => para > 0;
         public static int Knocks;   // 시험용: 밀어낸 횟수
@@ -201,9 +202,9 @@ namespace EarthDef
             slow = Mathf.Min(max, slow + amt);
             slowT = Mathf.Max(slowT, time);
         }
-        public void Paralyze(float time)
+        public void Paralyze(float time, bool evenBoss = false)
         {
-            if (row.IsBoss) return;      // 보스는 마비 안 됨 (기획서 6-2)
+            if (row.IsBoss && !evenBoss) return;      // 보스는 마비 안 됨 (기획서 6-2) — 11-22 돔 빙결(Dome_Freeze_Boss 1)만 보스도
             para = Mathf.Max(para, time);
         }
         public void Burn(double dps, float time, TurretInst src) { burnDps = burnT > 0 ? System.Math.Max(burnDps, dps) : dps; burnT = time; burnSrc = src; }   // 11-17: 큰 수가 float 로 깎이던 것 · 화상이 끝난 뒤에도 예전 큰 값이 남던 것 고침

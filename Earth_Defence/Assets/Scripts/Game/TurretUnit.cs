@@ -160,6 +160,38 @@ namespace EarthDef
                     }
                     break;
                 case "tesla": for (int i = 0; i < 3; i++) b.Add(new TeslaBolt(t, i == 0 ? target : b.RandomEnemy(), Head, 0.3f + i * 0.15f, 12, t.row.rate, t.row.radius * t.Area)); break;
+                // ---------- 11-22 새 타워 필살기 (타워_전체_정리 "제안 성능") ----------
+                case "boomerang":
+                {
+                    var tg = target != null && !target.dead ? target : b.RandomEnemy();
+                    if (tg == null) break;
+                    var d = (tg.Pos - Head).normalized; float spd = t.row.speed * 1.1f;
+                    b.Add(new Boomerang(t, Head, d, spd, t.Range * 1.2f, 1.1f, rate, 3.2f, 1.6f));
+                    b.Add(new Boomerang(t, Head, d, spd, t.Range * 1.2f, 1.1f, rate, -3.2f, 1.6f));
+                    break;
+                }
+                case "frost":
+                {
+                    var at = new Vector2(Mathf.Clamp(tp.x, World.FieldX0 + 2.6f, World.HalfW - 2.6f), Mathf.Clamp(b.CrowdY(), World.FieldLo + 2f, 7f));
+                    Frost.Blast(t, at, rate, 2.6f, true);
+                    foreach (var e in b.enemies)
+                    {
+                        if (e.dead || Vector2.Distance(e.Pos, at) > 2.6f + e.radius) continue;
+                        if (e.row.IsBoss) e.AddSlow(0.6f, 2.5f, 0.6f); else Combat.Freeze(e, 2.5f);
+                    }
+                    break;
+                }
+                case "flame": for (int i = -1; i <= 1; i++) Flame(ang + i * 20f, rate, 1, t.row.radius * t.Area * 1.2f, t.Duration, 0.8f, 1f); break;
+                case "saw": b.Add(new SawBlade(t, target != null && !target.dead ? target.Pos : World.FieldCenter, 1.8f, 4f, 0.2f, rate, false, 1.2f)); break;
+                case "meteor":
+                    for (int i = 0; i < 6; i++)
+                    {
+                        var e = i == 0 && target != null && !target.dead ? target : b.RandomEnemy();
+                        var at = e != null ? e.Pos : World.FieldCenter + Random.insideUnitCircle * 2f;
+                        b.Add(new MeteorFall(t, at, t.row.speed * (1 + i * 0.08f), 1.6f, rate, true, 1.1f));
+                    }
+                    break;
+                case "prism": b.PrismOverload(t, rate); break;
             }
         }
 
@@ -297,6 +329,7 @@ namespace EarthDef
             if (IsGuardian) { if (Tables.Ci("Guardian_Fixed", 1) != 1) Move(dt); AimStep(dt); }   // 11-18: 대장 카피는 사령실 가운데 고정
             else HeadStep(dt);
             if (IsGuardian && Battle.I.lab != null && !Battle.I.lab.guardianFire) return;   // 시험장: 대장 카피 쏘기 끔
+            PendStep(dt);       // 11-22 한 발 더 · 다시 치기
             if (Charging) { ChargeStep(dt); return; }
             cd -= dt;
             if (cd > 0) return;
@@ -307,6 +340,8 @@ namespace EarthDef
             if (idle) { idle.OnFire(); if (idle.HasHead) { headDeg = headWant = AngleTo(target.Pos); idle.SetAim(headDeg); } }   // 쏠 때는 머리가 적을 봄
             Fire(target);
             fired++;
+            for (int i = 0; i < t.Followup; i++) { Queue(Tables.Cf("Followup_Delay", 0.22f) * (i + 1), t.FollowMul); Followups++; }
+            if (t.Has("recast_prob") && Combat.R < t.S("recast_prob")) { Queue(Tables.Cf("Recast_Delay", 0.45f), 1); Recasts++; }   // 벼락탑 번개 확장
             UltStep(target);
             kick = 0.1f;
             // 2차 칩 "N% 확률로 한 번 더 쏨" (대장 카피 빼고)
@@ -326,15 +361,18 @@ namespace EarthDef
             moveLean = Mathf.Clamp(-moveVel * 1.6f, -7f, 7f);                                     // 가는 쪽으로 기움 (AimStep 에서 젖힘과 합쳐 돌림)
         }
 
-        void Fire(Enemy target)
+        void Fire(Enemy target, double mul = 1)
         {
             var b = Battle.I;
+            double R = t.row.rate * mul;                 // 11-22 한 발 더(0.8 · 관통포 0.5) = 피해 배율
+            float sc = mul < 0.999 ? 0.8f : 1f;          // 한 발 더는 조금 작게
             Audio.Play(t.row.kind switch
             {
                 "rail" => Audio.Sfx.Rail, "laser" => Audio.Sfx.Laser, "field" => Audio.Sfx.Field, "hive" => Audio.Sfx.Bee, "missile" => Audio.Sfx.Missile,
                 "bolt" => Audio.Sfx.Bolt, "cannon" => Audio.Sfx.BigBoom, "focus" => Audio.Sfx.Focus, "vortex" => Audio.Sfx.Vortex, "wheel" => Audio.Sfx.Wheel,
-                "tesla" => Audio.Sfx.Tesla, _ => Audio.Sfx.Gun,
-            });
+                "tesla" => Audio.Sfx.Tesla, "boomerang" => Audio.Sfx.Wheel, "frost" => Audio.Sfx.Missile, "flame" => Audio.Sfx.Laser, "saw" => Audio.Sfx.Tesla,
+                "meteor" => Audio.Sfx.BigBoom, "prism" => Audio.Sfx.Upgrade, _ => Audio.Sfx.Gun,
+            }, mul < 0.999 ? 0.7f : 1f);
             switch (t.row.kind)
             {
                 case "gun": Gun(target, 1, t.row.rate); break;
@@ -342,8 +380,8 @@ namespace EarthDef
                     for (int i = 0; i < t.Shots; i++)
                     {
                         var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 6f);
-                        var pr = new Projectile(t, "shell", Head, d, t.row.speed, t.row.rate, t.Pierce, 1f) { hitR = 0.22f };
-                        if (i == 0) Fx.Muzzle(Head, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, Projectile.ShotColor("shell"), 0.9f);
+                        var pr = new Projectile(t, "shell", Head, d, t.row.speed, R, t.Pierce, sc) { hitR = 0.22f };
+                        if (i == 0) Fx.Muzzle(Head, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, Projectile.ShotColor("shell"), 0.9f * sc);
                         bool first = true;
                         pr.onHit = (p, e) =>
                         {
@@ -358,16 +396,19 @@ namespace EarthDef
                 {
                     float ang = Mathf.Atan2(target.Pos.y - Head.y, target.Pos.x - Head.x) * Mathf.Rad2Deg;
                     float w = t.row.radius * t.Area, sweep = t.Has("sweep") ? 22f : 0f;
-                    b.Add(new Beam(t, Head, ang, t.Duration, t.row.tick, w, t.row.rate, sweep));
+                    b.Add(new Beam(t, Head, ang, t.Duration, t.row.tick, w, R, sweep));
                     int extra = (int)t.S("beam_split");
                     for (int i = 0; i < extra; i++)
-                        b.Add(new Beam(t, Head, ang + ((i % 2 == 0) ? 1 : -1) * 14f * (i / 2 + 1), t.Duration, t.row.tick, w * 0.7f, t.row.rate * 0.6, sweep));
+                        b.Add(new Beam(t, Head, ang + ((i % 2 == 0) ? 1 : -1) * 14f * (i / 2 + 1), t.Duration, t.row.tick, w * 0.7f, R * 0.6, sweep));
                     break;
                 }
                 case "field":
                 {
+                    // 11-22 개편: 드론이 가로지르며 감속선 (기본 피해 Drone_Line_Base_Dmg · 장판 공격 카드 line_dmg) · 장판 증폭 = 확률로 1개 더
                     float half = t.row.radius * t.Area;
                     int n = 1 + (int)t.S("count_free");
+                    if (t.Has("extra_line") && Combat.R < t.S("extra_line")) { n++; ExtraLines++; }
+                    double rate = R * (Tables.C("Drone_Line_Base_Dmg", 1) + t.S("line_dmg") / 100.0);
                     if (World.FieldVert)
                     {   // 8차 "끈끈이 드랍은 세로로": 적 무리 x 에 세로 띠 (여러 개면 오른쪽 · 왼쪽으로 번갈아, 끝에 닿으면 반대쪽)
                         float x0 = World.FieldX0 + half + 0.2f, x1 = World.HalfW - half - 0.1f;
@@ -377,25 +418,32 @@ namespace EarthDef
                             float off = (i + 1) / 2 * 2.6f * (i % 2 == 1 ? 1 : -1);
                             float xi = x + off;
                             if (xi > x1 || xi < x0) xi = x - off;
-                            b.Add(new Field(t, Mathf.Clamp(xi, x0, x1), half, t.Duration, t.Tick, t.row.rate));
+                            b.Add(new Field(t, Mathf.Clamp(xi, x0, x1), half, t.Duration, t.Tick, rate, null, true));
                         }
                         break;
                     }
                     float y = Mathf.Clamp(b.CrowdY(), World.FieldLo + half + 0.3f, 7.5f);
                     for (int i = 0; i < n; i++)
-                        b.Add(new Field(t, Mathf.Clamp(y + i * 2.6f, World.FieldLo + half + 0.3f, 8.5f), half, t.Duration, t.Tick, t.row.rate));
+                        b.Add(new Field(t, Mathf.Clamp(y + i * 2.6f, World.FieldLo + half + 0.3f, 8.5f), half, t.Duration, t.Tick, rate, null, true));
                     break;
                 }
                 case "hive":
-                    for (int i = 0; i < t.Shots; i++) b.Add(new Bee(t, Head + new Vector2(Random.Range(-0.4f, 0.4f), 0.1f * i), t.row.hits + (int)t.S("hits"), t.row.rate));
+                {
+                    int hits = t.row.hits + (int)t.S("hits");
+                    for (int i = 0; i < t.Shots; i++) b.Add(new Bee(t, Head + new Vector2(Random.Range(-0.4f, 0.4f), 0.1f * i), hits, R));
+                    // 11-22 밀집 군집: 작은 벌 (메인 벌의 80%)
+                    double sm = t.S("sub_bee") > 0 && t.S("sub_mul") > 0 ? t.S("sub_mul") / t.S("sub_bee") : 0.8;
+                    for (int i = 0; i < (int)t.S("sub_bee"); i++) b.Add(new Bee(t, Head + new Vector2(Random.Range(-0.4f, 0.4f), 0.2f), hits, R * sm, false, 0.7f));
                     break;
+                }
                 case "missile":
                     for (int i = 0; i < t.Shots; i++)
                     {
                         var d = Rot(HeadDir, (i - (t.Shots - 1) / 2f) * 25f);   // 11-18: 머리(45°) 쪽으로 나감
-                        var m = new Projectile(t, "missile", Head, d, t.row.speed, t.row.rate, 0, 1f) { target = target, turn = 4.5f, life = 5f, hitR = 0.25f };
+                        var m = new Projectile(t, mul < 0.999 ? "mini_missile" : "missile", Head, d, t.row.speed, R, 0, 1f) { target = target, turn = 4.5f, life = 5f, hitR = 0.25f };
                         Fx.Sparks(Head, Projectile.ShotColor("missile"), 4, 2.5f, 0.9f, 80f, -90f + Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg - 90f);
-                        m.onHit = (p, e) => MissileHit(p.pos, e, 1.0);
+                        double k = mul;
+                        m.onHit = (p, e) => MissileHit(p.pos, e, k);
                         b.Add(m);
                     }
                     break;
@@ -404,23 +452,23 @@ namespace EarthDef
                     {
                         var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 9f);
                         // 11-16 저녁 사용자 "발사체 크기 2배"
-                        var pr = new Projectile(t, "cannonball", Head, d, t.row.speed, t.row.rate, t.Pierce, 2f) { hitR = 0.42f, life = 2.5f };
-                        if (i == 0) Fx.Muzzle(Head, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, Projectile.ShotColor("cannonball"), 1.2f);
-                        bool first = true;
-                        pr.onHit = (p, e) => { CannonHit(p.pos, p.dir, e, first); first = false; };
+                        var pr = new Projectile(t, "cannonball", Head, d, t.row.speed, R, t.Pierce, 2f * sc) { hitR = 0.42f, life = 2.5f };
+                        if (i == 0) Fx.Muzzle(Head, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, Projectile.ShotColor("cannonball"), 1.2f * sc);
+                        bool first = true; double k = mul;
+                        pr.onHit = (p, e) => { CannonHit(p.pos, p.dir, e, first, k); first = false; };
                         b.Add(pr);
                     }
                     break;
                 case "focus":
                 {
                     float w = t.row.radius * t.Area;
-                    b.Add(new FocusBeam(t, target, t.Duration, w));
+                    b.Add(new FocusBeam(t, target, t.Duration, w) { rateMul = mul });
                     int extra = (int)t.S("beams");
                     var skip = new System.Collections.Generic.HashSet<Enemy> { target };
                     for (int i = 0; i < extra; i++)
                     {
                         var e2 = b.Nearest(Head, t.Range, skip); if (e2 == null) break; skip.Add(e2);
-                        b.Add(new FocusBeam(t, e2, t.Duration, w * 0.8f, target));
+                        b.Add(new FocusBeam(t, e2, t.Duration, w * 0.8f, target) { rateMul = mul });
                     }
                     break;
                 }
@@ -429,8 +477,8 @@ namespace EarthDef
                     float spd = t.row.speed, pull = 3.6f * (1 + (float)t.S("pull_pow") / 100f);   // 11-16 저녁 "끌어들이는 효과를 조금 더 강하게" 2.4 → 3.6
                     for (int i = 0; i < t.Shots; i++)
                     {
-                        var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 18f);
-                        b.Add(new Vortex(t, Head + d * 0.3f, d, spd, t.Duration, t.row.radius * t.Area, t.row.rate, pull));
+                        var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 18f + (mul < 0.999 ? 14f : 0f));
+                        b.Add(new Vortex(t, Head + d * 0.3f, d, spd, t.Duration, t.row.radius * t.Area * sc, R, pull));
                     }
                     Fx.Glow(Head, 0.6f, new Color(0.8f, 0.7f, 1f, 0.7f), 0.2f);
                     break;
@@ -441,8 +489,8 @@ namespace EarthDef
                     int hits = Mathf.RoundToInt(t.row.hits * (1 + (float)t.S("hits_pct") / 100f) + (float)t.S("hits"));
                     for (int i = 0; i < t.Shots; i++)
                     {
-                        var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 30f + Random.Range(-12f, 12f));
-                        b.Add(new FireWheel(t, Head, d * spd, t.row.radius * t.Area, hits, t.Duration, t.row.rate));
+                        var d = Rot((target.Pos - Head).normalized, (i - (t.Shots - 1) / 2f) * 30f + Random.Range(-12f, 12f) + (mul < 0.999 ? 25f : 0f));
+                        b.Add(new FireWheel(t, Head, d * spd, t.row.radius * t.Area * sc, hits, t.Duration, R));
                     }
                     Fx.Sparks(Head, Art.Hex("#ffb35c"), 6, 3f, 1f, 120f, 90f);
                     break;
@@ -457,21 +505,106 @@ namespace EarthDef
                     for (int i = 0; i < n; i++)
                     {
                         var tg = i == 0 ? target : (b.RandomEnemy() ?? target);
-                        b.Add(new TeslaBolt(t, tg, Head, charge + i * 0.12f, bounces, t.row.rate, rad));
+                        b.Add(new TeslaBolt(t, tg, Head, charge + i * 0.12f, bounces, R, rad));
                     }
                     break;
                 }
                 case "bolt":
                 {
-                    float w = t.row.radius * 2 * t.Area;
+                    float w = t.row.radius * 2 * t.Area * sc;
                     float x0 = target.Pos.x;
                     for (int i = 0; i < t.Shots; i++)
                     {
                         float x = i == 0 ? x0 : (b.RandomEnemy()?.Pos.x ?? x0 + (i % 2 == 0 ? 1 : -1) * 1.5f * i);
-                        b.Add(new Strike(t, x, w, t.Duration, t.row.tick, t.row.rate));
+                        b.Add(new Strike(t, x, w, t.Duration, t.row.tick, R));
                     }
                     break;
                 }
+                // ---------- 11-22 새 타워 6종 ----------
+                case "boomerang": ThrowBoomerang(target, mul); break;
+                case "frost":
+                {
+                    var d = (target.Pos - Head).normalized;
+                    var pr = new Projectile(t, "frost_ball", Head, d, t.row.speed, R, 0, sc) { hitR = 0.3f, life = 2.5f, target = target, turn = 2.5f };
+                    Fx.Muzzle(Head, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg, Art.Hex("#9fe8ff"), 1f * sc);
+                    float rad = t.row.radius * t.Area * sc;
+                    pr.onHit = (p, e) => Frost.Blast(t, p.pos, p.rate, rad);
+                    b.Add(pr);
+                    break;
+                }
+                case "flame":
+                {
+                    var d = (target.Pos - Head).normalized;
+                    float ang = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg + (mul < 0.999 ? 10f : 0f);
+                    Flame(ang, R, mul, t.row.radius * t.Area, t.Duration);
+                    break;
+                }
+                case "saw":
+                {
+                    var d = (target.Pos - Head).normalized;
+                    var pr = new Projectile(t, "saw", Head, d, t.row.speed, R, 0, 0.45f * sc) { hitR = 0.3f, life = 2f, target = target, turn = 4f };
+                    double tr = Tables.C("Saw_Tick_Rate", 48) * (1 + t.S("tick_dmg") / 100.0) * mul;
+                    float rad = t.row.radius * t.Area * sc;
+                    pr.onHit = (p, e) => { Combat.Hit(t, e, p.rate); b.Add(new SawBlade(t, p.pos, rad, t.Duration, t.Tick, tr)); };
+                    b.Add(pr);
+                    break;
+                }
+                case "meteor": b.Add(new MeteorVolley(t, target, mul)); break;
+                case "prism": b.PrismPulse(t); break;
+            }
+        }
+
+        public static int ExtraLines, Recasts, Followups;   // 시험용
+        // ---------- 11-22 "쏜 뒤 한 발 더" · 다시 치기 · 바로 다시 던지기 ----------
+        readonly System.Collections.Generic.List<float> pendT = new();
+        readonly System.Collections.Generic.List<double> pendMul = new();
+        void Queue(float delay, double mul) { pendT.Add(delay); pendMul.Add(mul); }
+        void PendStep(float dt)
+        {
+            for (int i = pendT.Count - 1; i >= 0; i--)
+            {
+                pendT[i] -= dt;
+                if (pendT[i] > 0) continue;
+                double m = pendMul[i]; pendT.RemoveAt(i); pendMul.RemoveAt(i);
+                var tg = Battle.I.Nearest(Head, t.Range);
+                if (tg != null) Fire(tg, m);
+            }
+        }
+        /// <summary>군집 지휘: 남은 쿨다운 k 만큼 줄임</summary>
+        public void CutCd(double k) { if (cd > 0) cd *= (float)(1 - k); }
+
+        void ThrowBoomerang(Enemy target, double mul)
+        {
+            var b = Battle.I;
+            var d = (target.Pos - Head).normalized;
+            float spd = t.row.speed * (1 + (float)t.S("speed") / 100f), r = t.row.radius * t.Area;
+            double rate = t.row.rate * mul;
+            bool twin = t.Has("twin_arc");
+            var bm = new Boomerang(t, Head, d, spd, t.Range, r, rate, twin ? 2.0f : 0f, mul < 0.999 ? 0.85f : 1f);
+            if (t.Has("instant_recast"))
+                bm.onHome = () => { if (Combat.R < t.S("instant_recast")) { var tg = Battle.I.Nearest(Head, t.Range); if (tg != null) { Recasts++; Fire(tg); } } };
+            b.Add(bm);
+            if (twin) b.Add(new Boomerang(t, Head, d, spd, t.Range, r * 0.9f, rate * Tables.C("Boomerang_Twin_Mul", 0.8), -2.0f, 0.85f));
+        }
+
+        /// <summary>용암 화염방사기: 일직선 불길 + 지나간 길에 화상 지대 (용암 웅덩이 = 피해 +60% · 둔화 · 열기 증폭 = 취약)</summary>
+        void Flame(float ang, double rate, double mul, float width, float dur, float zoneR = 0, float zoneTimeAdd = 0)
+        {
+            var b = Battle.I;
+            float len = Mathf.Min(22f, t.Range * (1 + (float)t.S("area") / 200f));
+            b.Add(new Beam(t, Head, ang, dur, t.Tick > 0 ? t.Tick : 0.2f, width, rate, 0, false, len, true));
+            Fx.Muzzle(Head, ang, Art.Hex("#ff8a3d"), 1.1f);
+            bool lava = t.Has("lava_pool");
+            double zr0 = Tables.C("Flame_Zone_Rate", 35) * (1 + t.S("burn_dmg") / 100.0) * (lava ? 1.6 : 1) * mul;
+            float zt = dur + Tables.Cf("Flame_Zone_Time", 3f) * (1 + (float)t.S("burn_dur") / 100f) + zoneTimeAdd;
+            float zr = zoneR > 0 ? zoneR : Mathf.Max(0.45f, width * 0.85f);
+            var dir = new Vector2(Mathf.Cos(ang * Mathf.Deg2Rad), Mathf.Sin(ang * Mathf.Deg2Rad));
+            var col = lava ? Art.Hex("#ff6a2a") : Art.Hex("#ff9440");
+            for (float a = zr + 0.4f; a < len; a += zr * 2f)
+            {
+                var p = Head + dir * a;
+                if (!World.OnField(p) || p.y < World.FieldLo) continue;
+                b.Add(new Zone(t, p, zr, zt, 0.5f, zr0, col, lava ? 0.25f : 0f) { alpha = 0.32f, vuln = t.S("burn_vuln") / 100.0 });
             }
         }
 
@@ -548,14 +681,14 @@ namespace EarthDef
 
         // ---------- 쾅쾅 대포 (2차) ----------
         /// <summary>포탄이 맞으면: 충격 피해 + 둥근 폭발(Rate2) + 폭발 안 적을 위로 밀어냄 · 첫 적중에 산탄 · 기뢰</summary>
-        void CannonHit(Vector2 at, Vector2 dir, Enemy e, bool first)
+        void CannonHit(Vector2 at, Vector2 dir, Enemy e, bool first, double mul = 1)
         {
-            Combat.Hit(t, e, t.row.rate);
-            float r = t.row.radius * t.Area;
-            Combat.Explode(t, at, r, t.row.rate2, Art.Hex("#ffcf6b"));
+            Combat.Hit(t, e, t.row.rate * mul);
+            float r = t.row.radius * t.Area * (mul < 0.999 ? 0.8f : 1f);
+            Combat.Explode(t, at, r, t.row.rate2 * mul, Art.Hex("#ffcf6b"));
             float kn = Tables.Cf("Knock_Base", 0.6f) * t.row.knock * (1 + (float)t.S("knock") / 100f);
             foreach (var en in Battle.I.enemies) if (!en.dead && Vector2.Distance(en.Pos, at) <= r + en.radius) en.Knock(kn);
-            if (!first) return;
+            if (!first || mul < 0.999) return;
             int sc = (int)t.S("scatter");
             if (sc > 0)
             {

@@ -465,7 +465,7 @@ namespace EarthDef
             var lv = UIKit.Label(p.win, open ? L.F("lv", SaveData.Cur.TurretLv(t.id)) : L.F("unlock_at", t.unlock), 28, open ? Art.Brown : Art.Red, TextAnchor.MiddleLeft, false);
             lv.rectTransform.TL(374, 192, 460, 50);
             float y = 300;
-            Section(p.win, ref y, L.T("ti_stat"), t.kind == "field" ? L.F("tinfo_stat_field", Num.F(t.rate), t.cd) : L.F("tinfo_stat", Num.F(t.rate + t.rate2), t.cd, t.range), Art.Ink, 28, 70);
+            Section(p.win, ref y, L.T("ti_stat"), t.kind == "field" ? L.F("tinfo_stat_field", Num.F(t.rate), t.cd) : t.kind == "prism" ? L.F("tinfo_stat_prism", Num.F(t.rate), t.cd) : L.F("tinfo_stat", Num.F(t.rate + t.rate2), t.cd, t.range), Art.Ink, 28, 70);
             Section(p.win, ref y, L.T("ti_desc"), string.IsNullOrEmpty(t.info) ? t.desc : t.info, Art.Ink, 28, 120);
             if (lines.Count > 0) Section(p.win, ref y, L.T("ti_break"), string.Join("\n", lines), Art.Hex("#6a4fa8"), 26, 110);
             p.Btn("btn_green", L.T("ok"), 0, 36, 320, p.Close, 96);

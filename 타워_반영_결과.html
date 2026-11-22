@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>타워 정리 반영</title>
+<style>
+  :root{--bg:#fbf7ef;--card:#fff;--ink:#3b281c;--soft:#7a6a5c;--line:#e3d8c6;--orange:#c4741f;--orange-bg:#fdf0dc;--green:#3f7a3a;--green-bg:#eaf4e2;--red-bg:#fbe6e0;--blue:#2f5f8a;--blue-bg:#e4eef8;--gray-bg:#efeae2}
+  body{background:var(--bg);color:var(--ink);font-family:"Malgun Gothic",sans-serif;margin:0;padding:24px 16px;line-height:1.62}
+  main{max-width:1100px;margin:auto}
+  h1{font-size:25px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}
+  h3{font-size:17px;margin:20px 0 6px}
+  p.note{color:var(--soft);margin:4px 0 10px;font-size:15px}
+  code{background:#f1e8d8;padding:1px 5px;border-radius:4px;font-size:14px}
+  .tip{border-radius:10px;padding:12px 16px;margin:12px 0;font-size:15px} .tip.green{background:var(--green-bg)} .tip.blue{background:var(--blue-bg)} .tip.gray{background:var(--gray-bg)} .tip.red{background:var(--red-bg)}
+  .tip ul{margin:6px 0 0;padding-left:20px} .tip li{margin:3px 0}
+  .shots{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .shots figure{margin:0;flex:1;min-width:200px;max-width:270px}
+  .shots img{width:100%;border:4px solid #3b281c;border-radius:20px;display:block}
+  .shots figcaption,.wide figcaption{font-size:14px;color:var(--soft);margin-top:6px}
+  figure.wide{margin:10px 0} figure.wide img{width:100%;max-width:900px;border:4px solid #3b281c;border-radius:16px;display:block}
+  table{border-collapse:collapse;width:100%;background:#fff;font-size:14px;margin:6px 0}
+  th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top} th{background:#f6efe2;white-space:nowrap}
+  .new{display:inline-block;font-size:11px;border-radius:5px;padding:0 5px;background:#e4eef8;color:#2f5f8a;font-weight:bold;margin-left:4px}
+  .chg{display:inline-block;font-size:11px;border-radius:5px;padding:0 5px;background:#fdf0dc;color:#c4741f;font-weight:bold;margin-left:4px}
+  .del{display:inline-block;font-size:11px;border-radius:5px;padding:0 5px;background:#fbe6e0;color:#a33b2a;font-weight:bold;margin-left:4px}
+  ul.todo{list-style:none;padding:0;margin:0}
+  ul.todo > li{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  ul.todo .row{display:flex;gap:8px;align-items:flex-start;padding:10px 12px}
+  ul.todo label{flex:1;display:flex;gap:10px;cursor:pointer} ul.todo input{margin-top:6px;transform:scale(1.25)}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:0 6px;margin-right:6px;font-weight:bold;background:#f3e8f8;color:#7a3f8f}
+  .why{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+  .pen{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:2px 10px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--soft)}
+  li.has-note .pen{background:var(--orange-bg);color:var(--orange);border-color:var(--orange);font-weight:bold}
+  .notebox{display:none;padding:0 14px 12px 41px} li.open .notebox{display:block}
+  .notebox textarea{width:100%;box-sizing:border-box;min-height:70px;border:1px solid var(--orange);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink);font:15px/1.55 inherit}
+  .notebox .hint{color:var(--soft);font-size:13px;margin:4px 0 0}
+  #copyNotes{border:1px solid var(--orange);background:var(--orange-bg);color:var(--orange);border-radius:8px;padding:2px 10px;cursor:pointer;font-size:13px}
+  .bar{position:sticky;top:0;background:var(--bg);padding:8px 0;display:flex;gap:10px;align-items:center;z-index:2;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  ul.todo > li.checked label > span{opacity:.55}
+</style></head><body><main>
+<h1>타워 전체 정리 → 게임 반영</h1>
+<p class="note">2026-11-22 · 요청: "타워_전체_정리.html 문서를 보고 게임 내 반영해줘" (원본 = <code>타워 추가 컨셉.xlsx</code> + 문서 ✎ 의견 6개, 키 earthdef-towers-1120)</p>
+<div class="bar"><span id="stat"></span><button id="copyNotes" type="button">의견 모아 복사</button></div>
+
+<div class="tip blue"><b>먼저 알려 드릴 것 (제 해석 — 모두 값 하나로 바꿀 수 있어요)</b><ul>
+<li><b>문서의 "제안" 숫자를 그대로 넣었습니다</b> (새 타워 6종 능력치 · 카드 n% · 필살기). 밸런스는 맨 마지막 원칙대로 아직 재지 않았어요.</li>
+<li><b>끈끈이 드론 감속선</b>: 엑셀은 "선을 지나면 감속"만 적혀 있어 기본 피해가 없어지는데, 그러면 돌파(장판 제압 · 마지막 폭발)가 쓸모없어져서 <b>예전 장판 피해는 남겼습니다</b>. 엑셀 그대로(피해 없음, "장판 공격" 카드로만)는 Config <code>Drone_Line_Base_Dmg</code> 0. 선 모양은 지금 띠 그림 그대로 — 드론이 가로질러 날며 선을 그어요.</li>
+<li><b>"멀티샷 패널티 70%"</b> = 발당 피해 70% (Config <code>Multi_Penalty</code> 0.3). 다만 멀티샷 카드가 모두 "한 발 더(80%)"로 바뀌어 <b>지금 이 값을 쓰는 카드는 없습니다</b>. 찌릿 코일 튕긴 번개 70%(<code>Tesla_Bounce_Mul</code>)와 같은 숫자로 맞췄어요.</li>
+<li><b>돔 빙결</b>: "2초간 모두 이동 정지 + 받는 피해 증가 · 1회성" → 얼음 파동이 <b>보스도 2초 얼리고</b>, 그동안 <b>받는 피해 +30%</b>(숫자가 없어 제가 정함, <code>Dome_Vuln</code>), <b>한 판에 1번</b>(<code>Dome_Skill_Uses</code>). 예전 체력 % 감소는 그대로 두었어요.</li>
+<li><b>대장 카피 "일제 사격 → 치명타 피해로, 최대 3회"</b> = 카드 이름 "치명 사격", 치명 피해 +30% x3 (숫자가 없어 제가 정함). "일제 사격+"(탄 +1, 피해 그대로)는 문서에 그대로 있어 남겼어요.</li>
+<li><b>관통포 "기본 관통 3마리"</b> = 관통 수 2 → 3 (이제 한 줄로 최대 4마리). "3마리까지만"이 맞다면 예전 값(2)이라 의견 주세요.</li>
+<li><b>"관통포 별 삭제 - 공속 최대 0.5초 감소"</b> = 그 회로(Id 그대로)를 <b>관통포 공속: 쿨다운 -0.07 ~ -0.5초</b>로 바꿈 → 이미 가진 회로도 사라지지 않고 새 효과로 바뀝니다.</li>
+<li><b>대장 카피 "쿨다운 0.3초 기준, 최대 0.15초"</b> = 기본 0.3초 · 터렛 레벨 쿨 단축을 대장 카피만 더 크게(Lv45 = 0.15초, <code>Guardian_Cd_Lv_Scale</code>).</li>
+<li><b>집중 빔 "처치할 때까지"</b> = 최대 8초(<code>Focus_Hold_Max</code>, 쏘는 시간 카드로 늘어남) 동안 쏘고, 적이 죽으면 가까운 적으로 옮기며 증폭은 처음부터 다시(초당 +15%, 최대 +150%). 0 이면 예전 4초.</li>
+<li><b>해금이 앞당겨져서</b> 이미 스테이지 5 · 10 · 15 · 20 을 깬 사람은 새 타워가 바로 열립니다 (이번에 새로 연 터렛 알림도 뜸).</li>
+<li>곧 열리는 터렛 칸(11-21 그림만 넣은 6종)은 이제 진짜 터렛이라 터렛 탭에서 빠졌어요. 부록 <b>히든 타워 8종은 문서에도 "미구현 기획"이라 이번엔 넣지 않았습니다.</b></li>
+</ul></div>
+
+<h2>바뀐 것 한눈에</h2>
+<table>
+<tr><th>해금</th><td>처음 6종(관통포 · 레이저 · 드론 · 벌집 · 미사일 · 벼락탑) → <b>5</b>: 쾅쾅 대포 · 집중 빔 · 소용돌이포 → <b>10</b>: 불바퀴 · 찌릿 코일 · 별빛 부메랑 → <b>15</b>: 서리 눈꽃포 · 용암 화염방사기 · 자기장 톱날 → <b>20</b>: 유성 박격포 · 별빛 증폭탑</td></tr>
+<tr><th>한 발 더 <span class="chg">개편</span></th><td>"탄 +1, 발당 -15%" 카드 8장 → <b>쏜 뒤 0.22초에 80% 피해로 한 발 더</b>(관통포 50%) — 포탄 일제 사격 · 일제 미사일 · 연속 낙뢰 · 다중 포격 · 추가 장 · 쌍바퀴 · (새) 이중 눈꽃 포격 · 이중 톱날(75%). 한 발 더는 조금 작게 그려져요.</td></tr>
+<tr><th>밀집 군집 <span class="chg">개편</span></th><td>벌 +2(-15%) → 작은 벌 1마리 더 (80%) · 밀집 군집+ = 벌 +1</td></tr>
+<tr><th>끈끈이 드론 <span class="chg">개편</span></th><td>드론이 적 무리를 가로지르며 감속선을 그음 · 닿으면 3초 동안 35% 둔화(예전 = 틱마다 +10% 쌓임) · <b>장판 증폭</b> = 35% 확률로 선 1개 더 · <b>장판 공격</b><span class="new">신규</span> = 선 피해 +25% · <b>빠른 진동</b><span class="del">제거</span></td></tr>
+<tr><th>레이저 포 <span class="chg">개편</span></th><td>고에너지 펄스: 굵기 +100% → 맞는 적 둔화 +20% (2회)</td></tr>
+<tr><th>벼락탑 <span class="chg">개편</span></th><td>번개 확장: 굵기 +100% → 30% 확률로 낙뢰를 한 번 더 (2회)</td></tr>
+<tr><th>집중 빔 <span class="chg">개편</span></th><td>처치할 때까지 길게 · 붙어 있을수록 점점 세짐 (위 해석)</td></tr>
+<tr><th>소용돌이포</th><td>연장 장 +30% → +50%</td></tr>
+<tr><th>불바퀴</th><td>신속 바퀴<span class="new">신규</span> 이동 속도 +50% (2회)</td></tr>
+<tr><th>찌릿 코일 <span class="chg">개편</span></th><td>기본 튕김 3 → 1 · 전기 체인 = 튕기기 +1 (튕긴 번개는 70%) · 전기 체인+<span class="del">제거</span></td></tr>
+<tr><th>의견 6개</th><td>적 저항 0.6 → <b>0.5배</b> · 대장 카피 피해 13.25 → <b>10%</b> · 쿨 0.15 → <b>0.3초(Lv45 0.15)</b> · 탄속 22 → <b>20</b> · 치명 사격 · 폭발탄 10 → <b>5%</b> · 관통포 관통 <b>3</b> · 관통포 별 → <b>공속 회로</b> · 돔 빙결</td></tr>
+</table>
+
+<h2>새 타워 6종</h2>
+<table>
+<tr><th>타워</th><th>공격</th><th>돌파 A / B</th><th>필살기 (스킨)</th></tr>
+<tr><td><b>별빛 부메랑</b> 물리 · 10</td><td>240% · 3.6초 · 사거리 끝까지 꿰뚫고 날아갔다 타워로 돌아오며 한 번 더 · 되돌이 연사 35% 바로 다시</td><td>정점 회전 (돌아설 곳에서 1.2초 돌며 0.25초마다 120%) / 쌍부메랑 교차 (좌우 곡선 2개, 보조 80%) · 별가루 궤적 · 귀환 강타</td><td>은하수 부메랑 · 쌍성 대부메랑 (큰 부메랑 2개 X자)</td></tr>
+<tr><td><b>서리 눈꽃포</b> 빛 · 15</td><td>260% · 4.2초 · 반경 1.35 서리 폭발 + 2.5초 30% 둔화</td><td>빙결 파쇄 (25% 빙결 · 느린 적 +60%) · 얼음 파편 · 동상 취약 / 서리 지대 (3초 장판) · 영구 동토 · 서리 폭발</td><td>빙하 눈꽃포 · 절대영도 폭격 (반경 2.6 · 2.5초 빙결)</td></tr>
+<tr><td><b>용암 화염방사기</b> 불 · 15</td><td>틱 65% · 1.6초 일직선 불길 (꿰뚫음) + 지나간 길에 화상 지대 0.5초마다 35% (3초)</td><td>용암 웅덩이 (지대 +60% · 둔화) · 열기 증폭 · 분화구 파열 / 초고온 플라즈마 (장갑 50% 무시 · +50%) · 연속 분사 · 열풍 밀치기</td><td>태양 용암포 · 마그마 대분출 (불길 3줄)</td></tr>
+<tr><td><b>자기장 톱날</b> 번개 · 15</td><td>180% 직격 → 그 자리에 3초 도는 톱날 (0.25초마다 48%) · 장갑 30% 무시</td><td>자석 추적 톱날 (엘리트 · 보스를 쫓음) · 장갑 분쇄 · 가속 회전 / 자기장 분열 (끝날 때 폭발 + 작은 톱날 2) · 전자기 감전 · 이중 톱날</td><td>오버클럭 톱날 · 기가 톱날 폭풍 (반경 1.8 · 끌어당김)</td></tr>
+<tr><td><b>유성 박격포</b> 불 · 20</td><td>210% x 3발 (0.35초 간격) · 하늘에서 비스듬히 떨어져 반경 1.2 폭발</td><td>거대 혜성 (3번째 = 범위 +60% · 2배) · 충돌구 · 치명 파열 / 유성우 포화 (+2발 80%) · 파편 확산 · 충격 여진</td><td>혜성 박격포 · 유성우 대폭격 (큰 유성 6발)</td></tr>
+<tr><td><b>별빛 증폭탑</b> 중력 · 20</td><td>직접 공격 없음 · 9초마다 5초 동안 아군 모두 피해 +25% (터렛 레벨로 Lv45 약 +60%)</td><td>약점 파동 (적 모두 받는 피해 +20% · 표식) · 약점 심화 · 표식 파열 / 초신성 과부하 (아군 공속 +25%) · 상시 가동 · 대장 집중 증폭</td><td>초신성 증폭탑 · 은하 과부하 (4초 공속 +40% · 치명 +30%)</td></tr>
+</table>
+<p class="note">타워마다 카드 = 새 1 · 일반 6 · 돌파 2 · 연계 4 · 콤보 2 (문서 그대로, 엑셀 "네이밍 필요"는 문서의 이름) · 스킨 다이아 300 · 전용 회로 3 (피해 · 별 · 특수). 효과 그림 4장 새로 (부메랑 · 서리탄 · 톱날 · 유성), 터렛 그림은 11-21 것.</p>
+
+<h2>화면</h2>
+<div class="shots">
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_1_new4.jpg" alt=""><figcaption>부메랑 · 서리 · 화염 · 톱날 (스테이지 12)</figcaption></figure>
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_3_meteor_prism.jpg" alt=""><figcaption>유성 · 증폭탑(보라 고리 = 버프) · 감속선 2줄 · 관통포</figcaption></figure>
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_4_turret_tab.jpg" alt=""><figcaption>터렛 탭 18종</figcaption></figure>
+</div>
+<figure class="wide"><img src="캡쳐본 모음/타워_반영_1122/zoom_r12_1_new4.jpg" alt=""><figcaption>아래 확대 — 왼쪽 끝 화염방사기 불길(주황) · 부메랑 · 대장 카피 · 서리 눈꽃포 · 톱날</figcaption></figure>
+<h3>실제로 쏘는 모습 (실시간 1.7초 간격)</h3>
+<div class="shots">
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_6a_live.jpg" alt=""><figcaption>화염 불길 · 작은 부메랑</figcaption></figure>
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_6b_live.jpg" alt=""><figcaption>불길이 지나간 길 = 화상 지대 · 서리 지대(파란 원) · 톱날</figcaption></figure>
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_6c_live.jpg" alt=""><figcaption>톱날이 적 무리에서 돎</figcaption></figure>
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_6d_live.jpg" alt=""><figcaption>다음 불길 · 부메랑 2개(쌍부메랑)</figcaption></figure>
+</div>
+<figure class="wide"><img src="캡쳐본 모음/타워_반영_1122/zoom_r12_6c_live.jpg" alt=""><figcaption>확대 — 화상 지대 줄 · 서리 지대 · 자기장 톱날</figcaption></figure>
+<div class="shots">
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_7a_live.jpg" alt=""><figcaption>드론이 가로지르며 감속선을 긋는 중 · 하늘에서 유성 · "별빛 증폭!"</figcaption></figure>
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_7b_live.jpg" alt=""><figcaption>감속선 완성 · 벌집 + 작은 벌</figcaption></figure>
+<figure><img src="캡쳐본 모음/타워_반영_1122/r12_7c_live.jpg" alt=""><figcaption>유성 박격포 · 증폭탑 · 드론 · 벌집</figcaption></figure>
+</div>
+<figure class="wide"><img src="캡쳐본 모음/타워_반영_1122/zoom_r12_7a_live.jpg" alt=""><figcaption>확대 — 드론(보라)이 날아가며 선이 늘어남 · 유성 2개 떨어지는 중</figcaption></figure>
+
+<h2>바꿀 수 있는 값 (Config · 표)</h2>
+<table>
+<tr><th>한 발 더</th><td><code>Followup_Mul</code> 0.8 · <code>Followup_Delay</code> 0.22 · 관통포 0.5 는 카드 Val2 · <code>Recast_Delay</code> 0.45 (번개 확장)</td></tr>
+<tr><th>드론 · 코일 · 빔</th><td><code>Drone_Line_Base_Dmg</code> 1 · <code>Drone_Line_Slow</code> 0.35 · <code>Drone_Line_Slow_Time</code> 3 · <code>Drone_Fly_Time</code> 0.6 · <code>Tesla_Bounce_Mul</code> 0.7 · <code>Focus_Hold</code> 1 · <code>Focus_Hold_Max</code> 8 · <code>Focus_Base_Ramp</code> 0.15 · <code>Focus_Base_Ramp_Max</code> 1.5</td></tr>
+<tr><th>의견</th><td><code>Resist_Mul</code> 0.5 · <code>Multi_Penalty</code> 0.3 · <code>Guardian_Cd_Lv_Scale</code> 1.667 · <code>Dome_Freeze_Time</code> 2 · <code>Dome_Freeze_Boss</code> 1 · <code>Dome_Vuln</code> 30 · <code>Dome_Skill_Uses</code> 1</td></tr>
+<tr><th>새 타워</th><td><code>Boomerang_Apex_Time</code> · <code>Boomerang_Apex_Rate</code> · <code>Boomerang_Twin_Mul</code> · <code>Frost_Slow</code> · <code>Freeze_Time</code> · <code>Frost_Zone_Rate</code> · <code>Flame_Zone_Rate</code> · <code>Flame_Zone_Time</code> · <code>Saw_Tick_Rate</code> · <code>Saw_Armor_Pen</code> · <code>Saw_Track_Speed</code> · <code>Meteor_Gap</code> · <code>Prism_Lv_Mul</code> — 능력치는 Turret.xlsx, 카드는 Card.xlsx</td></tr>
+<tr><th>다시 만들기</th><td>표 = <code>PYTHONUTF8=1 python tools/fix12_tables.py</code> (Id 기준 덮어씀) · 효과 그림 = PowerShell <code>python tools/fix12_art.py</code> · 스킨 그림 = <code>tools/skin_preview.py</code></td></tr>
+</table>
+
+<h2>시험</h2>
+<p>새 시험 <code>PlayTest.RunR12</code> <b>38줄</b> · 기본 <b>137줄</b> · 시험장 13 · 3차 107 · 7차 24 · 8차 28 · 9차 52 · 코스튬 33 · 전투 요청 11 · 콘텐츠 확장 22 · 비공개 테스트 24 — <b>모두 오류 0</b>.</p>
+<ul>
+<li>R12 가 보는 것: 해금 · 새 타워 6종 카드 수(새 1 · 일반 6 · 돌파 2 · 연계 4 · 콤보 2) · 스킨 · 회로 · 그림 · 글꼴 · 의견 6개 숫자(대장 카피 0.3 → Lv45 0.15초 등) · 6종이 실제로 쏨 · 부메랑 돌아옴 · 서리 폭발 · 톱날 틱 · 장갑 무시 · 돌파 4종 · 정점 회전 · 추적 톱날 · 필살기 6종 · 유성 연발 · 증폭탑 버프(아군 피해 x1.25) · 한 발 더 · 감속선 1개 더 · 감속선 둔화 35%(틱마다 안 쌓임) · 집중 빔 4초 넘게 + 점점 세짐.</li>
+<li>예전 시험에서 고친 것 (게임 문제 아님 — 규칙이 바뀜): 터렛 12 → 18 · 스킨 11 → 17 · 알려진 카드 키 · 저항 0.6 → 표 값 · "관통포 별" 회로 검사 → 레이저 별 · 얼음 파동(보스도 얼음 · 취약) · 곧 열리는 터렛 칸 없어짐.</li>
+<li><b>3차 시험 "월 1회 패키지"는 이번 일과 무관하게 이미 깨져 있었어요</b> — 11-21 결제 코드에서 "결제가 끝난 건 횟수가 넘어도 준다"로 바뀐 뒤 그 검사만 옛 규칙(두 번째 = 0)이었음 → 새 규칙으로 고침 (같은 달 막기는 비공개 테스트 시험이 결제 창 쪽에서 봄).</li>
+</ul>
+
+<h2>확인해 주실 것</h2>
+<ul class="todo">
+<li data-id="t-drone"><label><input type="checkbox"><span><span class="tag">해석</span>끈끈이 감속선 기본 피해를 남김 (추천) — 엑셀대로 피해 없이 감속만?<span class="why">엑셀대로면 의견에 "피해 없이" → <code>Drone_Line_Base_Dmg</code> 0 (장판 공격 카드를 골라야 피해)</span></span></label></li>
+<li data-id="t-rail"><label><input type="checkbox"><span><span class="tag">해석</span>관통포 관통 3 (한 줄 최대 4마리) 맞는지<span class="why">"최대 3마리"였다면 예전 값 2 로 되돌림</span></span></label></li>
+<li data-id="t-dome"><label><input type="checkbox"><span><span class="tag">해석</span>돔 빙결 = 보스 포함 2초 · 받는 피해 +30% · 한 판 1번 · 체력 % 감소는 유지<span class="why">숫자(+30%)나 체력 감소를 빼고 싶으면 의견에</span></span></label></li>
+<li data-id="t-crit"><label><input type="checkbox"><span><span class="tag">해석</span>치명 사격 = 치명 피해 +30% x3<span class="why">다른 숫자면 의견에</span></span></label></li>
+<li data-id="t-focus"><label><input type="checkbox"><span><span class="tag">해석</span>집중 빔 최대 8초 · 초당 +15% (최대 +150%)<span class="why">"정말 죽을 때까지 무제한"이면 의견에 — 대신 보스 하나에 묶여 다른 적을 못 봄</span></span></label></li>
+<li data-id="t-play"><label><input type="checkbox"><span><span class="tag">손맛</span>새 타워 6종 직접 해 보기 (치트로 스테이지 넘기고 카드)<span class="why">모양 · 세기 · 소리 — 의견 칸에 타워별로 적어 주시면 고칩니다</span></span></label></li>
+<li data-id="t-balance"><label><input type="checkbox"><span><span class="tag">다음</span>밸런스 다시 재기 (새 타워 · 해금 앞당김 · 대장 카피 약해짐 · 코일 튕김 1)<span class="why">추천: 비공개 테스트 업데이트 전에 한 번 측정 (bal_run)</span></span></label></li>
+</ul>
+</main>
+<script>
+(function(){
+  var KEY='earthdef-tower12-1122', st={c:{},n:{}};
+  try{ var v=JSON.parse(localStorage.getItem(KEY)||'{}'); st.c=v.c||{}; st.n=v.n||{}; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} stat(); }
+  var items=document.querySelectorAll('ul.todo > li[data-id]');
+  function stat(){
+    var c=0,n=0;
+    items.forEach(function(li){ var id=li.dataset.id; if(st.c[id]) c++; if((st.n[id]||'').trim()) n++; });
+    document.getElementById('stat').textContent='체크 '+c+' / '+items.length+' · 의견 '+n;
+  }
+  items.forEach(function(li){
+    var id=li.dataset.id, label=li.querySelector('label'), cb=li.querySelector('input');
+    var row=document.createElement('div'); row.className='row';
+    li.insertBefore(row,label); row.appendChild(label);
+    var pen=document.createElement('button'); pen.type='button'; pen.className='pen'; pen.textContent='✎ 의견';
+    row.appendChild(pen);
+    var box=document.createElement('div'); box.className='notebox';
+    var ta=document.createElement('textarea'); ta.placeholder='고칠 점이 있으면 적어 주세요';
+    var hint=document.createElement('div'); hint.className='hint'; hint.textContent='적는 대로 이 브라우저에 저장됩니다.';
+    box.appendChild(ta); box.appendChild(hint); li.appendChild(box);
+    cb.checked=!!st.c[id]; ta.value=st.n[id]||'';
+    function mark(){ li.classList.toggle('has-note',!!ta.value.trim()); pen.textContent=ta.value.trim()?'✎ 의견 있음':'✎ 의견'; }
+    mark(); if(ta.value.trim()) li.classList.add('open');
+    li.classList.toggle('checked',cb.checked);
+    cb.addEventListener('change',function(){ st.c[id]=cb.checked; li.classList.toggle('checked',cb.checked); save(); });
+    ta.addEventListener('input',function(){ if(ta.value.trim()) st.n[id]=ta.value; else delete st.n[id]; mark(); save(); });
+    pen.addEventListener('click',function(){ li.classList.toggle('open'); if(li.classList.contains('open')) ta.focus(); });
+  });
+  stat();
+  document.getElementById('copyNotes').addEventListener('click',function(){
+    var out=[], btn=this;
+    items.forEach(function(li){
+      var id=li.dataset.id, note=(st.n[id]||'').trim(), on=!!st.c[id];
+      if(!note && !on) return;
+      var t=li.querySelector('label > span').textContent.replace(/\s+/g,' ').trim();
+      out.push((on?'[V] ':'[ ] ')+t.slice(0,60)+(note?'\n    → '+note.replace(/\n/g,'\n      '):''));
+    });
+    var text=out.length?out.join('\n'):'(체크·의견 없음)';
+    function done(){ btn.textContent='복사했어요'; setTimeout(function(){ btn.textContent='의견 모아 복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  });
+})();
+</script>
+</body></html>

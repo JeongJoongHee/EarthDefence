@@ -110,7 +110,7 @@ namespace EarthDef.EditorTools
             Popup.CloseAll(); Game.Lobby.SetTab(1); yield return Wait(0.4f);
             int soon = 0; bool pics = true;
             foreach (var t in Tables.TurretSoon) { var g = GameObject.Find("Soon_" + t.id); if (g) soon++; if (!Art.TurretUI(t.id)) pics = false; }
-            Check(soon == 6 && pics && Tables.Turrets.Count == 12 && GameObject.Find("SoonHead"), $"터렛 탭 맨 아래 \"곧 열리는 터렛\" {soon}종 (그림만 — 전투 터렛 목록은 그대로 {Tables.Turrets.Count})");
+            Check(Tables.TurretSoon.Count == 0 && Tables.Turrets.Count == 18 && !GameObject.Find("SoonHead"), $"11-22: 곧 열리는 터렛 6종이 진짜 터렛이 됨 (전투 터렛 {Tables.Turrets.Count} · 곧 열리는 칸 {Tables.TurretSoon.Count})");
             var sr = Object.FindAnyObjectByType<ScrollRect>();
             if (sr) { Canvas.ForceUpdateCanvases(); sr.verticalNormalizedPosition = 0f; }
             yield return Wait(0.3f);

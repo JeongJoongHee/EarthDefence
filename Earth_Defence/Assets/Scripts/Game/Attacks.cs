@@ -128,18 +128,21 @@ namespace EarthDef
         SpriteRenderer core, flare;
         public static Vector2? LastMiniOrigin;   // 시험용: 마지막 작은 레이저가 나간 곳
 
-        public Beam(TurretInst tr, Vector2 o, float angleDeg, float duration, float tickSec, float width, double rate, float sweepDeg = 0, bool mini = false, float len = 0)
+        /// <summary>11-22 용암 화염방사기: 주황 불길 + 불꽃 튐 (flame)</summary>
+        readonly bool flame; float flameT;
+        public Beam(TurretInst tr, Vector2 o, float angleDeg, float duration, float tickSec, float width, double rate, float sweepDeg = 0, bool mini = false, float len = 0, bool flame = false)
         {
-            src = tr; origin = o; angle = baseAngle = angleDeg; dur = duration; tick = tickSec; this.width = width; this.rate = rate; sweep = sweepDeg; this.mini = mini;
+            src = tr; origin = o; angle = baseAngle = angleDeg; dur = duration; tick = tickSec; this.width = width; this.rate = rate; sweep = sweepDeg; this.mini = mini; this.flame = flame;
             if (mini) { length = len > 0 ? len : 4.5f; LastMiniOrigin = o; }
-            col = Elem.Color("light");
+            else if (len > 0) length = len;
+            col = flame ? Art.Hex("#ff8a3d") : Elem.Color("light");
             MakeSprite("beam", Art.Fx("beam", new Vector4(40, 8, 40, 8)), o, 28);
             sr.drawMode = SpriteDrawMode.Sliced;
             Art.Additive(sr);
             var gc0 = col; gc0.a = 0.85f; sr.color = gc0;
             core = Child("core", Art.Fx("beam_core", new Vector4(20, 8, 20, 8)), 29);
             core.drawMode = SpriteDrawMode.Sliced;
-            core.color = Color.Lerp(col, Color.white, 0.5f);
+            core.color = flame ? Art.Hex("#ffe08a") : Color.Lerp(col, Color.white, 0.5f);
             flare = Child("flare", Art.Fx("glow"), 29);
             Art.Additive(flare);
             var fc = Color.Lerp(col, Color.white, 0.3f); fc.a = 0.7f; flare.color = fc;
@@ -175,6 +178,14 @@ namespace EarthDef
             float fade = Mathf.Clamp01(Mathf.Min(t / 0.08f, (dur - t) / 0.12f));
             Layout(0.4f + 0.6f * fade);
             { var c = sr.color; c.a = 0.85f * fade; sr.color = c; var cc = core.color; cc.a = fade; core.color = cc; }
+            if (flame && (flameT -= dt) <= 0)
+            {   // 불길: 길을 따라 불꽃 · 연기
+                flameT = 0.04f;
+                var fd = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+                var at = origin + fd * UnityEngine.Random.Range(0.3f, length);
+                Fx.Sparks(at, Color.Lerp(Art.Hex("#ff7a2a"), Art.Hex("#ffe08a"), UnityEngine.Random.value), 2, 2.5f, 0.8f, 60f, angle);
+                if (UnityEngine.Random.value < 0.15f) Fx.Puff(at, 0.3f);
+            }
             if (tickT <= 0)
             {
                 tickT += tick;
@@ -212,9 +223,16 @@ namespace EarthDef
         public float Center => c;
         public Rect Area => vert ? new Rect(c - half, lo, half * 2, hi - lo) : new Rect(lo, c - half, hi - lo, half * 2);
 
-        public Field(TurretInst tr, float at, float halfW, float duration, float tickSec, double rate, bool? vertical = null)
+        // 11-22 개편 "가운데로 드론이 달리고 양옆으로 선이 만들어짐 · 그 선을 지나가면 n초간 감속": 드론이 가로질러 날며 선을 긋고(Drone_Fly_Time),
+        //   닿은 적은 처음 한 번 Drone_Line_Slow 둔화 · 그 뒤 닿아 있는 동안 시간만 이어짐 (예전 = 틱마다 +10% 쌓임)
+        readonly bool line; readonly float flyT; Vector2 size0; Transform droneT;
+        readonly HashSet<Enemy> touched = new();
+        float Reveal => line && flyT > 0 ? Mathf.Clamp01(t / flyT) : 1f;
+
+        public Field(TurretInst tr, float at, float halfW, float duration, float tickSec, double rate, bool? vertical = null, bool line = false)
         {
-            src = tr; c = at; half = halfW; dur = duration; tick = tickSec; this.rate = rate;
+            src = tr; c = at; half = halfW; dur = duration; tick = tickSec; this.rate = rate; this.line = line;
+            flyT = line ? Tables.Cf("Drone_Fly_Time", 0.6f) : 0f;
             vert = vertical ?? World.FieldVert;
             Vector2 pos, size;
             if (vert)
@@ -230,14 +248,36 @@ namespace EarthDef
             MakeSprite("field", Art.Fx("field", new Vector4(28, 24, 28, 24)), pos, 8);
             sr.drawMode = SpriteDrawMode.Sliced;      // 장판은 보통 그리기 (빛 더하기면 겹칠 때 하얗게 탐 — 11-16 캡처로 확인)
             sr.color = Elem.Color("grav");
-            sr.size = size;
+            sr.size = size; size0 = size;
+            if (line && flyT > 0)
+            {
+                var d = new GameObject("drone_fly"); d.transform.SetParent(go.transform.parent, false);
+                var ds = d.AddComponent<SpriteRenderer>(); ds.sprite = Art.Get("Turret/drone_body", Art.PPU); ds.sortingOrder = 33;
+                d.transform.localScale = Vector3.one * 0.75f; droneT = d.transform;
+                Layout();
+            }
         }
+
+        void Layout()
+        {
+            float k = Reveal;
+            if (vert) { sr.size = new Vector2(size0.x, Mathf.Max(0.05f, size0.y * k)); go.transform.position = new Vector3(c, lo + (hi - lo) * k * 0.5f, 0); }
+            else { sr.size = new Vector2(Mathf.Max(0.05f, size0.x * k), size0.y); go.transform.position = new Vector3(lo + (hi - lo) * k * 0.5f, c, 0); }
+            if (droneT)
+            {
+                float a = lo + (hi - lo) * k;
+                droneT.position = vert ? new Vector3(c, a, 0) : new Vector3(a, c + 0.25f + Mathf.Sin(t * 18f) * 0.05f, 0);
+                if (k >= 1f) { UnityEngine.Object.Destroy(droneT.gameObject); droneT = null; }
+            }
+        }
+
+        public override void Kill() { if (droneT) UnityEngine.Object.Destroy(droneT.gameObject); base.Kill(); }
 
         /// <summary>적이 띠 안 (가로질러 재는 거리 · 길이 방향 범위)</summary>
         bool Inside(Enemy e, float pad)
         {
             float across = vert ? e.Pos.x : e.Pos.y, along = vert ? e.Pos.y : e.Pos.x;
-            return Mathf.Abs(across - c) <= half + e.radius + pad && along >= lo - e.radius && along <= hi + e.radius;
+            return Mathf.Abs(across - c) <= half + e.radius + pad && along >= lo - e.radius && along <= lo + (hi - lo) * Reveal + e.radius;
         }
 
         public override void Step(float dt)
@@ -245,6 +285,7 @@ namespace EarthDef
             if (dead) return;
             t += dt; tickT -= dt;
             var col = sr.color; col.a = Mathf.Clamp01(Mathf.Min(t / 0.2f, (dur - t) / 0.4f)); sr.color = col;
+            if (line && (t - dt) < flyT + 0.05f) Layout();
             var list = Battle.I.enemies;
             if (src.Has("pull"))
                 foreach (var e in list) if (!e.dead && Inside(e, 0.6f)) e.Pull(vert ? new Vector2(c, e.Pos.y) : new Vector2(e.Pos.x, c), 0.9f * dt);
@@ -256,7 +297,13 @@ namespace EarthDef
                 {
                     var e = list[i];
                     if (e.dead || !Inside(e, 0)) continue;
-                    e.AddSlow(0.1f, tick + 0.2f, slowMax);
+                    if (line)
+                    {
+                        float lt = Tables.Cf("Drone_Line_Slow_Time", 3f);
+                        if (touched.Add(e)) e.AddSlow(Tables.Cf("Drone_Line_Slow", 0.35f), lt, slowMax); else e.AddSlow(0f, lt, slowMax);
+                    }
+                    else e.AddSlow(0.1f, tick + 0.2f, slowMax);
+                    if (rate <= 0) continue;   // 기본 피해 꺼짐(Drone_Line_Base_Dmg 0) + 장판 공격 카드 없음
                     if (src.Has("paralyze") && Combat.R < src.S("paralyze")) e.Paralyze(Tables.Cf("Para_Time", 1f));
                     Combat.Hit(src, e, rate, true, false);
                 }
@@ -330,12 +377,13 @@ namespace EarthDef
         double rate; float cool, life = 14f;
         Enemy target;
 
-        public Bee(TurretInst tr, Vector2 p, int hits, double rate, bool echo = false)
+        public Bee(TurretInst tr, Vector2 p, int hits, double rate, bool echo = false, float scale = 1f)
         {
             src = tr; pos = p; this.hits = hits; this.rate = rate; this.echo = echo;
             vel = new Vector2(UnityEngine.Random.Range(-2f, 2f), 3f);
             MakeSprite("bee", Art.Fx("bee"), p, 32);   // 그림에 금빛 번짐 들어 있음 (11-16)
             if (echo) { sr.color = new Color(1, 0.9f, 0.6f); go.transform.localScale = Vector3.one * 0.8f; }
+            if (scale != 1f) go.transform.localScale = Vector3.one * scale;   // 11-22 밀집 군집 작은 벌
         }
 
         public override void Step(float dt)
@@ -390,6 +438,8 @@ namespace EarthDef
         Vector2 pos; float r, dur, t, tick, tickT, slow, boltT; double rate; bool bolts;
         /// <summary>가장 진할 때 투명도 (불바퀴 자국처럼 많이 깔리는 것은 옅게)</summary>
         public float alpha = 0.8f;
+        /// <summary>11-22: 끝날 때 (서리 폭발) · 안의 적 취약 (열기 증폭) · procs = 효과도 일으킴</summary>
+        public Action onEnd; public double vuln; public bool procs;
         /// <summary>slow = 틱마다 둔화 (2차 전기 덫) · bolts = 0.5초마다 작은 낙뢰 (덫 낙뢰)</summary>
         public Zone(TurretInst tr, Vector2 p, float radius, float duration, float tickSec, double rate, Color c, float slow = 0, bool bolts = false)
         {
@@ -411,7 +461,8 @@ namespace EarthDef
                 {
                     if (e.dead || Vector2.Distance(e.Pos, pos) > r + e.radius) continue;
                     if (slow > 0) e.AddSlow(slow, tick + 0.2f, Tables.Cf("Slow_Max", 0.5f));
-                    Combat.Hit(src, e, rate, false, false);
+                    if (vuln > 0) e.Vulnerable(vuln, Tables.Cf("Vuln_Time", 4f));
+                    Combat.Hit(src, e, rate, procs, false);
                 }
             }
             if (bolts && (boltT -= dt) <= 0)
@@ -419,7 +470,7 @@ namespace EarthDef
                 boltT = 0.5f;
                 Battle.I.Add(new Strike(src, pos.x + UnityEngine.Random.Range(-r, r) * 0.6f, 0.4f, 0.25f, 0.25f, Tables.C("Mini_Bolt_Rate", 120) * 0.5, mini: true, y: pos.y));
             }
-            if (t >= dur) Kill();
+            if (t >= dur) { onEnd?.Invoke(); Kill(); }
         }
     }
 

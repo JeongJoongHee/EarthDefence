@@ -20,7 +20,9 @@ namespace EarthDef
         public float DomeCdMax => Tables.Cf("Dome_Skill_Cd", 60f);
         public bool Burning => burnT > 0;
         public bool CanBurn => SkillOn && st == St.Play && skillCdG <= 0 && Guardian != null && lab == null;
-        public bool CanDome => SkillOn && st == St.Play && skillCdD <= 0 && lab == null;
+        public bool CanDome => SkillOn && st == St.Play && skillCdD <= 0 && lab == null && !DomeSpent;
+        /// <summary>11-22 의견 "1회성": 한 판에 Dome_Skill_Uses 번 쓰면 끝 (0 = 쿨타임마다)</summary>
+        public bool DomeSpent => Tables.Ci("Dome_Skill_Uses", 1) > 0 && domeUsed >= Tables.Ci("Dome_Skill_Uses", 1);
         /// <summary>버닝 중 대장 카피 공격 간격에 곱함 (TurretUnit)</summary>
         public float BurnCdMul => Burning ? 1f / Mathf.Max(0.1f, Tables.Cf("Burn_Rate_Mul", 2f)) : 1f;
         /// <summary>버닝 중 대장 카피 피해에 곱함 (Combat.Calc)</summary>
@@ -59,8 +61,10 @@ namespace EarthDef
                 if (i >= enemies.Count) continue;
                 var e = enemies[i];
                 if (e.dead || !World.OnField(e.Pos)) continue;
-                if (e.row.IsBoss) { float sl = Tables.Cf("Dome_Boss_Slow", 0.5f); e.AddSlow(sl, freeze, sl); }   // 보스는 원래 규칙대로 안 얼고(기획서 6-2) 느려짐
-                else e.Paralyze(freeze);
+                // 11-22 의견 "빙결 2초간 모두 이동 정지 + 받는 피해 증가": Dome_Freeze_Boss 1 = 보스도 얼림 (0 = 예전처럼 보스는 느려짐)
+                if (e.row.IsBoss && Tables.Ci("Dome_Freeze_Boss", 1) != 1) { float sl = Tables.Cf("Dome_Boss_Slow", 0.5f); e.AddSlow(sl, freeze, sl); }
+                else e.Paralyze(freeze, true);
+                if (Tables.C("Dome_Vuln", 30) > 0) e.Vulnerable(Tables.C("Dome_Vuln", 30) / 100.0, freeze);
                 Fx.Ring(e.Pos, 0.6f, Art.Hex("#9fe8ff"));
                 if (src != null) Combat.Raw(e, e.maxHp * (e.row.IsBoss || e.row.IsElite ? pctBoss : pct), false, src, true);
             }
@@ -74,6 +78,7 @@ namespace EarthDef
 
         void SkillStep(float dt)
         {
+            BuffStep(dt);       // 11-22 별빛 증폭탑 버프 시간
             if (skillCdG > 0) skillCdG -= dt;
             if (skillCdD > 0) skillCdD -= dt;
             if (burnT <= 0) return;

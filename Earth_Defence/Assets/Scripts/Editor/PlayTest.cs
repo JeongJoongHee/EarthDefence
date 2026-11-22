@@ -56,6 +56,7 @@ namespace EarthDef.EditorTools
         public static void RunExpand() => Start("expand");
         /// <summary>11-21 전투 요청 3개 — 좌우 이동 · 특수 능력 · 속도 (Editor/PlayTest11.cs)</summary>
         public static void RunR11() => Start("r11");
+        public static void RunR12() => Start("r12");
         /// <summary>11-21 스토어 스크린샷 촬영 (Editor/PlayTestStore.cs → tools/store_graphics.py)</summary>
         public static void RunStore() => Start("store");
 
@@ -101,7 +102,7 @@ namespace EarthDef.EditorTools
             float timeout = Time.realtimeSinceStartup + (mode == "bal" ? 7000f : 420f);
             Battle.NoSlotPick = true; StoryView.Off = true;   // 9차: 스토리 대화창은 RunR9 에서 따로 시험 ·      // 11-18: 새 터렛 자리 고르기는 정해진 순서로 자동 (자리 고르기 흐름은 Steps 에서 따로 시험)
             if (mode != "r7" && mode != "r8" && mode != "r9" && Title.I) Title.I.Enter();      // 7차 타이틀: 다른 시험은 바로 로비로 (타이틀 흐름은 RunR7 에서)
-            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : mode == "r11" ? R11Steps() : mode == "store" ? StoreSteps() : Steps());
+            var main = StartCoroutine(mode == "idle" ? IdleShots() : mode == "sound" ? SoundDump() : mode == "lab" ? LabSteps() : mode == "p3" ? P3Steps() : mode == "perf" ? PerfSteps() : mode == "bal" ? BalSteps() : mode == "r7" ? R7Steps() : mode == "r8" ? R8Steps() : mode == "r9" ? R9Steps() : mode == "r10" ? R10Steps() : mode == "closed" ? ClosedSteps() : mode == "expand" ? ExpandSteps() : mode == "r11" ? R11Steps() : mode == "r12" ? R12Steps() : mode == "store" ? StoreSteps() : Steps());
             while (running && Time.realtimeSinceStartup < timeout) yield return null;
             if (running) { errors++; Log("FAIL 시간 초과"); StopCoroutine(main); }
             Log($"DONE errors={errors}");
@@ -118,7 +119,7 @@ namespace EarthDef.EditorTools
             Directory.CreateDirectory(OutDir);
             SetupCapture();
             yield return Wait(0.5f);
-            Check(Tables.Frames.Count == 7 && Tables.Skins.Count == 11 && Tables.Products.FindAll(x => x.kind == "dia").Count == 5 && Tables.ShopItems.Count >= 8, $"3차 표: 외형 {Tables.Frames.Count} · 스킨 {Tables.Skins.Count} · 상품 {Tables.Products.Count} · 상점 {Tables.ShopItems.Count}");
+            Check(Tables.Frames.Count == 7 && Tables.Skins.Count == 17 && Tables.Products.FindAll(x => x.kind == "dia").Count == 5 && Tables.ShopItems.Count >= 8, $"3차 표: 외형 {Tables.Frames.Count} · 스킨 {Tables.Skins.Count} · 상품 {Tables.Products.Count} · 상점 {Tables.ShopItems.Count}");
             double rsum = 0; foreach (var (_, r) in Tables.BoxRates) rsum += r;
             Check(System.Math.Abs(rsum - 100) < 0.01, $"상자 확률 합 {rsum}%");
             Check(Art.HueMat != null && Art.HueMat.HasProperty("_Hue") && Art.HueMat.HasProperty("_RendererColor"), "스킨 색 돌리기 셰이더 (EarthDef/SpriteHue)");
@@ -460,7 +461,7 @@ namespace EarthDef.EditorTools
                 // 6) 월 1회 다이아 폭탄 패키지
                 var mp = Tables.Products.Find(x => x.kind == "monthly"); double dm = S.dia;
                 int m1 = mp != null ? Store.Purchase(mp) : 0, m2 = mp != null ? Store.Purchase(mp) : -1;
-                Check(mp != null && mp.krw == 9900 && m1 == 10000 && m2 == 0 && Store.MonthDone(mp) && S.dia == dm + 10000, $"월 1회 패키지: {m1} → 같은 달 다시 {m2}");
+                Check(mp != null && mp.krw == 9900 && m1 == 10000 && Store.MonthDone(mp) && S.dia == dm + m1 + m2, $"월 1회 패키지: {m1} → 같은 달 표시 {Store.MonthDone(mp)} (11-21 규칙: 결제 창 전에 막고, 이미 낸 결제는 그대로 줌)");
                 // 7) 상자: 전설까지 · 55번 천장
                 {
                     var rnd = new System.Random(9); int top = 0;
@@ -589,7 +590,7 @@ namespace EarthDef.EditorTools
 
             // --- 스킨 · 필살기
             foreach (var k in Tables.Skins) Store.BuySkin(k);
-            Check(S.skins.Count == 11 && S.skinOn.Count == 11, $"스킨 11개 사고 끼움 (다이아 {Num.Comma(S.dia)} 남음)");
+            Check(S.skins.Count == Tables.Skins.Count && S.skinOn.Count == Tables.Skins.Count, $"스킨 {Tables.Skins.Count}개 사고 끼움 (다이아 {Num.Comma(S.dia)} 남음)");
             Game.StartStage(3, 6); yield return null;      // 밸런스 2차: 12 는 시험 세이브에게 너무 셈 → 3
             foreach (var id in new[] { "new_rail", "new_laser", "new_missile", "new_vortex" }) Force(id);
             var rail = B.run.Get("rail");
@@ -796,7 +797,7 @@ namespace EarthDef.EditorTools
             // 1) 로비
             Check(Game.Lobby != null && World.I != null && UIRoot.I != null, "로비 · 전장 · 화면 만들어짐");
             Check(S.stage == 1 && S.best == 0 && Tables.Stages.Count == 100, $"스테이지 1 부터 (표 {Tables.Stages.Count}개)");
-            Check(Tables.Turrets.Count == 12 && Tables.Cards.Count >= 180 && Tables.Enemies.Count >= 18, $"표: 터렛 {Tables.Turrets.Count} · 카드 {Tables.Cards.Count} · 적 {Tables.Enemies.Count}");
+            Check(Tables.Turrets.Count == 18 && Tables.Cards.Count >= 270 && Tables.Enemies.Count >= 18, $"표: 터렛 {Tables.Turrets.Count} · 카드 {Tables.Cards.Count} · 적 {Tables.Enemies.Count}");
             Check(Tables.GearParts.Count == 6 && Tables.Grades.Count == 7 && Tables.Chips.Count >= 60 && Tables.Missions.Count >= 6 && Tables.Attend.Count == 7,
                   $"2차 표: 부위 {Tables.GearParts.Count} · 등급 {Tables.Grades.Count} · 칩 {Tables.Chips.Count} · 미션 {Tables.Missions.Count} · 출석 {Tables.Attend.Count}");
             foreach (var c in Tables.Chips)
@@ -993,7 +994,7 @@ namespace EarthDef.EditorTools
             Check(System.Math.Abs(weak / neutral - Tables.C("Weak_Mul")) < 0.02, $"약점 배율 {weak / neutral:0.00} (Config {Tables.C("Weak_Mul")})");
             B.stage.weak = g.row.elem; double stageWeak = MinCalc(g, "moth"); B.stage.weak = sw0;
             Check(System.Math.Abs(stageWeak / neutral - Tables.C("Weak_Mul")) < 0.02, $"스테이지 약점: 약점이 다른 적도 x{stageWeak / neutral:0.00}");
-            Check(System.Math.Abs(resist / neutralL - 0.6) < 0.02, $"저항 배율 {resist / neutralL:0.00}");
+            Check(System.Math.Abs(resist / neutralL - Tables.C("Resist_Mul", 0.6)) < 0.02, $"저항 배율 {resist / neutralL:0.00} (표 {Tables.C("Resist_Mul")})");
 
             // 7) 40초 진행 → 모든 터렛이 쏨
             int k0 = (int)B.kills;
@@ -1152,14 +1153,14 @@ namespace EarthDef.EditorTools
             var ca = S.chips.Find(x => x.id == "ch_atk" && x.q == 2 && x.at < 0);
             var cm = Gear.MergeChip(ca);
             Check(cm != null && cm.q == 3, "같은 칩 3개 합성 → 등급 3");
-            Gear.PutChip(Gear.NewChip(7, "tc_rail_star"), suit, 0);
+            Gear.PutChip(Gear.NewChip(7, "tc_laser_star"), suit, 0);   // 11-22: 관통포 별 회로는 의견대로 "관통포 공속"이 됨 → 레이저 별로
             Gear.PutChip(Gear.NewChip(7, "ch_immune"), suit, 1);
             Gear.PutChip(Gear.NewChip(7, "ch_refresh"), shield, 0);
             Gear.PutChip(Gear.NewChip(7, "ch_choice"), shield, 1);
             Gear.PutChip(Gear.NewChip(7, "ch_elite"), core, 1);
             Gear.PutChip(Gear.NewChip(7, "ch_shield"), shield, 2);
             lo = Loadout.Build(S);
-            Check(System.Math.Abs(lo.C("dmg") - 14) < 0.01 && lo.TS("rail", "start_stars") == 2 && lo.B("refresh") == 6, $"칩 합계: 피해 +{lo.C("dmg")}% · 관통포 별 +{lo.TS("rail", "start_stars")} · 새로고침 +{lo.B("refresh")}");
+            Check(System.Math.Abs(lo.C("dmg") - 14) < 0.01 && lo.TS("laser", "start_stars") == 2 && lo.B("refresh") == 6, $"칩 합계: 피해 +{lo.C("dmg")}% · 레이저 별 +{lo.TS("laser", "start_stars")} · 새로고침 +{lo.B("refresh")}");
             Game.ToLobby(); yield return null; Popup.CloseAll();
             GearTab.showChips = false; Game.Lobby.SetTab(2); yield return Wait(0.4f);
             Capture("13_gear_tab");
@@ -1180,8 +1181,8 @@ namespace EarthDef.EditorTools
             Check(B.st == Battle.St.Pick && B.offer.Count == 4, $"첫 카드 칩 → 첫 레벨업 카드 {B.offer.Count}장");
             Game.BattleUI.ShowPick(); yield return Wait(0.4f);
             Capture("16_four_cards");
-            B.offer[0] = Tables.CardById["new_rail"]; B.Choose(0);
-            Check(B.run.Get("rail")?.stars == 3, $"관통포 별 칩 → 놓자마자 별 {B.run.Get("rail")?.stars}");
+            B.offer[0] = Tables.CardById["new_laser"]; B.Choose(0);
+            Check(B.run.Get("laser")?.stars == 3, $"레이저 별 칩 → 놓자마자 별 {B.run.Get("laser")?.stars}");
             {
                 var g = B.run.turrets[0];
                 var el = B.Spawn("big", new Vector2(0, 3)); var nm = B.Spawn("moth", new Vector2(1, 3)); B.Tick(Battle.StepSec);
@@ -1325,6 +1326,12 @@ namespace EarthDef.EditorTools
             "knock", "scatter", "scatter_dmg", "mines", "mine_dmg", "mine_knock", "beams", "focus_ramp", "focus_keep", "refract", "refract_dmg",
             "pull_pow", "blackhole", "bh_area", "bh_dmg", "vortex_burst", "burst_area", "burst_dmg", "hits_pct", "speed", "wheel_trail", "trail_dmg",
             "trail_dur", "mini_wheel", "mini_dmg", "bounce", "bounce_free", "shockwave", "trap", "trap_dmg", "trap_dur", "trap_bolt", "overcharge", "kill_chain",
+            // 11-22 타워 정리 반영: 한 발 더 · 개편 · 새 타워 6종 · 의견
+            "crit_dmg", "followup", "followup_mul", "extra_line", "line_dmg", "sub_bee", "sub_mul", "recast_prob", "cd_sec", "armor_pen", "dmg_vs_slow",
+            "instant_recast", "hover_apex", "apex_dur", "apex_dmg", "twin_arc", "return_dmg", "freeze", "ice_shard", "frost_zone", "zone_dur", "zone_area", "zone_detonate",
+            "burn_dmg", "burn_dur", "lava_pool", "burn_vuln", "kill_mini", "tick_dmg", "saw_track", "saw_split", "giant_meteor", "crater_burn",
+            "meteor_extra", "shrapnel", "hit_bolt", "buff_dmg", "buff_crit", "buff_crit_dmg", "aura_vuln", "aura_slow", "mark_pop", "buff_cd", "guardian_bonus",
+            "buff_boss", "buff_cdr_burst",
         };
         /// <summary>칩 board · card · cond 키 (Loadout · Combat · Battle 이 읽음)</summary>
         static readonly HashSet<string> BoardStats = new()

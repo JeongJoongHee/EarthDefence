@@ -82,6 +82,7 @@ namespace EarthDef
             stageNo = no; stage = Tables.Stage(no); eliteMode = elite && IsStage;
             frame = Store.Frame; frameVal = frame != null ? frame.Val(Store.FrameStar) : 0; frameT = frame != null ? (float)frame.cd : 0;
             SkillStart();      // 11-21 특수 능력 (BattleSkills.cs)
+            BuffReset();       // 11-22 별빛 증폭탑 (Battle12.cs)
             nextBoss = Tables.Cf("Endless_Boss_Gap", 150); nextElite = mode == "survival" ? 8f : nextBoss * 0.5f;
             rnd = new System.Random(seed);
             Combat.Seed(seed + 1);
@@ -382,6 +383,7 @@ namespace EarthDef
         public void OnKill(Enemy e, TurretInst src)
         {
             kills++;
+            Combat.MarkPop(e);   // 11-22 표식 파열
             Audio.Play(e.row.IsBoss || e.row.IsElite ? Audio.Sfx.BigBoom : Audio.Sfx.Kill);
             goldGot += Tables.C("Kill_Gold", 1) * (1 + 0.1 * (stageNo - 1)) * (e.row.IsBoss ? 30 : e.row.IsElite ? 10 : 1);
             Fx.Hit(e.Pos, e.size * 1.3f);

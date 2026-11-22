@@ -1,5 +1,15 @@
 # 카피바라 지구를 지켜라! (폴더·코드 이름 Earth_Defence)
 
+## ▶ 재개 메모 (2026-11-22 — 타워 전체 정리 반영)
+- 요청 = "타워_전체_정리.html 보고 게임 내 반영" (원본 `타워 추가 컨셉.xlsx` + 문서 ✎ 의견 6개, 키 earthdef-towers-1120). 보고 = **`타워_반영_결과.html`** (키 earthdef-tower12-1122, 캡처 `캡쳐본 모음/타워_반영_1122/`) — 확인 칸 7개(t-drone · t-rail · t-dome · t-crit · t-focus · t-play · t-balance).
+- 바뀐 것: 해금 5/10/15/20 · 멀티샷 → "한 발 더"(followup · followup_mul, TurretUnit.Queue/PendStep) · 드론 감속선(Field line · Drone_Line_*) · 레이저 펄스 둔화 · 번개 확장 다시 치기(recast_prob) · 집중 빔 처치까지(Focus_Hold*) · 코일 기본 1번 + 튕김 70% · 신속 바퀴 · 밀집 군집 작은 벌 · 의견 6개(Resist 0.5 · 대장 카피 10%/0.3초/탄속 20/Lv45 0.15 · 치명 사격 · 폭발탄 5% · 관통포 관통 3 · tc_rail_star → cd_sec · 돔 빙결 보스 포함 2초 + 취약 30% + 한 판 1번).
+- 새 타워 6종 (Kind boomerang · frost · flame · saw · meteor · prism): `Game/Attacks12.cs`(Boomerang · Frost.Blast · SawBlade · MeteorFall · MeteorVolley · DelayBlast) · `Game/Battle12.cs`(증폭탑 버프 PrismPulse · BuffCdPct · BuffCrit · 표식 markUntil) · 필살기 6 = TurretUnit.CastUlt. 카드 90 · 스킨 6 · 회로 18. Turret_Soon 시트 비움.
+- 도구: 표 `tools/fix12_tables.py`(Id 기준 덮어씀) · 효과 그림 `tools/fix12_art.py`(PowerShell) · 스킨 그림 `tools/skin_preview.py`.
+- 시험: 새 `PlayTest.RunR12`(Editor/PlayTest12.cs) 38 · 기본 137 · 시험장 13 · 3차 107 · 7차 24 · 8차 28 · 9차 52 · 10 33 · 11 11 · 확장 22 · Closed 24 — 오류 0. (3차 "월 1회 패키지"는 11-21 결제 규칙 바뀐 뒤 옛 검사였던 것 고침)
+- 해석(보고 첫머리): 감속선 기본 피해 남김(Drone_Line_Base_Dmg 0 = 엑셀대로) · 관통 3 = 최대 4마리 · 돔 취약 +30% 는 제가 정한 숫자 · 치명 사격 +30% · 집중 빔 최대 8초 · 히든 타워 8종은 안 넣음 · 밸런스 안 잼.
+- 커밋 안 한 것(다른 작업): `장비_회로_*.html` · Icon/chip·g_* 그림 변경 · `타워 추가 컨셉.xlsx` · `타워_전체_정리.html`.
+- **재개 첫 순서**: ① `PYTHONUTF8=1 python tools/todo_checks.py 타워_반영_결과.html` → 반영 ② 밸런스 다시 재기(새 타워 · 대장 카피 약해짐) ③ 아래 11-21 마무리 메모의 비공개 테스트 순서 (2번 AAB 에는 이번 변경이 없음 — 업데이트로 3번).
+
 ## ▶ 재개 메모 (2026-11-21 마무리 — 비공개 테스트 B 단계 진행 중)
 - **남은 일 = `남은_작업.html` 하나** (키 earthdef-todo-1121 · `PYTHONUTF8=1 python tools/todo_checks.py 남은_작업.html`). 끝난 문서는 모두 `완료 사항 모음_HTML/`.
 - **비공개 테스트 진행 (사용자, Play Console = Cachisi 계정 `/u/1/`, 앱 id 4974878942316119318)**:
