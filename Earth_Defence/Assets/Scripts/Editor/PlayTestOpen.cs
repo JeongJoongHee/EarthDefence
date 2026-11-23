@@ -39,7 +39,7 @@ namespace EarthDef.EditorTools
                       $"탈것 보임 {m.Length} / 전체 {Tables.Mounts.Count} (숨김 {Tables.Mounts.Count - m.Length}) — {On(m)}");
                 Check(f.OrderBy(x => x).SequenceEqual(OpFrame.OrderBy(x => x)) && Tables.Frames.Count == 7,
                       $"기지 돔 보임 {f.Length} / 전체 {Tables.Frames.Count} — {On(f)} (숨김 {On(Tables.Frames.Where(r => !r.enabled).Select(r => r.id))})");
-                Check(Tables.Turrets.Count == 18 && Tables.Skins.Count == 17 && Tables.Chips.Count == 86, $"터렛 {Tables.Turrets.Count} · 스킨 {Tables.Skins.Count} · 회로 {Tables.Chips.Count} 은 그대로 다 엶");
+                Check(Tables.Turrets.Count == 18 && Tables.Skins.Count == 17 && Tables.Chips.Count == 86, $"표 줄은 그대로: 터렛 {Tables.Turrets.Count} · 스킨 {Tables.Skins.Count} · 회로 {Tables.Chips.Count}");
                 Check(Tables.GearTop == 6 && Tables.ChipTop == 5 && Store.BoxMaxFor(true) == 5 && Store.BoxMaxFor(false) == 4,
                       $"등급 상한: 장비 {Tables.Grade(Tables.GearTop).name} · 회로 {Tables.Grade(Tables.ChipTop).name} / 상자 최대: 장비 {Tables.Grade(Store.BoxMaxFor(true)).name} · 회로 {Tables.Grade(Store.BoxMaxFor(false)).name}");
             }
@@ -171,6 +171,49 @@ namespace EarthDef.EditorTools
                                           L.F("pity_note", 55, "전설", "영웅") })
                     foreach (char ch in s) if (ch > ' ' && font != null && !font.HasCharacter(ch)) bad.Add(ch);
                 Check(bad.Count == 0, $"새 글자 글꼴 확인 ({ShopTab.BoxMaxNote})" + (bad.Count > 0 ? " 없는 글자: " + string.Join("", bad) : ""));
+            }
+
+            // ---------- 8) 11-23 터렛은 찌릿 코일까지만 (스테이지 30 = 숨기지 않았다면 다 열렸을 진행) ----------
+            {
+                string[] openT = { "guardian", "rail", "laser", "drone", "hive", "missile", "bolt", "cannon", "focus", "vortex", "wheel", "tesla" };
+                string[] hideT = { "boomerang", "frost_cannon", "flamethrower", "plasma_saw", "meteor_mortar", "prism_beacon" };
+                var onT = Tables.Turrets.Where(t => t.enabled).Select(t => t.id).ToArray();
+                Check(onT.SequenceEqual(openT), $"터렛 보임 {onT.Length} / 전체 {Tables.Turrets.Count} — 마지막 {onT.LastOrDefault()}");
+                Check(hideT.All(id => !S.Unlocked(Tables.TurretById[id])) && openT.All(id => S.Unlocked(Tables.TurretById[id])), "스테이지 30 에서도 숨긴 6종은 안 열림 (조각 · 강화 대상 아님)");
+
+                Popup.CloseAll(); Game.Lobby.SetTab(1); yield return Wait(0.4f);
+                int rowOn = openT.Count(id => GameObject.Find("Row_" + id)), rowOff = hideT.Count(id => GameObject.Find("Row_" + id));
+                Check(rowOn == 12 && rowOff == 0, $"터렛 탭 {rowOn}줄 · 숨긴 것 {rowOff}줄");
+                Capture("op_09_turret");
+                var trs = GameObject.Find("Row_tesla")?.GetComponentInParent<ScrollRect>();
+                if (trs) { trs.verticalNormalizedPosition = 0; Canvas.ForceUpdateCanvases(); yield return Wait(0.2f); }
+                Capture("op_09b_turret_end");
+
+                Looks.Open(0); yield return Wait(0.4f);
+                int skOn = Tables.Skins.Count(k => GameObject.Find("S_" + k.id) && Tables.TurretOpen(k.turret)), skOff = Tables.Skins.Count(k => GameObject.Find("S_" + k.id) && !Tables.TurretOpen(k.turret));
+                Check(skOn == 11 && skOff == 0, $"터렛 외형 {skOn}줄 · 숨긴 것 {skOff}줄");
+                Popup.CloseAll();
+
+                CodexUI.view = 1; CodexUI.Open(); yield return Wait(0.4f);
+                int cdOn = Tables.Chips.Count(x => GameObject.Find("C_" + x.id) && Tables.TurretOpen(x.turret)), cdOff = Tables.Chips.Count(x => GameObject.Find("C_" + x.id) && !Tables.TurretOpen(x.turret));
+                Check(cdOn == 68 && cdOff == 0 && Codex.ChipAll == 68, $"회로 도감 {cdOn}줄 · 숨긴 것 {cdOff}줄 · 모두 {Codex.ChipAll}종");
+                Popup.CloseAll(); CodexUI.view = 0;
+
+                var chipRnd = new System.Random(23); int badChip = 0;
+                for (int i = 0; i < 2000; i++) { var x = Gear.NewChip(1, null, chipRnd); if (!Tables.TurretOpen(Tables.ChipById[x.id].turret)) badChip++; S.chips.Remove(x); }
+                Check(badChip == 0, $"회로 2천 번: 숨긴 터렛 회로 {badChip}개");
+
+                foreach (var id in hideT) S.seen.Remove("t:" + id);
+                var nu = Meta.NewUnlock();
+                Check(nu == null || nu.enabled, $"새 터렛 알림에 숨긴 터렛 없음 ({nu?.name ?? "없음"})");
+
+                Game.StartStage(30, 2311); yield return null; Tutorial.CloseCur();
+                var newCards = Tables.Cards.Where(x => x.kind == "new").ToList();
+                bool hideOff = newCards.Where(x => !Tables.TurretOpen(x.turret)).All(x => !B.run.Eligible(x));
+                bool teslaOn = B.run.Eligible(Tables.CardById["new_tesla"]);
+                int badCard = 0;
+                for (int i = 0; i < 500; i++) foreach (var x in B.run.Roll(3)) if (!Tables.TurretOpen(x.turret)) badCard++;
+                Check(hideOff && teslaOn && badCard == 0, $"전투 카드: 숨긴 터렛 안 나옴 · 찌릿 코일은 나옴 (500번 뽑기에 숨긴 카드 {badCard}장)");
             }
             Game.ToLobby(); yield return Wait(0.2f);
             running = false;

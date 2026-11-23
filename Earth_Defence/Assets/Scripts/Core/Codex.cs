@@ -22,8 +22,8 @@ namespace EarthDef
         }
         public static int GearGot { get { int n = 0; foreach (var p in Tables.GearParts) for (int g = 1; g <= Tables.GearTop; g++) if (HasGear(p.part, g)) n++; return n; } }
         public static int GearAll => Tables.GearParts.Count * Tables.GearTop;     // 11-22 오픈 스펙: 보이는 등급까지
-        public static int ChipGot { get { int n = 0; foreach (var c in Tables.Chips) if (ChipBest(c.id) > 0) n++; return n; } }
-        public static int ChipAll => Tables.Chips.Count;
+        public static int ChipGot { get { int n = 0; foreach (var c in Tables.Chips) if (Tables.TurretOpen(c.turret) && ChipBest(c.id) > 0) n++; return n; } }
+        public static int ChipAll { get { int n = 0; foreach (var c in Tables.Chips) if (Tables.TurretOpen(c.turret)) n++; return n; } }   // 11-23: 숨긴 터렛의 회로는 안 셈
     }
 
     /// <summary>

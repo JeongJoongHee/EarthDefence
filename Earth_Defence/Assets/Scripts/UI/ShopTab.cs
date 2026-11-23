@@ -442,7 +442,7 @@ namespace EarthDef
             var area = UIKit.Rect(bg.transform, "Area"); area.Fill(10, 14, 10, top);
             var c = UIKit.Scroll(area, "Scroll"); c.parent.GetComponent<RectTransform>().Fill();
             float y = 6;
-            if (sub == 0) foreach (var k in Tables.Skins) y = ShopTab.SkinRow(c, k, y, Re);
+            if (sub == 0) foreach (var k in Tables.Skins) { if (Tables.TurretOpen(k.turret)) y = ShopTab.SkinRow(c, k, y, Re); }   // 11-23: 숨긴 터렛의 외형은 뺌
             // 11-22 오픈 스펙: 숨긴 것(Enabled 0)은 목록에서 뺌 — 이미 가진 것은 보임
             else if (sub == 1) foreach (var f in Tables.Frames) { if (Store.ShowFrame(f)) y = ShopTab.FrameRow(c, f, y, Re); }
             else foreach (var r in sub == 3 ? Tables.Mounts : Tables.Costumes) { if (Store.ShowLook(r, sub == 3)) y = LookRow(c, r, sub == 3, y, Re); }

@@ -58,7 +58,7 @@ namespace EarthDef
         {
             float y = 10;
             // 얻어 본 것 먼저 (등급 높은 순) · 그다음 못 얻은 것 (표 순서)
-            var rows = new System.Collections.Generic.List<ChipRow>(Tables.Chips);
+            var rows = Tables.Chips.FindAll(x => Tables.TurretOpen(x.turret));   // 11-23: 숨긴 터렛의 회로는 뺌
             rows.Sort((a, b) => { int x = Codex.ChipBest(b.id).CompareTo(Codex.ChipBest(a.id)); return x != 0 ? x : Tables.Chips.IndexOf(a).CompareTo(Tables.Chips.IndexOf(b)); });
             foreach (var r in rows)
             {

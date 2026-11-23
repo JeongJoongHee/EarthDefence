@@ -119,7 +119,7 @@ namespace EarthDef
 
         /// <summary>오늘 날짜 번호 (기기 시간대 기준 · 시험에서 NowOffset 으로 넘김)</summary>
         public static int Today => (int)(DateTimeOffset.FromUnixTimeSeconds(Clock).ToLocalTime().Date - new DateTime(2020, 1, 1)).TotalDays;
-        public bool Unlocked(TurretRow t) => t.unlock <= 0 || best >= t.unlock;
+        public bool Unlocked(TurretRow t) => t.enabled && (t.unlock <= 0 || best >= t.unlock);   // 11-23: 숨긴 터렛은 안 열림 (카드 · 조각 · 회로 · 알림)
         public bool Tut(string key) => tut.Contains(key);
 
         // ---------- 하루 횟수 (기기 시간 밤 12시에 새로) ----------

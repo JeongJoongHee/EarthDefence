@@ -316,6 +316,7 @@ namespace EarthDef
             }
             foreach (var t in Tables.Turrets)
             {
+                if (!t.enabled) continue;   // 11-23 오픈 스펙: 찌릿 코일까지만 보임 (Turret 표 Enabled)
                 var r = UIKit.Rect(c, "Row_" + t.id); r.TL(10, y, 1000, h);
                 bool open = S.Unlocked(t);
                 var tile = UIKit.Tile(r, "slot", open ? Color.white : new Color(0.75f, 0.72f, 0.68f), Art.TurretIcon(t), 0.86f, "Icon"); tile.rectTransform.TL(0, 4, 108, 108);

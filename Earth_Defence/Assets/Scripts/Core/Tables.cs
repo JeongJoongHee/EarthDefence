@@ -12,6 +12,8 @@ namespace EarthDef
         public float rate, rate2, tick, cd, range, dur, radius, speed, knock;
         public int count, hits, pierce;
         public int unlock;                // 2차: 이 스테이지(보통)를 깨면 열림 (0 = 처음부터)
+        /// <summary>11-23 오픈 스펙: 0 = 숨김(업데이트 때 열 것) — 터렛 탭 · 카드 · 조각 · 회로 · 외형 · 도감에서 빠짐</summary>
+        public bool enabled = true;
     }
     public class TurretLvRow { public int lv, shards; public double dmgBonus, cdMul, gold; }
     public class CardRow
@@ -117,6 +119,8 @@ namespace EarthDef
         public static List<FrameRow> OpenFrames => Frames.FindAll(f => f.enabled);
         public static FrameRow Frame(string id) => Frames.Find(f => f.id == id) ?? (Frames.Count > 0 ? Frames[0] : null);
         public static SkinRow SkinOf(string turret) => Skins.Find(s => s.turret == turret);
+        /// <summary>11-23 오픈 스펙: 그 터렛이 보이는지 (터렛 전용이 아니면 true) — 숨긴 터렛의 외형 · 회로를 화면에서 뺄 때</summary>
+        public static bool TurretOpen(string id) => string.IsNullOrEmpty(id) || !TurretById.TryGetValue(id, out var t) || t.enabled;
 
         public static void Load(bool force = false)
         {
@@ -135,7 +139,7 @@ namespace EarthDef
                     id = r.S("Id"), name = r.S("Name"), elem = r.S("Elem"), art = r.S("Art"), kind = r.S("Kind"), desc = r.S("Desc"),
                     rate = r.F("Rate"), rate2 = r.F("Rate2"), tick = r.F("Tick"), cd = r.F("Cooldown"), range = r.F("Range"),
                     count = r.I("Count"), hits = r.I("Hits"), dur = r.F("Duration"), radius = r.F("Radius"), pierce = r.I("Pierce"), speed = r.F("Speed"),
-                    unlock = r.I("Unlock"), knock = r.F("Knock"), info = r.S("Info"),
+                    unlock = r.I("Unlock"), knock = r.F("Knock"), info = r.S("Info"), enabled = r.S("Enabled") != "0",
                 };
                 Turrets.Add(t); TurretById[t.id] = t;
             }
